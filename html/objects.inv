@@ -1,0 +1,4 @@
+# Sphinx inventory version 1
+# Project: Yaybu
+# Version: 0.1
+yaybu.core.resource.Resource class resources.html

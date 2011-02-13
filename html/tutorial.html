@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Tutorial &mdash; Yaybu v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Yaybu v0.1 documentation" href="index.html" />
+    <link rel="next" title="Resources" href="resources.html" />
+    <link rel="prev" title="Introduction" href="intro.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="resources.html" title="Resources"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="intro.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Yaybu v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tutorial">
+<h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="worked-example">
+<h2>Worked Example<a class="headerlink" href="#worked-example" title="Permalink to this headline">¶</a></h2>
+<p>We have a computer &#8220;mybox&#8221; on which we wish to deploy a simple PHP application
+from Subversion, based on tagged versions of the php content.</p>
+<p>The following file expresses this configuration:</p>
+<p>mybox.yay:</p>
+<div class="highlight-python"><pre>yaybu:
+    versions:
+        yaybu.apache: 1
+        yaybu.mysql: 1
+        yaybu.firewall: 1
+
+distro:
+    base: Ubuntu 10.04.1 LTS
+    packages:
+        - openssh
+
+firewall:
+    recipe: yaybu.firewall
+    open-ports:
+        - ssh
+
+apache:
+    recipe: yaybu.apache
+    enable-modules:
+        - php5
+        - ssl
+    virtual-hosts:
+            - name: www.example.com
+              server-name: www.example.com
+              customlog: /var/log/apache2/www.example.com.log combined
+              errorlog: /var/log/apache2/www.example.com.error.log
+              document-root: /var/local/www.example.com/htdocs
+
+content:
+    recipe: yaybu.scm
+    name: /var/local/www.example.com
+    repository: https://svn.example.com/example
+    branch: /tags/1.1.1
+    user: www-data
+
+# todo, add some mysql stuff to create a database and user and load a
+# schema if the database does not exist</pre>
+</div>
+<p>The recipes specified above are also defined in yay.  The recipe files specify
+which resources need to exist and be configured for the recipe to work. For
+example, the following recipe is for apache:</p>
+<div class="highlight-python"><pre>recipe: yaybu.apache
+description: installs and configures apache
+
+firewall:
+    open-ports.append:
+        - 80
+
+resources.append:
+    .foreach virtual-hosts as vhost:
+        - File:
+            name: /etc/apache2/sites-available/${vhost.name}
+            template: package://yaybu.apache/templates/vhost.j2
+            template_args:
+                server-name: ${vhost.server-name}
+                customlog: ${vhost.customlog}
+                errorlog: ${vhost.errorlog}
+                document-root: ${vhost.document-root}
+        - Link:
+            name: /etc/apache2/sites-enabled/${vhost.name}
+            to: ../sites-available/${vhost.name}
+
+resources.append:
+    - Package:
+        - name: apache2
+    - Execute:
+        command: /usr/sbin/apache2ctl graceful
+        when.foreach virtual-hosts as vhost:
+            - resource: File[/etc/apache2/sites-available/${vhost.name}]</pre>
+</div>
+<p>This recipe specifies what the system should look like once the recipe is
+applied.  For example, that the apache2 package should be installed, port 80
+opened in iptables and a file and symlink created.</p>
+<p>The recipe is provided as part of a python package.  The template is located
+using the python module name resolution namespace.</p>
+<p>The terms with capital letters in the recipe are Resources. Resources are
+registered by python packages also: each resource specifies an interface for a
+Provider.</p>
+<p>Providers provide a resource when a certain set of criteria match. If two
+providers both match then an error is thrown.</p>
+<p>For example, the following specification in a recipe:</p>
+<div class="highlight-python"><pre>Scm:
+    repository: http://svn.example.com/foo</pre>
+</div>
+<p>could be fulfilled by any provider that uses a URL for a repository. In these
+cases you should specify the scm client:</p>
+<div class="highlight-python"><pre>Scm:
+    client: subversion
+    repository: http://svn.example.com/foo</pre>
+</div>
+<p>In other cases it will depend on the target system:</p>
+<div class="highlight-python"><pre>Package:
+    - apache2</pre>
+</div>
+<p>This will install an rpm on RedHat systems and a deb on Debian systems. in this
+case distro.base will be inspected to determine which packaging commands will
+be issued.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="#">Tutorial</a><ul>
+<li><a class="reference external" href="#worked-example">Worked Example</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="intro.html"
+                                  title="previous chapter">Introduction</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="resources.html"
+                                  title="next chapter">Resources</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/tutorial.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="resources.html" title="Resources"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="intro.html" title="Introduction"
+             >previous</a> |</li>
+        <li><a href="index.html">Yaybu v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, John Carr, Doug Winter.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
+    </div>
+  </body>
+</html>
