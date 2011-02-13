@@ -4,7 +4,12 @@ import dateutil.parser
 import urlparse
 import os
 from yaybu import recipe
-import wingdbstub
+
+try:
+    import wingdbstub
+except ImportError:
+    pass
+
 
 class NoValidProvider(Exception):
     pass

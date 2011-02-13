@@ -10,12 +10,15 @@ setup(name='Yaybu',
       author="Isotoma Limited",
       author_email="support@isotoma.com",
       packages=find_packages(exclude=['ez_setup']),
-      namespace_packages=['yaybu'],
       include_package_data=True,
       zip_safe=False,
       install_requires=[
           'setuptools',
           'jinja2',
           'yay',
-      ]
+      ],
+      entry_points = """
+      [console_scripts]
+      yaybu = yaybu.core.runner:main
+      """
       )
