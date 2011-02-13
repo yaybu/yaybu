@@ -55,7 +55,7 @@ class File(abstract.Provider):
                     for l in output.splitlines():
                         simlog.info("    %s" % l)
                 else:
-                    open(self.resource.name).write(output)
+                    open(self.resource.name, "w").write(output)
         if self.resource.owner is not None:
             owner = pwd.getpwnam(self.resource.owner)
             if owner.pw_uid != uid:

@@ -14,7 +14,6 @@ class File(Resource):
 
     """
 
-    providers = []
     name = String()
     owner = String()
     group = String()

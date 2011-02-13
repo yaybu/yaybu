@@ -13,9 +13,19 @@ class TooManyProviders(Exception):
     pass
 
 class MetaResource(type):
+
+    resources = {}
+
     def __new__(meta, class_name, bases, new_attrs):
         cls = type.__new__(meta, class_name, bases, new_attrs)
         cls.__args__ = []
+        cls.providers = []
+        if class_name != 'Resource':
+            rname = new_attrs.get("__resource_name__", class_name)
+            if rname in meta.resources:
+                raise ValueError("Redefinition of resource %s" % rname)
+            else:
+                meta.resources[rname] = cls
         for key, value in new_attrs.items():
             if isinstance(value, abstract.Argument):
                 cls.__args__.append(key)
