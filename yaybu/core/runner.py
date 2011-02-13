@@ -1,10 +1,12 @@
 
-import optparse
+import optparse, sys, logging
 
 import yay
 
-from yaybu.core import shell
+from yaybu.core.shell import Shell
 from yaybu.core.resource import MetaResource
+
+logging.basicConfig(stream=sys.stdout,level=logging.DEBUG)
 
 
 class LoaderError(Exception):
@@ -18,7 +20,8 @@ class Runner(object):
         self.registry = registry or MetaResource.resources
 
     def create_resource(self, typename, instance):
-        kls = self.registry[typename](**instance)
+        unicode_hack = dict((key.encode('utf-8'), item) for (key, item) in instance.iteritems())
+        kls = self.registry[typename](**unicode_hack)
         self.resources.append(kls)
 
     def create_resources_of_type(self, typename, instances):
@@ -47,7 +50,7 @@ class Runner(object):
 
         self.create_resources(config.get("resources", []))
 
-        shell = shell.Shell(simulate=opts.simulate)
+        shell = Shell(simulate=opts.simulate)
 
         for resource in self.resources:
             provider = resource.select_provider(None)

@@ -7,13 +7,11 @@ resources:
       - name: /tmp/wibble
         owner: ${preset.owner}
         group: ${preset.group}
-        mode: 666
 
       - name: /tmp/interfaces
         owner: ${preset.owner}
         group: ${preset.group}
-        mode: 644
-        template: recipe://yaybu.distro/interfaces.j2
+        template: file:yaybu/recipe/interfaces.j2
         template_args:
             interfaces:
               - name: eth0
