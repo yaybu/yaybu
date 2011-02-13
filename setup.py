@@ -15,5 +15,7 @@ setup(name='Yaybu',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'jinja2',
+          'yay',
       ]
       )
