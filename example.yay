@@ -1,0 +1,35 @@
+preset:
+    owner: nobody
+    group: nobody
+
+resources:
+    - File:
+      - name: /tmp/wibble
+        owner: ${preset.owner}
+        group: ${preset.group}
+
+      - name: /tmp/interfaces
+        owner: ${preset.owner}
+        group: ${preset.group}
+        template: file:yaybu/recipe/interfaces.j2
+        template_args:
+            interfaces:
+              - name: eth0
+                type: static
+                auto-up: yes
+                address: 83.142.228.46
+                netmask: 255.255.255.0
+                network: 83.142.228.0
+                broadcast: 83.142.228.255
+                gateway: 83.142.228.1
+
+              - name: eth0:0
+                type: static
+                auto-up: yes
+                address: 83.142.228.16
+                netmask: 255.255.255.0
+
+              - name: eth1
+                type: dhcp
+                auto-up: yes
+

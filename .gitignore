@@ -1,1 +1,7 @@
 *.pyc
+.installed.cfg
+Yaybu.egg-info/
+bin/
+develop-eggs/
+eggs/
+parts/

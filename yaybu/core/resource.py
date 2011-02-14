@@ -4,7 +4,12 @@ import dateutil.parser
 import urlparse
 import os
 from yaybu import recipe
-import wingdbstub
+
+try:
+    import wingdbstub
+except ImportError:
+    pass
+
 
 class NoValidProvider(Exception):
     pass
@@ -66,7 +71,9 @@ class Resource(object):
 
 class String(abstract.Argument):
     def __set__(self, instance, value):
-        setattr(instance, self.arg_id, unicode(value, 'utf-8'))
+        if not isinstance(value, unicode):
+            value = unicode(value, 'utf-8')
+        setattr(instance, self.arg_id, value)
 
 class Integer(abstract.Argument):
 
@@ -85,7 +92,7 @@ class Octal(abstract.Argument):
 
 class Dict(abstract.Argument):
     def __set__(self, instance, value):
-        setattr(instance, self.arg_id, value.copy())
+        setattr(instance, self.arg_id, value)
 
 class File(abstract.Argument):
 
