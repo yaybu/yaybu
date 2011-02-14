@@ -1,1 +1,5 @@
-from yaybu.resource import filesystem
+from yaybu.resource import (
+    filesystem,
+    checkout,
+    )
+
