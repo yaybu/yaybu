@@ -1,1 +1,4 @@
-from yaybu.provider import filesystem
+from yaybu.provider import (
+    filesystem,
+    subversion,
+    )

@@ -1,7 +1,6 @@
 import os, logging
 
 from yaybu.core import abstract
-from yaybu.resource import scm as resource
 
 log = logging.getLogger("subversion")
 
