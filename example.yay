@@ -3,6 +3,11 @@ preset:
     group: nobody
 
 resources:
+    - Checkout:
+      - name: /tmp/checkout
+        repository: http://svn.github.com/isotoma/yaybu.git
+        branch:
+
     - File:
       - name: /tmp/wibble
         owner: ${preset.owner}

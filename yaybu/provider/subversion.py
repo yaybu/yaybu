@@ -1,11 +1,16 @@
 import os, logging
 
 from yaybu.core import abstract
+from yaybu import resource
 
 log = logging.getLogger("subversion")
 
 
 class Svn(abstract.Provider):
+
+    def action_create(self, shell):
+        #FIXME: Need to work out what to do with these
+        return self.action_sync(shell)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
@@ -20,20 +25,20 @@ class Svn(abstract.Provider):
             return
 
         log.info("Checking out %s" % self.resource)
-        self.svn(shell, "co", self.svnurl, self.resource.name)
+        self.svn(shell, "co", self.url, self.resource.name)
         #self.resource.updated()
 
     def action_sync(self, shell):
         if not os.path.exists(self.resource.name):
-            self.action_checkout()
+            self.action_checkout(shell)
             return
 
         log.info("Syncing %s" % self.resource)
 
         changed = False
 
-        info = self.info(self.resource.name)
-        repo_info = self.info(self.svnurl)
+        info = self.info(shell, self.resource.name)
+        repo_info = self.info(shell, self.url)
 
         # If the 'Repository Root' is different between the checkout and the repo, switch --relocated
         old_repo_root = info["Repository Root"]
@@ -67,14 +72,10 @@ class Svn(abstract.Provider):
         if os.path.exists(self.resource.name):
             return
         log.info("Exporting %s" % self.resource)
-        self.svn(shell, "export", self.svnurl, self.resource.name)
+        self.svn(shell, "export", self.url, self.resource.name)
         #self.resource.updated()
 
-    def info(self, shell, uri):
-        stdout, stderr = self.svn(shell, "info", uri)
-        return dict(x.split(": ") for x in stdout.split("\n") if x)
-
-    def svn(self, shell, action, *args):
+    def get_svn_args(self, action, *args):
         command = ["svn", action, "--non-interactive"]
 
         if self.resource.scm_username:
@@ -85,8 +86,16 @@ class Svn(abstract.Provider):
             command.append("--no-auth-cache")
 
         command.extend(list(args))
+        return command
 
-        returncode, stdout, stderr = shell.execute(command)
+    def info(self, shell, uri):
+        command = self.get_svn_args("info", uri)
+        returncode, stdout, stderr = shell.execute(command, passthru=True)
+        return dict(x.split(": ") for x in stdout.split("\n") if x)
 
-        return stdout, stderr
+    def svn(self, shell, action, *args):
+        command = self.get_svn_args(action, *args)
+        return shell.execute(command)
+
+resource.checkout.Checkout.providers.append(Svn)
 
