@@ -37,5 +37,11 @@ class TestOrchestration(unittest.TestCase):
     def test_validate(self):
         r = R(foo="a", bar="b")
         self.assertEqual(r.validate(), Prov1)
+        r = R()
+        self.assertRaises(resource.NonConformingPolicy, r.validate)
         r = R(ensure=["p1"])
         self.assertRaises(resource.NonConformingPolicy, r.validate)
+        r = R(ensure=["p1", "p2"], foo="a", bar="b")
+        self.assertEqual(r.validate(), Prov1)
+        r = R(ensure=["p1", "p3"], foo="a", bar="b")
+        self.assertRaises(resource.TooManyProviders, r.validate)
