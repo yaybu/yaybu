@@ -12,8 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.providers import (
-    execute,
-    filesystem,
-    subversion,
+from yaybu.core.resource import (
+    Resource,
+    String,
+    Integer,
+    Octal,
+    File,
+    Dict,
     )
+
+
+class Execute(Resource):
+
+    name = String()
+    command = String()
+    cwd = String()
+    environment = Dict()
+    returns = Integer()
+
+    user = String()
+    group = String()
+
+    creates = String()
+
