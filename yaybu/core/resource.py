@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argument import Argument
+from argument import Argument, List
 from yaybu import recipe
 
-class NoValidProvider(Exception):
+class NoValidPolicy(Exception):
+    pass
+
+class NonConformingPolicy(Exception):
     pass
 
 class TooManyProviders(Exception):
@@ -28,7 +31,6 @@ class MetaResource(type):
     def __new__(meta, class_name, bases, new_attrs):
         cls = type.__new__(meta, class_name, bases, new_attrs)
         cls.__args__ = []
-        cls.providers = []
         cls.policies = []
         if class_name != 'Resource':
             rname = new_attrs.get("__resource_name__", class_name)
@@ -56,21 +58,55 @@ class Resource(object):
 
     __metaclass__ = MetaResource
 
+    # The arguments for this resource, set in the metaclass
+    __args__ = []
+    # the policies for this resource, registered as policies are created
+    policies = []
+    # the list of policies provided by configuration
+    ensure = List()
+
     def __init__(self, **kwargs):
-        """ Pass a dictionary of arguments and they will be updated from the supplied data """
+        """ Pass a dictionary of arguments and they will be updated from the
+        supplied data. A special argument 'yay' should be passed that contains
+        the entire yay structure, used in provider selection. """
+        self.yay = kwargs.pop("yay", None)
         for key, value in kwargs.items():
-            if not hasattr(self, key):
+            if not key in self.__args__:
                 raise AttributeError("Cannot assign argument '%s' to resource" % key)
             setattr(self, key, value)
 
-    def select_provider(self, yay):
-        valid = [p for p in self.providers if p.isvalid(self, yay)]
-        if not valid:
-            raise NoValidProvider()
-        if len(valid) == 1:
-            return valid[0](self, yay)
+    def validate(self):
+        """ Given the provided yay configuration dictionary, validate that
+        this resource is correctly specified. Will raise an exception if it is
+        invalid. Returns the provider if it is valid. """
+        policies = list(self.select_policies())
+        providers = set()
+        if not policies:
+            # No defined policies means this resource cannot be implemented
+            raise NoValidPolicy()
+        for p in policies:
+            if not p.conforms(self):
+                # if any of the chosen policies does not conform, that's an error
+                raise NonconformingPolicy(p.name)
+            providers.update(p.providers)
+        if len(providers) == 1:
+            return providers.pop()
         else:
             raise TooManyProviders()
+
+    def select_policies(self):
+        """ Return the list of policies that are selected for this resource. """
+        if self.ensure is not None:
+            policies = self.ensure
+        else:
+            for p in self.policies:
+                if p.default is True:
+                    yield p
+
+    def select_provider(self):
+        """ Right now a side effect of validation is determining the provider.
+        """
+        return self.validate()
 
     def dict_args(self):
 

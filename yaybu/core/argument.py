@@ -71,6 +71,10 @@ class Dict(Argument):
     def __set__(self, instance, value):
         setattr(instance, self.arg_id, value)
 
+class List(Argument):
+    def __set__(self, instance, value):
+        setattr(instance, self.arg_id, value)
+
 class File(Argument):
 
     """ Provided with a URL, this can get files by various means. Often used

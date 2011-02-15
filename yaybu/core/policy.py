@@ -18,6 +18,7 @@ class MetaPolicy(type):
 
     def __new__(meta, class_name, bases, new_attrs):
         cls = type.__new__(meta, class_name, bases, new_attrs)
+        cls.providers = []
         if cls.resource is not None:
             cls.resource.policies.append(cls)
         return cls
@@ -36,9 +37,16 @@ class Policy(object):
 
     __metaclass__ = MetaPolicy
 
-    resource = None # specify the resource to which this policy applies
-    signature = () # Override this with a list of assertions
-
+    # specify true if you wish this policy to be enabled by default
+    default = False
+    # the name of the policy, used to find it in the ensures config
+    name = None
+    # specify the resource to which this policy applies
+    resource = None
+    # the list of providers that provide this policy
+    providers = []
+    # Override this with a list of assertions
+    signature = ()
 
     def __init__(self, name):
         self.name = name

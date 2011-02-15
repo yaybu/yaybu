@@ -19,7 +19,6 @@ from yaybu import resources
 
 log = logging.getLogger("subversion")
 
-
 class Svn(Provider):
 
     resource = resources.checkout.Checkout
