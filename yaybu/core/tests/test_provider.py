@@ -32,9 +32,10 @@ class Prov1(provider.Provider):
 class Prov2(provider.Provider):
     policies = [P3]
 
-
 class TestOrchestration(unittest.TestCase):
 
     def test_validate(self):
         r = R(foo="a", bar="b")
         self.assertEqual(r.validate(), Prov1)
+        r = R(ensure=["p1"])
+        self.assertRaises(resource.NonConformingPolicy, r.validate)

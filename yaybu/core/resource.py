@@ -31,6 +31,9 @@ class MetaResource(type):
     def __new__(meta, class_name, bases, new_attrs):
         cls = type.__new__(meta, class_name, bases, new_attrs)
         cls.__args__ = []
+        for b in bases:
+            if hasattr(b, "__args__"):
+                cls.__args__.extend(b.__args__)
         cls.policies = []
         if class_name != 'Resource':
             rname = new_attrs.get("__resource_name__", class_name)
@@ -87,7 +90,7 @@ class Resource(object):
         for p in policies:
             if not p.conforms(self):
                 # if any of the chosen policies does not conform, that's an error
-                raise NonconformingPolicy(p.name)
+                raise NonConformingPolicy(p.name)
             providers.update(p.providers)
         if len(providers) == 1:
             return providers.pop()
@@ -97,7 +100,13 @@ class Resource(object):
     def select_policies(self):
         """ Return the list of policies that are selected for this resource. """
         if self.ensure is not None:
-            policies = self.ensure
+            available = [p.name for p in self.policies]
+            for p in self.ensure:
+                if p not in available:
+                    raise ValueError("Invalid policy '%s'" % p)
+            for p in self.policies:
+                if p.name in self.ensure:
+                    yield p
         else:
             for p in self.policies:
                 if p.default is True:
