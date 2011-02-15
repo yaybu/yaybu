@@ -82,3 +82,54 @@ class TestArgument(unittest.TestCase):
                                  )
                             )
                         , "recipe/interfaces.j2"))
+
+class TestArgumentAssertion(unittest.TestCase):
+
+    def test_present(self):
+        class P(resource.Policy):
+            signature = [resource.Present("foo")]
+        class Q(resource.Policy):
+            signature = [resource.Present("bar")]
+        class R(resource.Policy):
+            signature = [resource.Present("baz")]
+        f = F()
+        self.assertEqual(P.conforms(f), True)
+        self.assertEqual(Q.conforms(f), False)
+        self.assertRaises(AttributeError, R.conforms, f)
+
+    def test_absent(self):
+        class P(resource.Policy):
+            signature = [resource.Absent("foo")]
+        class Q(resource.Policy):
+            signature = [resource.Absent("bar")]
+        class R(resource.Policy):
+            signature = [resource.Absent("baz")]
+        f = F()
+        self.assertEqual(P.conforms(f), False)
+        self.assertEqual(Q.conforms(f), True)
+        self.assertRaises(AttributeError, R.conforms, f)
+
+    def test_and(self):
+        class P(resource.Policy):
+            signature = [resource.Present("foo"),
+                         resource.Absent("bar"),
+                         ]
+        f = F()
+        self.assertEqual(P.conforms(f), True)
+
+    def test_xor(self):
+        class P(resource.Policy):
+            signature = [resource.XOR(
+                              resource.Present("foo"),
+                              resource.Present("bar"),
+                         )]
+        g = G()
+        self.assertEqual(P.conforms(g), False)
+        g.foo = "yes"
+        self.assertEqual(P.conforms(g), True)
+        g.bar = "yes"
+        self.assertEqual(P.conforms(g), False)
+        g.foo = None
+        self.assertEqual(P.conforms(g), True)
+
+

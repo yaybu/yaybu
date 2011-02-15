@@ -51,11 +51,18 @@ class MetaResource(type):
 
 class Resource(object):
 
-    """ Documentation for Resource """
+    """ A resource represents a resource that can be configured on the system.
+    This might be as simple as a symlink or as complex as a database schema
+    migration. Resources have policies that represent how the resource is to
+    be treated. Providers are the implementation of the resource policy.
+
+    Resource definitions specify the complete set of attributes that can be
+    configured for a resource. Policies define which attributes must be
+    configured for the policy to be used.
+
+    """
 
     __metaclass__ = MetaResource
-
-    provider = None
 
     def __init__(self, **kwargs):
         """ Pass a dictionary of arguments and they will be updated from the supplied data """
@@ -74,17 +81,90 @@ class Resource(object):
             raise TooManyProviders()
 
     def dict_args(self):
+
         """ Return all argument names and values in a dictionary. If an
-        argument has no default and has not been set, we will throw an
-        exception. """
+        argument has no default and has not been set, it's value in the
+        dictionary will be None. """
+
         d = {}
         for a in self.__args__:
-            d[a] = getattr(self, a)
+            d[a] = getattr(self, a, None)
         return d
+
+class Policy(object):
+
+    """
+    A policy is a representation of a resource. A policy requires a
+    certain argument signature to be present before it can be used. There may
+    be multiple policies selected for a resource, in which case all argument
+    signatures must be conformant.
+
+    Providers must provide all selected policies to be a valid provider for
+    the resource.
+    """
+
+    signature = () # Override this with a list of assertions
+
+
+    def __init__(self, name):
+        self.name = name
+
+    @classmethod
+    def conforms(self, resource):
+        """ Test if the provided resource conforms to the signature for this
+        policy. """
+        for a in self.signature:
+            if not a.test(resource):
+                return False
+        return True
+
+class ArgumentAssertion(object):
+
+    """ An assertion of the state of an argument """
+
+    def __init__(self, name):
+        self.name = name
+
+class Present(ArgumentAssertion):
+
+    """ The argument has been specified, or has a default value. """
+
+    def test(self, resource):
+        """ Test that the argument this asserts for is present in the
+        resource. """
+        if getattr(resource, self.name) is not None:
+            return True
+        return False
+
+class Absent(ArgumentAssertion):
+
+    """ The argument has not been specified by the user and has no default
+    value. An argument with a default value is always defined. """
+
+    def test(self, resource):
+        if getattr(resource, self.name) is None:
+            return True
+        return False
+
+class XOR(ArgumentAssertion):
+
+    def __init__(self, *args):
+        self.args = args
+
+    def test(self, resource):
+        l = [1 for a in self.args if a.test(resource)]
+        if len(l) == 0:
+            return False
+        elif len(l) == 1:
+            return True
+        else:
+            return False
 
 class String(abstract.Argument):
     def __set__(self, instance, value):
-        if not isinstance(value, unicode):
+        if value is None:
+            pass
+        elif not isinstance(value, unicode):
             value = unicode(value, 'utf-8')
         setattr(instance, self.arg_id, value)
 
