@@ -22,11 +22,14 @@ import logging
 from jinja2 import Template
 
 from yaybu.core import abstract
-from yaybu.resources import filesystem as resource
+from yaybu import resources
+from yaybu.core import provider
 
 simlog = logging.getLogger("simulation")
 
-class File(abstract.Provider):
+class File(provider.Provider):
+
+    resource = resources.filesystem.File
 
     @classmethod
     def isvalid(self, *args, **kwargs):
@@ -80,5 +83,3 @@ class File(abstract.Provider):
         if self.resource.mode is not None:
             if mode != self.resource.mode:
                 shell.execute(["chmod", "%o" % self.resource.mode, name])
-
-resource.File.providers.append(File)

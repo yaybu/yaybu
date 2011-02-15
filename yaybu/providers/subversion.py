@@ -22,6 +22,8 @@ log = logging.getLogger("subversion")
 
 class Svn(Provider):
 
+    resource = resources.checkout.Checkout
+
     def action_create(self, shell):
         #FIXME: Need to work out what to do with these
         return self.action_sync(shell)
@@ -111,5 +113,4 @@ class Svn(Provider):
         command = self.get_svn_args(action, *args)
         return shell.execute(command)
 
-resources.checkout.Checkout.providers.append(Svn)
 

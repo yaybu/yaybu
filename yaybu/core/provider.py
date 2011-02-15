@@ -18,8 +18,12 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 class MetaProvider(ABCMeta):
 
+    """ Registers the provider with the resource which it provides """
+
     def __new__(meta, class_name, bases, new_attrs):
         cls = type.__new__(meta, class_name, bases, new_attrs)
+        if cls.resource is not None:
+            cls.resource.providers.append(cls)
         return cls
 
 
@@ -28,6 +32,8 @@ class Provider(object):
 
     # every provider should have a name
     name = None
+    # in your class, specify which resource you provide an implementation for
+    resource = None
 
     def __init__(self, resource, yay):
         self.resource = resource
