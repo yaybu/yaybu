@@ -30,7 +30,7 @@ class Shell(object):
     def execute(self, command, stdin=None, shell=False, passthru=False):
         if self.simulate and not passthru:
             simlog.info(" ".join(command))
-            return
+            return (0, "", "")
         logger.info(" ".join(command))
         p = subprocess.Popen(command,
                              shell=shell,

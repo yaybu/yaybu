@@ -16,13 +16,13 @@ import os
 import shlex
 
 from yaybu.core import abstract
-from yaybu.resource import execute as resource
+from yaybu.resource import system as resource
 
 class Execute(abstract.Provider):
 
     @classmethod
     def isvalid(self, *args, **kwargs):
-        return super(File, self).isvalid(*args, **kwargs)
+        return super(Execute, self).isvalid(*args, **kwargs)
 
     def action_create(self, shell):
         if self.resource.creates and os.path.exists(self.resource.creates):

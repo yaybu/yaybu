@@ -8,6 +8,10 @@ resources:
         repository: http://svn.github.com/isotoma/yaybu.git
         branch:
 
+    - Execute:
+      - name: foo-badger
+        command: whoami
+
     - File:
       - name: /tmp/wibble
         owner: ${preset.owner}

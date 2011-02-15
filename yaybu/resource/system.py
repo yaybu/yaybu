@@ -28,7 +28,7 @@ class Execute(Resource):
     command = String()
     cwd = String()
     environment = Dict()
-    returns = Integer()
+    returncode = Integer()
 
     user = String()
     group = String()
