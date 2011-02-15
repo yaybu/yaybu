@@ -31,11 +31,11 @@ class File(Resource):
     owner = String()
     group = String()
     mode = Octal()
+    static = File()
     template = File()
     template_args = Dict(default={})
     backup = String()
     dated_backup = String()
-    #action = Action(["create", "delete"], default="create")
 
 class Directory(Resource):
     name = String()
