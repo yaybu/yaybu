@@ -21,7 +21,6 @@ import logging
 
 from jinja2 import Template
 
-from yaybu.core import abstract
 from yaybu import resources
 from yaybu.core import provider
 

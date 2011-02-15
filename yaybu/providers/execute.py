@@ -15,10 +15,12 @@
 import os
 import shlex
 
-from yaybu.core import abstract
-from yaybu.resource import system as resource
+from yaybu.core import provider
+from yaybu.resources import system
 
-class Execute(abstract.Provider):
+class Execute(provider.Provider):
+
+    resource = system.Execute
 
     @classmethod
     def isvalid(self, *args, **kwargs):
@@ -36,4 +38,3 @@ class Execute(abstract.Provider):
         if expected_returncode != returncode:
             raise RuntimeError("%s failed with return code %d" % (self.resource, expected_returncode))
 
-resource.Execute.providers.append(Execute)

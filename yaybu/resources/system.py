@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.core.resource import (
-    Resource,
+from yaybu.core.resource import Resource
+from yaybu.core.argument import (
     String,
     Integer,
     Octal,
