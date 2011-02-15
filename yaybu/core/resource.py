@@ -81,7 +81,19 @@ class Resource(object):
     def validate(self):
         """ Given the provided yay configuration dictionary, validate that
         this resource is correctly specified. Will raise an exception if it is
-        invalid. Returns the provider if it is valid. """
+        invalid. Returns the provider if it is valid.
+
+        We only validate if:
+
+           - the chosen policies all exist, or
+           - there is at least one default policy, and
+           - the arguments provided conform with all selected policies, and
+           - the selected policies all share a single provider
+
+        If the above is all true then we can identify a provider that should
+        be able to implement the required policies.
+
+        """
         policies = list(self.select_policies())
         providers = set()
         if not policies:
