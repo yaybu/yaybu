@@ -3,19 +3,21 @@ import os
 import unittest
 import datetime
 from yaybu.core import resource
+from yaybu.core import argument
+from yaybu.core import policy
 
 class F(resource.Resource):
-    foo = resource.String("42")
-    bar = resource.String()
+    foo = argument.String("42")
+    bar = argument.String()
 
 class G(resource.Resource):
-    foo = resource.String()
-    bar = resource.String()
+    foo = argument.String()
+    bar = argument.String()
 
 class H(resource.Resource):
-    foo = resource.Integer()
-    bar = resource.DateTime()
-    baz = resource.File()
+    foo = argument.Integer()
+    bar = argument.DateTime()
+    baz = argument.File()
 
 class TestResource(unittest.TestCase):
 
@@ -86,42 +88,42 @@ class TestArgument(unittest.TestCase):
 class TestArgumentAssertion(unittest.TestCase):
 
     def test_present(self):
-        class P(resource.Policy):
-            signature = [resource.Present("foo")]
-        class Q(resource.Policy):
-            signature = [resource.Present("bar")]
-        class R(resource.Policy):
-            signature = [resource.Present("baz")]
+        class P(policy.Policy):
+            signature = [policy.Present("foo")]
+        class Q(policy.Policy):
+            signature = [policy.Present("bar")]
+        class R(policy.Policy):
+            signature = [policy.Present("baz")]
         f = F()
         self.assertEqual(P.conforms(f), True)
         self.assertEqual(Q.conforms(f), False)
         self.assertRaises(AttributeError, R.conforms, f)
 
     def test_absent(self):
-        class P(resource.Policy):
-            signature = [resource.Absent("foo")]
-        class Q(resource.Policy):
-            signature = [resource.Absent("bar")]
-        class R(resource.Policy):
-            signature = [resource.Absent("baz")]
+        class P(policy.Policy):
+            signature = [policy.Absent("foo")]
+        class Q(policy.Policy):
+            signature = [policy.Absent("bar")]
+        class R(policy.Policy):
+            signature = [policy.Absent("baz")]
         f = F()
         self.assertEqual(P.conforms(f), False)
         self.assertEqual(Q.conforms(f), True)
         self.assertRaises(AttributeError, R.conforms, f)
 
     def test_and(self):
-        class P(resource.Policy):
-            signature = [resource.Present("foo"),
-                         resource.Absent("bar"),
+        class P(policy.Policy):
+            signature = [policy.Present("foo"),
+                         policy.Absent("bar"),
                          ]
         f = F()
         self.assertEqual(P.conforms(f), True)
 
     def test_xor(self):
-        class P(resource.Policy):
-            signature = [resource.XOR(
-                              resource.Present("foo"),
-                              resource.Present("bar"),
+        class P(policy.Policy):
+            signature = [policy.XOR(
+                              policy.Present("foo"),
+                              policy.Present("bar"),
                          )]
         g = G()
         self.assertEqual(P.conforms(g), False)

@@ -13,5 +13,12 @@
 # limitations under the License.
 
 import recipe
-import provider
-import resource
+import providers
+import resources
+
+try:
+    import wingdbstub
+except ImportError:
+    pass
+
+

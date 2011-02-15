@@ -12,7 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.provider import (
-    filesystem,
-    subversion,
+from yaybu.core.resource import Resource
+from yaybu.core.argument import (
+    String,
+    Octal,
     )
+
+class Checkout(Resource):
+    """ A checkout ('*a* checkout', not 'to checkout') """
+    name = String()
+    repository = String()
+    branch = String()
+    revision = String()
+    scm_username = String()
+    scm_password = String()
+    owner = String()
+    group = String()
+    mode = Octal()
+

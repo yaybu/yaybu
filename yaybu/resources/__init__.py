@@ -12,21 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.core.resource import (
-    Resource,
-    String,
-    Octal,
+from yaybu.resources import (
+    filesystem,
+    checkout,
     )
-
-class Checkout(Resource):
-    """ A checkout ('*a* checkout', not 'to checkout') """
-    name = String()
-    repository = String()
-    branch = String()
-    revision = String()
-    scm_username = String()
-    scm_password = String()
-    owner = String()
-    group = String()
-    mode = Octal()
 

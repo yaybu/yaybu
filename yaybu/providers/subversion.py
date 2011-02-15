@@ -14,13 +14,13 @@
 
 import os, logging
 
-from yaybu.core import abstract
-from yaybu import resource
+from yaybu.core.provider import Provider
+from yaybu import resources
 
 log = logging.getLogger("subversion")
 
 
-class Svn(abstract.Provider):
+class Svn(Provider):
 
     def action_create(self, shell):
         #FIXME: Need to work out what to do with these
@@ -111,5 +111,5 @@ class Svn(abstract.Provider):
         command = self.get_svn_args(action, *args)
         return shell.execute(command)
 
-resource.checkout.Checkout.providers.append(Svn)
+resources.checkout.Checkout.providers.append(Svn)
 

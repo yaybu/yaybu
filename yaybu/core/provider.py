@@ -12,12 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Abstract Base Classes for yaybu """
+""" Core classes for providers """
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-class Provider:
-    __metaclass__ = ABCMeta
+class MetaProvider(ABCMeta):
+
+    def __new__(meta, class_name, bases, new_attrs):
+        cls = type.__new__(meta, class_name, bases, new_attrs)
+        return cls
+
+
+class Provider(object):
+    __metaclass__ = MetaProvider
 
     # every provider should have a name
     name = None
@@ -39,30 +46,4 @@ class Provider:
             if resource.provider is not None:
                 return False
         return True
-
-class Argument(object):
-
-    """ Stores the argument value on the instance object. It's a bit fugly,
-    neater ways of doing this that do not involve passing extra arguments to
-    Argument are welcome. """
-
-    metaclass = ABCMeta
-    argument_id = 0
-
-    def __init__(self, default=None):
-        self.default = default
-        self.arg_id = "argument_%d" % Argument.argument_id
-        Argument.argument_id += 1
-
-    def __get__(self, instance, owner):
-        if instance is None:
-            raise AttributeError
-        if hasattr(instance, self.arg_id):
-            return getattr(instance, self.arg_id)
-        else:
-            return self.default
-
-    @abstractmethod
-    def __set__(self, instance, value):
-        """ Set the property. The value will be a UTF-8 encoded string read from the yaml source file. """
 

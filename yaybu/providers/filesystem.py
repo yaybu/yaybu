@@ -22,7 +22,7 @@ import logging
 from jinja2 import Template
 
 from yaybu.core import abstract
-from yaybu.resource import filesystem as resource
+from yaybu.resources import filesystem as resource
 
 simlog = logging.getLogger("simulation")
 
