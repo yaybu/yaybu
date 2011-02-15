@@ -1,0 +1,13 @@
+resources:
+    File:
+        name: /etc/firewall.thing
+        template: firewall.j2
+    Execute:
+        name: iptables-restore
+        command: /usr/sbin/iptables-restore < /etc/firewall.thing
+        when:
+            name: /etc/firewall.thing
+            event: updated
+
+    
+

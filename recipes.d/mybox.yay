@@ -1,0 +1,54 @@
+yay:
+    extends:
+        - firewall.yay
+        - distro.yay
+        - apache.yay
+
+distro:
+    base: Ubuntu 10.04.1 LTS
+    network:
+        interfaces:
+            - name: eth0
+              type: static
+              auto-up: yes
+              address: 83.142.228.46
+              netmask: 255.255.255.0
+              network: 83.142.228.0
+              broadcast: 83.142.228.255
+              gateway: 83.142.228.1
+
+            - name: eth0:0
+              type: static
+              auto-up: yes
+              address: 83.142.228.16
+              netmask: 255.255.255.0
+
+            - name: eth1
+              type: dhcp
+              auto-up: yes
+    packages:
+        - openssh
+
+firewall:
+    open-ports:
+        - ssh
+
+apache:
+    enable-modules:
+        - php5
+        - ssl
+    virtual-hosts:
+            - name: www.example.com
+              server-name: www.example.com
+              customlog: /var/log/apache2/www.example.com.log combined
+              errorlog: /var/log/apache2/www.example.com.error.log
+              document-root: /var/local/www.example.com/htdocs
+
+resources:
+    WorkingCopy:
+        name: /var/local/www.example.com
+        repository: https://svn.example.com/example
+        branch: /tags/1.1.1
+        user: www-data
+
+
