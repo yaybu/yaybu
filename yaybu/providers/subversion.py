@@ -21,11 +21,7 @@ log = logging.getLogger("subversion")
 
 class Svn(Provider):
 
-    resource = resources.checkout.Checkout
-
-    def action_create(self, shell):
-        #FIXME: Need to work out what to do with these
-        return self.action_sync(shell)
+    policies = (resources.checkout.CheckoutSyncPolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
@@ -43,7 +39,7 @@ class Svn(Provider):
         self.svn(shell, "co", self.url, self.resource.name)
         #self.resource.updated()
 
-    def action_sync(self, shell):
+    def apply(self, shell):
         if not os.path.exists(self.resource.name):
             self.action_checkout(shell)
             return
