@@ -66,7 +66,7 @@ class Runner(object):
         shell = Shell(simulate=opts.simulate)
 
         for resource in self.resources:
-            provider = resource.select_provider(None)
+            provider = resource.select_provider()
             provider.action_create(shell)
 
         return 0
