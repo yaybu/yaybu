@@ -21,6 +21,9 @@ class NoValidPolicy(Exception):
 class NonConformingPolicy(Exception):
     pass
 
+class NoSuitableProviders(Exception):
+    pass
+
 class TooManyProviders(Exception):
     pass
 
@@ -104,7 +107,9 @@ class Resource(object):
                 # if any of the chosen policies does not conform, that's an error
                 raise NonConformingPolicy(p.name)
             providers.update(p.providers)
-        if len(providers) == 1:
+        if len(providers) == 0:
+            raise NoSuitableProviders(self)
+        elif len(providers) == 1:
             return providers.pop()
         else:
             raise TooManyProviders(self)
