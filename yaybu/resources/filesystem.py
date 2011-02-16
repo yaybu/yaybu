@@ -105,6 +105,17 @@ class Link(Resource):
     to = String()
     mode = Octal()
 
+
+class LinkCreatedPolicy(Policy):
+    resource = Link
+    name = "created"
+    default = True
+    signature = (
+        Present("name"),
+        Present("to"),
+        )
+
+
 class Special(Resource):
     name = String()
     owner = String()
