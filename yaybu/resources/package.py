@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
+from yaybu.core.policy import Policy
 from yaybu.core.argument import (
     String,
     File,
@@ -27,3 +28,15 @@ class Package(Resource):
     # To deploy a particular .deb for example
     file = File()
 
+
+class PackageInstallPolicy(Policy):
+
+    resource = Package
+    name = "install"
+    default = True
+
+class PackageUninstallPolicy(Policy):
+
+    resource = Package
+    name = "uninstall"
+    default = False

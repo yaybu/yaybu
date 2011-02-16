@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
+from yaybu.core.policy import Policy
 from yaybu.core.argument import (
     String,
     Octal,
@@ -30,3 +31,16 @@ class Checkout(Resource):
     group = String()
     mode = Octal()
 
+
+class CheckoutSyncPolicy(Policy):
+
+    resource = Checkout
+    name = "sync"
+    default = True
+
+
+class CheckoutExportPolicy(Policy):
+
+    resource = Checkout
+    name = "export"
+    default = False

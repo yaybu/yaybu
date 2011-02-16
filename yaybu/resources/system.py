@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
+from yaybu.core.policy import Policy
 from yaybu.core.argument import (
     String,
     Integer,
@@ -35,3 +36,9 @@ class Execute(Resource):
 
     creates = String()
 
+
+class ExecutePolicy(Policy):
+
+    resource = Execute
+    name = "execute"
+    default = True

@@ -16,11 +16,11 @@ import os
 import shlex
 
 from yaybu.core import provider
-from yaybu.resources import system
+from yaybu import resources
 
 class Execute(provider.Provider):
 
-    resource = system.Execute
+    policies = (resources.system.ExecutePolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
