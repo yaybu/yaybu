@@ -26,7 +26,7 @@ class Execute(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Execute, self).isvalid(*args, **kwargs)
 
-    def action_create(self, shell):
+    def apply(self, shell):
         if self.resource.creates and os.path.exists(self.resource.creates):
             return
 
