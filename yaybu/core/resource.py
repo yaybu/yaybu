@@ -127,7 +127,8 @@ class Resource(object):
     def select_provider(self):
         """ Right now a side effect of validation is determining the provider.
         """
-        return self.validate()
+        provider = self.validate()
+        return provider(self, None)
 
     def dict_args(self):
 
