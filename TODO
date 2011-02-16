@@ -2,6 +2,10 @@
 Release a1
 =========
 
+ * Error reporting and management
+    - exception hierarchy
+    - decide on formatting of errors
+
  * Eventing system
     - immediate events
     - deferred events to be analysed at the end of all 
