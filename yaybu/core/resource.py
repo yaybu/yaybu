@@ -98,7 +98,7 @@ class Resource(object):
         providers = set()
         if not policies:
             # No defined policies means this resource cannot be implemented
-            raise NoValidPolicy()
+            raise NoValidPolicy(self)
         for p in policies:
             if not p.conforms(self):
                 # if any of the chosen policies does not conform, that's an error
@@ -107,7 +107,7 @@ class Resource(object):
         if len(providers) == 1:
             return providers.pop()
         else:
-            raise TooManyProviders()
+            raise TooManyProviders(self)
 
     def select_policies(self):
         """ Return the list of policies that are selected for this resource. """
@@ -139,3 +139,8 @@ class Resource(object):
         for a in self.__args__:
             d[a] = getattr(self, a, None)
         return d
+
+    def __repr__(self):
+        classname = getattr(self, '__resource_name__', self.__class__.__name__)
+        return "%s[%s]" % (classname, self.name)
+
