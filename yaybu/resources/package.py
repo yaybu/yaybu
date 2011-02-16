@@ -12,10 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.resources import (
-    system,
-    filesystem,
-    checkout,
-    package,
+from yaybu.core.resource import Resource
+from yaybu.core.argument import (
+    String,
+    File,
     )
+
+
+class Package(Resource):
+
+    name = String()
+    version = String()
+
+    # To deploy a particular .deb for example
+    file = File()
 
