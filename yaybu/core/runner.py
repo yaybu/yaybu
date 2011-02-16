@@ -33,8 +33,7 @@ class Runner(object):
         self.registry = registry or MetaResource.resources
 
     def create_resource(self, typename, instance):
-        unicode_hack = dict((key.encode('utf-8'), item) for (key, item) in instance.iteritems())
-        kls = self.registry[typename](**unicode_hack)
+        kls = self.registry[typename](**instance)
         self.resources.append(kls)
 
     def create_resources_of_type(self, typename, instances):
