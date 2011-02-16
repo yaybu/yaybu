@@ -1,0 +1,32 @@
+
+Release a1
+=========
+
+ * Eventing system
+    - immediate events
+    - deferred events to be analysed at the end of all 
+
+ * Unit tests for orchestration
+
+ * Resources & Policies
+
+    - User: Apply, Remove
+    - Group: Apply, Remove
+    - File: Apply, Remove
+    - Directory: Apply, Remove
+    - Link: Apply, Remove
+    - Special: Apply, Remove
+    - Execute: Apply
+        - add CWD and other environment control
+        - add "creates" which creates a file once run successfully and is tested before execution
+    - Checkout: Apply, Remove
+    - Prompt: Apply
+        - ask the operator to do something and confirm when it is done
+
+Release a3
+==========
+
+ * Fabric support
+    - execution of scripts
+
+    
