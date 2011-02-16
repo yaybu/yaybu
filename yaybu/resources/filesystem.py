@@ -13,6 +13,11 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
+from yaybu.core.policy import (Policy,
+                               Absent,
+                               Present,
+                               XOR,
+                               NAND)
 
 from yaybu.core.argument import (
     String,
@@ -38,11 +43,60 @@ class File(Resource):
     backup = String()
     dated_backup = String()
 
+class FileCreatedPolicy(Policy):
+
+    resource = File
+    name = "created"
+    default = True
+    signature = (Present("name"),
+                 NAND(Present("template"),
+                      Present("static")),
+                 NAND(Present("backup"),
+                      Present("dated_backup")),
+                 )
+
+class FileAbsentPolicy(Policy):
+
+    resource = File
+    name = "absent"
+    default = False
+    signature = (Present("name"),
+                 Absent("owner"),
+                 Absent("group"),
+                 Absent("mode"),
+                 Absent("static"),
+                 Absent("template"),
+                 Absent("template_args"),
+                 NAND(Present("backup"),
+                      Present("dated_backup")),
+                 )
+
 class Directory(Resource):
     name = String()
     owner = String()
     group = String()
     mode = Octal()
+
+class DirectoryCreatedPolicy(Policy):
+    resource = Directory
+    name = "created"
+    default = True
+    signature = (
+        Present("name"),
+        )
+
+class DirectoryDeletedPolicy(Policy):
+
+    # TODO: what about recursive deletes?
+    resource = Directory
+    name = "deleted"
+    default = False
+    signature = (
+        Present("name"),
+        Absent("owner"),
+        Absent("group"),
+        Absent("mode"),
+        )
 
 class Link(Resource):
     name = String()

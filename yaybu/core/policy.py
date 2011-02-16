@@ -88,6 +88,28 @@ class Absent(ArgumentAssertion):
             return True
         return False
 
+class AND(ArgumentAssertion):
+
+    def __init__(self, *args):
+        self.args = args
+
+    def test(self, resource):
+        for a in self.args:
+            if not a.test(resource):
+                return False
+        return True
+
+class NAND(ArgumentAssertion):
+
+    def __init__(self, *args):
+        self.args = args
+
+    def test(self, resource):
+        results = [1 for a in self.args if a.test(resource)]
+        if len(results) > 1:
+            return False
+        return True
+
 class XOR(ArgumentAssertion):
 
     def __init__(self, *args):

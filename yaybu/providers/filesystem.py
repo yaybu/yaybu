@@ -28,13 +28,13 @@ simlog = logging.getLogger("simulation")
 
 class File(provider.Provider):
 
-    resource = resources.filesystem.File
+    policies = (resources.filesystem.FileCreatedPolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
         return super(File, self).isvalid(*args, **kwargs)
 
-    def action_create(self, shell):
+    def apply(self, shell):
         name = self.resource.name
         exists = False
         uid = None
