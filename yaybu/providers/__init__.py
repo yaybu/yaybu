@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yaybu.providers import (
+    apt,
     execute,
     filesystem,
     subversion,
