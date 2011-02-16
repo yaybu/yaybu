@@ -65,7 +65,9 @@ class DateTime(Argument):
 class Octal(Argument):
 
     def __set__(self, instance, value):
-        setattr(instance, self.arg_id, int(value, 8))
+        if not isinstance(value, int):
+            value = int(value, 8)
+        setattr(instance, self.arg_id, value)
 
 class Dict(Argument):
     def __set__(self, instance, value):
