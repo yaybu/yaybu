@@ -67,7 +67,7 @@ class Runner(object):
 
         for resource in self.resources:
             provider = resource.select_provider()
-            provider.action_create(shell)
+            provider.apply(shell)
 
         return 0
 
