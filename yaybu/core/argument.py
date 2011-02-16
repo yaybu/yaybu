@@ -108,4 +108,4 @@ class File(Argument):
         elif scheme == "recipe":
             self._recipe(instance, netloc, path)
         else:
-            raise NotImplementedError
+            raise NotImplementedError('Scheme %s on %s' % (scheme, instance))
