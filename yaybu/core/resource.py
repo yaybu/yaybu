@@ -78,7 +78,7 @@ class Resource(object):
         self.yay = kwargs.pop("yay", None)
         for key, value in kwargs.items():
             if not key in self.__args__:
-                raise AttributeError("Cannot assign argument '%s' to resource" % key)
+                raise AttributeError("Cannot assign argument '%s' to resource %s" % (key, self))
             setattr(self, key, value)
 
     def validate(self):
