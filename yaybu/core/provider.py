@@ -21,7 +21,7 @@ class MetaProvider(ABCMeta):
     """ Registers the provider with the resource which it provides """
 
     def __new__(meta, class_name, bases, new_attrs):
-        cls = type.__new__(meta, class_name, bases, new_attrs)
+        cls = super(MetaProvider, meta).__new__(meta, class_name, bases, new_attrs)
         for policy in cls.policies:
             policy.providers.append(cls)
         return cls
