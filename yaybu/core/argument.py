@@ -101,7 +101,7 @@ class File(Argument):
 
     def __set__(self, instance, value):
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(value)
-        if scheme == "file":
+        if scheme == "file" or not scheme:
             self._file(instance, path)
         elif scheme == "package":
             self._package(instance, netloc, path)
