@@ -43,10 +43,10 @@ class File(Resource):
     backup = String()
     dated_backup = String()
 
-class FileCreatedPolicy(Policy):
+class FileAppliedPolicy(Policy):
 
     resource = File
-    name = "created"
+    name = "applied"
     default = True
     signature = (Present("name"),
                  NAND(Present("template"),
@@ -55,10 +55,10 @@ class FileCreatedPolicy(Policy):
                       Present("dated_backup")),
                  )
 
-class FileAbsentPolicy(Policy):
+class FileRemovePolicy(Policy):
 
     resource = File
-    name = "absent"
+    name = "removed"
     default = False
     signature = (Present("name"),
                  Absent("owner"),
@@ -77,26 +77,35 @@ class Directory(Resource):
     group = String()
     mode = Octal()
 
-class DirectoryCreatedPolicy(Policy):
+class DirectoryAppliedPolicy(Policy):
     resource = Directory
-    name = "created"
+    name = "applied"
     default = True
-    signature = (
-        Present("name"),
-        )
+    signature = (Present("name"),
+                 Present("owner"),
+                 Present("group"),
+                 Present("mode"),
+                 )
 
-class DirectoryDeletedPolicy(Policy):
-
-    # TODO: what about recursive deletes?
+class DirectoryRemovedPolicy(Policy):
     resource = Directory
-    name = "deleted"
+    name = "removed"
     default = False
-    signature = (
-        Present("name"),
-        Absent("owner"),
-        Absent("group"),
-        Absent("mode"),
-        )
+    signature = (Present("name"),
+                 Absent("owner"),
+                 Absent("group"),
+                 Absent("mode"),
+                 )
+
+class DirectoryRemovedRecursivePolicy(Policy):
+    resource = Directory
+    name = "removed-recursive"
+    default = False
+    signature = (Present("name"),
+                 Absent("owner"),
+                 Absent("group"),
+                 Absent("mode"),
+                 )
 
 class Link(Resource):
     name = String()
@@ -105,16 +114,22 @@ class Link(Resource):
     to = String()
     mode = Octal()
 
-
-class LinkCreatedPolicy(Policy):
+class LinkAppliedPolicy(Policy):
     resource = Link
-    name = "created"
+    name = "applied"
     default = True
     signature = (
         Present("name"),
         Present("to"),
         )
 
+class LinkRemovedPolicy(Policy):
+    name = "applied"
+    default = False
+    signature = (
+        Present("name"),
+        Absent("to"),
+        )
 
 class Special(Resource):
     name = String()
@@ -124,3 +139,27 @@ class Special(Resource):
     type_ = String()
     major = Integer()
     minor = Integer()
+
+class SpecialAppliedPolicy(Policy):
+    name = "applied"
+    default = True
+    signature = (Present("name"),
+                 Present("owner"),
+                 Present("group"),
+                 Present("mode"),
+                 Present("type_"),
+                 Present("major"),
+                 Present("minor"),
+                 )
+
+class SpecialRemovedPolicy(Policy):
+    name = "removed"
+    default = False
+    signature = (Present("name"),
+                 Absent("owner"),
+                 Absent("group"),
+                 Absent("mode"),
+                 Absent("type_"),
+                 Absent("major"),
+                 Absent("minor"),
+                 )
