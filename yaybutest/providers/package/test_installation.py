@@ -1,4 +1,4 @@
-from yaybu.tests.utils import TestCase
+from yaybutest.utils import TestCase
 
 class TestPackageInstallation(TestCase):
 
