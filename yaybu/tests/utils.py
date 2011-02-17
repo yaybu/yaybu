@@ -4,9 +4,7 @@ import testtools
 def build_environment(base_image, distro='lucid'):
     commands = [
         "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,ubuntu-keyring %(distro)s %(base_image)s",
-        "git clone git://github.com/isotoma/yaybu %(base_image)s/yaybu",
-        "fakeroot fakechroot -s chroot %(base_image)s sh -c 'cd /yaybu && python setup.py install'",
-        "rm -rf %(base_image)s/yaybu",
+        "python setup.py install --root=%(base_image)s --no-compile -O0",
         ]
     for command in commands:
         command = command % dict(base_image=base_image, distro=distro)
