@@ -32,6 +32,6 @@ class TestFile(unittest.TestCase):
             template_args={"foo": "this is foo", "bar": 42}
             )
         p = filesystem.File(r, None)
-        p.action_create(shell.Shell())
+        p.apply(shell.Shell())
 
 
