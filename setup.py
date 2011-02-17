@@ -23,6 +23,9 @@ setup(name='Yaybu',
           'jinja2',
           'yay',
       ],
+      extras_require = {
+          'test': ['testtools'],
+          },
       entry_points = """
       [console_scripts]
       yaybu = yaybu.core.runner:main
