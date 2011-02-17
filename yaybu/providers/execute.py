@@ -36,5 +36,5 @@ class Execute(provider.Provider):
         expected_returncode = self.resource.returncode or 0
 
         if expected_returncode != returncode:
-            raise RuntimeError("%s failed with return code %d" % (self.resource, expected_returncode))
+            raise RuntimeError("%s failed with return code %d" % (self.resource, returncode))
 

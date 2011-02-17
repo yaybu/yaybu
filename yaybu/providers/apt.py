@@ -28,5 +28,5 @@ class Apt(provider.Provider):
         returncode, stdout, stderr = shell.execute(command)
 
         if returncode != 0:
-            raise RuntimeError("%s failed with return code %d" % (self.resource, expected_returncode))
+            raise RuntimeError("%s failed with return code %d" % (self.resource, returncode))
 
