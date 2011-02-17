@@ -19,6 +19,7 @@ def build_environment(base_image, distro='lucid'):
 
 def refresh_environment(base_image):
     commands = [
+        "fakeroot fakechroot -s chroot %(base_image)s apt-get update",
         "rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
         "python setup.py sdist --dist-dir %(base_image)s",
         "fakeroot fakechroot -s chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
