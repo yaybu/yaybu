@@ -5,7 +5,7 @@ def build_environment(base_image, distro='lucid'):
     commands = [
         "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,ubuntu-keyring %(distro)s %(base_image)s",
         "python setup.py sdist --dist-dir %(base_image)s",
-        "fakeroot fakechroot -s chroot %(base_image)s sh -c 'easy_install /yaybu-*.tar.gz'",
+        "fakeroot fakechroot -s chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
         ]
     for command in commands:
         command = command % dict(base_image=base_image, distro=distro)
