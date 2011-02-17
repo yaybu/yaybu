@@ -24,7 +24,7 @@ setup(name='Yaybu',
           'yay',
       ],
       extras_require = {
-          'test': ['testtools'],
+          'test': ['testtools', 'discover'],
           },
       entry_points = """
       [console_scripts]
