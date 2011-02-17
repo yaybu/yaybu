@@ -24,7 +24,7 @@ class Apt(provider.Provider):
         return super(Execute, self).isvalid(*args, **kwargs)
 
     def apply(self, shell):
-        command = ["apt-get", "install", "-y", self.resource.name]
+        command = ["apt-get", "install", "-q", "-y", self.resource.name]
         returncode, stdout, stderr = shell.execute(command)
 
         if returncode != 0:
