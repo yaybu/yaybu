@@ -1,4 +1,4 @@
-import os, shlex, subprocess, tempfile
+import os, shlex, subprocess, tempfile, time
 import testtools
 
 def run_commands(commands, base_image, distro='lucid'):
@@ -53,6 +53,13 @@ class TestCase(testtools.TestCase):
 
     def tearDown(self):
         super(TestCase, self).tearDown()
+
+        # give cowdancer a few seconds to exit (avoids a race where it delets another sessions .ilist)
+        for i in range(20):
+            if not os.path.exists(os.path.join(self.chroot_path, ".ilist")):
+                break
+            time.sleep(0.1)
+
         subprocess.check_call(["rm", "-rf", self.chroot_path])
 
     def failUnlessExists(self, path):
