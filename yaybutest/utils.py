@@ -4,12 +4,14 @@ import testtools
 def build_environment(base_image, distro='lucid'):
     commands = [
         "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,ubuntu-keyring %(distro)s %(base_image)s",
-        "python setup.py install --root=%(base_image)s --no-compile -O0",
+        "python setup.py sdist --dist-dir %(base_image)s",
+        "fakeroot fakechroot -s chroot %(base_image)s sh -c 'easy_install /yaybu-*.tar.gz'",
         ]
     for command in commands:
         command = command % dict(base_image=base_image, distro=distro)
         p = subprocess.Popen(shlex.split(command))
-        p.wait()
+        if p.wait():
+            raise SystemExit("Command failed")
 
 
 class TestCase(testtools.TestCase):
