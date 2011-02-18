@@ -61,7 +61,7 @@ example, the following recipe is for apache::
             - 80
 
     resources.append:
-        .foreach virtual-hosts as vhost:
+        .foreach vhost in virtual-hosts:
             - File:
                 name: /etc/apache2/sites-available/${vhost.name}
                 template: package://yaybu.apache/templates/vhost.j2
@@ -79,7 +79,7 @@ example, the following recipe is for apache::
             - name: apache2
         - Execute:
             command: /usr/sbin/apache2ctl graceful
-            when.foreach virtual-hosts as vhost:
+            when.foreach vhost in virtual-hosts:
                 - resource: File[/etc/apache2/sites-available/${vhost.name}]
 
 This recipe specifies what the system should look like once the recipe is
