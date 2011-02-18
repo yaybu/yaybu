@@ -17,6 +17,7 @@ import optparse, os, sys, logging
 import yay
 
 from yaybu.core.shell import Shell
+from yaybu.core import change
 from yaybu.core.resource import MetaResource
 
 logging.basicConfig(stream=sys.stdout,level=logging.DEBUG)
@@ -29,8 +30,8 @@ class LoaderError(Exception):
 class RunContext:
 
     def __init__(self, opts):
-        logger.debug("Invoked with ypath: %r" % opts.ypath)
-        logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
+        #logger.debug("Invoked with ypath: %r" % opts.ypath)
+        #logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
         self.ypath = opts.ypath
         if "YAYBUPATH" in os.environ:
             for term in os.environ["YAYBUPATH"].split(":"):
@@ -92,7 +93,8 @@ class Runner(object):
         self.create_resources(config.get("resources", []))
         self.bind_resources()
 
-        shell = Shell(ctx, simulate=opts.simulate)
+        changelog = change.ChangeLog("text", sys.stderr)
+        shell = Shell(ctx, changelog, simulate=opts.simulate)
 
         for resource in self.resources:
             provider = resource.select_provider()
