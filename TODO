@@ -1,6 +1,6 @@
 
 Release a1
-=========
+==========
 
  * Error reporting and management
     - exception hierarchy
@@ -8,7 +8,43 @@ Release a1
 
  * Eventing system
     - immediate events
-    - deferred events to be analysed at the end of all 
+    - deferred events to be analysed at the end of all
+
+    resources:
+        File:
+            name: foo
+            static: baz
+            user: zope
+            group: zope
+            mode: 600
+
+        File:
+            name: quux
+            policy:
+                apply:
+                    - when: apply
+                      on: foo
+                      immediately: false
+                remove:
+                    - when: remove
+                      on : foo
+            static: foobar
+
+    resource.append:
+        .foreach sitename in sitenames:
+            - Checkout:
+                name: /var/local/checkouts/${sitename}
+
+            - Execute:
+                name: buildout
+                command: buildout
+                cwd: /var/local/checkouts/${sitename}
+                policy:
+                    execute:
+                        - when: apply
+                          on: /var/local/checkouts/${sitename}
+
+
 
  * Unit tests for orchestration
 
@@ -27,10 +63,13 @@ Release a1
     - Prompt: Apply
         - ask the operator to do something and confirm when it is done
 
+ * scripts to support initial demonstrator
+
+
 Release a3
 ==========
 
  * Fabric support
     - execution of scripts
 
-    
+
