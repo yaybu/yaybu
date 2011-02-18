@@ -5,3 +5,6 @@ bin/
 develop-eggs/
 eggs/
 parts/
+base-image/
+distribute-0.6.10.tar.gz
+venv

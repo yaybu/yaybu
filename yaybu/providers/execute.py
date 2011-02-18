@@ -18,6 +18,10 @@ import shlex
 from yaybu.core import provider
 from yaybu import resources
 
+import logging
+
+logger = logging.getLogger("execute")
+
 class Execute(provider.Provider):
 
     policies = (resources.system.ExecutePolicy,)
@@ -27,10 +31,15 @@ class Execute(provider.Provider):
         return super(Execute, self).isvalid(*args, **kwargs)
 
     def apply(self, shell):
-        if self.resource.creates and os.path.exists(self.resource.creates):
+        if self.resource.creates is not None \
+           and os.path.exists(self.resource.creates):
+            logging.debug("%s exists, not executing" % self.resource.creates)
             return
 
-        command = shlex.split(self.resource.command)
+        logging.debug("Parsing command %r" % self.resource.command)
+        command = shlex.split(self.resource.command.encode("UTF-8"))
+        logging.debug("Split into: %r" % command)
+        command[0] = shell.locate_file(command[0])
         returncode, stdout, stderr = shell.execute(command)
 
         expected_returncode = self.resource.returncode or 0

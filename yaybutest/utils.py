@@ -40,7 +40,8 @@ class TestCase(testtools.TestCase):
         subprocess.check_call(chroot + command, cwd=self.chroot_path)
 
     def yaybu(self, *args):
-        self.call(["yaybu"] + list(args))
+        filespath = os.path.join(os.path.dirname(__file__), "files")
+        self.call(["yaybu", "--ypath", filespath] + list(args))
 
     def apply(self, contents):
         path = self.write_temporary_file(contents)

@@ -24,8 +24,12 @@ class Shell(object):
     """ This object wraps a shell in yet another shell. When the shell is
     switched into "simulate" mode it can just print what would be done. """
 
-    def __init__(self, simulate=False):
+    def __init__(self, context, simulate=False):
         self.simulate = simulate
+        self.context = context
+
+    def locate_file(self, filename):
+        return self.context.locate_file(filename)
 
     def execute(self, command, stdin=None, shell=False, passthru=False):
         if self.simulate and not passthru:

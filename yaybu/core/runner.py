@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import optparse, sys, logging
+import optparse, os, sys, logging
 
 import yay
 
@@ -21,10 +21,34 @@ from yaybu.core.resource import MetaResource
 
 logging.basicConfig(stream=sys.stdout,level=logging.DEBUG)
 
+logger = logging.getLogger("runner")
 
 class LoaderError(Exception):
     pass
 
+class RunContext:
+
+    def __init__(self, opts):
+        logger.debug("Invoked with ypath: %r" % opts.ypath)
+        logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
+        self.ypath = opts.ypath
+        if "YAYBUPATH" in os.environ:
+            for term in os.environ["YAYBUPATH"].split(":"):
+                self.ypath.append(term)
+
+    def locate_file(self, filename):
+        """ Locates a file by referring to the defined yaybu path. If the
+        filename starts with a / then it is absolutely rooted in the
+        filesystem and will be returned unmolested. """
+        if filename.startswith("/"):
+            return filename
+        for prefix in self.ypath:
+            candidate = os.path.realpath(os.path.join(prefix, filename))
+            logger.debug("Testing for existence of %r" % (candidate,))
+            if os.path.exists(candidate):
+                return candidate
+            logger.debug("%r does not exist" % candidate)
+        raise ValueError("Cannot locate file %r" % filename)
 
 class Runner(object):
 
@@ -56,17 +80,19 @@ class Runner(object):
     def run(self):
         parser = optparse.OptionParser()
         parser.add_option("-s", "--simulate", default=False, action="store_true")
+        parser.add_option("-p", "--ypath", default=[], action="append")
         opts, args = parser.parse_args()
+        ctx = RunContext(opts)
 
         config = yay.load_uri(args[0])
 
         self.create_resources(config.get("resources", []))
 
-        shell = Shell(simulate=opts.simulate)
+        shell = Shell(ctx, simulate=opts.simulate)
 
         for resource in self.resources:
             provider = resource.select_provider()
-            provider.apply(shell)
+            provider.apply(shell, )
 
         return 0
 

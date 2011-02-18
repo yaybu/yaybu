@@ -1,2 +1,3 @@
 include *.rst
 recursive-include yaybutest *.j2
+recursive-include yaybutest *.sh
