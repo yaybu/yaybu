@@ -27,25 +27,7 @@ from yaybu.core import change
 
 simlog = logging.getLogger("simulation")
 
-class FileChange(change.Change):
-
-    def __init__(self, filename, old_contents, new_contents):
-        self.filename = filename
-        self.old_contents = old_contents
-        self.new_contents = new_contents
-
-class FileChangeHTMLRenderer(change.HTMLRenderer):
-    pass
-
-class FileChangeTextRenderer(change.TextRenderer):
-
-    def render(self):
-        print >>self.stream, "Updating file '%s':" % self.resource.name
-        diff = "".join(difflib.context_diff(current.splitlines(1), output.splitlines(1)))
-        for l in diff.splitlines():
-            print >>self.stream, "    %s" % l
-
-class AttributeChanger:
+class AttributeChanger(change.Change):
 
     """ Make the changes required to a file's attributes """
 
@@ -81,7 +63,7 @@ class AttributeChanger:
             if mode != self.mode:
                 shell.execute(["chmod", "%o" % self.mode, self.filename])
 
-class FileContentChanger:
+class FileContentChanger(change.Change):
 
     """ Apply a content change to a file in a managed way. Simulation mode is
     catered for. Additionally the minimum changes required to the contents are
@@ -90,6 +72,7 @@ class FileContentChanger:
     def __init__(self, filename, contents, backup_filename=None):
         self.filename = filename
         self.backup_filename = backup_filename
+        self.current = ""
         self.contents = contents
 
     def empty_file(self, shell):
@@ -106,8 +89,8 @@ class FileContentChanger:
 
     def overwrite_existing_file(self, shell):
         """ Change the content of an existing file """
-        current = open(self.filename).read()
-        if current != self.contents:
+        self.current = open(self.filename).read()
+        if self.current != self.contents:
             if shell.simulate:
                 # log change
                 self.changelog.record(
@@ -142,6 +125,17 @@ class FileContentChanger:
             self.empty_file(shell)
         else:
             self.write_file(shell)
+        shell.changelog.change(self)
+
+class FileChangeTextRenderer(change.TextRenderer):
+    renderer_for = FileContentChanger
+
+    def render(self, stream):
+        print >>stream, "%r Updated file '%s'" % (self.original, self.original.filename)
+        if self.original.contents is not None:
+            diff = "".join(difflib.context_diff(self.original.current.splitlines(1), self.original.contents.splitlines(1)))
+            for l in diff.splitlines():
+                print >>stream, "    %s" % l
 
 class File(provider.Provider):
 
