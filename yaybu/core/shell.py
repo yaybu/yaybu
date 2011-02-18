@@ -15,9 +15,11 @@
 import logging
 import subprocess
 import StringIO
+import change
 
 logger = logging.getLogger("shell")
 simlog = logging.getLogger("simulation")
+
 
 class Shell(object):
 
@@ -27,6 +29,7 @@ class Shell(object):
     def __init__(self, context, simulate=False):
         self.simulate = simulate
         self.context = context
+        self.changelog = change.ChangeLog()
 
     def locate_file(self, filename):
         return self.context.locate_file(filename)

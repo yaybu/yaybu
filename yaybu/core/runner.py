@@ -65,6 +65,9 @@ class Runner(object):
         for instance in instances:
             self.create_resource(typename, instance)
 
+    def bind_resources(self):
+        pass
+
     def create_resources(self, resources):
         for resource in resources:
             if len(resource.keys()) > 1:

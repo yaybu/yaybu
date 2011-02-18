@@ -21,6 +21,20 @@ class HTMLRenderer(ChangeRenderer):
 class TextRenderer(ChangeRenderer):
     pass
 
+class ResourceChange:
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class ChangeLog:
 
+    def resource(self, resource):
+        return ResourceChange()
+
     def record_change(self, change):
+        pass
+

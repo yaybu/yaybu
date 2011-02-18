@@ -38,8 +38,9 @@ class FileChangeHTMLRenderer(change.HTMLRenderer):
     pass
 
 class FileChangeTextRenderer(change.TextRenderer):
+
     def render(self):
-        print >>self.stream, "Updating file '%s':" % self.resource.name)
+        print >>self.stream, "Updating file '%s':" % self.resource.name
         diff = "".join(difflib.context_diff(current.splitlines(1), output.splitlines(1)))
         for l in diff.splitlines():
             print >>self.stream, "    %s" % l
@@ -60,9 +61,9 @@ class AttributeChanger:
         uid = None
         gid = None
         mode = None
-        if os.path.exists(self.name):
+        if os.path.exists(self.filename):
             exists = True
-            st = os.stat(self.name)
+            st = os.stat(self.filename)
             uid = st.st_uid
             gid = st.st_gid
             mode = st.st_mode
@@ -71,14 +72,14 @@ class AttributeChanger:
         if self.user is not None:
             owner = pwd.getpwnam(self.user)
             if owner.pw_uid != uid:
-                shell.execute(["chown", self.user, name])
+                shell.execute(["chown", self.user, self.filename])
         if self.group is not None:
             group = grp.getgrnam(self.group)
             if group.gr_gid != gid:
-                shell.execute(["chgrp", self.group, name])
-        if self.resource.mode is not None:
+                shell.execute(["chgrp", self.group, self.filename])
+        if self.mode is not None:
             if mode != self.mode:
-                shell.execute(["chmod", "%o" % self.mode, name])
+                shell.execute(["chmod", "%o" % self.mode, self.filename])
 
 class FileContentChanger:
 
@@ -95,7 +96,7 @@ class FileContentChanger:
         """ Write an empty file """
         exists = os.path.exists(self.filename)
         if not exists:
-            shell.execute(["touch", name])
+            shell.execute(["touch", self.filename])
         else:
             if shell.simulate:
                 simlog.info("Emptying contents of file %r" % self.filename)
@@ -123,7 +124,7 @@ class FileContentChanger:
             for l in output.splitlines():
                 simlog.info("    %s" % l)
         else:
-            open(self.filename, "w").write(output)
+            open(self.filename, "w").write(self.contents)
 
     def write_file(self, shell):
         """ Write to either an existing or new file """
