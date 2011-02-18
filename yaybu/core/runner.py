@@ -87,6 +87,7 @@ class Runner(object):
         config = yay.load_uri(args[0])
 
         self.create_resources(config.get("resources", []))
+        self.bind_resources()
 
         shell = Shell(ctx, simulate=opts.simulate)
 

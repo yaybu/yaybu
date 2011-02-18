@@ -46,7 +46,7 @@ class File(Resource):
 class FileAppliedPolicy(Policy):
 
     resource = File
-    name = "applied"
+    name = "apply"
     default = True
     signature = (Present("name"),
                  NAND(Present("template"),
@@ -58,7 +58,7 @@ class FileAppliedPolicy(Policy):
 class FileRemovePolicy(Policy):
 
     resource = File
-    name = "removed"
+    name = "remove"
     default = False
     signature = (Present("name"),
                  Absent("owner"),

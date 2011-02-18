@@ -31,6 +31,9 @@ class Shell(object):
     def locate_file(self, filename):
         return self.context.locate_file(filename)
 
+    def info(self, msg):
+        logger.info(msg)
+
     def execute(self, command, stdin=None, shell=False, passthru=False):
         if self.simulate and not passthru:
             simlog.info(" ".join(command))
