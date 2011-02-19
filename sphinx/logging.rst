@@ -62,15 +62,15 @@ If the log level is verbose you would instead see::
 Invocation options related to logging
 =====================================
 
- -d / --debug
+ *-d / --debug*
   switch all logging to maximum, and write out to the console
- -h / --html
+ *-h / --html*
   Instead of writing progress information to the console, write an html progress log to this file."
- -l / --logfile
+ *-l / --logfile*
   The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.
- -v / --verbose
+ *-v / --verbose*
   Write additional informational messages to the console log. repeat for even more verbosity.
- --log-facility
+ *--log-facility*
   the syslog local facility number to which to write the audit trail
- --log-level
+ *--log-level*
   the minimum log level to write to the audit trail
