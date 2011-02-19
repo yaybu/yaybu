@@ -81,10 +81,22 @@ class Runner(object):
 
             self.create_resources_of_type(typename, instances)
 
+    def log_opener(self, arg):
+        if arg is None:
+            stream = None
+        elif arg == "-":
+            stream = sys.stdout
+        else:
+            stream = open(arg, "w")
+        return stream
+
     def run(self):
         parser = optparse.OptionParser()
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("-p", "--ypath", default=[], action="append")
+        parser.add_option("-S", "--shelllog", default=None, help="Specify a filename to write the shell command log to")
+        parser.add_option("-c", "--changelog", default="-", help="Specify a file to write text narrative to")
+        parser.add_option("-h", "--htmllog", default=None, help="Specify a file to write the html narrative to")
         opts, args = parser.parse_args()
         ctx = RunContext(opts)
 
@@ -93,7 +105,10 @@ class Runner(object):
         self.create_resources(config.get("resources", []))
         self.bind_resources()
 
-        changelog = change.ChangeLog("text", sys.stderr)
+
+        changelog = change.ChangeLog(self.log_opener(opts.shelllog),
+                                     self.log_opener(opts.changelog),
+                                     self.log_opener(opts.htmllog))
         shell = Shell(ctx, changelog, simulate=opts.simulate)
 
         for resource in self.resources:

@@ -82,9 +82,9 @@ class FileContentChanger(change.Change):
             shell.execute(["touch", self.filename])
         else:
             if shell.simulate:
-                simlog.info("Emptying contents of file %r" % self.filename)
+                simlog.info("Emptying contents of file {0!r}" % self.filename)
             else:
-                shell.info("# Emptying contents of file %r" % self.filename)
+                shell.info("# Emptying contents of file {0!r}" % self.filename)
                 open(self.filename, "w").close()
 
     def overwrite_existing_file(self, shell):
@@ -130,12 +130,11 @@ class FileContentChanger(change.Change):
 class FileChangeTextRenderer(change.TextRenderer):
     renderer_for = FileContentChanger
 
-    def render(self, stream):
-        print >>stream, "%r Updated file '%s'" % (self.original, self.original.filename)
+    def render(self, logger):
+        logger.log("change", "%r Updated file '%s'", self.original, self.original.filename)
         if self.original.contents is not None:
             diff = "".join(difflib.context_diff(self.original.current.splitlines(1), self.original.contents.splitlines(1)))
-            for l in diff.splitlines():
-                print >>stream, "    %s" % l
+            logger.log_multiline("change", diff)
 
 class File(provider.Provider):
 

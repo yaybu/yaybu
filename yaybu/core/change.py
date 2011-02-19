@@ -25,7 +25,7 @@ class ChangeRenderer:
     def __init__(self, original):
         self.original = original
 
-    def render(self, stream):
+    def render(self, logger):
         pass
 
 class HTMLRenderer(ChangeRenderer):
@@ -55,25 +55,34 @@ class ResourceChangeTextRenderer(TextRenderer):
 
     renderer_for = ResourceChange
 
-    def render(self, stream):
+    def render(self, logger):
         if self.original.state == "enter":
-            print >>stream, "Start Processing %r" % self.original.resource
+            logger.log("change", "start", resource=self.original.resource)
         else:
-            print >>stream, "End Processing %r" % self.original.resource
+            logger.log("change", "end", resource=self.original.resource)
 
 class ChangeLog:
 
     """ Orchestrate writing output to a changelog. """
 
-    def __init__(self, log_type, stream):
-        self.log_type = log_type
-        self.stream = stream
+    def __init__(self, shell, change, html):
+        self.shell = shell
+        self.change = change
+        self.html = html
 
     def resource(self, resource):
         return ResourceChange(self, resource)
 
+    def log_multiline(self, facility, message):
+        for l in message.splitlines():
+            print >>self.stream, "    %s" % l
+
+    def log(self, facility, message, *args, **kwargs):
+        resource = kwargs.pop("resource", None)
+        print >>self.stream, repr(resource), facility, message.format(*args, **kwargs)
+
     def change(self, change):
         renderer = MetaChangeRenderer.renderers[(self.log_type, change.__class__)]
-        renderer(change).render(self.stream)
+        renderer(change).render(self)
 
 
