@@ -28,7 +28,7 @@ class NoSuitableProviders(Exception):
 class TooManyProviders(Exception):
     pass
 
-class MetaResource(type):
+class ResourceType(type):
 
     resources = {}
 
@@ -63,7 +63,7 @@ class Resource(object):
 
     """
 
-    __metaclass__ = MetaResource
+    __metaclass__ = ResourceType
 
     # The arguments for this resource, set in the metaclass
     __args__ = []

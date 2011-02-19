@@ -24,7 +24,7 @@ import yay
 
 from yaybu.core.shell import Shell
 from yaybu.core import change
-from yaybu.core.resource import MetaResource
+from yaybu.core.resource import ResourceType
 
 logger = logging.getLogger("runner")
 
@@ -65,7 +65,7 @@ class Runner(object):
 
     def __init__(self, registry=None):
         self.resources = ordereddict.OrderedDict()
-        self.registry = registry or MetaResource.resources
+        self.registry = registry or ResourceType.resources
 
     def create_resource(self, typename, instance):
         kls = self.registry[typename](**instance)

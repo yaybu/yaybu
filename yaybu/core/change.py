@@ -12,7 +12,7 @@ class Change:
 class AttributeChange(Change):
     """ A change to one attribute of a file's metadata """
 
-class MetaChangeRenderer(type):
+class ChangeRendererType(type):
 
     """ Keeps a registry of available renderers by type. The only types
     supported are text and html and a class may not implement both. """
@@ -22,14 +22,14 @@ class MetaChangeRenderer(type):
     def __new__(meta, class_name, bases, new_attrs):
         cls = type.__new__(meta, class_name, bases, new_attrs)
         if cls.renderer_for is not None:
-            MetaChangeRenderer.renderers[(cls.renderer_type, cls.renderer_for)] = cls
+            ChangeRendererType.renderers[(cls.renderer_type, cls.renderer_for)] = cls
         return cls
 
 class ChangeRenderer:
 
     """ A class that knows how to render a change. """
 
-    __metaclass__ = MetaChangeRenderer
+    __metaclass__ = ChangeRendererType
 
     renderer_for = None
     renderer_type = None
@@ -125,10 +125,10 @@ class ChangeLog:
 
     def change(self, change):
         """ Render the change on the appropriate logs """
-        renderer = MetaChangeRenderer.renderers[("text", change.__class__)]
+        renderer = ChangeRendererType.renderers[("text", change.__class__)]
         renderer(change).render(self)
         if self.ctx.html is not None:
-            renderer = MetaChangeRenderer.renderers[("html", change.__class__)]
+            renderer = ChangeRendererType.renderers[("html", change.__class__)]
             renderer(change).render(self)
 
     def info(self, message, *args, **kwargs):
