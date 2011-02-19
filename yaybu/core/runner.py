@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import optparse, os, sys, logging
+import optparse
+import os
+import sys
+import logging
+import logging.handlers
 
 import yay
 
@@ -27,13 +31,16 @@ class LoaderError(Exception):
 
 class RunContext:
 
+    html = None
+
     def __init__(self, opts):
         logger.debug("Invoked with ypath: %r" % opts.ypath)
         logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
         self.simulate = opts.simulate
         self.ypath = opts.ypath
         self.verbose = opts.verbose
-        self.html = opts.html
+        if self.html is not None:
+            self.html = open(opts.html, "w")
         if "YAYBUPATH" in os.environ:
             for term in os.environ["YAYBUPATH"].split(":"):
                 self.ypath.append(term)
@@ -95,7 +102,8 @@ class Runner(object):
         log_level = levels.get(opts.log_level, None)
         if log_level is None:
             raise KeyError("Log level %s not recognised, terminating" % opts.log_level)
-        if opts.logfile:
+        if opts.logfile is not None:
+            raise NotImplementedError
             if opts.logfile == "-":
                 logging.basicConfig(stream=sys.stdout,
                                     format="%(asctime)s %(levelname)s %(message)s",
@@ -107,7 +115,7 @@ class Runner(object):
                                     level=log_level)
         else:
             facility = getattr(logging.handlers.SysLogHandler, "LOG_LOCAL%s" % opts.log_facility)
-            handler = logging.handlers.SysLogHandler(facility=facility)
+            handler = logging.handlers.SysLogHandler("/dev/log", facility=facility)
             formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
             handler.setFormatter(formatter)
             logging.getLogger().addHandler(handler)
@@ -118,10 +126,10 @@ class Runner(object):
         parser.add_option("-p", "--ypath", default=[], action="append")
         parser.add_option("", "--log-facility", default="2", help="the syslog local facility number to which to write the audit trail")
         parser.add_option("", "--log-level", default="info", help="the minimum log level to write to the audit trail")
-        parser.add_option("-d", "--debug", default="False", help="switch all logging to maximum, and write out to the console")
+        parser.add_option("-d", "--debug", default=False, help="switch all logging to maximum, and write out to the console")
         parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
         parser.add_option("-v", "--verbose", default=0, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
-        parser.add_option("-H", "--html", default=False, action="store_true", help="Instead of writing progress information to the console, write an html progress log to this file.")
+        parser.add_option("-H", "--html", default=None, help="Instead of writing progress information to the console, write an html progress log to this file.")
 
         opts, args = parser.parse_args()
         if opts.debug:
@@ -140,7 +148,8 @@ class Runner(object):
 
         for resource in self.resources:
             provider = resource.select_provider()
-            provider.apply(shell, )
+            with changelog.resource(resource):
+                provider.apply(shell)
 
         return 0
 

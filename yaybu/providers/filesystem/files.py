@@ -148,10 +148,6 @@ class File(provider.Provider):
         return super(File, self).isvalid(*args, **kwargs)
 
     def apply(self, shell):
-        with shell.changelog.resource(self.resource):
-            self._apply(shell)
-
-    def _apply(self, shell):
         name = self.resource.name
         if self.resource.template is None:
             contents = None

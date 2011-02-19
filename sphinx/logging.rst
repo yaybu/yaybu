@@ -45,7 +45,7 @@ Default example output is below::
 
     ----- start File[/etc/hosts]
     |
-    |=====# chown root /etc/hosts
+    |=====> chown root /etc/hosts
     |=====> Change /etc/hosts
     |     ***
     |     ---

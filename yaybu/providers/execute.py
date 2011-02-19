@@ -34,12 +34,10 @@ class Execute(provider.Provider):
     def apply(self, shell):
         if self.resource.creates is not None \
            and os.path.exists(self.resource.creates):
-            logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
+            #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
             return
 
-        logging.debug("Parsing command %r" % self.resource.command)
         command = shlex.split(self.resource.command.encode("UTF-8"))
-        logging.debug("Split into: %r" % command)
         command[0] = shell.locate_file(command[0])
         returncode, stdout, stderr = shell.execute(command)
 
