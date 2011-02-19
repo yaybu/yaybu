@@ -20,8 +20,6 @@ from yaybu.core.shell import Shell
 from yaybu.core import change
 from yaybu.core.resource import MetaResource
 
-logging.basicConfig(stream=sys.stdout,level=logging.DEBUG)
-
 logger = logging.getLogger("runner")
 
 class LoaderError(Exception):
@@ -30,9 +28,12 @@ class LoaderError(Exception):
 class RunContext:
 
     def __init__(self, opts):
-        #logger.debug("Invoked with ypath: %r" % opts.ypath)
-        #logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
+        logger.debug("Invoked with ypath: %r" % opts.ypath)
+        logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
+        self.simulate = opts.simulate
         self.ypath = opts.ypath
+        self.verbose = opts.verbose
+        self.html = opts.html
         if "YAYBUPATH" in os.environ:
             for term in os.environ["YAYBUPATH"].split(":"):
                 self.ypath.append(term)
@@ -81,35 +82,61 @@ class Runner(object):
 
             self.create_resources_of_type(typename, instances)
 
-    def log_opener(self, arg):
-        if arg is None:
-            stream = None
-        elif arg == "-":
-            stream = sys.stdout
+    def configure_logging(self, opts):
+        """ configure the audit trail to log to file or to syslog """
+        levels = {
+            'debug': logging.DEBUG,
+            'info': logging.INFO,
+            'warning': logging.WARNING,
+            'error': logging.ERROR,
+            'critical': logging.CRITICAL,
+            }
+
+        log_level = levels.get(opts.log_level, None)
+        if log_level is None:
+            raise KeyError("Log level %s not recognised, terminating" % opts.log_level)
+        if opts.logfile:
+            if opts.logfile == "-":
+                logging.basicConfig(stream=sys.stdout,
+                                    format="%(asctime)s %(levelname)s %(message)s",
+                                    level=log_level)
+            else:
+                logging.basicConfig(filename=opts.logfile,
+                                    filemode="a",
+                                    format="%(asctime)s %(levelname)s %(message)s",
+                                    level=log_level)
         else:
-            stream = open(arg, "w")
-        return stream
+            facility = getattr(logging.handlers.SysLogHandler, "LOG_LOCAL%s" % opts.log_facility)
+            handler = logging.handlers.SysLogHandler(facility=facility)
+            formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+            handler.setFormatter(formatter)
+            logging.getLogger().addHandler(handler)
 
     def run(self):
         parser = optparse.OptionParser()
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("-p", "--ypath", default=[], action="append")
-        parser.add_option("-S", "--shelllog", default=None, help="Specify a filename to write the shell command log to")
-        parser.add_option("-c", "--changelog", default="-", help="Specify a file to write text narrative to")
-        parser.add_option("-h", "--htmllog", default=None, help="Specify a file to write the html narrative to")
-        opts, args = parser.parse_args()
-        ctx = RunContext(opts)
+        parser.add_option("", "--log-facility", default="2", help="the syslog local facility number to which to write the audit trail")
+        parser.add_option("", "--log-level", default="info", help="the minimum log level to write to the audit trail")
+        parser.add_option("-d", "--debug", default="False", help="switch all logging to maximum, and write out to the console")
+        parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
+        parser.add_option("-v", "--verbose", default=0, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
+        parser.add_option("-H", "--html", default=False, action="store_true", help="Instead of writing progress information to the console, write an html progress log to this file.")
 
+        opts, args = parser.parse_args()
+        if opts.debug:
+            opts.html = False
+            opts.logfile = "-"
+            opts.verbose = 2
+        self.configure_logging(opts)
+        ctx = RunContext(opts)
         config = yay.load_uri(args[0])
 
         self.create_resources(config.get("resources", []))
         self.bind_resources()
 
-
-        changelog = change.ChangeLog(self.log_opener(opts.shelllog),
-                                     self.log_opener(opts.changelog),
-                                     self.log_opener(opts.htmllog))
-        shell = Shell(ctx, changelog, simulate=opts.simulate)
+        changelog = change.ChangeLog(ctx)
+        shell = Shell(ctx, changelog)
 
         for resource in self.resources:
             provider = resource.select_provider()

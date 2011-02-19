@@ -13,6 +13,7 @@ Contents:
 
    intro
    tutorial
+   logging
    resources
    yay_reference
 

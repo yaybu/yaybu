@@ -1,4 +1,8 @@
 
+import logging
+
+logger = logging.getLogger("audit")
+
 class Change:
     pass
 
@@ -56,33 +60,26 @@ class ResourceChangeTextRenderer(TextRenderer):
     renderer_for = ResourceChange
 
     def render(self, logger):
-        if self.original.state == "enter":
-            logger.log("change", "start", resource=self.original.resource)
-        else:
-            logger.log("change", "end", resource=self.original.resource)
+        pass
 
 class ChangeLog:
 
     """ Orchestrate writing output to a changelog. """
 
-    def __init__(self, shell, change, html):
-        self.shell = shell
-        self.change = change
-        self.html = html
+    def __init__(self, context):
+        self.ctx = context
 
     def resource(self, resource):
         return ResourceChange(self, resource)
 
-    def log_multiline(self, facility, message):
-        for l in message.splitlines():
-            print >>self.stream, "    %s" % l
+    def info(self, message, *args, **kwargs):
+        logger.info(message.format(*args, **kwargs))
 
-    def log(self, facility, message, *args, **kwargs):
-        resource = kwargs.pop("resource", None)
-        print >>self.stream, repr(resource), facility, message.format(*args, **kwargs)
+    def notice(self, message, *args, **kwargs):
+        logger.warning(message.format(*args, **kwargs))
 
     def change(self, change):
-        renderer = MetaChangeRenderer.renderers[(self.log_type, change.__class__)]
+        renderer = MetaChangeRenderer.renderers[("text", change.__class__)]
         renderer(change).render(self)
 
 

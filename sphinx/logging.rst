@@ -2,7 +2,10 @@
 Logging
 =======
 
-Yaybu produces a number of different log outputs, suited for different tasks.
+Yaybu produces two different classes of log output, one suited for audit
+trails that by default is written to syslog. The other is output to the
+console by default and provides something suitable to be reviewed once a
+change has been completed to ensure the change is acceptable.
 
 Audit trail
 ===========
@@ -12,12 +15,11 @@ By default Yaybu logs all activity to syslog using facility *local2*. The follow
  *Debug*
   Internal messages from Yaybu useful for debugging Yaybu itself
  *Info*
-  Potentially less useful messages such as file diffs for changed files (which might be bulky)
- *Notice*
-  Any commands executed to change the state of the filesystem, for example chmod. Also activities that change the contents of files.
+  Messages such as file diffs for changed files (which might be bulky) which can be excluded if you wish
+  Information on non-default policies fired by events
  *Warning*
-  Output from shell commands where the returnvalue is non-null, but the return value is not being checked in the resource
- *Alert*
+  Any commands executed to change the state of the filesystem, for example chmod. Also activities that change the contents of files, but not the contents just the event.
+ *Critical*
   Anything that causes Yaybu to terminate abnormally, presumably leaving the system in an erroneous state. Correcting the configuration and re-running Yaybu would be a normal response.
 
 Post change review
@@ -37,13 +39,14 @@ This log indicates the processing of resources, useful informational messages
 about processing decisions.  You can configure the following aspects of this log:
 
  - using the `-v` switch you can show even resources that are not changed
- - using the `-vv` switch you can show informational messages about decisions taken
+ - using the `-vv` switch you can show informational messages about decisions taken and routine non-system-affecting parts of execution (such as file backup taken before change)
 
 Default example output is below::
 
     ----- start File[/etc/hosts]
+    |
     |=====# chown root /etc/hosts
-    |=====> Change /etc/hosts, diff follows
+    |=====> Change /etc/hosts
     |     ***
     |     ---
     |     ***************
@@ -61,3 +64,18 @@ Default example output is below::
     ----- end File[/etc/hosts]
 
 
+Invocation options related to logging
+=====================================
+
+ -d / --debug
+  switch all logging to maximum, and write out to the console
+ -h / --html
+  Instead of writing progress information to the console, write an html progress log to this file."
+ -l / --logfile
+  The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.
+ -v / --verbose
+  Write additional informational messages to the console log. repeat for even more verbosity.
+ --log-facility
+  the syslog local facility number to which to write the audit trail
+ --log-level
+  the minimum log level to write to the audit trail

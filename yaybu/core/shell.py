@@ -44,18 +44,23 @@ class ShellTextRenderer(change.TextRenderer):
 
     renderer_for = ShellCommand
 
-    def render_output(self, name, data, logger):
+    def render_output(self, cmd, name, data, logger):
         if data:
-            logger.log("shell", "---- {0} follows ----", name)
+            cmd("---- {0} follows ----", name)
             for l in data.splitlines():
-                logger.log("shell", l)
-            logger.log("shell",  "---- {0} ends ----", name)
+                cmd(l)
+            cmd("---- {0} ends ----", name)
 
     def render(self, logger):
-        logger.log("shell", " ".join(self.original.command))
-        logger.log("shell", "returned {0}", self.original.returncode)
-        self.render_output("stdout", self.original.stdout, logger)
-        self.render_output("stderr", self.original.stderr, logger)
+        logger.notice(" ".join(self.original.command))
+        if self.original.returncode != 0:
+            logger.notice("returned {0}", self.original.returncode)
+            self.render_output(logger.notice, "stdout", self.original.stdout, logger)
+            self.render_output(logger.notice, "stderr", self.original.stderr, logger)
+        else:
+            self.render_output(logger.info, "stdout", self.original.stdout, logger)
+            self.render_output(logger.info, "stderr", self.original.stderr, logger)
+
 
 class Shell(object):
 
