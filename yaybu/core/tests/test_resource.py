@@ -148,3 +148,29 @@ class TestArgumentAssertion(unittest.TestCase):
         self.assertEqual(P.conforms(g), True)
 
 
+class Ev1(resource.Resource):
+    pass
+
+class Ev1FooPolicy(policy.Policy):
+    pass
+
+class Ev1BarPolicy(policy.Policy):
+    pass
+
+class Ev1BazPolicy(policy.Policy):
+    pass
+
+class PolicyBindingTests(unittest.TestCase):
+    def test_structure(self):
+        e1 = Ev1(name="e1",
+                policy = {
+                    'pol1': {
+                        'when': 'bar',
+                        'on': 'e2'},
+                    })
+        e2 = Ev1(name="e2")
+        resources = {'e1': e1, 'e2': e2}
+        e1.bind(resources)
+        e2.bind(resources)
+        self.assertEqual(e2.observers['bar'],
+                         [(True, e1, 'pol1')])

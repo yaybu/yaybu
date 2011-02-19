@@ -141,7 +141,7 @@ class PolicyStructure(Argument):
             coll = PolicyCollection(StandardPolicy(value))
         else:
             triggers = []
-            for policy, conditions in value:
+            for policy, conditions in value.items():
                 triggers.append(
                     PolicyTrigger(
                         policy=policy,

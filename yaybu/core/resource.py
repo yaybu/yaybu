@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argument import Argument, List, PolicyStructure
+from argument import Argument, List, PolicyStructure, String
 from yaybu import recipe
 import collections
 
@@ -71,6 +71,7 @@ class Resource(object):
     policies = {}
     # the list of policies provided by configuration
     policy = PolicyStructure()
+    name = String()
 
     def __init__(self, **kwargs):
         """ Pass a dictionary of arguments and they will be updated from the
@@ -117,6 +118,11 @@ class Resource(object):
             return providers.pop()
         else:
             raise TooManyProviders(self)
+
+    def bind(self, resources):
+        if self.policy is not None:
+            for trigger in self.policy.triggers:
+                trigger.bind(resources, self)
 
     def select_policy(self):
         """ Return the list of policies that are selected for this resource. """
