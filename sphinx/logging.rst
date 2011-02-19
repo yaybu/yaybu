@@ -43,26 +43,21 @@ about processing decisions.  You can configure the following aspects of this log
 
 Default example output is below::
 
-    ----- start File[/etc/hosts]
-    |
-    |=====> chown root /etc/hosts
-    |=====> Change /etc/hosts
-    |     ***
-    |     ---
-    |     ***************
-    |     *** 3,8 ****
-    |     --- 3,10 ----
-    |       192.168.1.17    foo
-    |       192.168.1.24    bar
-    |
-    |     + 123.123.123.123 myhost
-    |     +
-    |
-    |       # The following lines are desirable for IPv6 capable hosts
-    |       ::1     localhost ip6-localhost ip6-loopback
-    | <===== end of diff for /etc/hosts
-    ----- end File[/etc/hosts]
+    /------------------------------- Package[python] -------------------------------
+    |====> apt-get install -q -y python
+    \-------------------------------------------------------------------------------
 
+If the log level is verbose you would instead see::
+
+    /------------------------------- Package[python] -------------------------------
+    |====> apt-get install -q -y python
+    | ---- stdout follows ----
+    | Reading package lists...
+    | Building dependency tree...
+    | python is already the newest version.
+    | 0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+    | ---- stdout ends ----
+    \-------------------------------------------------------------------------------
 
 Invocation options related to logging
 =====================================
