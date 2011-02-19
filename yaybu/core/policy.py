@@ -20,7 +20,7 @@ class MetaPolicy(type):
         cls = type.__new__(meta, class_name, bases, new_attrs)
         cls.providers = []
         if cls.resource is not None:
-            cls.resource.policies.append(cls)
+            cls.resource.policies[cls.name] = cls
         return cls
 
 class Policy(object):

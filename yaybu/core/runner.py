@@ -17,6 +17,8 @@ import os
 import sys
 import logging
 import logging.handlers
+import collections
+import ordereddict
 
 import yay
 
@@ -62,12 +64,12 @@ class RunContext:
 class Runner(object):
 
     def __init__(self, registry=None):
-        self.resources = []
+        self.resources = ordereddict.OrderedDict()
         self.registry = registry or MetaResource.resources
 
     def create_resource(self, typename, instance):
         kls = self.registry[typename](**instance)
-        self.resources.append(kls)
+        self.resources[kls.name] = kls
 
     def create_resources_of_type(self, typename, instances):
         # Create a Resource object for each item
@@ -75,7 +77,10 @@ class Runner(object):
             self.create_resource(typename, instance)
 
     def bind_resources(self):
-        pass
+        for resource in self.resources.values():
+            if resource.policy is not None:
+                for trigger in resource.policy.triggers:
+                    trigger.bind(self.resources, resource)
 
     def create_resources(self, resources):
         for resource in resources:
@@ -146,7 +151,7 @@ class Runner(object):
         changelog = change.ChangeLog(ctx)
         shell = Shell(ctx, changelog)
 
-        for resource in self.resources:
+        for resource in self.resources.values():
             provider = resource.select_provider()
             with changelog.resource(resource):
                 provider.apply(shell)
