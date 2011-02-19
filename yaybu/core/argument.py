@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import error
 import dateutil.parser
 import types
 import urlparse
@@ -125,7 +126,10 @@ class PolicyTrigger:
         self.immediately = immediately
 
     def bind(self, resources, target):
-        resources[self.on].register_observer(self.when, target, self.policy, self.immediately)
+        if self.on in resources:
+            resources[self.on].register_observer(self.when, target, self.policy, self.immediately)
+        else:
+            raise error.BindingError("Cannot bind %s to missing resource %s" % (target.name, self.on))
 
 class PolicyCollection:
 
