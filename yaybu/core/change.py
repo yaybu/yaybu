@@ -1,16 +1,21 @@
 
+""" Classes that handle logging of changes. """
+
 import sys
 import logging
 
 logger = logging.getLogger("audit")
 
 class Change:
-    pass
+    """ Base class for changes """
 
 class AttributeChange(Change):
     """ A change to one attribute of a file's metadata """
 
 class MetaChangeRenderer(type):
+
+    """ Keeps a registry of available renderers by type. The only types
+    supported are text and html and a class may not implement both. """
 
     renderers = {}
 
@@ -21,6 +26,8 @@ class MetaChangeRenderer(type):
         return cls
 
 class ChangeRenderer:
+
+    """ A class that knows how to render a change. """
 
     __metaclass__ = MetaChangeRenderer
 
@@ -40,6 +47,9 @@ class TextRenderer(ChangeRenderer):
     renderer_type = "text"
 
 class ResourceChange(Change):
+
+    """ A context manager that handles logging per resource. This allows us to
+    elide unchanged resources, which is the default logging output option. """
 
     def __init__(self, changelog, resource):
         self.changelog = changelog
@@ -114,6 +124,7 @@ class ChangeLog:
         return ResourceChange(self, resource)
 
     def change(self, change):
+        """ Render the change on the appropriate logs """
         renderer = MetaChangeRenderer.renderers[("text", change.__class__)]
         renderer(change).render(self)
         if self.ctx.html is not None:
@@ -121,23 +132,29 @@ class ChangeLog:
             renderer(change).render(self)
 
     def info(self, message, *args, **kwargs):
+        """ Write a textual information message. This is used for both the
+        audit trail and the text console log. """
         formatted = message.format(*args, **kwargs)
         logger.info(formatted)
         if self.ctx.html is None:
             self.current_resource.info(formatted)
 
     def notice(self, message, *args, **kwargs):
+        """ Write a textual notification message. This is used for both the
+        audit trail and the text console log. """
         formatted = message.format(*args, **kwargs)
         logger.warning(formatted)
         if self.ctx.html is None:
             self.current_resource.notice(formatted)
 
     def html_info(self, message, *args, **kwargs):
+        """ Write an html information message. """
         formatted = message.format(*args, **kwargs)
         if self.ctx.html is not None:
             self.current_resource.html_info(formatted)
 
     def html_notice(self, message, *args, **kwargs):
+        """ Write an html notification message. """
         formatted = message.format(*args, **kwargs)
         if self.ctx.html is not None:
             self.current_resource.html_notice(formatted)
