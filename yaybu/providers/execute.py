@@ -51,3 +51,7 @@ class Execute(provider.Provider):
         if expected_returncode != returncode:
             raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
 
+        if self.resource.creates is not None:
+            shell.execute(["touch", self.resource.creates])
+
+
