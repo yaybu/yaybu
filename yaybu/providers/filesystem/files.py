@@ -106,7 +106,7 @@ class FileContentChanger(change.Change):
                                current,
                                self.contents))
             else:
-                open(self.filename).write(self.contents)
+                open(self.filename, "w").write(self.contents)
             self.changed = True
 
     def write_new_file(self, shell):
