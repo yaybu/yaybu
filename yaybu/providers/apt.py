@@ -27,7 +27,7 @@ class Apt(provider.Provider):
     def apply(self, shell):
 
         # work out if the package is already installed
-        command = ["dokg-query", "--show", self.resource.name]
+        command = ["dpkg-query", "--show", self.resource.name]
         returncode, stdout, stderr = shell.exectute(command)
         
         # if the return code is 0, the package is installed
