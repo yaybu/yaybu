@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yaybu.core import provider
+from yaybu.core import error
 from yaybu import resources
 
 class Apt(provider.Provider):
@@ -21,12 +22,14 @@ class Apt(provider.Provider):
 
     @classmethod
     def isvalid(self, *args, **kwargs):
-        return super(Execute, self).isvalid(*args, **kwargs)
+        return super(Apt, self).isvalid(*args, **kwargs)
 
     def apply(self, shell):
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
         returncode, stdout, stderr = shell.execute(command)
 
         if returncode != 0:
-            raise RuntimeError("%s failed with return code %d" % (self.resource, returncode))
+            raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
+
+        return True
 

@@ -12,10 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.providers import (
-    apt,
-    execute,
-    filesystem,
-    subversion,
-    user,
+from yaybu.core.resource import Resource
+from yaybu.core.policy import Policy
+from yaybu.core.argument import (
+    String,
+    Integer,
+    Octal,
+    File,
+    Dict,
     )
+
+
+class User(Resource):
+
+    name = String()
+    password = String()
+    fullname = String()
+    home = String()
+    uid = Integer()
+    gid = Integer()
+
+
+class UserApplyPolicy(Policy):
+
+    resource = User
+    name = "apply"
+    default = True

@@ -57,12 +57,16 @@ class String(Argument):
 class Integer(Argument):
 
     def __set__(self, instance, value):
-        setattr(instance, self.arg_id, int(value))
+        if not isinstance(value, int):
+            value = int(value)
+        setattr(instance, self.arg_id, value)
 
 class DateTime(Argument):
 
     def __set__(self, instance, value):
-        setattr(instance, self.arg_id, dateutil.parser.parse(value))
+        if isinstance(value, basestring):
+            value = dateutil.parser.parse(value)
+        setattr(instance, self.arg_id, value)
 
 class Octal(Argument):
 

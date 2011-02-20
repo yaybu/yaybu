@@ -39,10 +39,21 @@ class Execute(provider.Provider):
 
         command = shlex.split(self.resource.command.encode("UTF-8"))
         command[0] = shell.locate_file(command[0])
-        returncode, stdout, stderr = shell.execute(command)
+
+        # Filter out empty strings...
+        cwd = self.resource.cwd or None
+        env = self.resource.environment or None 
+
+        returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env)
 
         expected_returncode = self.resource.returncode or 0
 
         if expected_returncode != returncode:
             raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
+
+        if self.resource.creates is not None:
+            shell.execute(["touch", self.resource.creates])
+
+        return True
+
 

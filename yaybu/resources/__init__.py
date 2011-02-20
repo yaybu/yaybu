@@ -17,5 +17,6 @@ from yaybu.resources import (
     filesystem,
     checkout,
     package,
+    user,
     )
 
