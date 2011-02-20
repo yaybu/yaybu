@@ -88,7 +88,7 @@ class FileContentChanger(change.Change):
             if shell.simulate:
                 simlog.info("Emptying contents of file {0!r}" % self.filename)
             else:
-                shell.changelog.info("# Emptying contents of file {0!r}" % self.filename)
+                shell.changelog.info("# Emptying contents of file {0!r}", self.filename)
                 open(self.filename, "w").close()
 
     def overwrite_existing_file(self, shell):
