@@ -144,7 +144,7 @@ class FileChangeTextRenderer(change.TextRenderer):
         if self.original.contents is not None:
             diff = "".join(difflib.context_diff(self.original.current.splitlines(1), self.original.contents.splitlines(1)))
             for l in diff.splitlines():
-                changelog.info("    %s" % l)
+                changelog.info("    {0}", l)
 
 class File(provider.Provider):
 
