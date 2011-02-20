@@ -158,11 +158,15 @@ class File(provider.Provider):
 
     def apply(self, shell):
         name = self.resource.name
-        if self.resource.template is None:
-            contents = None
-        else:
+
+        if self.resource.template:
             template = Template(open(self.resource.template).read())
             contents = template.render(**self.resource.template_args)
+        elif self.resource.static:
+            contents = open(self.resource.static).read()
+        else:
+            contents = None
+
         fc = FileContentChanger(self.resource.name, contents)
         fc.apply(shell)
         ac = AttributeChanger(self.resource.name,
