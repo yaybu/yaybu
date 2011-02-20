@@ -65,13 +65,13 @@ class Resource(object):
     policies = {}
     # the list of policies provided by configuration
     policy = PolicyStructure()
+    # any policy applied by a policy trigger
+    policy_override = None
     name = String()
 
     def __init__(self, **kwargs):
         """ Pass a dictionary of arguments and they will be updated from the
-        supplied data. A special argument 'yay' should be passed that contains
-        the entire yay structure, used in provider selection. """
-        self.yay = kwargs.pop("yay", None)
+        supplied data. """
         for key, value in kwargs.items():
             if not key in self.__args__:
                 raise AttributeError("Cannot assign argument '%s' to resource %s" % (key, self))
@@ -118,15 +118,19 @@ class Resource(object):
         prov_class = pol.get_provider(yay)
         prov = prov_class(self)
         prov.apply(shell)
-        self.fire_event(pol.name, yay, shell)
+        self.fire_event(pol.name)
 
-    def fire_event(self, name, yay, shell):
+    def fire_event(self, name):
         """ Apply the appropriate policies on the resources that are observing
         this resource for the firing of a policy. """
         for immediately, resource, policy in  self.observers[name]:
             if immediately is False:
                 raise NotImplementedError
-            resource.apply(shell, yay=yay, policy=policy)
+
+            if resource.policy_override is not None:
+                raise error.ExecutionError("attempting to trigger policy '%s' on %r, but '%s' is already set" % (
+                    policy, resource, resource.policy_override))
+            resource.policy_override = policy
 
     def bind(self, resources):
         """ Bind this resource to all the resources on which it triggers.
@@ -143,8 +147,13 @@ class Resource(object):
             if self.policy.standard is not None:
                 return self.policies[self.policy.standard.policy_name](self)
             else:
-                return policy.NullPolicy(self)
+                if self.policy_override is not None:
+                    return self.policies[self.policy_override](self)
+                else:
+                    return policy.NullPolicy(self)
         else:
+            if self.policy_override is not None:
+                return self.policies[self.policy_override](self)
             for p in self.policies.values():
                 if p.default is True:
                     return p(self)

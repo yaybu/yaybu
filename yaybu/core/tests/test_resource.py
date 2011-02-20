@@ -265,7 +265,7 @@ class TestResourceBundle(unittest.TestCase):
         self.assertEqual(p1, Ev1Provider)
         self.assertEqual(p2, provider.NullProvider)
         e1.apply(shell)
-        self.assertEqual(Ev1Provider.applied, 2)
+        self.assertEqual(Ev1Provider.applied, 1)
         e2.apply(shell)
         self.assertEqual(Ev1Provider.applied, 2)
 
