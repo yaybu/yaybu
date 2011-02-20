@@ -16,6 +16,7 @@ Contents:
    logging
    resources
    yay_reference
+   hacking
 
 Indices and tables
 ==================
