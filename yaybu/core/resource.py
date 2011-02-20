@@ -117,8 +117,9 @@ class Resource(object):
             pol = pol_class(self)
         prov_class = pol.get_provider(yay)
         prov = prov_class(self)
-        prov.apply(shell)
-        self.fire_event(pol.name)
+        changed = prov.apply(shell)
+        if changed:
+            self.fire_event(pol.name)
 
     def fire_event(self, name):
         """ Apply the appropriate policies on the resources that are observing

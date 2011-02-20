@@ -36,6 +36,7 @@ class AttributeChanger(change.Change):
         self.user = user
         self.group = group
         self.mode = mode
+        self.changed = False
 
     def apply(self, shell):
         """ Apply the changes """
@@ -55,13 +56,16 @@ class AttributeChanger(change.Change):
             owner = pwd.getpwnam(self.user)
             if owner.pw_uid != uid:
                 shell.execute(["chown", self.user, self.filename])
+                self.changed = True
         if self.group is not None:
             group = grp.getgrnam(self.group)
             if group.gr_gid != gid:
                 shell.execute(["chgrp", self.group, self.filename])
+                self.changed = True
         if self.mode is not None:
             if mode != self.mode:
                 shell.execute(["chmod", "%o" % self.mode, self.filename])
+                self.changed = True
 
 class FileContentChanger(change.Change):
 
@@ -74,12 +78,14 @@ class FileContentChanger(change.Change):
         self.backup_filename = backup_filename
         self.current = ""
         self.contents = contents
+        self.changed = False
 
     def empty_file(self, shell):
         """ Write an empty file """
         exists = os.path.exists(self.filename)
         if not exists:
             shell.execute(["touch", self.filename])
+            self.changed = True
         else:
             if shell.simulate:
                 simlog.info("Emptying contents of file {0!r}" % self.filename)
@@ -99,6 +105,7 @@ class FileContentChanger(change.Change):
                                self.contents))
             else:
                 open(self.filename).write(output)
+            self.changed = True
 
     def write_new_file(self, shell):
         """ Write contents to a new file. """
@@ -108,6 +115,7 @@ class FileContentChanger(change.Change):
                 simlog.info("    %s" % l)
         else:
             open(self.filename, "w").write(self.contents)
+        self.changed = True
 
     def write_file(self, shell):
         """ Write to either an existing or new file """
@@ -116,6 +124,7 @@ class FileContentChanger(change.Change):
             self.overwrite_existing_file(shell)
         else:
             self.write_new_file(shell)
+        self.changed = True
 
     def apply(self, shell):
         """ Apply the changes necessary to the file contents. """
@@ -161,5 +170,7 @@ class File(provider.Provider):
                               self.resource.group,
                               self.resource.mode)
         ac.apply(shell)
+        if fc.changed or ac.changed:
+            return True
 
 

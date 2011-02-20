@@ -52,7 +52,11 @@ class Provider(object):
 
     @abstractmethod
     def apply(self, shell):
-        """ Execute this provider using the supplied shell object. This base method must be overridden """
+        """ Execute this provider using the supplied shell object. This base
+        method must be overridden. This should return True if the provider
+        changed anything, or False if it did not need to change anything (i.e.
+        the Resource was already in the state the policy ensures). """
+        return False
 
 class NullProvider(Provider):
     policies = [policy.NullPolicy]

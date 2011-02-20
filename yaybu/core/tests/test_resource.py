@@ -177,6 +177,7 @@ class Ev1Provider(provider.Provider):
 
     def apply(self, shell):
         Ev1Provider.applied += 1
+        return True
 
 class TestResourceBundle(unittest.TestCase):
     def test_structure(self):
