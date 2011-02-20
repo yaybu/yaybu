@@ -76,8 +76,8 @@ class Shell(object):
         self.context = context
         self.changelog = changelog
 
-    def locate_file(self, filename):
-        return self.context.locate_file(filename)
+    def locate_bin(self, filename):
+        return self.context.locate_bin(filename)
 
     def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None):
         if self.simulate and not passthru:

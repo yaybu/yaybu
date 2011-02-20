@@ -38,7 +38,7 @@ class Execute(provider.Provider):
             return
 
         command = shlex.split(self.resource.command.encode("UTF-8"))
-        command[0] = shell.locate_file(command[0])
+        command[0] = shell.locate_bin(command[0])
 
         # Filter out empty strings...
         cwd = self.resource.cwd or None

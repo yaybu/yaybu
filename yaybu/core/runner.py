@@ -38,6 +38,7 @@ class RunContext:
     html = None
 
     def __init__(self, opts=None):
+        self.path = []
         self.ypath = []
         if opts is not None:
             logger.debug("Invoked with ypath: %r" % opts.ypath)
@@ -47,23 +48,36 @@ class RunContext:
             self.verbose = opts.verbose
             if opts.html is not None:
                 self.html = open(opts.html, "w")
+        if "PATH" in os.environ:
+            for term in os.environ["PATH"].split(":"):
+                self.path.append(term)
         if "YAYBUPATH" in os.environ:
             for term in os.environ["YAYBUPATH"].split(":"):
                 self.ypath.append(term)
 
-    def locate_file(self, filename):
-        """ Locates a file by referring to the defined yaybu path. If the
-        filename starts with a / then it is absolutely rooted in the
-        filesystem and will be returned unmolested. """
+    def locate(self, paths, filename):
         if filename.startswith("/"):
             return filename
-        for prefix in self.ypath:
+        for prefix in paths:
             candidate = os.path.realpath(os.path.join(prefix, filename))
             logger.debug("Testing for existence of %r" % (candidate,))
             if os.path.exists(candidate):
                 return candidate
             logger.debug("%r does not exist" % candidate)
         raise ValueError("Cannot locate file %r" % filename)
+
+    def locate_file(self, filename):
+        """ Locates a file by referring to the defined yaybu path. If the
+        filename starts with a / then it is absolutely rooted in the
+        filesystem and will be returned unmolested. """
+        return self.locate(self.ypath, filename)
+
+    def locate_bin(self, filename):
+        """ Locates a binary by referring to the defined yaybu path and PATH. If the
+        filename starts with a / then it is absolutely rooted in the
+        filesystem and will be returned unmolested. """
+        return self.locate(self.ypath + self.path, filename)
+
 
 class Runner(object):
 
