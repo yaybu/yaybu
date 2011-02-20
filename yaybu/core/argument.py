@@ -46,6 +46,18 @@ class Argument(object):
     def __set__(self, instance, value):
         """ Set the property. The value will be a UTF-8 encoded string read from the yaml source file. """
 
+
+class Boolean(Argument):
+    def __set__(self, instance, value):
+        if type(value) in types.StringTypes:
+            if value.lower() in ("yes", "on", "true"):
+                value = True
+            else:
+                value = False
+        else:
+            value = bool(value)
+        setattr(instance, self.arg_id, value)
+
 class String(Argument):
     def __set__(self, instance, value):
         if value is None:

@@ -14,6 +14,7 @@
 
 import os
 import pwd
+import spwd
 
 from yaybu.core import provider
 from yaybu.core import error
@@ -45,6 +46,16 @@ class User(provider.Provider):
         for i, field in enumerate(fields):
             info[field] = info_tuple[i]
 
+        shadow = spwd.getspnam(self.resource.name)
+        if shadow.sp_pwd == "*":
+            info["disabled-password"] = True
+        else:
+            info["disabled-password"] = False
+        if shadow.sp_pwd == "!":
+            info['disabled-login'] = True
+        else:
+            info['disabled-login'] = False
+
         return info
 
     def apply(self, shell):
@@ -66,6 +77,18 @@ class User(provider.Provider):
 
         if self.resource.gid and info["gid"] != self.resource.gid:
             command.extend(["--gid", str(self.resource.gid)])
+
+        if self.resource.shell != info["shell"]:
+            command.extend(["--shell", str(self.resource.shell)])
+
+        if self.resource.disabled_password and not info["disabled-password"]:
+            command.extend(["--disabled-password"])
+
+        if self.resource.disabled_login and not info["disabled-login"]:
+            command.extend(["--disabled-login"])
+
+        if info["exists"] is False and self.resource.system:
+            command.extend(["--system"])
 
         command.extend(["-m", self.resource.name])
 

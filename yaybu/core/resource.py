@@ -198,10 +198,17 @@ class ResourceBundle(ordereddict.OrderedDict):
             for instance in instances:
                 self._create(typename, instance)
 
+
+    def key_remap(self, kw):
+        """ Maps - to _ to make resource attribute name more pleasant. """
+        for k, v in kw.items():
+            k = k.replace("-", "_")
+            yield k,v
+
     def _create(self, typename, instance):
         if not isinstance(instance, dict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
-        kls = ResourceType.resources[typename](**instance)
+        kls = ResourceType.resources[typename](**dict(self.key_remap(instance)))
         self[kls.name] = kls
 
     def bind(self):

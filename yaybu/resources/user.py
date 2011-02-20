@@ -20,6 +20,7 @@ from yaybu.core.argument import (
     Octal,
     File,
     Dict,
+    Boolean,
     )
 
 
@@ -31,7 +32,10 @@ class User(Resource):
     home = String()
     uid = Integer()
     gid = Integer()
-
+    system = Boolean(default=True) # has no effect on modification, only creation
+    shell = String(default="/bin/bash")
+    disabled_password = Boolean(default=False)
+    disabled_login = Boolean(default=False)
 
 class UserApplyPolicy(Policy):
 
