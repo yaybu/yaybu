@@ -121,7 +121,7 @@ class Runner(object):
         config = yay.load_uri(args[0])
         self.resources = resource.ResourceBundle(config.get("resources", []))
         self.resources.bind()
-        shell = Shell(ctx, change.ChangeLog(ctx))
+        shell = Shell(ctx, change.ChangeLog(ctx), simulate=opts.simulate)
         self.resources.apply(shell, config)
         return 0
 
