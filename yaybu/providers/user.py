@@ -34,7 +34,7 @@ class User(provider.Provider):
     def get_user_info(self):
         info = {}
         try:
-            info_tuple = pwd.getpwname(self.resource.name)
+            info_tuple = pwd.getpwnam(self.resource.name)
         except KeyError:
             return
 
@@ -67,7 +67,7 @@ class User(provider.Provider):
         if self.resource.gid:
             command.extend(["--gid", self.resource.gid])
 
-        command.extend(["-m", self.resource.name)
+        command.extend(["-m", self.resource.name])
 
         returncode, stdout, stderr = shell.execute(command)
         if returncode != 0:
