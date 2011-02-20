@@ -109,7 +109,7 @@ class FileContentChanger(change.Change):
         """ Write contents to a new file. """
         if shell.simulate:
             simlog.info("Writing new file '%s':" % self.filename)
-            for l in output.splitlines():
+            for l in self.contents.splitlines():
                 simlog.info("    %s" % l)
         else:
             open(self.filename, "w").write(self.contents)
