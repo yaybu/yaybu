@@ -21,6 +21,9 @@ import ordereddict
 
 class ResourceType(type):
 
+    """ Keeps a registry of resources as they are created, and provides some
+    simple access to their arguments. """
+
     resources = {}
 
     def __new__(meta, class_name, bases, new_attrs):
@@ -126,9 +129,13 @@ class Resource(object):
             resource.apply(shell, yay=yay, policy=policy)
 
     def bind(self, resources):
+        """ Bind this resource to all the resources on which it triggers.
+        Returns a list of the resources to which we are bound. """
+        bound = []
         if self.policy is not None:
             for trigger in self.policy.triggers:
-                trigger.bind(resources, self)
+                bound.append(trigger.bind(resources, self))
+        return bound
 
     def get_default_policy(self):
         """ Return an instantiated policy for this resource. """
@@ -161,6 +168,10 @@ class Resource(object):
 
 class ResourceBundle(ordereddict.OrderedDict):
 
+    """ An ordered, indexed collection of resources. Pass in a specification
+    that consists of scalars, lists and dictionaries and this class will
+    instantiate the appropriate resources into the structure. """
+
     def __init__(self, specification=()):
         super(ResourceBundle, self).__init__()
         for resource in specification:
@@ -170,19 +181,29 @@ class ResourceBundle(ordereddict.OrderedDict):
             if not isinstance(instances, list):
                 instances = [instances]
             for instance in instances:
-                self.create_resource(typename, instance)
+                self._create(typename, instance)
 
-    def create_resource(self, typename, instance):
+    def _create(self, typename, instance):
         if not isinstance(instance, dict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
         kls = ResourceType.resources[typename](**instance)
         self[kls.name] = kls
 
     def bind(self):
-        for resource in self.values():
-            resource.bind(self)
+        """ Bind all the resources so they can observe each others for policy
+        triggers. """
+        for i, resource in enumerate(self.values()):
+            for bound in resource.bind(self):
+                if bound == resource:
+                    raise error.BindingError("Attempt to bind %r to itself!" % resource)
+                j = self.values().index(bound)
+                if j > i:
+                    raise error.BindingError("Attempt to bind forwards on %r" % resource)
+
 
     def apply(self, shell, config):
+        """ Apply the resources to the system, using the provided shell and
+        overall configuration. """
         for resource in self.values():
             with shell.changelog.resource(resource):
                 resource.apply(shell, config)

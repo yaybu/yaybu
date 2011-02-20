@@ -21,7 +21,6 @@ from yaybu.core import (resource,
                         error,
                         provider,
                         change,
-                        runner,
                         testutils,
                         )
 
@@ -236,6 +235,7 @@ class TestResourceBundle(unittest.TestCase):
         self.assertRaises(error.BindingError, e1.bind, resources)
 
     def test_firing(self):
+        Ev1Provider.applied = 0
         resources = resource.ResourceBundle([
             {"Ev1": [
                 { "name": "e1",
@@ -259,7 +259,6 @@ class TestResourceBundle(unittest.TestCase):
                          {'foo': [
                              (True, e2, 'baz')]
                           })
-        ctx = runner.RunContext()
         shell = Mock()
         p1 = e1.get_default_policy().get_provider({})
         p2 = e2.get_default_policy().get_provider({})
@@ -271,7 +270,55 @@ class TestResourceBundle(unittest.TestCase):
         self.assertEqual(Ev1Provider.applied, 2)
 
     def test_not_firing(self):
-        pass
+        Ev1Provider.applied = 0
+        resources = resource.ResourceBundle([
+            {"Ev1": [
+                { "name": "e1",
+                  "policy": "foo",
+                }, {
+                  "name": "e2",
+                  "policy":
+                      {"baz": [{
+                          "when": "baz",
+                          "on": "e1",
+                          }],
+                       },
+                  },
+            ]}])
+        e1 = resources['e1']
+        e2 = resources['e2']
+        resources.bind()
+        self.assertEqual(dict(e2.observers), {})
+        self.assertEqual(dict(e1.observers),
+                         {'baz': [
+                             (True, e2, 'baz')]
+                          })
+        shell = Mock()
+        p1 = e1.get_default_policy().get_provider({})
+        p2 = e2.get_default_policy().get_provider({})
+        self.assertEqual(p1, Ev1Provider)
+        self.assertEqual(p2, provider.NullProvider)
+        e1.apply(shell)
+        self.assertEqual(Ev1Provider.applied, 1)
+        e2.apply(shell)
+        self.assertEqual(Ev1Provider.applied, 1)
 
-
-
+    def test_forwardreference(self):
+        Ev1Provider.applied = 0
+        resources = resource.ResourceBundle([
+            {"Ev1": [
+                { "name": "e1",
+                  "policy":
+                      {"baz": [{
+                          "when": "baz",
+                          "on": "e2",
+                          }],
+                       },
+                }, {
+                  "name": "e2",
+                  "policy": "foo",
+                  }
+            ]}])
+        e1 = resources['e1']
+        e2 = resources['e2']
+        self.assertRaises(error.BindingError, resources.bind)

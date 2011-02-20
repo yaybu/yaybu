@@ -129,7 +129,8 @@ class PolicyTrigger:
         if self.on in resources:
             resources[self.on].register_observer(self.when, target, self.policy, self.immediately)
         else:
-            raise error.BindingError("Cannot bind %s to missing resource %s" % (target.name, self.on))
+            raise error.BindingError("Cannot bind %r to missing resource named '%s'" % (target, self.on))
+        return resources[self.on]
 
 class PolicyCollection:
 
