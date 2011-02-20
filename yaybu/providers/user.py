@@ -32,13 +32,17 @@ class User(provider.Provider):
         return super(User, self).isvalid(*args, **kwargs)
 
     def get_user_info(self):
-        info = {}
+        fields = ("name", "passwd", "uid", "gid", "gecos", "dir", "shell")
+
         try:
             info_tuple = pwd.getpwnam(self.resource.name)
         except KeyError:
-            return
+            info = dict((f, None) for f in fields)
+            info["exists"] = False
+            return info
 
-        for i, field in enumerate(("name", "passwd", "uid", "gid", "gecos", "dir", "shell")):
+        info = {"exists": True}
+        for i, field in enumerate(fields):
             info[field] = info_tuple[i]
 
         return info
@@ -46,25 +50,21 @@ class User(provider.Provider):
     def apply(self, shell):
         info = self.get_user_info()
 
-        # Only support creating users...
-        if info:
-            return
+        command = ["usermod"] if info["exists"] else ["useradd"]
 
-        command = ["useradd"]
-
-        if self.resource.fullname:
+        if self.resource.fullname and info["name"] != self.resource.fullname:
             command.extend(["--comment", self.resource.fullname])
 
-        if self.resource.password:
+        if self.resource.password and not info["exists"]:
             command.extend(["--password", self.resource.password])
 
-        if self.resource.home:
+        if self.resource.home and info["dir"] != self.resource.home:
             command.extend(["--home", self.resource.home])
 
-        if self.resource.uid:
+        if self.resource.uid and info["uid"] != self.resource.uid:
             command.extend(["--uid", str(self.resource.uid)])
 
-        if self.resource.gid:
+        if self.resource.gid and info["gid"] != self.resource.gid:
             command.extend(["--gid", str(self.resource.gid)])
 
         command.extend(["-m", self.resource.name])
