@@ -165,7 +165,7 @@ class File(provider.Provider):
         elif self.resource.static:
             contents = open(self.resource.static).read()
         else:
-            contents = None
+            contents = ""
 
         fc = FileContentChanger(self.resource.name, contents)
         fc.apply(shell)
