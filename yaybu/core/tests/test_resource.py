@@ -21,7 +21,6 @@ from yaybu.core import (resource,
                         error,
                         provider,
                         change,
-                        testutils,
                         )
 
 from mock import Mock
