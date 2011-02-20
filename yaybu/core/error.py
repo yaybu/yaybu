@@ -11,3 +11,15 @@ class BindingError(Error):
 class ExecutionError(Error):
     """ Root of exceptions that are caused by execution failing in an unexpected way. """
 
+class NoValidPolicy(ParseError):
+    pass
+
+class NonConformingPolicy(ParseError):
+    pass
+
+class NoSuitableProviders(ParseError):
+    pass
+
+class TooManyProviders(ParseError):
+    pass
+

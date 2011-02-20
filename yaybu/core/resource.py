@@ -14,20 +14,9 @@
 
 from argument import Argument, List, PolicyStructure, String
 import policy
+import error
 from yaybu import recipe
 import collections
-
-class NoValidPolicy(Exception):
-    pass
-
-class NonConformingPolicy(Exception):
-    pass
-
-class NoSuitableProviders(Exception):
-    pass
-
-class TooManyProviders(Exception):
-    pass
 
 class ResourceType(type):
 
@@ -88,7 +77,7 @@ class Resource(object):
     def register_observer(self, when, resource, policy, immediately):
         self.observers[when].append((immediately, resource, policy))
 
-    def validate(self):
+    def validate(self, yay=None):
         """ Given the provided yay configuration dictionary, validate that
         this resource is correctly specified. Will raise an exception if it is
         invalid. Returns the provider if it is valid.
@@ -104,44 +93,55 @@ class Resource(object):
         be able to implement the required policies.
 
         """
-        policy = self.select_policy()
-        providers = set()
-        if not policy:
-            # No defined policies means this resource cannot be implemented
-            raise NoValidPolicy(self)
-        if not policy.conforms(self):
-                # if any of the chosen policies does not conform, that's an error
-            raise NonConformingPolicy(policy.name)
-        providers.update(policy.providers)
-        if len(providers) == 0:
-            raise NoSuitableProviders(self)
-        elif len(providers) == 1:
-            return providers.pop()
+        if yay is None:
+            yay = {}
+        this_policy = self.get_default_policy()
+        if not this_policy.conforms(self):
+            raise error.NonConformingPolicy(this_policy.name)
+        this_policy.get_provider(self, yay)
+        return True
+
+    def apply(self, shell, yay=None, policy=None):
+        """ Apply the provider for the selected policy, and then fire any
+        events that are being observed. """
+        if yay is None:
+            yay = {}
+        if policy is None:
+            pol = self.get_default_policy()
         else:
-            raise TooManyProviders(self)
+            pol_class = self.policies[policy]
+            pol = pol_class(self)
+        prov_class = pol.get_provider(self, yay)
+        prov = prov_class(self)
+        prov.apply(shell)
+        self.fire_event(pol.name, yay, shell)
+
+    def fire_event(self, name, yay, shell):
+        """ Apply the appropriate policies on the resources that are observing
+        this resource for the firing of a policy. """
+        for immediately, resource, policy in  self.observers[name]:
+            if immediately is False:
+                raise NotImplementedError
+            resource.apply(shell, yay=yay, policy=policy)
 
     def bind(self, resources):
         if self.policy is not None:
             for trigger in self.policy.triggers:
                 trigger.bind(resources, self)
 
-    def select_policy(self):
-        """ Return the list of policies that are selected for this resource. """
+    def get_default_policy(self):
+        """ Return an instantiated policy for this resource. """
         if self.policy is not None:
             if self.policy.standard is not None:
-                return self.policies[self.policy.standard.policy_name]
+                return self.policies[self.policy.standard.policy_name](self)
             else:
                 return policy.NullPolicy(self)
         else:
             for p in self.policies.values():
                 if p.default is True:
-                    return p
-
-    def select_provider(self):
-        """ Right now a side effect of validation is determining the provider.
-        """
-        provider = self.validate()
-        return provider(self, None)
+                    return p(self)
+            else:
+                return policy.NullPolicy(self)
 
     def dict_args(self):
 

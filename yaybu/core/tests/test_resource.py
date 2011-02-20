@@ -15,13 +15,17 @@
 import os
 import unittest
 import datetime
-from yaybu.core import resource
-from yaybu.core import argument
-from yaybu.core import policy
-from yaybu.core import error
-from yaybu.core import provider
-from yaybu.core import change
-from yaybu.core import runner
+from yaybu.core import (resource,
+                        argument,
+                        policy,
+                        error,
+                        provider,
+                        change,
+                        runner,
+                        testutils,
+                        )
+
+from mock import Mock
 
 class F(resource.Resource):
     foo = argument.String("42")
@@ -156,16 +160,24 @@ class Ev1(resource.Resource):
     pass
 
 class Ev1FooPolicy(policy.Policy):
-    pass
+    name = "foo"
+    resource = Ev1
 
 class Ev1BarPolicy(policy.Policy):
-    pass
+    name = "bar"
+    resource = Ev1
 
 class Ev1BazPolicy(policy.Policy):
-    pass
+    name = "baz"
+    resource = Ev1
 
 class Ev1Provider(provider.Provider):
     policies = (Ev1FooPolicy, Ev1BarPolicy, Ev1BazPolicy)
+
+    applied = []
+
+    def apply(self, shell):
+        Ev1Provider.applied.append(shell)
 
 class PolicyBindingTests(unittest.TestCase):
     def test_structure(self):
@@ -226,17 +238,24 @@ class PolicyBindingTests(unittest.TestCase):
     def test_firing(self):
         e1 = Ev1(name="e1",
                 policy = {
-                    'pol1': {
+                    'baz': {
                         'when': 'bar',
                         'on': 'e2'},
                     })
-        e2 = Ev1(name="e2")
+        e2 = Ev1(name="e2", policy="foo")
         resources = {'e1': e1, 'e2': e2}
         e1.bind(resources)
         e2.bind(resources)
-        provider = e1.select_provider()
         ctx = runner.RunContext()
         changelog = change.ChangeLog(ctx)
+        shell = Mock()
+        e1.apply(shell)
+        e2.apply(shell)
+        p1 = e1.get_default_policy().get_provider(e1, {})
+        p2 = e2.get_default_policy().get_provider(e2, {})
+        self.assertEqual(p1, provider.NullProvider)
+        self.assertEqual(p2, Ev1Provider)
+
 
 
 

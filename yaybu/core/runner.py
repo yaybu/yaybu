@@ -157,9 +157,8 @@ class Runner(object):
         shell = Shell(ctx, changelog)
 
         for resource in self.resources.values():
-            provider = resource.select_provider()
             with changelog.resource(resource):
-                provider.apply(shell)
+                resource.apply(shell, config)
 
         return 0
 

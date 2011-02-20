@@ -38,23 +38,24 @@ class Provider(object):
     # these policies should all be for the same resource
     policies = []
 
-    def __init__(self, resource, yay):
+    def __init__(self, resource):
         self.resource = resource
-        self.yay = yay
 
     @classmethod
-    @abstractmethod
-    def isvalid(self, resource, yay):
+    def isvalid(self, policy, resource, yay):
         """ Returns True if this provider is valid for the specified resource,
-        within the context of the provided yay structure. This will return
-        True, unless a provider is specified. If a provider is specified then
-        the name specified must match the name of this provider. """
-        if hasattr(resource, 'provider'):
-            if resource.provider == self.name:
-                return True
-            if resource.provider is not None:
-                return False
+        within the context of the provided yay structure. This returns True by
+        default. If you want your provider to be more discriminating, then
+        make it so. In particular if you want two providers for a policy, then
+        only one of those providers may return True from this method. """
         return True
+
+    @abstractmethod
+    def apply(self, shell):
+        """ Execute this provider using the supplied shell object. This base method must be overridden """
 
 class NullProvider(Provider):
     policies = [policy.NullPolicy]
+
+    def apply(self, shell):
+        pass

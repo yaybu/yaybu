@@ -15,10 +15,11 @@
 
 import unittest
 
-from yaybu.core import resource
-from yaybu.core import policy
-from yaybu.core import argument
-from yaybu.core import provider
+from yaybu.core import (resource,
+                        policy,
+                        argument,
+                        provider,
+                        error)
 
 class R(resource.Resource):
     foo = argument.String()
@@ -51,8 +52,9 @@ class TestOrchestration(unittest.TestCase):
 
     def test_validate(self):
         r = R(foo="a", bar="b")
-        self.assertEqual(r.validate(), Prov1)
+        pol = r.get_default_policy()
+        self.assertEqual(r.get_default_policy().get_provider(r, {}), Prov1)
         r = R()
-        self.assertRaises(resource.NonConformingPolicy, r.validate)
+        self.assertRaises(error.NonConformingPolicy, r.validate)
         r = R(policy="p1")
-        self.assertRaises(resource.NonConformingPolicy, r.validate)
+        self.assertRaises(error.NonConformingPolicy, r.validate)

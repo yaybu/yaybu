@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import error
+
 class PolicyType(type):
 
     """ Registers the policy on the resource """
@@ -59,6 +61,16 @@ class Policy(object):
             if not a.test(resource):
                 return False
         return True
+
+    def get_provider(self, resource, yay):
+        """ Get the one and only one provider that is valid for this resource,
+        policy and overall context """
+        valid = [p.isvalid(self, resource, yay) for p in self.providers]
+        if valid.count(True) > 1:
+            raise error.TooManyProviders()
+        if valid.count(True) == 0:
+            raise error.NoSuitableProviders()
+        return self.providers[valid.index(True)]
 
 class NullPolicy(Policy):
     pass
