@@ -125,7 +125,6 @@ class FileContentChanger(change.Change):
             self.overwrite_existing_file(shell)
         else:
             self.write_new_file(shell)
-        self.changed = True
 
     def apply(self, shell):
         """ Apply the changes necessary to the file contents. """
