@@ -25,6 +25,21 @@ class Apt(provider.Provider):
         return super(Apt, self).isvalid(*args, **kwargs)
 
     def apply(self, shell):
+
+        # work out if the package is already installed
+        command = ["dokg-query", "--show", self.resource.name]
+        returncode, stdout, stderr = shell.exectute(command)
+        
+        # if the return code is 0, the package is installed
+        if returncode == 0:
+            return False
+
+        # if the return code is 1, it is not installed, if it's anything else, we have a problem
+        if returncode > 1:
+            raise error.ExecutionError("%s search failed with return code %s" % (self.resource, returncode))
+
+
+        # the search returned 1, package is not installed, continue and install it
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
         returncode, stdout, stderr = shell.execute(command)
 
