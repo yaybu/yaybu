@@ -92,7 +92,7 @@ class FileContentChanger(change.Change):
                 else:
                     shell.changelog.info("# Emptying contents of file {0!r}", self.filename)
                     open(self.filename, "w").close()
-            self.changed = True
+                self.changed = True
 
     def overwrite_existing_file(self, shell):
         """ Change the content of an existing file """
