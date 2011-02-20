@@ -54,4 +54,6 @@ class Execute(provider.Provider):
         if self.resource.creates is not None:
             shell.execute(["touch", self.resource.creates])
 
+        return True
+
 

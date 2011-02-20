@@ -73,3 +73,5 @@ class User(provider.Provider):
         if returncode != 0:
             raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
 
+        return True
+

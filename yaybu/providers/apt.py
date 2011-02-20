@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yaybu.core import provider
+from yaybu.core import error
 from yaybu import resources
 
 class Apt(provider.Provider):
@@ -28,5 +29,7 @@ class Apt(provider.Provider):
         returncode, stdout, stderr = shell.execute(command)
 
         if returncode != 0:
-            raise RuntimeError("%s failed with return code %d" % (self.resource, returncode))
+            raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
+
+        return True
 

@@ -37,12 +37,11 @@ class Svn(Provider):
 
         log.info("Checking out %s" % self.resource)
         self.svn(shell, "co", self.url, self.resource.name)
-        #self.resource.updated()
+        return True
 
     def apply(self, shell):
         if not os.path.exists(self.resource.name):
-            self.action_checkout(shell)
-            return
+            return self.action_checkout(shell)
 
         log.info("Syncing %s" % self.resource)
 
@@ -76,8 +75,7 @@ class Svn(Provider):
             self.svn(shell, "up", "-r", target_rev, self.resource.name)
             changed = True
 
-        #if changed:
-        #    self.resource.updated()
+        return changed
 
     def action_export(self, shell):
         if os.path.exists(self.resource.name):
