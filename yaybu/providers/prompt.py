@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.resources import (
-    system,
-    filesystem,
-    group,
-    checkout,
-    package,
-    user,
-    prompt,
-    )
+from yaybu.core import provider
+from yaybu.core import error
+from yaybu import resources
 
+class Prompt(provider.Provider):
+
+    policies = (resources.prompt.PromptPolicy,)
+
+    @classmethod
+    def isvalid(self, *args, **kwargs):
+        return super(Prompt, self).isvalid(*args, **kwargs)
+
+    def apply(self, shell):
+
+        raw_input(self.resource.question)
