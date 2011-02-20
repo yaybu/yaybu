@@ -31,7 +31,7 @@ class Execute(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Execute, self).isvalid(*args, **kwargs)
 
-    def execute(self, command):
+    def execute(self, shell, command):
         command = shlex.split(command.encode("UTF-8"))
         command[0] = shell.locate_bin(command[0])
 
@@ -54,7 +54,7 @@ class Execute(provider.Provider):
 
         commands = [self.resource.command] if self.resource.command else self.resource.commands
         for command in commands:
-            self.execute(command)
+            self.execute(shell, command)
 
         if self.resource.creates is not None:
             shell.execute(["touch", self.resource.creates])
