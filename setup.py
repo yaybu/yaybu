@@ -22,6 +22,7 @@ setup(name='Yaybu',
           'setuptools',
           'jinja2',
           'yay',
+          'dateutil',
       ],
       extras_require = {
           'test': ['testtools', 'discover'],
