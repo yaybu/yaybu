@@ -22,7 +22,7 @@ class Apt(provider.Provider):
 
     @classmethod
     def isvalid(self, *args, **kwargs):
-        return super(Execute, self).isvalid(*args, **kwargs)
+        return super(Apt, self).isvalid(*args, **kwargs)
 
     def apply(self, shell):
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
