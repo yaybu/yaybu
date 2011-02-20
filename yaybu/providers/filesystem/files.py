@@ -85,11 +85,14 @@ class FileContentChanger(change.Change):
             shell.execute(["touch", self.filename])
             self.changed = True
         else:
-            if shell.simulate:
-                simlog.info("Emptying contents of file {0!r}" % self.filename)
-            else:
-                shell.info("# Emptying contents of file {0!r}" % self.filename)
-                open(self.filename, "w").close()
+            st = os.stat(self.filename)
+            if st.st_size != 0:
+                if shell.simulate:
+                    simlog.info("Emptying contents of file {0!r}" % self.filename)
+                else:
+                    shell.changelog.info("# Emptying contents of file {0!r}", self.filename)
+                    open(self.filename, "w").close()
+                self.changed = True
 
     def overwrite_existing_file(self, shell):
         """ Change the content of an existing file """
@@ -122,7 +125,6 @@ class FileContentChanger(change.Change):
             self.overwrite_existing_file(shell)
         else:
             self.write_new_file(shell)
-        self.changed = True
 
     def apply(self, shell):
         """ Apply the changes necessary to the file contents. """
@@ -163,7 +165,7 @@ class File(provider.Provider):
         elif self.resource.static:
             contents = open(self.resource.static).read()
         else:
-            contents = None
+            contents = ""
 
         fc = FileContentChanger(self.resource.name, contents)
         fc.apply(shell)
