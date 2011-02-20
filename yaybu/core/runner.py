@@ -73,6 +73,8 @@ class Runner(object):
         self.registry = registry or ResourceType.resources
 
     def create_resource(self, typename, instance):
+        if not isinstance(instance, dict):
+            raise RuntimeError("Expected mapping for %s, got %s" % (typename, instance))
         kls = self.registry[typename](**instance)
         self.resources[kls.name] = kls
 

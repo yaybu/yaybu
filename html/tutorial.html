@@ -102,7 +102,7 @@ firewall:
         - 80
 
 resources.append:
-    .foreach virtual-hosts as vhost:
+    .foreach vhost in virtual-hosts:
         - File:
             name: /etc/apache2/sites-available/${vhost.name}
             template: package://yaybu.apache/templates/vhost.j2
@@ -120,7 +120,7 @@ resources.append:
         - name: apache2
     - Execute:
         command: /usr/sbin/apache2ctl graceful
-        when.foreach virtual-hosts as vhost:
+        when.foreach vhost in virtual-hosts:
             - resource: File[/etc/apache2/sites-available/${vhost.name}]</pre>
 </div>
 <p>This recipe specifies what the system should look like once the recipe is

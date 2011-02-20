@@ -1,9 +1,9 @@
 recipe: yaybu.distro
 description: sets up the core OS
 
-yaybu:
+resources.append:
     Package:
-        .foreach packages as package:
+        .foreach package in packages:
             - ${package}
 
     File:
