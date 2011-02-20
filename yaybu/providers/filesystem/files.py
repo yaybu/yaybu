@@ -112,7 +112,7 @@ class FileContentChanger(change.Change):
         """ Write contents to a new file. """
         if shell.simulate:
             simlog.info("Writing new file '%s':" % self.filename)
-            for l in output.splitlines():
+            for l in self.contents.splitlines():
                 simlog.info("    %s" % l)
         else:
             open(self.filename, "w").write(self.contents)
@@ -145,7 +145,7 @@ class FileChangeTextRenderer(change.TextRenderer):
         if self.original.contents is not None:
             diff = "".join(difflib.context_diff(self.original.current.splitlines(1), self.original.contents.splitlines(1)))
             for l in diff.splitlines():
-                changelog.info("    %s" % l)
+                changelog.info("    {0}", l)
 
 class File(provider.Provider):
 
