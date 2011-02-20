@@ -25,7 +25,7 @@ logger = logging.getLogger("provider")
 
 class Group(provider.Provider):
 
-    policies = (resources.user.UserApplyPolicy,)
+    policies = (resources.group.GroupApplyPolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
