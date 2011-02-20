@@ -12,13 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.resources import (
-    system,
-    filesystem,
-    group,
-    checkout,
-    package,
-    user,
-    prompt,
+from yaybu.core.resource import Resource
+from yaybu.core.policy import Policy
+from yaybu.core.argument import (
+    String,
+    Integer,
     )
 
+class Prompt(Resource):
+
+    name = String()
+    question = String()
+
+class PromptPolicy(Policy):
+
+    resource = Prompt
+    name = "Prompt"
+    default = True

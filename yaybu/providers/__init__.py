@@ -19,4 +19,5 @@ from yaybu.providers import (
     group,
     subversion,
     user,
+    prompt
     )
