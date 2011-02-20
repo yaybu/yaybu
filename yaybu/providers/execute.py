@@ -39,7 +39,12 @@ class Execute(provider.Provider):
 
         command = shlex.split(self.resource.command.encode("UTF-8"))
         command[0] = shell.locate_file(command[0])
-        returncode, stdout, stderr = shell.execute(command)
+
+        # Filter out empty strings...
+        cwd = self.resource.cwd or None
+        env = self.resource.environment or None 
+
+        returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env)
 
         expected_returncode = self.resource.returncode or 0
 

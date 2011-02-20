@@ -23,16 +23,20 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin):
+    def __init__(self, command, shell, stdin, cwd=None, env=None):
         self.command = command
         self.shell = shell
         self.stdin = stdin
+        self.cwd = cwd
+        self.env = env
 
     def apply(self, changelog):
         p = subprocess.Popen(self.command,
                              shell=self.shell,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
+                             cwd=self.cwd,
+                             env=self.env,
                              )
         (self.stdout, self.stderr) = p.communicate(self.stdin)
         self.returncode = p.returncode
@@ -75,10 +79,10 @@ class Shell(object):
     def locate_file(self, filename):
         return self.context.locate_file(filename)
 
-    def execute(self, command, stdin=None, shell=False, passthru=False):
+    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None):
         if self.simulate and not passthru:
             simlog.info(" ".join(command))
             return (0, "", "")
-        cmd = ShellCommand(command, shell, stdin)
+        cmd = ShellCommand(command, shell, stdin, cwd, env)
         cmd.apply(self.changelog)
         return (cmd.returncode, cmd.stdout, cmd.stderr)
