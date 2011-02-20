@@ -32,6 +32,10 @@ class Execute(provider.Provider):
         return super(Execute, self).isvalid(*args, **kwargs)
 
     def execute(self, shell, command):
+        # Filter out empty strings...
+        cwd = self.resource.cwd or None
+        env = self.resource.environment or None
+
         command = shlex.split(command.encode("UTF-8"))
         command[0] = shell.locate_bin(command[0])
 
@@ -47,10 +51,6 @@ class Execute(provider.Provider):
            and os.path.exists(self.resource.creates):
             #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
             return
-
-        # Filter out empty strings...
-        cwd = self.resource.cwd or None
-        env = self.resource.environment or None 
 
         commands = [self.resource.command] if self.resource.command else self.resource.commands
         for command in commands:
