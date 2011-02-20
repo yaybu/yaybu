@@ -19,7 +19,7 @@ import grp
 import logging
 
 from yaybu import resources
-from yaybu.core import provider
+from yaybu.core import provider, error
 
 simlog = logging.getLogger("simulation")
 
@@ -53,18 +53,38 @@ class Link(provider.Provider):
                     mode = mode - 32768
 
         if not exists:
-            shell.execute(["ln", "-s", name, self.resource.to])
+            shell.execute(["ln", "-s", self.resource.to, name])
 
         if self.resource.owner is not None:
             owner = pwd.getpwnam(self.resource.owner)
             if owner.pw_uid != uid:
-                shell.execute(["chown", self.resource.owner, name])
+                shell.execute(["chown", "-h", self.resource.owner, name])
 
         if self.resource.group is not None:
             group = grp.getgrnam(self.resource.group)
             if group.gr_gid != gid:
-                shell.execute(["chgrp", self.resource.group, name])
+                shell.execute(["chgrp", "-h", self.resource.group, name])
 
         if self.resource.mode is not None:
             if mode != self.resource.mode:
                 shell.execute(["chmod", "%o" % self.resource.mode, name])
+
+class RemoveLink(provider.Provider):
+
+    policies = (resources.filesystem.LinkRemovedPolicy,)
+
+    @classmethod
+    def isvalid(self, *args, **kwargs):
+        return super(RemoveLink, self).isvalid(*args, **kwargs)
+
+    def apply(self, shell):
+        if os.path.exists(self.resource.name):
+            if not os.path.islink(self.resource.name):
+                raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
+            shell.execute(["rm", self.resource.name])
+            changed = True
+        else:
+            shell.changelog.info("File %s missing already so not removed" % self.resource.name)
+            changed = False
+        return changed
+

@@ -116,7 +116,7 @@ class Link(Resource):
 
 class LinkAppliedPolicy(Policy):
     resource = Link
-    name = "applied"
+    name = "apply"
     default = True
     signature = (
         Present("name"),
@@ -124,7 +124,8 @@ class LinkAppliedPolicy(Policy):
         )
 
 class LinkRemovedPolicy(Policy):
-    name = "applied"
+    resource = Link
+    name = "remove"
     default = False
     signature = (
         Present("name"),
