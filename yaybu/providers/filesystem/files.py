@@ -18,6 +18,7 @@ import pwd
 import grp
 import difflib
 import logging
+import magic
 
 from jinja2 import Template
 
@@ -143,9 +144,15 @@ class FileChangeTextRenderer(change.TextRenderer):
     def render(self, changelog):
         changelog.notice("Changed file {0!r}", self.original.filename)
         if self.original.contents is not None:
-            diff = "".join(difflib.context_diff(self.original.current.splitlines(1), self.original.contents.splitlines(1)))
-            for l in diff.splitlines():
-                changelog.info("    {0}", l)
+            ms = magic.open(magic.MAGIC_NONE)
+            ms.load()
+            type1 = ms.buffer(self.original.contents)
+            type2 = ms.buffer(self.original.contents)
+            # this will need refinement
+            if type1.endswith("text") and type2.endswith("text"):
+                diff = "".join(difflib.context_diff(self.original.current.splitlines(1), self.original.contents.splitlines(1)))
+                for l in diff.splitlines():
+                    changelog.info("    {0}", l)
 
 class File(provider.Provider):
 
