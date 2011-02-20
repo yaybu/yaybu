@@ -174,12 +174,12 @@ class Ev1BazPolicy(policy.Policy):
 class Ev1Provider(provider.Provider):
     policies = (Ev1FooPolicy, Ev1BarPolicy, Ev1BazPolicy)
 
-    applied = []
+    applied = 0
 
     def apply(self, shell):
-        Ev1Provider.applied.append(shell)
+        Ev1Provider.applied += 1
 
-class PolicyBindingTests(unittest.TestCase):
+class TestResourceBundle(unittest.TestCase):
     def test_structure(self):
         e1 = Ev1(name="e1",
                 policy = {
@@ -199,16 +199,16 @@ class PolicyBindingTests(unittest.TestCase):
     def test_multiple(self):
         e1 = Ev1(name="e1",
                 policy = {
-                    'pol1': {
+                    'pol1': [{
                         'when': 'bar',
-                        'on': 'e2'},
-                    'pol2': {
+                        'on': 'e2'}],
+                    'pol2': [{
                         'when': 'foo',
-                        'on': 'e3'},
-                    'pol3': {
+                        'on': 'e3'}],
+                    'pol3': [{
                         'when': 'baz',
                         'on': 'e2',
-                        }
+                        }]
                     })
         e2 = Ev1(name="e2")
         e3 = Ev1(name="e3")
@@ -227,35 +227,51 @@ class PolicyBindingTests(unittest.TestCase):
     def test_missing(self):
         e1 = Ev1(name="e1",
                 policy = {
-                    'pol1': {
+                    'pol1': [{
                         'when': 'bar',
-                        'on': 'missing'},
+                        'on': 'missing'}],
                     })
         e2 = Ev1(name="e2")
         resources = {'e1': e1, 'e2': e2}
         self.assertRaises(error.BindingError, e1.bind, resources)
 
     def test_firing(self):
-        e1 = Ev1(name="e1",
-                policy = {
-                    'baz': {
-                        'when': 'bar',
-                        'on': 'e2'},
-                    })
-        e2 = Ev1(name="e2", policy="foo")
-        resources = {'e1': e1, 'e2': e2}
-        e1.bind(resources)
-        e2.bind(resources)
-        ctx = runner.RunContext()
-        changelog = change.ChangeLog(ctx)
-        shell = Mock()
-        e1.apply(shell)
-        e2.apply(shell)
-        p1 = e1.get_default_policy().get_provider(e1, {})
-        p2 = e2.get_default_policy().get_provider(e2, {})
-        self.assertEqual(p1, provider.NullProvider)
-        self.assertEqual(p2, Ev1Provider)
+        resources = resource.ResourceBundle([
+            {"Ev1": [
+                { "name": "e1",
+                  "policy": "foo",
+                }, {
+                  "name": "e2",
+                  "policy":
+                      {"baz": [{
+                          "when": "foo",
+                          "on": "e1",
+                          }],
+                       },
+                  },
+            ]}])
 
+        e1 = resources['e1']
+        e2 = resources['e2']
+        resources.bind()
+        self.assertEqual(dict(e2.observers), {})
+        self.assertEqual(dict(e1.observers),
+                         {'foo': [
+                             (True, e2, 'baz')]
+                          })
+        ctx = runner.RunContext()
+        shell = Mock()
+        p1 = e1.get_default_policy().get_provider({})
+        p2 = e2.get_default_policy().get_provider({})
+        self.assertEqual(p1, Ev1Provider)
+        self.assertEqual(p2, provider.NullProvider)
+        e1.apply(shell)
+        self.assertEqual(Ev1Provider.applied, 2)
+        e2.apply(shell)
+        self.assertEqual(Ev1Provider.applied, 2)
+
+    def test_not_firing(self):
+        pass
 
 
 

@@ -50,8 +50,8 @@ class Policy(object):
     # Override this with a list of assertions
     signature = ()
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, resource):
+        self.resource = resource
 
     @classmethod
     def conforms(self, resource):
@@ -62,10 +62,10 @@ class Policy(object):
                 return False
         return True
 
-    def get_provider(self, resource, yay):
+    def get_provider(self, yay):
         """ Get the one and only one provider that is valid for this resource,
         policy and overall context """
-        valid = [p.isvalid(self, resource, yay) for p in self.providers]
+        valid = [p.isvalid(self, self.resource, yay) for p in self.providers]
         if valid.count(True) > 1:
             raise error.TooManyProviders()
         if valid.count(True) == 0:

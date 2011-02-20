@@ -53,7 +53,7 @@ class TestOrchestration(unittest.TestCase):
     def test_validate(self):
         r = R(foo="a", bar="b")
         pol = r.get_default_policy()
-        self.assertEqual(r.get_default_policy().get_provider(r, {}), Prov1)
+        self.assertEqual(r.get_default_policy().get_provider({}), Prov1)
         r = R()
         self.assertRaises(error.NonConformingPolicy, r.validate)
         r = R(policy="p1")

@@ -18,13 +18,12 @@ import sys
 import logging
 import logging.handlers
 import collections
-import ordereddict
 
 import yay
 
 from yaybu.core.shell import Shell
 from yaybu.core import change
-from yaybu.core.resource import ResourceType
+from yaybu.core import resource
 
 logger = logging.getLogger("runner")
 
@@ -68,36 +67,7 @@ class RunContext:
 
 class Runner(object):
 
-    def __init__(self, registry=None):
-        self.resources = ordereddict.OrderedDict()
-        self.registry = registry or ResourceType.resources
-
-    def create_resource(self, typename, instance):
-        if not isinstance(instance, dict):
-            raise RuntimeError("Expected mapping for %s, got %s" % (typename, instance))
-        kls = self.registry[typename](**instance)
-        self.resources[kls.name] = kls
-
-    def create_resources_of_type(self, typename, instances):
-        # Create a Resource object for each item
-        for instance in instances:
-            self.create_resource(typename, instance)
-
-    def bind_resources(self):
-        for resource in self.resources.values():
-            resource.bind(self.resources)
-
-    def create_resources(self, resources):
-        for resource in resources:
-            if len(resource.keys()) > 1:
-                raise LoaderError("Too many keys in list item")
-
-            typename, instances = resource.items()[0]
-
-            if not isinstance(instances, list):
-                instances = [instances]
-
-            self.create_resources_of_type(typename, instances)
+    resources = None
 
     def configure_logging(self, opts):
         """ configure the audit trail to log to file or to syslog """
@@ -149,19 +119,11 @@ class Runner(object):
         self.configure_logging(opts)
         ctx = RunContext(opts)
         config = yay.load_uri(args[0])
-
-        self.create_resources(config.get("resources", []))
-        self.bind_resources()
-
-        changelog = change.ChangeLog(ctx)
-        shell = Shell(ctx, changelog)
-
-        for resource in self.resources.values():
-            with changelog.resource(resource):
-                resource.apply(shell, config)
-
+        self.resources = resource.ResourceBundle(config.get("resources", []))
+        self.resources.bind()
+        shell = Shell(ctx, change.ChangeLog(ctx))
+        self.resources.apply(shell, config)
         return 0
-
 
 def main():
     return Runner().run()

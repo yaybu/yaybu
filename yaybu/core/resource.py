@@ -17,6 +17,7 @@ import policy
 import error
 from yaybu import recipe
 import collections
+import ordereddict
 
 class ResourceType(type):
 
@@ -111,7 +112,7 @@ class Resource(object):
         else:
             pol_class = self.policies[policy]
             pol = pol_class(self)
-        prov_class = pol.get_provider(self, yay)
+        prov_class = pol.get_provider(yay)
         prov = prov_class(self)
         prov.apply(shell)
         self.fire_event(pol.name, yay, shell)
@@ -158,3 +159,30 @@ class Resource(object):
         classname = getattr(self, '__resource_name__', self.__class__.__name__)
         return "%s[%s]" % (classname, self.name)
 
+class ResourceBundle(ordereddict.OrderedDict):
+
+    def __init__(self, specification=()):
+        super(ResourceBundle, self).__init__()
+        for resource in specification:
+            if len(resource.keys()) > 1:
+                raise error.ParseError("Too many keys in list item")
+            typename, instances = resource.items()[0]
+            if not isinstance(instances, list):
+                instances = [instances]
+            for instance in instances:
+                self.create_resource(typename, instance)
+
+    def create_resource(self, typename, instance):
+        if not isinstance(instance, dict):
+            raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
+        kls = ResourceType.resources[typename](**instance)
+        self[kls.name] = kls
+
+    def bind(self):
+        for resource in self.values():
+            resource.bind(self)
+
+    def apply(self, shell, config):
+        for resource in self.values():
+            with shell.changelog.resource(resource):
+                resource.apply(shell, config)

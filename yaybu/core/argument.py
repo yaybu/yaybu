@@ -146,12 +146,15 @@ class PolicyStructure(Argument):
         else:
             triggers = []
             for policy, conditions in value.items():
-                triggers.append(
-                    PolicyTrigger(
-                        policy=policy,
-                        when=conditions['when'],
-                        on=conditions['on'],
-                        immediately=conditions.get('immediately', 'true') == 'true')
-                    )
+                if not isinstance(conditions, list):
+                    conditions = [conditions]
+                for condition in conditions:
+                    triggers.append(
+                        PolicyTrigger(
+                            policy=policy,
+                            when=condition['when'],
+                            on=condition['on'],
+                            immediately=condition.get('immediately', 'true') == 'true')
+                        )
             coll = PolicyCollection(triggers=triggers)
         setattr(instance, self.arg_id, coll)
