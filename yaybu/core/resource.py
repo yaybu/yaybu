@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from argument import Argument, List, PolicyStructure, String
+import policy
 from yaybu import recipe
 import collections
 
@@ -127,7 +128,10 @@ class Resource(object):
     def select_policy(self):
         """ Return the list of policies that are selected for this resource. """
         if self.policy is not None:
-            return self.policies[self.policy.standard.policy_name]
+            if self.policy.standard is not None:
+                return self.policies[self.policy.standard.policy_name]
+            else:
+                return policy.NullPolicy(self)
         else:
             for p in self.policies.values():
                 if p.default is True:

@@ -19,6 +19,9 @@ from yaybu.core import resource
 from yaybu.core import argument
 from yaybu.core import policy
 from yaybu.core import error
+from yaybu.core import provider
+from yaybu.core import change
+from yaybu.core import runner
 
 class F(resource.Resource):
     foo = argument.String("42")
@@ -161,6 +164,9 @@ class Ev1BarPolicy(policy.Policy):
 class Ev1BazPolicy(policy.Policy):
     pass
 
+class Ev1Provider(provider.Provider):
+    policies = (Ev1FooPolicy, Ev1BarPolicy, Ev1BazPolicy)
+
 class PolicyBindingTests(unittest.TestCase):
     def test_structure(self):
         e1 = Ev1(name="e1",
@@ -216,4 +222,21 @@ class PolicyBindingTests(unittest.TestCase):
         e2 = Ev1(name="e2")
         resources = {'e1': e1, 'e2': e2}
         self.assertRaises(error.BindingError, e1.bind, resources)
+
+    def test_firing(self):
+        e1 = Ev1(name="e1",
+                policy = {
+                    'pol1': {
+                        'when': 'bar',
+                        'on': 'e2'},
+                    })
+        e2 = Ev1(name="e2")
+        resources = {'e1': e1, 'e2': e2}
+        e1.bind(resources)
+        e2.bind(resources)
+        provider = e1.select_provider()
+        ctx = runner.RunContext()
+        changelog = change.ChangeLog(ctx)
+
+
 

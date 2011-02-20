@@ -33,16 +33,21 @@ class LoaderError(Exception):
 
 class RunContext:
 
+    simulate = False
+    ypath = ()
+    verbose = 0
     html = None
 
-    def __init__(self, opts):
-        logger.debug("Invoked with ypath: %r" % opts.ypath)
-        logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
-        self.simulate = opts.simulate
-        self.ypath = opts.ypath
-        self.verbose = opts.verbose
-        if self.html is not None:
-            self.html = open(opts.html, "w")
+    def __init__(self, opts=None):
+        self.ypath = []
+        if opts is not None:
+            logger.debug("Invoked with ypath: %r" % opts.ypath)
+            logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
+            self.simulate = opts.simulate
+            self.ypath = opts.ypath
+            self.verbose = opts.verbose
+            if opts.html is not None:
+                self.html = open(opts.html, "w")
         if "YAYBUPATH" in os.environ:
             for term in os.environ["YAYBUPATH"].split(":"):
                 self.ypath.append(term)
@@ -78,9 +83,7 @@ class Runner(object):
 
     def bind_resources(self):
         for resource in self.resources.values():
-            if resource.policy is not None:
-                for trigger in resource.policy.triggers:
-                    trigger.bind(self.resources, resource)
+            resource.bind(self.resources)
 
     def create_resources(self, resources):
         for resource in resources:

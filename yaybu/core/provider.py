@@ -16,6 +16,8 @@
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
+import policy
+
 class ProviderType(ABCMeta):
 
     """ Registers the provider with the resource which it provides """
@@ -54,3 +56,5 @@ class Provider(object):
                 return False
         return True
 
+class NullProvider(Provider):
+    policies = [policy.NullPolicy]

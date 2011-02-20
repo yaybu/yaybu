@@ -60,6 +60,9 @@ class Policy(object):
                 return False
         return True
 
+class NullPolicy(Policy):
+    pass
+
 class ArgumentAssertion(object):
 
     """ An assertion of the state of an argument """
