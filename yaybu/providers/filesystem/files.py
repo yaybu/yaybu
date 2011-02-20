@@ -85,11 +85,14 @@ class FileContentChanger(change.Change):
             shell.execute(["touch", self.filename])
             self.changed = True
         else:
-            if shell.simulate:
-                simlog.info("Emptying contents of file {0!r}" % self.filename)
-            else:
-                shell.changelog.info("# Emptying contents of file {0!r}", self.filename)
-                open(self.filename, "w").close()
+            st = os.stat(self.filename)
+            if st.st_size != 0:
+                if shell.simulate:
+                    simlog.info("Emptying contents of file {0!r}" % self.filename)
+                else:
+                    shell.changelog.info("# Emptying contents of file {0!r}", self.filename)
+                    open(self.filename, "w").close()
+            self.changed = True
 
     def overwrite_existing_file(self, shell):
         """ Change the content of an existing file """
