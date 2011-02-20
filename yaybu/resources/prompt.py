@@ -27,5 +27,5 @@ class Prompt(Resource):
 class PromptPolicy(Policy):
 
     resource = Prompt
-    name = "Prompt"
+    name = "prompt"
     default = True
