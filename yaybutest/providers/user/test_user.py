@@ -29,13 +29,13 @@ class TestUser(TestCase):
                     uid: 1111
             """)
 
-    def test_user_with_gid(self):
-        self.apply("""
-            resources:
-                - User:
-                    name: test
-                    gid: 1111
-            """)
+    #def test_user_with_gid(self):
+    #    self.apply("""
+    #        resources:
+    #            - User:
+    #                name: test
+    #                gid: 1111
+    #        """)
 
     def test_user_with_fullname(self):
         self.apply("""
