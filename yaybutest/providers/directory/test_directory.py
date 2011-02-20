@@ -12,4 +12,5 @@ class TestDirectory(TestCase):
                   group: root
             """)
         self.failUnlessExists("/etc/somedir")
-        self.failUnless(os.path.isdir("/etc/somedir"))
+        path = self.enpathinate("/etc/somedir")
+        self.failUnless(os.path.isdir(path))

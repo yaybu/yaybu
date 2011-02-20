@@ -179,60 +179,15 @@ class Ev1Provider(provider.Provider):
         return True
 
 class TestResourceBundle(unittest.TestCase):
-    def test_structure(self):
-        e1 = Ev1(name="e1",
-                policy = {
-                    'pol1': {
-                        'when': 'bar',
-                        'on': 'e2'},
-                    })
-        e2 = Ev1(name="e2")
-        resources = {'e1': e1, 'e2': e2}
-        e1.bind(resources)
-        e2.bind(resources)
-        self.assertEqual(len(e1.observers), 0)
-        self.assertEqual(dict(e2.observers), {
-            'bar': [(True, e1, 'pol1')]
-            })
 
-    def test_multiple(self):
-        e1 = Ev1(name="e1",
-                policy = {
-                    'pol1': [{
-                        'when': 'bar',
-                        'on': 'e2'}],
-                    'pol2': [{
-                        'when': 'foo',
-                        'on': 'e3'}],
-                    'pol3': [{
-                        'when': 'baz',
-                        'on': 'e2',
-                        }]
-                    })
-        e2 = Ev1(name="e2")
-        e3 = Ev1(name="e3")
-        resources = {'e1': e1, 'e2': e2, 'e3': e3}
-        e1.bind(resources)
-        e2.bind(resources)
-        self.assertEqual(dict(e1.observers), {})
-        self.assertEqual(dict(e2.observers), {
-            'bar': [(True, e1, 'pol1')],
-            'baz': [(True, e1, 'pol3')],
-            })
-        self.assertEqual(dict(e3.observers), {
-            'foo': [(True, e1, 'pol2')],
-            })
-
-    def test_missing(self):
-        e1 = Ev1(name="e1",
-                policy = {
-                    'pol1': [{
-                        'when': 'bar',
-                        'on': 'missing'}],
-                    })
-        e2 = Ev1(name="e2")
-        resources = {'e1': e1, 'e2': e2}
-        self.assertRaises(error.BindingError, e1.bind, resources)
+    def test_creation(self):
+        resources = resource.ResourceBundle([
+            {"File": [{
+                "name": "/etc/foo",
+                "mode": "666",
+                }]
+             }])
+        self.assertEqual(resources["/etc/foo"].mode, 438)
 
     def test_firing(self):
         Ev1Provider.applied = 0
@@ -322,3 +277,58 @@ class TestResourceBundle(unittest.TestCase):
         e1 = resources['e1']
         e2 = resources['e2']
         self.assertRaises(error.BindingError, resources.bind)
+
+    def test_structure(self):
+        e1 = Ev1(name="e1",
+                policy = {
+                    'pol1': {
+                        'when': 'bar',
+                        'on': 'e2'},
+                    })
+        e2 = Ev1(name="e2")
+        resources = {'e1': e1, 'e2': e2}
+        e1.bind(resources)
+        e2.bind(resources)
+        self.assertEqual(len(e1.observers), 0)
+        self.assertEqual(dict(e2.observers), {
+            'bar': [(True, e1, 'pol1')]
+            })
+
+    def test_multiple(self):
+        e1 = Ev1(name="e1",
+                policy = {
+                    'pol1': [{
+                        'when': 'bar',
+                        'on': 'e2'}],
+                    'pol2': [{
+                        'when': 'foo',
+                        'on': 'e3'}],
+                    'pol3': [{
+                        'when': 'baz',
+                        'on': 'e2',
+                        }]
+                    })
+        e2 = Ev1(name="e2")
+        e3 = Ev1(name="e3")
+        resources = {'e1': e1, 'e2': e2, 'e3': e3}
+        e1.bind(resources)
+        e2.bind(resources)
+        self.assertEqual(dict(e1.observers), {})
+        self.assertEqual(dict(e2.observers), {
+            'bar': [(True, e1, 'pol1')],
+            'baz': [(True, e1, 'pol3')],
+            })
+        self.assertEqual(dict(e3.observers), {
+            'foo': [(True, e1, 'pol2')],
+            })
+
+    def test_missing(self):
+        e1 = Ev1(name="e1",
+                policy = {
+                    'pol1': [{
+                        'when': 'bar',
+                        'on': 'missing'}],
+                    })
+        e2 = Ev1(name="e2")
+        resources = {'e1': e1, 'e2': e2}
+        self.assertRaises(error.BindingError, e1.bind, resources)

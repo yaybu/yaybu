@@ -64,5 +64,8 @@ class TestCase(testtools.TestCase):
         subprocess.check_call(["rm", "-rf", self.chroot_path])
 
     def failUnlessExists(self, path):
-        full_path = os.path.join(self.chroot_path, *path.split(os.path.sep))
+        full_path = self.enpathinate(path)
         self.failUnless(os.path.exists(full_path))
+
+    def enpathinate(self, path):
+        return os.path.join(self.chroot_path, *path.split(os.path.sep))

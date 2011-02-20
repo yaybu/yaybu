@@ -49,9 +49,7 @@ class AttributeChanger(change.Change):
             st = os.stat(self.filename)
             uid = st.st_uid
             gid = st.st_gid
-            mode = st.st_mode
-            if mode > 32767:
-                mode = mode - 32768
+            mode = stat.S_IMODE(st.st_mode)
         if self.user is not None:
             owner = pwd.getpwnam(self.user)
             if owner.pw_uid != uid:

@@ -36,13 +36,17 @@ class ResourceType(type):
         if class_name != 'Resource':
             rname = new_attrs.get("__resource_name__", class_name)
             if rname in meta.resources:
-                raise ValueError("Redefinition of resource %s" % rname)
+                raise error.ParseError("Redefinition of resource %s" % rname)
             else:
                 meta.resources[rname] = cls
         for key, value in new_attrs.items():
             if isinstance(value, Argument):
                 cls.__args__.append(key)
         return cls
+
+    @classmethod
+    def clear(self):
+        self.resources = {}
 
 class Resource(object):
 

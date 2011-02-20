@@ -71,7 +71,10 @@ class DateTime(Argument):
 class Octal(Argument):
 
     def __set__(self, instance, value):
-        if not isinstance(value, int):
+        if isinstance(value, int):
+            # we assume this is due to lame magic in yaml and rebase it
+            value = int(str(value), 8)
+        else:
             value = int(value, 8)
         setattr(instance, self.arg_id, value)
 
