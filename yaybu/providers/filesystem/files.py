@@ -100,11 +100,9 @@ class FileContentChanger(change.Change):
         self.current = open(self.filename).read()
         if self.current != self.contents:
             if shell.simulate:
-                # log change
-                self.changelog.record(
-                    FileChange(self.filename,
-                               current,
-                               self.contents))
+                simlog.info("Overwriting new file '%s':" % self.filename)
+                for l in self.contents.splitlines():
+                    simlog.info("    %s" % l)
             else:
                 open(self.filename, "w").write(self.contents)
             self.changed = True
