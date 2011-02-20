@@ -29,7 +29,7 @@ class Link(provider.Provider):
 
     @classmethod
     def isvalid(self, *args, **kwargs):
-        return super(Directory, self).isvalid(*args, **kwargs)
+        return super(Link, self).isvalid(*args, **kwargs)
 
     def apply(self, shell):
         name = self.resource.name
