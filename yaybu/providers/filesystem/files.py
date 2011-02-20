@@ -134,7 +134,8 @@ class FileContentChanger(change.Change):
             self.empty_file(shell)
         else:
             self.write_file(shell)
-        shell.changelog.change(self)
+        if self.changed:
+            shell.changelog.change(self)
 
 class FileChangeTextRenderer(change.TextRenderer):
     renderer_for = FileContentChanger
@@ -165,7 +166,7 @@ class File(provider.Provider):
         elif self.resource.static:
             contents = open(self.resource.static).read()
         else:
-            contents = ""
+            contents = None
 
         fc = FileContentChanger(self.resource.name, contents)
         fc.apply(shell)
