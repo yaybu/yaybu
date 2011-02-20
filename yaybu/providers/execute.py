@@ -31,18 +31,13 @@ class Execute(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Execute, self).isvalid(*args, **kwargs)
 
-    def apply(self, shell):
-        if self.resource.creates is not None \
-           and os.path.exists(self.resource.creates):
-            #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
-            return
-
-        command = shlex.split(self.resource.command.encode("UTF-8"))
-        command[0] = shell.locate_bin(command[0])
-
+    def execute(self, shell, command):
         # Filter out empty strings...
         cwd = self.resource.cwd or None
-        env = self.resource.environment or None 
+        env = self.resource.environment or None
+
+        command = shlex.split(command.encode("UTF-8"))
+        command[0] = shell.locate_bin(command[0])
 
         returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env)
 
@@ -50,6 +45,16 @@ class Execute(provider.Provider):
 
         if expected_returncode != returncode:
             raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
+
+    def apply(self, shell):
+        if self.resource.creates is not None \
+           and os.path.exists(self.resource.creates):
+            #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
+            return
+
+        commands = [self.resource.command] if self.resource.command else self.resource.commands
+        for command in commands:
+            self.execute(shell, command)
 
         if self.resource.creates is not None:
             shell.execute(["touch", self.resource.creates])

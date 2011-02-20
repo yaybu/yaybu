@@ -13,13 +13,20 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
-from yaybu.core.policy import Policy
+from yaybu.core.policy import (
+    Policy,
+    Absent,
+    Present,
+    XOR,
+    NAND)
+
 from yaybu.core.argument import (
     String,
     Integer,
     Octal,
     File,
     Dict,
+    List,
     )
 
 
@@ -27,6 +34,7 @@ class Execute(Resource):
 
     name = String()
     command = String()
+    commands = List()
     cwd = String()
     environment = Dict()
     returncode = Integer()
@@ -42,3 +50,7 @@ class ExecutePolicy(Policy):
     resource = Execute
     name = "execute"
     default = True
+    signature = (Present("name"),
+        XOR(Present("command"), Present("commands")),
+        )
+
