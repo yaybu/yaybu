@@ -16,6 +16,7 @@ from yaybu.providers import (
     apt,
     execute,
     filesystem,
+    group,
     subversion,
     user,
     )
