@@ -48,7 +48,7 @@ class Group(provider.Provider):
         return info
 
     def apply(self, shell):
-        info = self.get_user_info()
+        info = self.get_group_info()
 
         command = ["groupmod"] if info["exists"] else ["groupadd"]
 
