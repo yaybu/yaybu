@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-import shlex
+import pwd
 
 from yaybu.core import provider
 from yaybu.core import error
@@ -31,13 +31,45 @@ class User(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(User, self).isvalid(*args, **kwargs)
 
+    def get_user_info(self):
+        info = {}
+        try:
+            info_tuple = pwd.getpwname(self.resource.name)
+        except KeyError:
+            return
+
+        for i, field in enumerate(("name", "passwd", "uid", "gid", "gecos", "dir", "shell")):
+            info[field] = info_tuple[i]
+
+        return info
+
     def apply(self, shell):
-        command = []
+        info = self.get_user_info()
 
+        # Only support creating users...
+        if info:
+            return
 
+        command = ["useradd"]
+
+        if self.resource.fullname:
+            command.extend(["--comment", self.resource.fullname])
+
+        if self.resource.password:
+            command.extend(["--password", self.resource.password])
+
+        if self.resource.home:
+            command.extend(["--home", self.resource.home])
+
+        if self.resource.uid:
+            command.extend(["--uid", self.resource.uid])
+
+        if self.resource.gid:
+            command.extend(["--gid", self.resource.gid])
+
+        command.extend(["-m", self.resource.name)
 
         returncode, stdout, stderr = shell.execute(command)
         if returncode != 0:
             raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
-
 
