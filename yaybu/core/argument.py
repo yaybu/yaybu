@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import dateutil.parser
+import types
 import urlparse
 import os
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -109,3 +110,44 @@ class File(Argument):
             self._recipe(instance, netloc, path)
         else:
             raise NotImplementedError('Scheme %s on %s' % (scheme, instance))
+
+class StandardPolicy:
+
+    def __init__(self, policy_name):
+        self.policy_name = policy_name
+
+class PolicyTrigger:
+
+    def __init__(self, policy, when, on, immediately=True):
+        self.policy = policy
+        self.when = when
+        self.on = on
+        self.immediately = immediately
+
+    def bind(self, resources, target):
+        resources[self.on].register_observer(self.when, target, self.policy, self.immediately)
+
+class PolicyCollection:
+
+    def __init__(self, standard=None, triggers=()):
+        self.standard = standard
+        self.triggers = triggers
+
+class PolicyStructure(Argument):
+
+    def __set__(self, instance, value):
+        """ Set either a default policy or a set of triggers on the policy collection """
+        if type(value) in types.StringTypes:
+            coll = PolicyCollection(StandardPolicy(value))
+        else:
+            triggers = []
+            for policy, conditions in value:
+                triggers.append(
+                    PolicyTrigger(
+                        policy=policy,
+                        when=conditions['when'],
+                        on=conditions['on'],
+                        immediately=conditions.get('immediately', 'true') == 'true')
+                    )
+            coll = PolicyCollection(triggers=triggers)
+        setattr(instance, self.arg_id, coll)

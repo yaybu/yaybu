@@ -23,8 +23,119 @@ from jinja2 import Template
 
 from yaybu import resources
 from yaybu.core import provider
+from yaybu.core import change
 
 simlog = logging.getLogger("simulation")
+
+class AttributeChanger(change.Change):
+
+    """ Make the changes required to a file's attributes """
+
+    def __init__(self, filename, user=None, group=None, mode=None):
+        self.filename = filename
+        self.user = user
+        self.group = group
+        self.mode = mode
+
+    def apply(self, shell):
+        """ Apply the changes """
+        exists = False
+        uid = None
+        gid = None
+        mode = None
+        if os.path.exists(self.filename):
+            exists = True
+            st = os.stat(self.filename)
+            uid = st.st_uid
+            gid = st.st_gid
+            mode = st.st_mode
+            if mode > 32767:
+                mode = mode - 32768
+        if self.user is not None:
+            owner = pwd.getpwnam(self.user)
+            if owner.pw_uid != uid:
+                shell.execute(["chown", self.user, self.filename])
+        if self.group is not None:
+            group = grp.getgrnam(self.group)
+            if group.gr_gid != gid:
+                shell.execute(["chgrp", self.group, self.filename])
+        if self.mode is not None:
+            if mode != self.mode:
+                shell.execute(["chmod", "%o" % self.mode, self.filename])
+
+class FileContentChanger(change.Change):
+
+    """ Apply a content change to a file in a managed way. Simulation mode is
+    catered for. Additionally the minimum changes required to the contents are
+    applied, and logs of the changes made are recorded. """
+
+    def __init__(self, filename, contents, backup_filename=None):
+        self.filename = filename
+        self.backup_filename = backup_filename
+        self.current = ""
+        self.contents = contents
+
+    def empty_file(self, shell):
+        """ Write an empty file """
+        exists = os.path.exists(self.filename)
+        if not exists:
+            shell.execute(["touch", self.filename])
+        else:
+            if shell.simulate:
+                simlog.info("Emptying contents of file {0!r}" % self.filename)
+            else:
+                shell.info("# Emptying contents of file {0!r}" % self.filename)
+                open(self.filename, "w").close()
+
+    def overwrite_existing_file(self, shell):
+        """ Change the content of an existing file """
+        self.current = open(self.filename).read()
+        if self.current != self.contents:
+            if shell.simulate:
+                # log change
+                self.changelog.record(
+                    FileChange(self.filename,
+                               current,
+                               self.contents))
+            else:
+                open(self.filename).write(output)
+
+    def write_new_file(self, shell):
+        """ Write contents to a new file. """
+        if shell.simulate:
+            simlog.info("Writing new file '%s':" % self.filename)
+            for l in output.splitlines():
+                simlog.info("    %s" % l)
+        else:
+            open(self.filename, "w").write(self.contents)
+
+    def write_file(self, shell):
+        """ Write to either an existing or new file """
+        exists = os.path.exists(self.filename)
+        if exists:
+            self.overwrite_existing_file(shell)
+        else:
+            self.write_new_file(shell)
+
+    def apply(self, shell):
+        """ Apply the changes necessary to the file contents. """
+        if self.backup_filename is not None:
+            raise NotImplementedError
+        if self.contents is None:
+            self.empty_file(shell)
+        else:
+            self.write_file(shell)
+        shell.changelog.change(self)
+
+class FileChangeTextRenderer(change.TextRenderer):
+    renderer_for = FileContentChanger
+
+    def render(self, changelog):
+        changelog.notice("Changed file {0!r}", self.original.filename)
+        if self.original.contents is not None:
+            diff = "".join(difflib.context_diff(self.original.current.splitlines(1), self.original.contents.splitlines(1)))
+            for l in diff.splitlines():
+                changelog.info("    %s" % l)
 
 class File(provider.Provider):
 
@@ -38,50 +149,17 @@ class File(provider.Provider):
 
     def apply(self, shell):
         name = self.resource.name
-        exists = False
-        uid = None
-        gid=None
-        mode=None
-        if os.path.exists(name):
-            exists = True
-            st = os.stat(name)
-            uid = st.st_uid
-            gid = st.st_gid
-            mode = st.st_mode
-            if mode > 32767:
-                mode = mode - 32768
         if self.resource.template is None:
-            if not exists:
-                shell.execute(["touch", name])
+            contents = None
         else:
             template = Template(open(self.resource.template).read())
-            output = template.render(**self.resource.template_args)
-            if exists:
-                current = open(self.resource.name).read()
-                if output != current:
-                    if shell.simulate:
-                        simlog.info("Updating file '%s':" % self.resource.name)
-                        diff = "".join(difflib.context_diff(current.splitlines(1), output.splitlines(1)))
-                        for l in diff.splitlines():
-                            simlog.info("    %s" % l)
-                    else:
-                        open(self.resource.name).write(output)
-            else:
-                if shell.simulate:
-                    simlog.info("Writing new file '%s':" % self.resource.name)
-                    for l in output.splitlines():
-                        simlog.info("    %s" % l)
-                else:
-                    open(self.resource.name, "w").write(output)
-        if self.resource.owner is not None:
-            owner = pwd.getpwnam(self.resource.owner)
-            if owner.pw_uid != uid:
-                shell.execute(["chown", self.resource.owner, name])
-        if self.resource.group is not None:
-            group = grp.getgrnam(self.resource.group)
-            if group.gr_gid != gid:
-                shell.execute(["chgrp", self.resource.group, name])
-        if self.resource.mode is not None:
-            if mode != self.resource.mode:
-                shell.execute(["chmod", "%o" % self.resource.mode, name])
+            contents = template.render(**self.resource.template_args)
+        fc = FileContentChanger(self.resource.name, contents)
+        fc.apply(shell)
+        ac = AttributeChanger(self.resource.name,
+                              self.resource.owner,
+                              self.resource.group,
+                              self.resource.mode)
+        ac.apply(shell)
+
 

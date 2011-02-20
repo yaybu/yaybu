@@ -15,18 +15,62 @@
 import logging
 import subprocess
 import StringIO
+import change
 
-logger = logging.getLogger("shell")
 simlog = logging.getLogger("simulation")
+
+class ShellCommand(change.Change):
+
+    """ Execute and log a change """
+
+    def __init__(self, command, shell, stdin):
+        self.command = command
+        self.shell = shell
+        self.stdin = stdin
+
+    def apply(self, changelog):
+        p = subprocess.Popen(self.command,
+                             shell=self.shell,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             )
+        (self.stdout, self.stderr) = p.communicate(self.stdin)
+        self.returncode = p.returncode
+        changelog.change(self)
+
+class ShellTextRenderer(change.TextRenderer):
+
+    """ Render a ShellCommand on a textual changelog. """
+
+    renderer_for = ShellCommand
+
+    def render_output(self, cmd, name, data, logger):
+        if data:
+            cmd("---- {0} follows ----", name)
+            for l in data.splitlines():
+                cmd(l)
+            cmd("---- {0} ends ----", name)
+
+    def render(self, logger):
+        logger.notice(" ".join(self.original.command))
+        if self.original.returncode != 0:
+            logger.notice("returned {0}", self.original.returncode)
+            self.render_output(logger.notice, "stdout", self.original.stdout, logger)
+            self.render_output(logger.notice, "stderr", self.original.stderr, logger)
+        else:
+            self.render_output(logger.info, "stdout", self.original.stdout, logger)
+            self.render_output(logger.info, "stderr", self.original.stderr, logger)
+
 
 class Shell(object):
 
     """ This object wraps a shell in yet another shell. When the shell is
     switched into "simulate" mode it can just print what would be done. """
 
-    def __init__(self, context, simulate=False):
+    def __init__(self, context, changelog, simulate=False):
         self.simulate = simulate
         self.context = context
+        self.changelog = changelog
 
     def locate_file(self, filename):
         return self.context.locate_file(filename)
@@ -35,19 +79,6 @@ class Shell(object):
         if self.simulate and not passthru:
             simlog.info(" ".join(command))
             return (0, "", "")
-        logger.info(" ".join(command))
-        p = subprocess.Popen(command,
-                             shell=shell,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             )
-        (stdout, stderr) = p.communicate(stdin)
-        if p.returncode != 0:
-            logger.info("returned %s" % p.returncode)
-        if stderr:
-            logger.debug("---- stderr follows ----")
-            for l in stderr.split("\n"):
-                logger.debug(l)
-            logger.debug("---- stderr ends ----")
-        return (p.returncode, stdout, stderr)
-
+        cmd = ShellCommand(command, shell, stdin)
+        cmd.apply(self.changelog)
+        return (cmd.returncode, cmd.stdout, cmd.stderr)

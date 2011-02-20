@@ -16,11 +16,12 @@ import os
 import shlex
 
 from yaybu.core import provider
+from yaybu.core import error
 from yaybu import resources
 
 import logging
 
-logger = logging.getLogger("execute")
+logger = logging.getLogger("provider")
 
 class Execute(provider.Provider):
 
@@ -33,17 +34,15 @@ class Execute(provider.Provider):
     def apply(self, shell):
         if self.resource.creates is not None \
            and os.path.exists(self.resource.creates):
-            logging.debug("%s exists, not executing" % self.resource.creates)
+            #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
             return
 
-        logging.debug("Parsing command %r" % self.resource.command)
         command = shlex.split(self.resource.command.encode("UTF-8"))
-        logging.debug("Split into: %r" % command)
         command[0] = shell.locate_file(command[0])
         returncode, stdout, stderr = shell.execute(command)
 
         expected_returncode = self.resource.returncode or 0
 
         if expected_returncode != returncode:
-            raise RuntimeError("%s failed with return code %d" % (self.resource, returncode))
+            raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
 

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class MetaPolicy(type):
+class PolicyType(type):
 
     """ Registers the policy on the resource """
 
@@ -20,7 +20,7 @@ class MetaPolicy(type):
         cls = type.__new__(meta, class_name, bases, new_attrs)
         cls.providers = []
         if cls.resource is not None:
-            cls.resource.policies.append(cls)
+            cls.resource.policies[cls.name] = cls
         return cls
 
 class Policy(object):
@@ -35,7 +35,7 @@ class Policy(object):
     the resource.
     """
 
-    __metaclass__ = MetaPolicy
+    __metaclass__ = PolicyType
 
     # specify true if you wish this policy to be enabled by default
     default = False
