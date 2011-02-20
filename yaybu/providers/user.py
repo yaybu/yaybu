@@ -62,10 +62,10 @@ class User(provider.Provider):
             command.extend(["--home", self.resource.home])
 
         if self.resource.uid:
-            command.extend(["--uid", self.resource.uid])
+            command.extend(["--uid", str(self.resource.uid)])
 
         if self.resource.gid:
-            command.extend(["--gid", self.resource.gid])
+            command.extend(["--gid", str(self.resource.gid)])
 
         command.extend(["-m", self.resource.name])
 
