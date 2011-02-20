@@ -183,4 +183,21 @@ class File(provider.Provider):
         if fc.changed or ac.changed:
             return True
 
+class RemoveFile(provider.Provider):
+    policies = (resources.filesystem.FileRemovePolicy,)
+
+    @classmethod
+    def isvalid(self, *args, **kwargs):
+        return super(RemoveFile, self).isvalid(*args, **kwargs)
+
+    def apply(self, shell):
+        if os.path.exists(self.resource.name):
+            if not os.path.isfile(self.resource.name):
+                raise error.InvalidProviderError("%r: %s exists and is not a file" % (self, self.resource.name))
+            shell.execute(["rm", self.resource.name])
+            changed = True
+        else:
+            shell.changelog.info("File %s missing already so not removed" % self.resource.name)
+            changed = False
+        return changed
 

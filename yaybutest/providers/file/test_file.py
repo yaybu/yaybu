@@ -47,3 +47,18 @@ class TestFile(TestCase):
                     """)
         self.failUnlessExists("/etc/templated")
 
+    def test_remove_file(self):
+        self.apply("""
+            resources:
+              - File:
+                  name: /etc/toremove
+            """)
+        self.apply("""
+            resources:
+              - File:
+                  name: /etc/toremove
+                  policy: remove
+            """)
+        self.failUnless(not os.path.exists(self.enpathinate("/etc/toremove")))
+
+

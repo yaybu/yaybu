@@ -54,10 +54,11 @@ class RemoveDirectory(provider.Provider):
 
     @classmethod
     def isvalid(self, *args, **kwargs):
-        if os.path.exists(self.resource.name) and not os.path.isdir(self.resource.name):
-            raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
+        return super(RemoveDirectory, self).isvalid(*args, **kwargs)
 
     def apply(self, shell):
+        if os.path.exists(self.resource.name) and not os.path.isdir(self.resource.name):
+            raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if os.path.exists(self.resource.name):
             shell.execute(["rmdir", self.resource.name])
             changed = True
