@@ -102,7 +102,8 @@ class Resource(object):
         this_policy = self.get_default_policy()
         if not this_policy.conforms(self):
             raise error.NonConformingPolicy(this_policy.name)
-        this_policy.get_provider(self, yay)
+        provider = this_policy.get_provider(self, yay)
+        provider.isvalid(this_policy, self, yay)
         return True
 
     def apply(self, shell, yay=None, policy=None):

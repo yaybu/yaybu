@@ -19,7 +19,9 @@ import grp
 import logging
 
 from yaybu import resources
-from yaybu.core import provider
+from yaybu.core import provider, error
+
+from files import AttributeChanger
 
 simlog = logging.getLogger("simulation")
 
@@ -32,35 +34,33 @@ class Directory(provider.Provider):
         return super(Directory, self).isvalid(*args, **kwargs)
 
     def apply(self, shell):
-        name = self.resource.name
-        exists = False
-        uid = None
-        gid=None
-        mode=None
+        changed = False
+        ac = AttributeChanger(self.resource.name,
+                              self.resource.owner,
+                              self.resource.group,
+                              self.resource.mode)
+        if not os.path.exists(self.resource.name):
+            shell.execute(["mkdir", self.resource.name])
+            changed = True
+        ac.apply(shell)
+        if changed or ac.changed:
+            return True
+        else:
+            return False
 
-        if os.path.exists(name):
-            exists = True
-            st = os.stat(name)
-            uid = st.st_uid
-            gid = st.st_gid
-            mode = st.st_mode
-            if mode > 32767:
-                mode = mode - 32768
+class RemoveDirectory(provider.Provider):
 
-        if not exists:
-            shell.execute(["mkdir", name])
+    policies = (resources.filesystem.DirectoryRemovedPolicy,)
 
-        if self.resource.owner is not None:
-            owner = pwd.getpwnam(self.resource.owner)
-            if owner.pw_uid != uid:
-                shell.execute(["chown", self.resource.owner, name])
+    @classmethod
+    def isvalid(self, *args, **kwargs):
+        if os.path.exists(self.resource.name) and not os.path.isdir(self.resource.name):
+            raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
 
-        if self.resource.group is not None:
-            group = grp.getgrnam(self.resource.group)
-            if group.gr_gid != gid:
-                shell.execute(["chgrp", self.resource.group, name])
-
-        if self.resource.mode is not None:
-            if mode != self.resource.mode:
-                shell.execute(["chmod", "%o" % self.resource.mode, name])
-
+    def apply(self, shell):
+        if os.path.exists(self.resource.name):
+            shell.execute(["rmdir", self.resource.name])
+            changed = True
+        else:
+            changed = False
+        return changed

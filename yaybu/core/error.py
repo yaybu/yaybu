@@ -23,3 +23,6 @@ class NoSuitableProviders(ParseError):
 class TooManyProviders(ParseError):
     pass
 
+class InvalidProvider(ExecutionError):
+    """ A provider is not valid. This is detected before any changes have been
+    applied. """
