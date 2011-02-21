@@ -1,6 +1,6 @@
 preset:
     owner: nobody
-    group: nobody
+    group: nogroup
 
 resources:
     - Checkout:
@@ -17,7 +17,7 @@ resources:
         owner: ${preset.owner}
         group: ${preset.group}
 
-      - name: /tmp/interfaces
+      - name: /etc/network/interfaces
         owner: ${preset.owner}
         group: ${preset.group}
         template: file:yaybu/recipe/interfaces.j2
