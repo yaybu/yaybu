@@ -37,7 +37,8 @@ class Execute(provider.Provider):
         env = self.resource.environment or None
 
         command = shlex.split(command.encode("UTF-8"))
-        command[0] = shell.locate_bin(command[0])
+        if not command[0].startswith("."):
+            command[0] = shell.locate_bin(command[0])
 
         returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env)
 

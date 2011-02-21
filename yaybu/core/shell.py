@@ -56,7 +56,7 @@ class ShellTextRenderer(change.TextRenderer):
         if data:
             cmd("---- {0} follows ----", name)
             for l in data.splitlines():
-                cmd(l)
+                cmd("{0}", l)
             cmd("---- {0} ends ----", name)
 
     def render(self, logger):
