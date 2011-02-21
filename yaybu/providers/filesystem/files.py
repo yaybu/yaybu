@@ -28,6 +28,17 @@ from yaybu.core import change
 
 simlog = logging.getLogger("simulation")
 
+def binary_buffers(*buffers):
+    
+    """ Check all of the passed buffers to see if any of them are binary. If
+    any of them are binary this will return True. """
+    ms = magic.open(magic.MAGIC_NONE)
+    ms.load()
+    for buff in buffers:
+        if not ms.buffer(buff).endswith("text"):
+            return True
+    return False
+
 class AttributeChanger(change.Change):
 
     """ Make the changes required to a file's attributes """
@@ -101,8 +112,9 @@ class FileContentChanger(change.Change):
         if self.current != self.contents:
             if shell.simulate:
                 simlog.info("Overwriting new file '%s':" % self.filename)
-                for l in self.contents.splitlines():
-                    simlog.info("    %s" % l)
+                if not binary_buffers(self.contents):
+                    for l in self.contents.splitlines():
+                        simlog.info("    %s" % l)
             else:
                 open(self.filename, "w").write(self.contents)
             self.changed = True
@@ -111,8 +123,9 @@ class FileContentChanger(change.Change):
         """ Write contents to a new file. """
         if shell.simulate:
             simlog.info("Writing new file '%s':" % self.filename)
-            for l in self.contents.splitlines():
-                simlog.info("    %s" % l)
+            if not binary_buffers(self.contents):
+                for l in self.contents.splitlines():
+                    simlog.info("    %s" % l)
         else:
             open(self.filename, "w").write(self.contents)
         self.changed = True
@@ -142,12 +155,7 @@ class FileChangeTextRenderer(change.TextRenderer):
     def render(self, changelog):
         changelog.notice("Changed file {0!r}", self.original.filename)
         if self.original.contents is not None:
-            ms = magic.open(magic.MAGIC_NONE)
-            ms.load()
-            type1 = ms.buffer(self.original.contents)
-            type2 = ms.buffer(self.original.contents)
-            # this will need refinement
-            if type1.endswith("text") and type2.endswith("text"):
+            if not binary_buffers(self.original.current, self.original.contents):
                 diff = "".join(difflib.context_diff(self.original.current.splitlines(1), self.original.contents.splitlines(1)))
                 for l in diff.splitlines():
                     changelog.info("    {0}", l)
