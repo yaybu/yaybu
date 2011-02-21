@@ -91,8 +91,8 @@ class Svn(Provider):
             command.extend(["--username", self.resource.scm_username])
         if self.resource.scm_password:
             command.extend(["--password", self.resource.scm_password])
-        if self.resource.scm_username or self.resource.scm_password:
-            command.append("--no-auth-cache")
+        #if self.resource.scm_username or self.resource.scm_password:
+            #command.append("--no-auth-cache")
 
         command.extend(list(args))
         return command

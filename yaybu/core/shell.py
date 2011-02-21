@@ -31,14 +31,18 @@ class ShellCommand(change.Change):
         self.env = env
 
     def apply(self, changelog):
-        p = subprocess.Popen(self.command,
-                             shell=self.shell,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             cwd=self.cwd,
-                             env=self.env,
-                             )
-        (self.stdout, self.stderr) = p.communicate(self.stdin)
+        try:
+            p = subprocess.Popen(self.command,
+                                 shell=self.shell,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 cwd=self.cwd,
+                                 env=self.env,
+                                 )
+            (self.stdout, self.stderr) = p.communicate(self.stdin)
+        except:
+            logging.error("Exception when running %r" % self.command)
+            raise
         self.returncode = p.returncode
         changelog.change(self)
 
