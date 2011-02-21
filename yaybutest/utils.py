@@ -9,7 +9,7 @@ def run_commands(commands, base_image, distro='lucid'):
             raise SystemExit("Command failed")
 
 
-def build_environment(base_image, distro='lucid'):
+def build_environment(base_image, distro='karmic'):
     commands = [
         "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,python-magic,ubuntu-keyring %(distro)s %(base_image)s",
         ]

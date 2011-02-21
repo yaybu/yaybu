@@ -20,6 +20,10 @@ import os
 from abc import ABCMeta, abstractmethod, abstractproperty
 from yaybu import recipe
 
+# we abuse urlparse for our parsing needs
+urlparse.uses_netloc.append("package")
+urlparse.uses_netloc.append("recipe")
+
 class Argument(object):
 
     """ Stores the argument value on the instance object. It's a bit fugly,
