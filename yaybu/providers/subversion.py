@@ -85,7 +85,7 @@ class Svn(Provider):
         #self.resource.updated()
 
     def get_svn_args(self, action, *args):
-        command = ["svn", action, "--non-interactive"]
+        command = ["sudo", "-u", self.resource.user, "svn", action, "--non-interactive"]
 
         if self.resource.scm_username:
             command.extend(["--username", self.resource.scm_username])

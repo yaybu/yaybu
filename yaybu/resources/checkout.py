@@ -27,9 +27,7 @@ class Checkout(Resource):
     revision = String()
     scm_username = String()
     scm_password = String()
-    owner = String()
-    group = String()
-    mode = Octal()
+    user = String(default="root")
 
 
 class CheckoutSyncPolicy(Policy):
