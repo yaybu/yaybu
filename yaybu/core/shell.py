@@ -98,5 +98,7 @@ class Shell(object):
         cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose)
         self.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
+            self.changelog.info(cmd.stdout)
+            self.changelog.notice(cmd.stderr)
             raise error.ExecutionError("Non zero return code from %r" % command)
         return (cmd.returncode, cmd.stdout, cmd.stderr)

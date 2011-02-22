@@ -36,7 +36,7 @@ class Svn(Provider):
             return
 
         log.info("Checking out %s" % self.resource)
-        self.svn(shell, "co", self.url, self.resource.name)
+        self.svn(shell, ["--quiet", "co"], self.url, self.resource.name)
         return True
 
     def apply(self, shell):
@@ -55,7 +55,7 @@ class Svn(Provider):
         new_repo_root = repo_info["Repository Root"]
         if old_repo_root != new_repo_root:
             log.info("Switching repository root from '%s' to '%s'" % (old_repo_root, new_repo_root))
-            self.svn(shell, "switch", "--relocate", old_repo_root, new_repo_root, self.resource.name)
+            self.svn(shell, ["--quiet", "switch"], "--relocate", old_repo_root, new_repo_root, self.resource.name)
             changed = True
 
         # If we have changed branch, switch
@@ -63,7 +63,7 @@ class Svn(Provider):
         new_url = repo_info["URL"]
         if old_url != new_url:
             log.info("Switching branch from '%s' to '%s'" % (old_url, new_url))
-            self.svn(shell, "switch", new_url, self.resource.name)
+            self.svn(shell, ["--quiet", "switch"], new_url, self.resource.name)
             changed = True
 
         # If we have changed revision, svn up
@@ -72,7 +72,7 @@ class Svn(Provider):
         target_rev = repo_info["Last Changed Rev"]
         if current_rev != target_rev:
             log.info("Switching revision from %s to %s" % (current_rev, target_rev))
-            self.svn(shell, "up", "-r", target_rev, self.resource.name)
+            self.svn(shell, ["--quiet", "up"], "-r", target_rev, self.resource.name)
             changed = True
 
         return changed
@@ -81,11 +81,13 @@ class Svn(Provider):
         if os.path.exists(self.resource.name):
             return
         log.info("Exporting %s" % self.resource)
-        self.svn(shell, "export", self.url, self.resource.name)
+        self.svn(shell, ["export"], self.url, self.resource.name)
         #self.resource.updated()
 
     def get_svn_args(self, action, *args):
-        command = ["sudo", "-u", self.resource.user, "svn", "--quiet", action, "--non-interactive"]
+        command = ["sudo", "-u", self.resource.user, "svn"]
+        command.extend(action)
+        command.extend(["--non-interactive"])
 
         if self.resource.scm_username:
             command.extend(["--username", self.resource.scm_username])
@@ -98,7 +100,7 @@ class Svn(Provider):
         return command
 
     def info(self, shell, uri):
-        command = self.get_svn_args("info", uri)
+        command = self.get_svn_args(["info"], uri)
         returncode, stdout, stderr = shell.execute(command, passthru=True)
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
