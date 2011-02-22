@@ -32,7 +32,8 @@ class ShellCommand(change.Change):
         self.env = env
         self.verbose = verbose
 
-    def apply(self, changelog):
+    def apply(self, renderer):
+        renderer.command(self.command)
         try:
             p = subprocess.Popen(self.command,
                                  shell=self.shell,
@@ -42,11 +43,12 @@ class ShellCommand(change.Change):
                                  env=self.env,
                                  )
             (self.stdout, self.stderr) = p.communicate(self.stdin)
-        except:
+            self.returncode = p.returncode
+            renderer.output(p.returncode, self.stdout, self.stderr)
+        except Exception, e:
             logging.error("Exception when running %r" % self.command)
+            renderer.exception(e)
             raise
-        self.returncode = p.returncode
-        changelog.change(self)
 
 class ShellTextRenderer(change.TextRenderer):
 
@@ -54,22 +56,26 @@ class ShellTextRenderer(change.TextRenderer):
 
     renderer_for = ShellCommand
 
-    def render_output(self, cmd, name, data, logger):
+    def command(self, command):
+        self.logger.notice(" ".join(command))
+
+    def render_output(self, cmd, name, data):
         if data:
             cmd("---- {0} follows ----", name)
             for l in data.splitlines():
                 cmd("{0}", l)
             cmd("---- {0} ends ----", name)
 
-    def render(self, logger):
-        logger.notice(" ".join(self.original.command))
-        if self.original.verbose >= 1 and self.original.returncode != 0:
-            logger.notice("returned {0}", self.original.returncode)
-        if self.original.verbose >= 2:
-            self.render_output(logger.info, "stdout", self.original.stdout, logger)
-        if self.original.verbose >= 1:
-            self.render_output(logger.info, "stderr", self.original.stderr, logger)
+    def output(self, returncode, stdout, stderr):
+        if self.verbose >= 1 and returncode != 0:
+            self.logger.notice("returned {0}", returncode)
+        if self.verbose >= 2:
+            self.render_output(self.logger.info, "stdout", stdout)
+        if self.verbose >= 1:
+            self.render_output(self.logger.info, "stderr", stderr)
 
+    def exception(self, exception):
+        self.logger.notice("Exception: %r" % exception)
 
 class Shell(object):
 
@@ -90,7 +96,7 @@ class Shell(object):
             simlog.info(" ".join(command))
             return (0, "", "")
         cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose)
-        cmd.apply(self.changelog)
+        self.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             raise error.ExecutionError("Non zero return code from %r" % command)
         return (cmd.returncode, cmd.stdout, cmd.stderr)

@@ -26,10 +26,8 @@ from yaybu import resources
 from yaybu.core import provider
 from yaybu.core import change
 
-simlog = logging.getLogger("simulation")
-
 def binary_buffers(*buffers):
-    
+
     """ Check all of the passed buffers to see if any of them are binary. If
     any of them are binary this will return True. """
     ms = magic.open(magic.MAGIC_NONE)
@@ -43,14 +41,15 @@ class AttributeChanger(change.Change):
 
     """ Make the changes required to a file's attributes """
 
-    def __init__(self, filename, user=None, group=None, mode=None):
+    def __init__(self, shell, filename, user=None, group=None, mode=None):
+        self.shell = shell
         self.filename = filename
         self.user = user
         self.group = group
         self.mode = mode
         self.changed = False
 
-    def apply(self, shell):
+    def apply(self, renderer):
         """ Apply the changes """
         exists = False
         uid = None
@@ -65,16 +64,16 @@ class AttributeChanger(change.Change):
         if self.user is not None:
             owner = pwd.getpwnam(self.user)
             if owner.pw_uid != uid:
-                shell.execute(["chown", self.user, self.filename])
+                self.shell.execute(["chown", self.user, self.filename])
                 self.changed = True
         if self.group is not None:
             group = grp.getgrnam(self.group)
             if group.gr_gid != gid:
-                shell.execute(["chgrp", self.group, self.filename])
+                self.shell.execute(["chgrp", self.group, self.filename])
                 self.changed = True
         if self.mode is not None:
             if mode != self.mode:
-                shell.execute(["chmod", "%o" % self.mode, self.filename])
+                self.shell.execute(["chmod", "%o" % self.mode, self.filename])
                 self.changed = True
 
 class FileContentChanger(change.Change):
@@ -83,82 +82,85 @@ class FileContentChanger(change.Change):
     catered for. Additionally the minimum changes required to the contents are
     applied, and logs of the changes made are recorded. """
 
-    def __init__(self, filename, contents, backup_filename=None):
+    def __init__(self, shell, filename, contents, backup_filename=None):
+        self.shell = shell
         self.filename = filename
         self.backup_filename = backup_filename
         self.current = ""
         self.contents = contents
         self.changed = False
+        self.renderer = None
 
-    def empty_file(self, shell):
+    def empty_file(self):
         """ Write an empty file """
         exists = os.path.exists(self.filename)
         if not exists:
-            shell.execute(["touch", self.filename])
+            self.shell.execute(["touch", self.filename])
             self.changed = True
         else:
             st = os.stat(self.filename)
             if st.st_size != 0:
                 if shell.simulate:
-                    simlog.info("Emptying contents of file {0!r}" % self.filename)
+                    self.renderer.simulation_info("Emptying contents of file {0!r}" % self.filename)
                 else:
-                    shell.changelog.info("# Emptying contents of file {0!r}", self.filename)
+                    self.renderer.empty_file(self.filename)
                     open(self.filename, "w").close()
                 self.changed = True
 
-    def overwrite_existing_file(self, shell):
+    def overwrite_existing_file(self):
         """ Change the content of an existing file """
         self.current = open(self.filename).read()
         if self.current != self.contents:
             if shell.simulate:
-                simlog.info("Overwriting new file '%s':" % self.filename)
+                self.renderer.simulation_info("Overwriting new file '%s':" % self.filename)
                 if not binary_buffers(self.contents):
                     for l in self.contents.splitlines():
-                        simlog.info("    %s" % l)
+                        self.renderer.simulation_info("    %s" % l)
             else:
                 open(self.filename, "w").write(self.contents)
             self.changed = True
 
-    def write_new_file(self, shell):
+    def write_new_file(self):
         """ Write contents to a new file. """
-        if shell.simulate:
-            simlog.info("Writing new file '%s':" % self.filename)
+        if self.shell.simulate:
+            self.renderer.simulation_info("Writing new file '%s':" % self.filename)
             if not binary_buffers(self.contents):
                 for l in self.contents.splitlines():
-                    simlog.info("    %s" % l)
+                    self.renderer.simulation_info("    %s" % l)
         else:
             open(self.filename, "w").write(self.contents)
         self.changed = True
 
-    def write_file(self, shell):
+    def write_file(self):
         """ Write to either an existing or new file """
         exists = os.path.exists(self.filename)
         if exists:
-            self.overwrite_existing_file(shell)
+            self.overwrite_existing_file()
         else:
-            self.write_new_file(shell)
+            self.write_new_file()
 
-    def apply(self, shell):
+    def apply(self, renderer):
         """ Apply the changes necessary to the file contents. """
         if self.backup_filename is not None:
             raise NotImplementedError
         if self.contents is None:
-            self.empty_file(shell)
+            self.empty_file()
         else:
-            self.write_file(shell)
-        if self.changed:
-            shell.changelog.change(self)
+            self.write_file()
 
 class FileChangeTextRenderer(change.TextRenderer):
     renderer_for = FileContentChanger
 
-    def render(self, changelog):
-        changelog.notice("Changed file {0!r}", self.original.filename)
-        if self.original.contents is not None:
-            if not binary_buffers(self.original.current, self.original.contents):
-                diff = "".join(difflib.context_diff(self.original.current.splitlines(1), self.original.contents.splitlines(1)))
+    def empty_file(self, filename):
+        self.logger.notice("Emptied file {0!r}", self.original.filename)
+
+    def changed_file(self, filename, previous, replacement):
+        self.logger.notice("Changed file {0!r}", self.original.filename)
+        if replacement is not None:
+            if not binary_buffers(previous, replacement):
+                diff = "".join(difflib.context_diff(previous.splitlines(1), replacement.splitlines(1)))
                 for l in diff.splitlines():
-                    changelog.info("    {0}", l)
+                    self.logger.info("    {0}", l)
 
 class File(provider.Provider):
 
@@ -181,13 +183,14 @@ class File(provider.Provider):
         else:
             contents = None
 
-        fc = FileContentChanger(self.resource.name, contents)
-        fc.apply(shell)
-        ac = AttributeChanger(self.resource.name,
+        fc = FileContentChanger(shell, self.resource.name, contents)
+        shell.changelog.apply(fc)
+        ac = AttributeChanger(shell,
+                              self.resource.name,
                               self.resource.owner,
                               self.resource.group,
                               self.resource.mode)
-        ac.apply(shell)
+        shell.changelog.apply(ac)
         if fc.changed or ac.changed:
             return True
 
