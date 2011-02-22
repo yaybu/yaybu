@@ -24,16 +24,18 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0, passthru=False):
         self.command = command
         self.shell = shell
         self.stdin = stdin
         self.cwd = cwd
         self.env = env
         self.verbose = verbose
+        self.passthru = passthru
 
     def apply(self, renderer):
-        renderer.command(self.command)
+        if not self.passthru:
+            renderer.command(self.command)
         try:
             p = subprocess.Popen(self.command,
                                  shell=self.shell,
@@ -95,7 +97,7 @@ class Shell(object):
         if self.simulate and not passthru:
             simlog.info(" ".join(command))
             return (0, "", "")
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose)
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru)
         self.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             raise error.ExecutionError("Non zero return code from %r" % command)
