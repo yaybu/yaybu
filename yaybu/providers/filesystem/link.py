@@ -39,21 +39,27 @@ class Link(provider.Provider):
         gid=None
         mode=None
 
-        if os.path.exists(name):
-            exists = True
+        try:
+            linkto = os.readlink(name)
+            isalink = True
+        except OSError:
+            isalink = False
 
-            if os.readlink(name) != to:
+        if isalink:
+            if linkto != to:
                 shell.execute(["rm", name])
+        else:
+            if os.path.exists(name):
+                # this is an error, we won't delete it if it's not a link
+                # but it exists
+                raise error.ExecutionError("%r: %r exists but is not a link" % (self, name))
             else:
-                st = os.stat(name)
-                uid = st.st_uid
-                gid = st.st_gid
-                mode = st.st_mode
-                if mode > 32767:
-                    mode = mode - 32768
+                shell.execute(["ln", "-s", self.resource.to, name])
 
-        if not exists:
-            shell.execute(["ln", "-s", self.resource.to, name])
+        st = os.stat(name)
+        uid = st.st_uid
+        gid = st.st_gid
+        mode = stat.S_IMODE(st.st_mode)
 
         if self.resource.owner is not None:
             owner = pwd.getpwnam(self.resource.owner)

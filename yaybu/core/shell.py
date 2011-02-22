@@ -16,6 +16,7 @@ import logging
 import subprocess
 import StringIO
 import change
+import error
 
 simlog = logging.getLogger("simulation")
 
@@ -23,12 +24,13 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0):
         self.command = command
         self.shell = shell
         self.stdin = stdin
         self.cwd = cwd
         self.env = env
+        self.verbose = verbose
 
     def apply(self, changelog):
         try:
@@ -61,12 +63,11 @@ class ShellTextRenderer(change.TextRenderer):
 
     def render(self, logger):
         logger.notice(" ".join(self.original.command))
-        if self.original.returncode != 0:
+        if self.original.verbose >= 1 and self.original.returncode != 0:
             logger.notice("returned {0}", self.original.returncode)
-            self.render_output(logger.notice, "stdout", self.original.stdout, logger)
-            self.render_output(logger.notice, "stderr", self.original.stderr, logger)
-        else:
+        if self.original.verbose >= 2:
             self.render_output(logger.info, "stdout", self.original.stdout, logger)
+        if self.original.verbose >= 1:
             self.render_output(logger.info, "stderr", self.original.stderr, logger)
 
 
@@ -75,18 +76,21 @@ class Shell(object):
     """ This object wraps a shell in yet another shell. When the shell is
     switched into "simulate" mode it can just print what would be done. """
 
-    def __init__(self, context, changelog, simulate=False):
+    def __init__(self, context, changelog, verbose=0, simulate=False):
         self.simulate = simulate
         self.context = context
         self.changelog = changelog
+        self.verbose = verbose
 
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
 
-    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None):
+    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True):
         if self.simulate and not passthru:
             simlog.info(" ".join(command))
             return (0, "", "")
-        cmd = ShellCommand(command, shell, stdin, cwd, env)
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose)
         cmd.apply(self.changelog)
+        if exceptions and cmd.returncode != 0:
+            raise error.ExecutionError("Non zero return code from %r" % command)
         return (cmd.returncode, cmd.stdout, cmd.stderr)
