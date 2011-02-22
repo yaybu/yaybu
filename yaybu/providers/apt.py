@@ -28,7 +28,7 @@ class Apt(provider.Provider):
 
         # work out if the package is already installed
         command = ["dpkg", "-s", self.resource.name]
-        returncode, stdout, stderr = shell.execute(command, exceptions=False)
+        returncode, stdout, stderr = shell.execute(command, exceptions=False, passthru=True)
 
         # if the return code is 0, the package is installed
         if returncode == 0:
