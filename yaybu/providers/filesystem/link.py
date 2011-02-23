@@ -36,28 +36,33 @@ class Link(provider.Provider):
         to = self.resource.to
         exists = False
         uid = None
-        gid=None
-        mode=None
+        gid = None
+        mode = None
+        isalink = False
 
         try:
             linkto = os.readlink(name)
             isalink = True
         except OSError:
-            isalink = False
+            pass
 
         if isalink:
             if linkto != to:
                 shell.execute(["rm", name])
-        else:
+                isalink = False
+
+        if not isalink:
             if os.path.exists(name):
                 shell.execute(["rm", "-rf", name])
             else:
                 shell.execute(["ln", "-s", self.resource.to, name])
+                isalink = True
 
-        st = os.stat(name)
-        uid = st.st_uid
-        gid = st.st_gid
-        mode = stat.S_IMODE(st.st_mode)
+        if isalink:
+            st = os.lstat(name)
+            uid = st.st_uid
+            gid = st.st_gid
+            mode = stat.S_IMODE(st.st_mode)
 
         if self.resource.owner is not None:
             owner = pwd.getpwnam(self.resource.owner)

@@ -100,7 +100,7 @@ class FileContentChanger(change.Change):
         else:
             st = os.stat(self.filename)
             if st.st_size != 0:
-                if shell.simulate:
+                if self.shell.simulate:
                     self.renderer.simulation_info("Emptying contents of file {0!r}" % self.filename)
                 else:
                     self.renderer.empty_file(self.filename)
@@ -111,7 +111,7 @@ class FileContentChanger(change.Change):
         """ Change the content of an existing file """
         self.current = open(self.filename).read()
         if self.current != self.contents:
-            if shell.simulate:
+            if self.shell.simulate:
                 self.renderer.simulation_info("Overwriting new file '%s':" % self.filename)
                 if not binary_buffers(self.contents):
                     for l in self.contents.splitlines():
@@ -141,6 +141,7 @@ class FileContentChanger(change.Change):
 
     def apply(self, renderer):
         """ Apply the changes necessary to the file contents. """
+        self.renderer = renderer
         if self.backup_filename is not None:
             raise NotImplementedError
         if self.contents is None:
@@ -152,10 +153,10 @@ class FileChangeTextRenderer(change.TextRenderer):
     renderer_for = FileContentChanger
 
     def empty_file(self, filename):
-        self.logger.notice("Emptied file {0!r}", self.original.filename)
+        self.logger.notice("Emptied file {0!r}", filename)
 
     def changed_file(self, filename, previous, replacement):
-        self.logger.notice("Changed file {0!r}", self.original.filename)
+        self.logger.notice("Changed file {0!r}", filename)
         if replacement is not None:
             if not binary_buffers(previous, replacement):
                 diff = "".join(difflib.context_diff(previous.splitlines(1), replacement.splitlines(1)))
