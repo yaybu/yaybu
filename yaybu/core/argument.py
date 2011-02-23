@@ -33,8 +33,9 @@ class Argument(object):
     metaclass = ABCMeta
     argument_id = 0
 
-    def __init__(self, default=None):
-        self.default = default
+    def __init__(self, **kwargs):
+        self.default = kwargs.pop("default", None)
+        self.help = kwargs.pop("help", None)
         self.arg_id = "argument_%d" % Argument.argument_id
         Argument.argument_id += 1
 

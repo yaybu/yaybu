@@ -59,7 +59,7 @@ class Group(provider.Provider):
 
         returncode, stdout, stderr = shell.execute(command)
         if returncode != 0:
-            raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
+            raise error.GroupError("%s failed with return code %d" % (self.resource, returncode))
 
         return True
 

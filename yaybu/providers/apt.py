@@ -36,7 +36,7 @@ class Apt(provider.Provider):
 
         # if the return code is 1, it is not installed, if it's anything else, we have a problem
         if returncode > 1:
-            raise error.ExecutionError("%s search failed with return code %s" % (self.resource, returncode))
+            raise error.DpkgError("%s search failed with return code %s" % (self.resource, returncode))
 
 
         # the search returned 1, package is not installed, continue and install it
@@ -44,7 +44,7 @@ class Apt(provider.Provider):
         returncode, stdout, stderr = shell.execute(command)
 
         if returncode != 0:
-            raise error.ExecutionError("%s failed with return code %d" % (self.resource, returncode))
+            raise error.AptError("%s failed with return code %d" % (self.resource, returncode))
 
         return True
 

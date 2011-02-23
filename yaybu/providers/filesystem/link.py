@@ -50,9 +50,7 @@ class Link(provider.Provider):
                 shell.execute(["rm", name])
         else:
             if os.path.exists(name):
-                # this is an error, we won't delete it if it's not a link
-                # but it exists
-                raise error.ExecutionError("%r: %r exists but is not a link" % (self, name))
+                shell.execute(["rm", "-rf", name])
             else:
                 shell.execute(["ln", "-s", self.resource.to, name])
 

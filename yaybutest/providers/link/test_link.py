@@ -28,3 +28,11 @@ class TestLink(TestCase):
         self.failUnless(not os.path.exists(self.enpathinate("/etc/toremovelink")))
 
 
+    def test_already_exists(self):
+        os.system("ln -s / %s" % self.enpathinate("/etc/existing"))
+        self.apply("""
+            resources:
+              - Link:
+                  name: /etc/existing
+                  to: /
+        """)

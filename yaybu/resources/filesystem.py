@@ -27,14 +27,61 @@ from yaybu.core.argument import (
     Dict,
     )
 
+import stdarg
+
+"""
+Failure Modes
+=============
+
+ General failure modes we detect ourselves:
+ * Cannot find ln binary
+ * Unexpected return code from binary
+ * Binary unexpectedly did not create expected symlink
+ * User does not exist
+ * Group does not exist
+
+
+ * EROFS Read only filesystem
+ * ENOSPC Insufficient disk space
+ * EACCESS Search permission is denied on a component of the path prefix
+ * EPERM The calling process did not have the required permissions
+ * EACCESS Write-once media
+ * Above errors for backup file - consider if different reporting needed
+ * Template failures
+ * ELOOP To many symbolic links were encountered in resolving pathname
+ * ENOENT A directory component in pathname does not exist, or is a dangling symbolic link
+ * Disk quota exhausted
+ * ENOTDIR A component used as a directory in pathname is not in fact a directory
+ * EPERM The filesystem does not support the creation of directories
+ * EIO An I/O error occurred
+ * EMLINK The file referred to by oldpath already has the maximum number of links to it
+ * ENAMETOOLONG The pathname was too long
+ * EXDEV paths are not on the same mounted filesystem (for hardlinks)
+ * ENFILE The system limit on the total number of open files has been reached
+ * ENXIO pathname refers to a device special file and no corresponding device exists
+ * EOVERFLOW file is too large to open
+ * ETXTBSY pathname refers to an executable image which is currently being executed and write access was requested
+ * EINVAL mode requested creation of something other than a regular file, device special file, FIFO or socket (mknod only)
+
+
+ * SELinux Policy does not allow (EPERM or EACCESS?)
+ * Insufficient inodes
+ * Linked to object does not exist
+ * Link name not supported by filesystem
+ * Cannot remove existing object (e.g. loopback devices)
+ * Stale NFS handles
+ * Faulty media
+ * Invalid mode
+ """
+
 class File(Resource):
 
-    """ A provider for this resource will create or amend an existing file to the following specification:
-
+    """ A provider for this resource will create or amend an existing file to
+    the provided specification.
     """
 
-    name = String()
-    owner = String()
+    name = stdarg.name
+    owner = stdarg.owner
     group = String()
     mode = Octal()
     static = File()

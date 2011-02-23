@@ -26,7 +26,7 @@ from yaybu.core import (resource,
 from mock import Mock
 
 class F(resource.Resource):
-    foo = argument.String("42")
+    foo = argument.String(default="42")
     bar = argument.String()
 
 class G(resource.Resource):

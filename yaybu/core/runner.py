@@ -18,12 +18,14 @@ import sys
 import logging
 import logging.handlers
 import collections
+import traceback
 
 import yay
 
 from yaybu.core.shell import Shell
 from yaybu.core import change
 from yaybu.core import resource
+from yaybu.core import error
 
 logger = logging.getLogger("runner")
 
@@ -132,21 +134,28 @@ class Runner(object):
         parser.add_option("-H", "--html", default=None, help="Instead of writing progress information to the console, write an html progress log to this file.")
 
         opts, args = parser.parse_args()
-        if opts.debug:
-            opts.html = False
-            opts.logfile = "-"
-            opts.verbose = 2
-        self.configure_logging(opts)
-        ctx = RunContext(opts)
-        config = yay.load_uri(args[0])
-        self.resources = resource.ResourceBundle(config.get("resources", []))
-        self.resources.bind()
-        shell = Shell(context=ctx,
-                      changelog=change.ChangeLog(ctx),
-                      verbose=opts.verbose,
-                      simulate=opts.simulate)
-        self.resources.apply(shell, config)
-        return 0
+        if len(args) != 1:
+            parser.print_help()
+            return 1
+        try:
+            if opts.debug:
+                opts.html = False
+                opts.logfile = "-"
+                opts.verbose = 2
+            self.configure_logging(opts)
+            ctx = RunContext(opts)
+            config = yay.load_uri(args[0])
+            self.resources = resource.ResourceBundle(config.get("resources", []))
+            self.resources.bind()
+            shell = Shell(context=ctx,
+                          changelog=change.ChangeLog(ctx),
+                          verbose=opts.verbose,
+                          simulate=opts.simulate)
+            self.resources.apply(shell, config)
+            return 0
+        except error.Error, e:
+            traceback.print_exc()
+            return e.returncode
 
 def main():
     return Runner().run()
