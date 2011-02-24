@@ -27,7 +27,7 @@ from yaybu.core.argument import (
     Dict,
     )
 
-import stdarg
+from yaybu.resources import stdarg
 
 """
 Failure Modes
@@ -39,31 +39,32 @@ Failure Modes
  * Binary unexpectedly did not create expected symlink
  * User does not exist
  * Group does not exist
-
-
- * EROFS Read only filesystem
- * ENOSPC Insufficient disk space
- * EACCESS Search permission is denied on a component of the path prefix
- * EPERM The calling process did not have the required permissions
- * EACCESS Write-once media
- * Above errors for backup file - consider if different reporting needed
  * Template failures
- * ELOOP To many symbolic links were encountered in resolving pathname
- * ENOENT A directory component in pathname does not exist, or is a dangling symbolic link
- * Disk quota exhausted
- * ENOTDIR A component used as a directory in pathname is not in fact a directory
- * EPERM The filesystem does not support the creation of directories
+
+
+ These are standard C error codes that apply to the underlying calls from these resources.
+
+ * EACCESS Search permission is denied on a component of the path prefix
+ * EINVAL mode requested creation of something other than a regular file, device special file, FIFO or socket (mknod only)
  * EIO An I/O error occurred
+ * ELOOP To many symbolic links were encountered in resolving pathname
  * EMLINK The file referred to by oldpath already has the maximum number of links to it
  * ENAMETOOLONG The pathname was too long
- * EXDEV paths are not on the same mounted filesystem (for hardlinks)
  * ENFILE The system limit on the total number of open files has been reached
  * ENXIO pathname refers to a device special file and no corresponding device exists
+ * ENOENT A directory component in pathname does not exist, or is a dangling symbolic link
+ * ENOSPC Insufficient disk space
+ * ENOTDIR A component used as a directory in pathname is not in fact a directory
  * EOVERFLOW file is too large to open
+ * EPERM The calling process did not have the required permissions
+ * EPERM The filesystem does not support the creation of directories
+ * EROFS Read only filesystem
  * ETXTBSY pathname refers to an executable image which is currently being executed and write access was requested
- * EINVAL mode requested creation of something other than a regular file, device special file, FIFO or socket (mknod only)
+ * EXDEV paths are not on the same mounted filesystem (for hardlinks)
 
 
+ * Above errors for backup file - consider if different reporting needed
+ * Disk quota exhausted
  * SELinux Policy does not allow (EPERM or EACCESS?)
  * Insufficient inodes
  * Linked to object does not exist
@@ -80,15 +81,14 @@ class File(Resource):
     the provided specification.
     """
 
-    name = stdarg.name
+    name = stdarg.Name()
     owner = stdarg.owner
-    group = String()
-    mode = Octal()
-    static = File()
-    template = File()
-    template_args = Dict(default={})
-    backup = String()
-    dated_backup = String()
+    group = stdarg.group
+    mode = stdarg.mode
+    static = File(help="""A static file to copy into this resource. The file is located on the yaybu path, so can be colocated with your recipes.""")
+    template = File(help="""A jinja2 template, used to generate the contents of this resource. The template is located on the yaybu path, so can be colocated with your recipes""")
+    template_args = Dict(default={}, help="""The arguments passed to the template.""")
+    backup = String(help="""A fully qualified pathname to which to copy this resource before it is overwritten. If you wish to include a date or timestamp, specify format args such as {year}, {month}, {day}, {hour}, {minute}, {second}""")
 
 class FileAppliedPolicy(Policy):
 
@@ -119,10 +119,10 @@ class FileRemovePolicy(Policy):
                  )
 
 class Directory(Resource):
-    name = String()
-    owner = String()
-    group = String()
-    mode = Octal()
+    name = stdarg.Name()
+    owner = stdarg.owner
+    group = stdarg.group
+    mode = stdarg.mode
 
 class DirectoryAppliedPolicy(Policy):
     resource = Directory
@@ -155,9 +155,16 @@ class DirectoryRemovedRecursivePolicy(Policy):
                  )
 
 class Link(Resource):
-    name = String()
-    owner = String()
-    group = String()
+
+    """ A resource representing a symbolic link. The link will be from `name`
+    to `to`. If you specify owner, group and/or mode then these settings will
+    be applied to the link itself, not to the object linked to.
+
+    """
+
+    name = stdarg.Name()
+    owner = stdarg.owner
+    group = stdarg.group
     to = String()
     mode = Octal()
 

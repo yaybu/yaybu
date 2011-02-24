@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,18 +12,19 @@
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '#',
+        URL_ROOT:    '',
         VERSION:     '0.1',
-        COLLAPSE_MODINDEX: false,
+        COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Yaybu v0.1 documentation" href="index.html" />
     <link rel="next" title="YAY Reference" href="yay_reference.html" />
-    <link rel="prev" title="Tutorial" href="tutorial.html" /> 
+    <link rel="prev" title="Logging" href="logging.html" /> 
   </head>
   <body>
     <div class="related">
@@ -34,7 +37,7 @@
           <a href="yay_reference.html" title="YAY Reference"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="tutorial.html" title="Tutorial"
+          <a href="logging.html" title="Logging"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Yaybu v0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -47,14 +50,81 @@
             
   <div class="section" id="resources">
 <h1>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h1>
-<p>Resources are a core concept in Yaybu. You can recognise when a resource is
-used in a yay configuration file, because it will be capitalised.</p>
-<p>All resources inherit from <a title="yaybu.core.resource.Resource" class="reference internal" href="#yaybu.core.resource.Resource"><tt class="xref docutils literal"><span class="pre">yaybu.core.resource.Resource</span></tt></a>.</p>
+<p>Resources are a core concept in Yaybu.</p>
+<p>A Resource is a thing on your deployment target that can be described in
+an abstract way and then be managed by Yaybu without any explicit migration
+scripts being written. You define the state you want the resource to be in
+and yaybu will work out how to get it there.</p>
+<p>The management yaybu can range from something like ensure a symbolic link
+exists, to applying templates to files, to making sure the right tag
+of your Plone site is checked out to anything that can be expressed in
+python.</p>
+<p>You can recognise when a resource is used in a yay configuration file,
+because it will be capitalised.</p>
+<div class="section" id="filesystem-resources">
+<h2>Filesystem resources<a class="headerlink" href="#filesystem-resources" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="link">
+<h3>Link<a class="headerlink" href="#link" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="yaybu.core.resource.Resource">
-<em class="property">class </em><tt class="descclassname">yaybu.core.resource.</tt><tt class="descname">Resource</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#yaybu.core.resource.Resource" title="Permalink to this definition">¶</a></dt>
-<dd>Documentation for Resource</dd></dl>
+<dt id="yaybu.resources.filesystem.Link">
+<em class="property">class </em><tt class="descclassname">yaybu.resources.filesystem.</tt><tt class="descname">Link</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#yaybu.resources.filesystem.Link" title="Permalink to this definition">¶</a></dt>
+<dd><p>A resource representing a symbolic link. The link will be from <cite>name</cite>
+to <cite>to</cite>. If you specify owner, group and/or mode then these settings will
+be applied to the link itself, not to the object linked to.</p>
+</dd></dl>
 
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.Link.name">
+<tt class="descclassname">Link.</tt><tt class="descname">name</tt><a class="headerlink" href="#yaybu.resources.filesystem.Link.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>blah</p>
+</dd></dl>
+
+<div class="section" id="raises">
+<h4>Raises<a class="headerlink" href="#raises" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt>BinaryMissing</dt>
+<dd>The system binary for one of the required binaries cannot be found. For    example, ln, rm, chmod etc.</dd>
+<dt>InvalidUser</dt>
+<dd>The specified <cite>owner</cite> is not a valid unix user.</dd>
+<dt>InvalidGroup</dt>
+<dd>The specified <cite>group</cite> is not a valid unix group.</dd>
+<dt>OperationFailed</dt>
+<dd>For an undetermined reason we didn&#8217;t get a link. This should not happen.</dd>
+<dt>SystemError</dt>
+<dd>If an error is returned from one of the system calls used.</dd>
+</dl>
+</div>
+<div class="section" id="system-errors">
+<h4>System Errors<a class="headerlink" href="#system-errors" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><dl class="docutils">
+<dt>EACCESS</dt>
+<dd>Search permission is denied on a component of the path prefix</dd>
+<dt>EEXIST</dt>
+<dd><cite>name</cite> already exists</dd>
+<dt>EIO</dt>
+<dd>An I/O error occurred</dd>
+<dt>ELOOP</dt>
+<dd>Too many symbolic links were encountered in resolving <cite>name</cite> or <cite>to</cite></dd>
+<dt>ENAMETOOLONG</dt>
+<dd>The pathname for <cite>name</cite> or <cite>to</cite> is too long</dd>
+<dt>ENOENT</dt>
+<dd>A directory component in oldpath or newpath does not exist or is a dangling symbolic link.</dd>
+<dt>ENOMEM</dt>
+<dd>Insufficient kernel memory was available</dd>
+<dt>ENOSPC</dt>
+<dd>Insufficient disk space</dd>
+<dt>ENOTDIR</dt>
+<dd>A component used as a directory in <cite>name</cite> or <cite>to</cite> is not, in fact, a directory.</dd>
+<dt>EPERM</dt>
+<dd>The filesystem containing <cite>name</cite> does not support the creation of symbolic links</dd>
+<dt>EROFS</dt>
+<dd><cite>name</cite> is on a read-only file system</dd>
+</dl>
+</div></blockquote>
+</div>
+</div>
+</div>
 </div>
 
 
@@ -63,30 +133,45 @@ used in a yay configuration file, because it will be capitalised.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-            <h4>Previous topic</h4>
-            <p class="topless"><a href="tutorial.html"
-                                  title="previous chapter">Tutorial</a></p>
-            <h4>Next topic</h4>
-            <p class="topless"><a href="yay_reference.html"
-                                  title="next chapter">YAY Reference</a></p>
-            <h3>This Page</h3>
-            <ul class="this-page-menu">
-              <li><a href="_sources/resources.txt"
-                     rel="nofollow">Show Source</a></li>
-            </ul>
-          <div id="searchbox" style="display: none">
-            <h3>Quick search</h3>
-              <form class="search" action="search.html" method="get">
-                <input type="text" name="q" size="18" />
-                <input type="submit" value="Go" />
-                <input type="hidden" name="check_keywords" value="yes" />
-                <input type="hidden" name="area" value="default" />
-              </form>
-              <p class="searchtip" style="font-size: 90%">
-              Enter search terms or a module, class or function name.
-              </p>
-          </div>
-          <script type="text/javascript">$('#searchbox').show(0);</script>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Resources</a><ul>
+<li><a class="reference internal" href="#filesystem-resources">Filesystem resources</a><ul>
+<li><a class="reference internal" href="#link">Link</a><ul>
+<li><a class="reference internal" href="#raises">Raises</a></li>
+<li><a class="reference internal" href="#system-errors">System Errors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="logging.html"
+                        title="previous chapter">Logging</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="yay_reference.html"
+                        title="next chapter">YAY Reference</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/resources.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -101,14 +186,14 @@ used in a yay configuration file, because it will be capitalised.</p>
           <a href="yay_reference.html" title="YAY Reference"
              >next</a> |</li>
         <li class="right" >
-          <a href="tutorial.html" title="Tutorial"
+          <a href="logging.html" title="Logging"
              >previous</a> |</li>
         <li><a href="index.html">Yaybu v0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-      &copy; Copyright 2011, John Carr, Doug Winter.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
+        &copy; Copyright 2011, John Carr, Doug Winter.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>

@@ -13,8 +13,10 @@ Contents:
 
    intro
    tutorial
+   logging
    resources
    yay_reference
+   hacking
 
 Indices and tables
 ==================

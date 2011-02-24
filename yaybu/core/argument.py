@@ -35,13 +35,15 @@ class Argument(object):
 
     def __init__(self, **kwargs):
         self.default = kwargs.pop("default", None)
-        self.help = kwargs.pop("help", None)
+        self.__doc__ = kwargs.pop("help", None)
         self.arg_id = "argument_%d" % Argument.argument_id
         Argument.argument_id += 1
 
     def __get__(self, instance, owner):
         if instance is None:
-            raise AttributeError
+            # sphinx complains?
+            #raise AttributeError
+            return None
         if hasattr(instance, self.arg_id):
             return getattr(instance, self.arg_id)
         else:

@@ -80,9 +80,6 @@ class BinaryMissing(ExecutionError):
     present where expected. """
     returncode = 143
 
-
-
-
 class SystemError(ExecutionError):
     """ An error represented by something in the errno list. """
 

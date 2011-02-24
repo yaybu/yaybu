@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Introduction &mdash; Yaybu v0.1 documentation</title>
+    <title>Resources &mdash; Yaybu v0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -23,8 +23,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Yaybu v0.1 documentation" href="index.html" />
-    <link rel="next" title="Tutorial" href="tutorial.html" />
-    <link rel="prev" title="Welcome to Yaybu’s documentation!" href="index.html" /> 
+    <link rel="prev" title="YAY Reference" href="yay_reference.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,10 +36,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="tutorial.html" title="Tutorial"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="index.html" title="Welcome to Yaybu’s documentation!"
+          <a href="yay_reference.html" title="YAY Reference"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Yaybu v0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -51,23 +47,23 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="introduction">
-<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
-<p>Yaybu fills the same need as <a class="reference external" href="http://www.puppetlabs.com/">Puppet</a> or <a class="reference external" href="http://wiki.opscode.com/display/chef/Home">Chef</a>: it provides an automation layer
-on top of your systems management processes, increasing reliability, removing
-repetitive manual tasks and providing a configuration database.</p>
-<div class="section" id="why-use-yaybu">
-<h2>Why use Yaybu?<a class="headerlink" href="#why-use-yaybu" title="Permalink to this headline">¶</a></h2>
-<p>There are a number of reasons we&#8217;ve written Yaybu, rather than using Puppet or Chef:</p>
-<blockquote>
-<div><dl class="docutils">
-<dt><strong>It&#8217;s written in Python</strong></dt>
-<dd>Puppet and Chef are both written in Ruby. If you already have a significant investment in Python, as we do, retraining a large number of people in Ruby isn&#8217;t such a great option.</dd>
-<dt><strong>It has a better configuration language: YAY</strong></dt>
-<dd>The language used to write your configurations is where your system administrators will be spending a lot of their time. This language needs to be appropriate for their needs, with enough power that they don&#8217;t have to cut and paste a lot of text. Yay is that language.</dd>
-</dl>
-</div></blockquote>
-</div>
+  <div class="section" id="resources">
+<h1>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h1>
+<p>Resources are a core concept in Yaybu. You can recognise when a resource is
+used in a yay configuration file, because it will be capitalised.</p>
+<p>All resources inherit from <a class="reference internal" href="#yaybu.core.resource.Resource" title="yaybu.core.resource.Resource"><tt class="xref py py-class docutils literal"><span class="pre">yaybu.core.resource.Resource</span></tt></a>.</p>
+<dl class="class">
+<dt id="yaybu.core.resource.Resource">
+<em class="property">class </em><tt class="descclassname">yaybu.core.resource.</tt><tt class="descname">Resource</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#yaybu.core.resource.Resource" title="Permalink to this definition">¶</a></dt>
+<dd><p>A resource represents a resource that can be configured on the system.
+This might be as simple as a symlink or as complex as a database schema
+migration. Resources have policies that represent how the resource is to
+be treated. Providers are the implementation of the resource policy.</p>
+<p>Resource definitions specify the complete set of attributes that can be
+configured for a resource. Policies define which attributes must be
+configured for the policy to be used.</p>
+</dd></dl>
+
 </div>
 
 
@@ -76,23 +72,12 @@ repetitive manual tasks and providing a configuration database.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Introduction</a><ul>
-<li><a class="reference internal" href="#why-use-yaybu">Why use Yaybu?</a></li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">Welcome to Yaybu&#8217;s documentation!</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="tutorial.html"
-                        title="next chapter">Tutorial</a></p>
+  <p class="topless"><a href="yay_reference.html"
+                        title="previous chapter">YAY Reference</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="_sources/intro.txt"
+    <li><a href="_sources/hacking.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -122,10 +107,7 @@ repetitive manual tasks and providing a configuration database.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="tutorial.html" title="Tutorial"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="index.html" title="Welcome to Yaybu’s documentation!"
+          <a href="yay_reference.html" title="YAY Reference"
              >previous</a> |</li>
         <li><a href="index.html">Yaybu v0.1 documentation</a> &raquo;</li> 
       </ul>
