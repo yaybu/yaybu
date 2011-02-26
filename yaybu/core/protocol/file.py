@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.core.protocol.server import ResponseHandler
+from yaybu.core.protocol.server import HttpResource
 
-class FileResource(ResponseHandler):
+class FileResource(HttpResource):
 
     leaf = True
 
@@ -23,7 +23,7 @@ class FileResource(ResponseHandler):
             # Always read in binary mode. Opening files in text mode may cause
             # newline translations, making the actual size of the content
             # transmitted *less* than the content-length!
-            f = open(yaybu.locate_file(path), 'rb')
+            f = open(yaybu.locate_file(restpath), 'rb')
         except IOError:
             request.send_error(404, "File not found")
             return None
