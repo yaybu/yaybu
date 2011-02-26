@@ -28,6 +28,7 @@ from yaybu.core import change
 from yaybu.core import resource
 from yaybu.core import error
 from yaybu.core import remote
+from yaybu.core import runcontext
 
 logger = logging.getLogger("runner")
 
@@ -84,7 +85,12 @@ class Runner(object):
                 opts.logfile = "-"
                 opts.verbose = 2
             self.configure_logging(opts)
-            ctx = RunContext(opts)
+
+            if not opts.remote:
+                ctx = runcontext.RunContext(opts)
+            else:
+                ctx = runcontext.RemoteRunContext(opts)
+
             config = yay.load_uri(args[0])
             self.resources = resource.ResourceBundle(config.get("resources", []))
             self.resources.bind()

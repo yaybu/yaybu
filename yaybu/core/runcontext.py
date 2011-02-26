@@ -15,7 +15,7 @@
 import os
 import logging
 
-from yaybu.core.protocol.client import HttpConnection
+from yaybu.core.protocol.client import HTTPConnection
 
 logger = logging.getLogger("runcontext")
 

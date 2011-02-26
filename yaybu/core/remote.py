@@ -20,7 +20,7 @@ from yaybu.core.protocol.file import FileResource
 class RemoteRunner(object):
 
     def run(self, opt, args):
-        p = subprocess.Popen(["ssh", "-A", opt.host, "yaybu"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        p = subprocess.Popen(["ssh", "-A", opt.host, "yaybu", "--remote"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
         root = HttpResource()
         root.put_child("files", FileResource())

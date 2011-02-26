@@ -31,7 +31,7 @@ class FileSockset(object):
             return self.rfile
         raise NotImplementedError
 
-    def close()
+    def close(self):
         pass
 
 
