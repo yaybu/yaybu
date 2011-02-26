@@ -55,7 +55,6 @@ class Runner(object):
         if log_level is None:
             raise KeyError("Log level %s not recognised, terminating" % opts.log_level)
         if opts.logfile is not None:
-            raise NotImplementedError
             if opts.logfile == "-":
                 logging.basicConfig(stream=sys.stdout,
                                     format="%(asctime)s %(levelname)s %(message)s",
@@ -91,7 +90,9 @@ class Runner(object):
             else:
                 ctx = runcontext.RemoteRunContext(args[0], opts)
 
-            self.resources = resource.ResourceBundle(ctx.get_config().get("resources", []))
+            config = ctx.get_config()
+
+            self.resources = resource.ResourceBundle(config.get("resources", []))
             self.resources.bind()
             shell = Shell(context=ctx,
                           changelog=change.ChangeLog(ctx),

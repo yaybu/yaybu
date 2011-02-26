@@ -134,6 +134,7 @@ class StaticResource(HttpResource):
     def render_GET(self, yaybu, request, postpath):
         request.send_response(200, "OK")
         request.send_header("Content-Type", "application/json")
+        request.send_header("Content-Length", str(len(self.content)))
         request.end_headers()
         request.write_fileobj(StringIO.StringIO(self.content))
 
