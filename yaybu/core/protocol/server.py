@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 from abc import ABCMeta, abstractmethod
 from BaseHTTPServer import BaseHTTPRequestHandler
 
@@ -37,7 +38,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 class Server(object):
 
-    def __init__(self, rfile=sys.stdin, wfile=sys.stdout):
+    def __init__(self, root, rfile=sys.stdin, wfile=sys.stdout):
+        self.root = root
         self.rfile = rfile
         self.wfile = wfile
         self.handlers = []
@@ -45,7 +47,7 @@ class Server(object):
     def handle_request(self):
         # This will use BaseHTTPRequestHandler to parse HTTP headers off stdin,
         #   stdin is then ready to read any payload?
-        r = Request(self.rfile, self.wfile)
+        r = RequestHandler(self.rfile, self.wfile)
         r.handle_one_request()
 
         segment, rest = r.path.split("/", 1)
@@ -53,15 +55,15 @@ class Server(object):
 
         while segment:
             if node.leaf:
-                break:
+                break
             node = node.getChild(segment)
             segment, rest = rest.split("/", 1)
 
         node.render(self.yaybu, r, rest)
 
-    def serve(self):
+    def serve_forever(self):
         while True:
-            handle_request()
+            self.handle_request()
 
 
 class Error(Exception):
@@ -85,6 +87,9 @@ class HttpResource(object):
 
     leaf = False
 
+    def __init__(self):
+        self.children = {}
+
     def put_child(self, key, child):
         self.children[key] = child
 
@@ -96,5 +101,5 @@ class HttpResource(object):
     def render(self, yaybu, request, postpath):
         if not hasattr(self, "render_" + request.method):
             raise MethodNotSupported(request.method)
-        getattr(self, "render_" + request.method)(yaybu, request, postpath))
+        getattr(self, "render_" + request.method)(yaybu, request, postpath)
 
