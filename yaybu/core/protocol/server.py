@@ -13,8 +13,10 @@
 # limitations under the License.
 
 import sys
+import shutil
 from abc import ABCMeta, abstractmethod
 from BaseHTTPServer import BaseHTTPRequestHandler
+import StringIO
 
 class RequestHandler(BaseHTTPRequestHandler):
 
@@ -30,7 +32,17 @@ class RequestHandler(BaseHTTPRequestHandler):
         if not self.raw_requestline:
             self.close_connection = 1
             return False
-        return self.parse_request()
+        if not self.parse_request():
+            return False
+
+        path = self.path
+        if "?" in path:
+            path, self.getargs = path.split("?", 1)
+        if "#" in path:
+            path, self.bookmark = path.split("#", 1)
+        self.path = filter(None, path.split("/"))
+
+        return True
 
     def write_fileobj(self, fileobj):
         shutil.copyfileobj(fileobj, self.wfile)
@@ -38,7 +50,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 class Server(object):
 
-    def __init__(self, root, rfile=sys.stdin, wfile=sys.stdout):
+    def __init__(self, context, root, rfile=sys.stdin, wfile=sys.stdout):
+        self.context = context
         self.root = root
         self.rfile = rfile
         self.wfile = wfile
@@ -50,16 +63,22 @@ class Server(object):
         r = RequestHandler(self.rfile, self.wfile)
         r.handle_one_request()
 
-        segment, rest = r.path.split("/", 1)
         node = self.root
 
-        while segment:
-            if node.leaf:
-                break
-            node = node.getChild(segment)
-            segment, rest = rest.split("/", 1)
+        if r.path:
+            segment, rest = r.path[0], r.path[1:]
+            while segment:
+                if node.leaf:
+                    break
+                node = node.get_child(segment)
+                if not rest:
+                    break
+                segment, rest = rest[0], rest[1:]
 
-        node.render(self.yaybu, r, rest)
+        try:
+            node.render(self.context, r, rest)
+        except Error, e:
+            e.render(r, None)
 
     def serve_forever(self):
         while True:
@@ -99,7 +118,22 @@ class HttpResource(object):
         raise NotFound(key)
 
     def render(self, yaybu, request, postpath):
-        if not hasattr(self, "render_" + request.method):
-            raise MethodNotSupported(request.method)
-        getattr(self, "render_" + request.method)(yaybu, request, postpath)
+        if not hasattr(self, "render_" + request.command):
+            raise MethodNotSupported(request.command)
+        getattr(self, "render_" + request.command)(yaybu, request, postpath)
+
+
+class StaticResource(HttpResource):
+
+    leaf = True
+
+    def __init__(self, content):
+        super(StaticResource, self).__init__()
+        self.content = content
+
+    def render_GET(self, yaybu, request, postpath):
+        request.send_response(200, "OK")
+        request.send_header("Content-Type", "application/json")
+        request.end_headers()
+        request.write_fileobj(StringIO.StringIO(self.content))
 

@@ -15,7 +15,7 @@
 import sys
 from httplib import HTTPConnection as BaseHTTPConnection
 
-class FileSockset(object):
+class FileSocket(object):
     """ I adapt a pair of file objects to look like a socket """
 
     def __init__(self, rfile, wfile):

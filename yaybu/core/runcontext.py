@@ -14,6 +14,9 @@
 
 import os
 import logging
+import json
+
+import yay
 
 from yaybu.core.protocol.client import HTTPConnection
 
@@ -26,7 +29,7 @@ class RunContext(object):
     verbose = 0
     html = None
 
-    def __init__(self, opts=None):
+    def __init__(self, configfile, opts=None):
         self.path = []
         self.ypath = []
         if opts is not None:
@@ -43,6 +46,8 @@ class RunContext(object):
         if "YAYBUPATH" in os.environ:
             for term in os.environ["YAYBUPATH"].split(":"):
                 self.ypath.append(term)
+
+        self.configfile = configfile
 
     def locate(self, paths, filename):
         if filename.startswith("/"):
@@ -67,15 +72,23 @@ class RunContext(object):
         filesystem and will be returned unmolested. """
         return self.locate(self.ypath + self.path, filename)
 
+    def get_config(self):
+        return yay.load_uri(self.configfile)
+
     def get_file(self, filename):
         return open(self.locate_file(filename), 'rb')
 
 
 class RemoteRunContext(RunContext):
 
-    def __init__(self, opts=None):
+    def __init__(self, configfile, opts=None):
         super(RemoteRunContext, self).__init__(opts)
         self.connection = HTTPConnection()
+
+    def get_config(self):
+        self.connection.request("GET", "/config")
+        rsp = self.connection.getresponse()
+        return json.load(rsp)
 
     def get_file(self, filename):
         self.connection.request("GET", "/files/" + filename)

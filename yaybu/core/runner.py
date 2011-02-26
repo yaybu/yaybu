@@ -87,12 +87,11 @@ class Runner(object):
             self.configure_logging(opts)
 
             if not opts.remote:
-                ctx = runcontext.RunContext(opts)
+                ctx = runcontext.RunContext(args[0], opts)
             else:
-                ctx = runcontext.RemoteRunContext(opts)
+                ctx = runcontext.RemoteRunContext(args[0], opts)
 
-            config = yay.load_uri(args[0])
-            self.resources = resource.ResourceBundle(config.get("resources", []))
+            self.resources = resource.ResourceBundle(ctx.get_config().get("resources", []))
             self.resources.bind()
             shell = Shell(context=ctx,
                           changelog=change.ChangeLog(ctx),
@@ -119,10 +118,7 @@ def main():
 
     opts, args = parser.parse_args()
 
-    if opts.remote and len(args) > 0:
-        parse.print_help()
-        return 1
-    elif not opts.remote and len(args) != 1:
+    if len(args) != 1:
         parser.print_help()
         return 1
 
