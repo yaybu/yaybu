@@ -118,7 +118,11 @@ def main():
     parser.add_option("--remote", default=False, action="store_true", help="Run yaybu.protocol client on stdio")
 
     opts, args = parser.parse_args()
-    if len(args) != 1:
+
+    if opts.remote and len(args) > 0:
+        parse.print_help()
+        return 1
+    elif not opts.remote and len(args) != 1:
         parser.print_help()
         return 1
 

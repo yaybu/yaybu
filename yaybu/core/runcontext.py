@@ -75,7 +75,7 @@ class RemoteRunContext(RunContext):
 
     def __init__(self, opts=None):
         super(RemoteRunContext, self).__init__(opts)
-        self.connection = HttpConnection()
+        self.connection = HTTPConnection()
 
     def get_file(self, filename):
         self.connection.request("GET", "/files/" + filename)
