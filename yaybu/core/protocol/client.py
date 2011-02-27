@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import sys
+from httplib import HTTPResponse as BaseHTTPResponse
 from httplib import HTTPConnection as BaseHTTPConnection
 
 class FileSocket(object):
@@ -26,7 +27,7 @@ class FileSocket(object):
         self.wfile.write(data)
         self.wfile.flush()
 
-    def makefile(self, mode, falgs):
+    def makefile(self, mode, flags):
         if mode.startswith("r"):
             return self.rfile
         raise NotImplementedError
@@ -35,7 +36,15 @@ class FileSocket(object):
         pass
 
 
+class HTTPResponse(BaseHTTPResponse):
+
+    def close(self):
+        pass
+
+
 class HTTPConnection(BaseHTTPConnection):
+
+    response_class = HTTPResponse
 
     def __init__(self, rfile=sys.stdin, wfile=sys.stdout):
         self.rfile = rfile

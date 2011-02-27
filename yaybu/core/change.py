@@ -47,6 +47,12 @@ class ChangeRenderer:
         self.logger = logger
         self.verbose = verbose
 
+    def simulation_info(self, message):
+        simlog.info(message)
+
+    def simulation_notice(self, message):
+        simlog.notice(message)
+
     def render(self, logger):
         pass
 
@@ -102,12 +108,6 @@ class ResourceChange(object):
 
     def html_notice(self, message):
         self.html_messages.append((1, message))
-
-    def simulation_info(self, message):
-        simlog.info(message)
-
-    def simulation_notice(self, message):
-        simlog.notice(message)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.exc_type = exc_type

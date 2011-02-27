@@ -40,12 +40,16 @@ class RunContext(object):
             self.verbose = opts.verbose
             if opts.html is not None:
                 self.html = open(opts.html, "w")
+
         if "PATH" in os.environ:
             for term in os.environ["PATH"].split(":"):
                 self.path.append(term)
+
         if "YAYBUPATH" in os.environ:
             for term in os.environ["YAYBUPATH"].split(":"):
                 self.ypath.append(term)
+        else:
+            self.ypath.append(os.getcwd())
 
         self.configfile = configfile
 

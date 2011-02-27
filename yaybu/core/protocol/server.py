@@ -61,28 +61,31 @@ class Server(object):
         # This will use BaseHTTPRequestHandler to parse HTTP headers off stdin,
         #   stdin is then ready to read any payload?
         r = RequestHandler(self.rfile, self.wfile)
-        r.handle_one_request()
+        if not r.handle_one_request():
+            return False
 
         node = self.root
 
         if r.path:
             segment, rest = r.path[0], r.path[1:]
             while segment:
+                node = node.get_child(segment)
                 if node.leaf:
                     break
-                node = node.get_child(segment)
                 if not rest:
                     break
                 segment, rest = rest[0], rest[1:]
 
         try:
-            node.render(self.context, r, rest)
+            node.render(self.context, r, "/".join(rest))
         except Error, e:
             e.render(r, None)
 
+        return True
+
     def serve_forever(self):
-        while True:
-            self.handle_request()
+        while self.handle_request():
+            pass
 
 
 class Error(Exception):
@@ -135,6 +138,7 @@ class StaticResource(HttpResource):
         request.send_response(200, "OK")
         request.send_header("Content-Type", "application/json")
         request.send_header("Content-Length", str(len(self.content)))
+        request.send_header("Content", "keep-alive")
         request.end_headers()
         request.write_fileobj(StringIO.StringIO(self.content))
 

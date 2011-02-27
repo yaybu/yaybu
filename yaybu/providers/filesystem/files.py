@@ -177,10 +177,10 @@ class File(provider.Provider):
         name = self.resource.name
 
         if self.resource.template:
-            template = Template(open(self.resource.template).read())
+            template = Template(shell.context.get_file(self.resource.template).read())
             contents = template.render(**self.resource.template_args)
         elif self.resource.static:
-            contents = open(self.resource.static).read()
+            contents = shell.context.get_file(self.resource.static).read()
         else:
             contents = None
 
