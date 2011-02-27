@@ -63,6 +63,75 @@ python.</p>
 because it will be capitalised.</p>
 <div class="section" id="filesystem-resources">
 <h2>Filesystem resources<a class="headerlink" href="#filesystem-resources" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="file">
+<h3>File<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="yaybu.resources.filesystem.File">
+<em class="property">class </em><tt class="descclassname">yaybu.resources.filesystem.</tt><tt class="descname">File</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#yaybu.resources.filesystem.File" title="Permalink to this definition">¶</a></dt>
+<dd><p>A provider for this resource will create or amend an existing file to
+the provided specification.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.File.name">
+<tt class="descclassname">File.</tt><tt class="descname">name</tt><a class="headerlink" href="#yaybu.resources.filesystem.File.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the file this resource represents.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.File.owner">
+<tt class="descclassname">File.</tt><tt class="descname">owner</tt><a class="headerlink" href="#yaybu.resources.filesystem.File.owner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A unix username or UID who will own created objects. An owner that
+begins with a digit will be interpreted as a UID, otherwise it will be
+looked up using the python &#8216;pwd&#8217; module.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.File.group">
+<tt class="descclassname">File.</tt><tt class="descname">group</tt><a class="headerlink" href="#yaybu.resources.filesystem.File.group" title="Permalink to this definition">¶</a></dt>
+<dd><p>A unix group or GID who will own created objects. A group that begins
+with a digit will be interpreted as a GID, otherwise it will be looked up
+using the python &#8216;grp&#8217; module.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.File.mode">
+<tt class="descclassname">File.</tt><tt class="descname">mode</tt><a class="headerlink" href="#yaybu.resources.filesystem.File.mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>A mode representation as an octal. This can begin with leading zeros if
+you like, but this is not required. DO NOT use yaml Octal representation
+(0o666), this will NOT work.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.File.static">
+<tt class="descclassname">File.</tt><tt class="descname">static</tt><a class="headerlink" href="#yaybu.resources.filesystem.File.static" title="Permalink to this definition">¶</a></dt>
+<dd><p>A static file to copy into this resource. The file is located on the
+yaybu path, so can be colocated with your recipes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.File.template">
+<tt class="descclassname">File.</tt><tt class="descname">template</tt><a class="headerlink" href="#yaybu.resources.filesystem.File.template" title="Permalink to this definition">¶</a></dt>
+<dd><p>A jinja2 template, used to generate the contents of this resource. The
+template is located on the yaybu path, so can be colocated with your
+recipes</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.File.template_args">
+<tt class="descclassname">File.</tt><tt class="descname">template_args</tt><a class="headerlink" href="#yaybu.resources.filesystem.File.template_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>The arguments passed to the template.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.File.backup">
+<tt class="descclassname">File.</tt><tt class="descname">backup</tt><a class="headerlink" href="#yaybu.resources.filesystem.File.backup" title="Permalink to this definition">¶</a></dt>
+<dd><p>A fully qualified pathname to which to copy this resource before it is
+overwritten. If you wish to include a date or timestamp, specify format
+args such as {year}, {month}, {day}, {hour}, {minute}, {second}</p>
+</dd></dl>
+
+</div>
 <div class="section" id="link">
 <h3>Link<a class="headerlink" href="#link" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
@@ -71,12 +140,50 @@ because it will be capitalised.</p>
 <dd><p>A resource representing a symbolic link. The link will be from <cite>name</cite>
 to <cite>to</cite>. If you specify owner, group and/or mode then these settings will
 be applied to the link itself, not to the object linked to.</p>
+<p>For example:</p>
+<div class="highlight-python"><pre>Link:
+  name: /etc/init.d/exampled
+  to: /usr/local/example/sbin/exampled
+  owner: root
+  group: root</pre>
+</div>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="yaybu.resources.filesystem.Link.name">
 <tt class="descclassname">Link.</tt><tt class="descname">name</tt><a class="headerlink" href="#yaybu.resources.filesystem.Link.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>blah</p>
+<dd><p>The name of the file this resource represents.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.Link.owner">
+<tt class="descclassname">Link.</tt><tt class="descname">owner</tt><a class="headerlink" href="#yaybu.resources.filesystem.Link.owner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A unix username or UID who will own created objects. An owner that
+begins with a digit will be interpreted as a UID, otherwise it will be
+looked up using the python &#8216;pwd&#8217; module.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.Link.group">
+<tt class="descclassname">Link.</tt><tt class="descname">group</tt><a class="headerlink" href="#yaybu.resources.filesystem.Link.group" title="Permalink to this definition">¶</a></dt>
+<dd><p>A unix group or GID who will own created objects. A group that begins
+with a digit will be interpreted as a GID, otherwise it will be looked up
+using the python &#8216;grp&#8217; module.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.Link.to">
+<tt class="descclassname">Link.</tt><tt class="descname">to</tt><a class="headerlink" href="#yaybu.resources.filesystem.Link.to" title="Permalink to this definition">¶</a></dt>
+<dd><p>The pathname to which to link the symlink. Dangling symlinks ARE
+considered errors in Yaybu.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="yaybu.resources.filesystem.Link.mode">
+<tt class="descclassname">Link.</tt><tt class="descname">mode</tt><a class="headerlink" href="#yaybu.resources.filesystem.Link.mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>A mode representation as an octal. This can begin with leading zeros if
+you like, but this is not required. DO NOT use yaml Octal representation
+(0o666), this will NOT work.</p>
 </dd></dl>
 
 <div class="section" id="raises">
@@ -88,6 +195,8 @@ be applied to the link itself, not to the object linked to.</p>
 <dd>The specified <cite>owner</cite> is not a valid unix user.</dd>
 <dt>InvalidGroup</dt>
 <dd>The specified <cite>group</cite> is not a valid unix group.</dd>
+<dt>DanglingSymlink</dt>
+<dd>The destination of the symbolic link does not exist.</dd>
 <dt>OperationFailed</dt>
 <dd>For an undetermined reason we didn&#8217;t get a link. This should not happen.</dd>
 <dt>SystemError</dt>
@@ -137,6 +246,7 @@ be applied to the link itself, not to the object linked to.</p>
   <ul>
 <li><a class="reference internal" href="#">Resources</a><ul>
 <li><a class="reference internal" href="#filesystem-resources">Filesystem resources</a><ul>
+<li><a class="reference internal" href="#file">File</a></li>
 <li><a class="reference internal" href="#link">Link</a><ul>
 <li><a class="reference internal" href="#raises">Raises</a></li>
 <li><a class="reference internal" href="#system-errors">System Errors</a></li>

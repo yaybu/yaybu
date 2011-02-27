@@ -102,5 +102,5 @@ class Shell(object):
         if exceptions and cmd.returncode != 0:
             self.changelog.info(cmd.stdout)
             self.changelog.notice(cmd.stderr)
-            raise error.ExecutionError("Non zero return code from %r" % command)
+            raise error.SystemError(cmd.returncode)
         return (cmd.returncode, cmd.stdout, cmd.stderr)

@@ -37,15 +37,15 @@ class TestCase(testtools.TestCase):
 
     def call(self, command):
         chroot = ["fakeroot", "fakechroot", "-s", "cow-shell", "chroot", self.chroot_path]
-        subprocess.check_call(chroot + command, cwd=self.chroot_path)
+        return subprocess.call(chroot + command, cwd=self.chroot_path)
 
     def yaybu(self, *args):
         filespath = os.path.join(self.chroot_path, "tmp", "files")
-        self.call(["yaybu", "--ypath", filespath] + list(args))
+        return self.call(["yaybu", "--ypath", filespath] + list(args))
 
     def apply(self, contents):
         path = self.write_temporary_file(contents)
-        self.yaybu(path)
+        return self.yaybu(path)
 
     def setUp(self):
         super(TestCase, self).setUp()

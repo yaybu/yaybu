@@ -29,7 +29,36 @@ class Link(provider.Provider):
 
     @classmethod
     def isvalid(self, *args, **kwargs):
+        # TODO: validation could provide warnings based on things
+        # that are not the correct state at the point of invocation
+        # but that will be modified by the yaybu script
         return super(Link, self).isvalid(*args, **kwargs)
+
+    def _get_owner(self):
+        """ Return the uid for the resource owner, or None if no owner is
+        specified. """
+        if self.resource.owner is not None:
+            try:
+                return pwd.getpwnam(self.resource.owner).pw_uid
+            except KeyError:
+                raise error.InvalidUser()
+
+    def _get_group(self):
+        """ Return the gid for the resource group, or None if no group is
+        specified. """
+        if self.resource.group is not None:
+            try:
+                return grp.getgrnam(self.resource.group).gr_gid
+            except KeyError:
+                raise error.InvalidGroup()
+
+    def _stat(self):
+        """ Extract stat information for the resource. """
+        st = os.lstat(self.resource.name)
+        uid = st.st_uid
+        gid = st.st_gid
+        mode = stat.S_IMODE(st.st_mode)
+        return uid, gid, mode
 
     def apply(self, shell):
         name = self.resource.name
@@ -40,11 +69,17 @@ class Link(provider.Provider):
         mode = None
         isalink = False
 
+        if not os.path.exists(to):
+            raise error.DanglingSymlink("Destination of symlink %r does not exist" % to)
+
+        owner = self._get_owner()
+        group = self._get_group()
+
         try:
             linkto = os.readlink(name)
             isalink = True
         except OSError:
-            pass
+            isalink = False
 
         if isalink:
             if linkto != to:
@@ -56,27 +91,27 @@ class Link(provider.Provider):
                 shell.execute(["rm", "-rf", name])
             else:
                 shell.execute(["ln", "-s", self.resource.to, name])
-                isalink = True
+
+        try:
+            linkto = os.readlink(name)
+            isalink = True
+        except OSError:
+            isalink = False
+
+        if not isalink:
+            raise error.OperationFailed("Did not create expected symbolic link")
 
         if isalink:
-            st = os.lstat(name)
-            uid = st.st_uid
-            gid = st.st_gid
-            mode = stat.S_IMODE(st.st_mode)
+            uid, gid, mode = self._stat()
 
-        if self.resource.owner is not None:
-            owner = pwd.getpwnam(self.resource.owner)
-            if owner.pw_uid != uid:
-                shell.execute(["chown", "-h", self.resource.owner, name])
+        if owner is not None and owner != uid:
+            shell.execute(["chown", "-h", self.resource.owner, name])
 
-        if self.resource.group is not None:
-            group = grp.getgrnam(self.resource.group)
-            if group.gr_gid != gid:
-                shell.execute(["chgrp", "-h", self.resource.group, name])
+        if group is not None and group != gid:
+            shell.execute(["chgrp", "-h", self.resource.group, name])
 
-        if self.resource.mode is not None:
-            if mode != self.resource.mode:
-                shell.execute(["chmod", "%o" % self.resource.mode, name])
+        if self.resource.mode is not None and mode != self.resource.mode:
+            shell.execute(["chmod", "%o" % self.resource.mode, name])
 
 class RemoveLink(provider.Provider):
 
