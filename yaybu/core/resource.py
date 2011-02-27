@@ -222,7 +222,6 @@ class ResourceBundle(ordereddict.OrderedDict):
                 if j > i:
                     raise error.BindingError("Attempt to bind forwards on %r" % resource)
 
-
     def apply(self, shell, config):
         """ Apply the resources to the system, using the provided shell and
         overall configuration. """

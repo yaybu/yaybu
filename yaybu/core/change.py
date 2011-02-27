@@ -5,6 +5,8 @@ import abc
 import sys
 import logging
 
+from yaybu.core import error
+
 logger = logging.getLogger("audit")
 simlog = logging.getLogger("simulation")
 
@@ -113,13 +115,15 @@ class ResourceChange(object):
         self.exc_type = exc_type
         self.exc_val = exc_val
         self.exc_tb = exc_tb
+        if self.exc_val is not None:
+            self.notice("Exception: %s" % self.exc_val)
         self.changelog.current_resource = None
         if self.rendered:
             self.render_resource_footer()
         if self.html_messages:
             self.changelog.write("<h2>%s</h2>" % self.resource)
             self.changelog.write("<ol>")
-            for level, msg in self.messages:
+            for level, msg in self.html_messages:
                 if level == 0:
                     self.changelog.write("<li>%s</li>" % msg)
                 elif level == 1:

@@ -100,8 +100,11 @@ class Runner(object):
                           simulate=opts.simulate)
             self.resources.apply(shell, config)
             return 0
-        except error.Error, e:
-            traceback.print_exc()
+        except error.ExecutionError, e:
+            # this will have been reported by the context manager, so we wish to terminate
+            # but not to raise it further. Other exceptions should be fully reported with
+            # tracebacks etc automatically
+            print >>sys.stderr, "Terminated due to execution error in processing"
             return e.returncode
 
 def main():
