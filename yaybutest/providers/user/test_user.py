@@ -2,6 +2,7 @@ import os, shutil
 
 from yaybutest.utils import TestCase
 from yaybu.util import sibpath
+from yaybu.core import error
 
 
 class TestUser(TestCase):
@@ -20,6 +21,15 @@ class TestUser(TestCase):
                     name: test
                     home: /home/foo
             """)
+
+    def test_user_with_impossible_home(self):
+        rv = self.apply("""
+            resources:
+                - User:
+                    name: test
+                    home: /does/not/exist
+            """)
+        self.failUnless(rv == error.UserAddError.returncode)
 
     def test_user_with_uid(self):
         self.check_apply("""

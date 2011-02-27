@@ -87,6 +87,11 @@ class DanglingSymlink(ExecutionError):
     """ The destination of a symbolic link does not exist. """
     returncode = 144
 
+class UserAddError(ExecutionError):
+    """ An error from the useradd command. It has a bunch of error codes of
+    it's own. """
+    returncode = 145
+
 class SystemError(ExecutionError):
     """ An error represented by something in the errno list. """
 

@@ -50,7 +50,7 @@ class TestCase(testtools.TestCase):
     def check_apply(self, contents):
         rv = self.apply(contents)
         if rv != 0:
-            raise subprocess.CalledProcessError()
+            raise subprocess.CalledProcessError(rv, "yaybu")
 
     def setUp(self):
         super(TestCase, self).setUp()
