@@ -13,7 +13,10 @@ class Error(Exception):
     """ Base class for all yaybu specific exceptions. """
     returncode = 255
 
-    def __str__(self, msg):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
         return "%s: %s" % (self.__class__.__name__, self.msg)
 
 class ParseError(Error):
@@ -80,13 +83,14 @@ class BinaryMissing(ExecutionError):
     present where expected. """
     returncode = 143
 
+class DanglingSymlink(ExecutionError):
+    """ The destination of a symbolic link does not exist. """
+    returncode = 144
+
 class SystemError(ExecutionError):
     """ An error represented by something in the errno list. """
 
-    def __init__(self, msg, returncode):
-        self.msg = msg
-        if returncode in errno.errorcode:
-            self.returncode = returncode
-        else:
-            raise KeyError("Attempt to create a SystemError for unknown errno %d" % returncode)
-
+    def __init__(self, returncode):
+        # if the returncode is not in errno, this will blow up.
+        self.msg = errno.errorcode[returncode]
+        self.returncode = returncode

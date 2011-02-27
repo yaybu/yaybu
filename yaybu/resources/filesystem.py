@@ -27,8 +27,6 @@ from yaybu.core.argument import (
     Dict,
     )
 
-from yaybu.resources import stdarg
-
 """
 Failure Modes
 =============
@@ -81,14 +79,40 @@ class File(Resource):
     the provided specification.
     """
 
-    name = stdarg.Name()
-    owner = stdarg.owner
-    group = stdarg.group
-    mode = stdarg.mode
-    static = File(help="""A static file to copy into this resource. The file is located on the yaybu path, so can be colocated with your recipes.""")
-    template = File(help="""A jinja2 template, used to generate the contents of this resource. The template is located on the yaybu path, so can be colocated with your recipes""")
-    template_args = Dict(default={}, help="""The arguments passed to the template.""")
-    backup = String(help="""A fully qualified pathname to which to copy this resource before it is overwritten. If you wish to include a date or timestamp, specify format args such as {year}, {month}, {day}, {hour}, {minute}, {second}""")
+    name = String()
+    """The name of the file this resource represents."""
+
+    owner = String()
+    """A unix username or UID who will own created objects. An owner that
+    begins with a digit will be interpreted as a UID, otherwise it will be
+    looked up using the python 'pwd' module."""
+
+    group = String()
+    """A unix group or GID who will own created objects. A group that begins
+    with a digit will be interpreted as a GID, otherwise it will be looked up
+    using the python 'grp' module."""
+
+    mode = Octal()
+    """A mode representation as an octal. This can begin with leading zeros if
+    you like, but this is not required. DO NOT use yaml Octal representation
+    (0o666), this will NOT work."""
+
+    static = File()
+    """A static file to copy into this resource. The file is located on the
+    yaybu path, so can be colocated with your recipes."""
+
+    template = File()
+    """A jinja2 template, used to generate the contents of this resource. The
+    template is located on the yaybu path, so can be colocated with your
+    recipes"""
+
+    template_args = Dict(default={})
+    """The arguments passed to the template."""
+
+    backup = String()
+    """A fully qualified pathname to which to copy this resource before it is
+    overwritten. If you wish to include a date or timestamp, specify format
+    args such as {year}, {month}, {day}, {hour}, {minute}, {second}"""
 
 class FileAppliedPolicy(Policy):
 
@@ -119,10 +143,10 @@ class FileRemovePolicy(Policy):
                  )
 
 class Directory(Resource):
-    name = stdarg.Name()
-    owner = stdarg.owner
-    group = stdarg.group
-    mode = stdarg.mode
+    name = String()
+    owner = String()
+    group = String()
+    mode = Octal()
 
 class DirectoryAppliedPolicy(Policy):
     resource = Directory
@@ -160,13 +184,37 @@ class Link(Resource):
     to `to`. If you specify owner, group and/or mode then these settings will
     be applied to the link itself, not to the object linked to.
 
+    For example::
+
+      Link:
+        name: /etc/init.d/exampled
+        to: /usr/local/example/sbin/exampled
+        owner: root
+        group: root
+
     """
 
-    name = stdarg.Name()
-    owner = stdarg.owner
-    group = stdarg.group
+    name = String()
+    """The name of the file this resource represents."""
+
+    owner = String()
+    """A unix username or UID who will own created objects. An owner that
+    begins with a digit will be interpreted as a UID, otherwise it will be
+    looked up using the python 'pwd' module."""
+
+    group = String()
+    """A unix group or GID who will own created objects. A group that begins
+    with a digit will be interpreted as a GID, otherwise it will be looked up
+    using the python 'grp' module."""
+
     to = String()
+    """ The pathname to which to link the symlink. Dangling symlinks ARE
+    considered errors in Yaybu. """
+
     mode = Octal()
+    """A mode representation as an octal. This can begin with leading zeros if
+    you like, but this is not required. DO NOT use yaml Octal representation
+    (0o666), this will NOT work."""
 
 class LinkAppliedPolicy(Policy):
     resource = Link
