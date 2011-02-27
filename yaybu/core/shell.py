@@ -46,7 +46,7 @@ class ShellCommand(change.Change):
                                  )
             (self.stdout, self.stderr) = p.communicate(self.stdin)
             self.returncode = p.returncode
-            renderer.output(p.returncode, self.stdout, self.stderr)
+            renderer.output(p.returncode, self.stdout, self.stderr, self.passthru)
         except Exception, e:
             logging.error("Exception when running %r" % self.command)
             renderer.exception(e)
@@ -68,10 +68,10 @@ class ShellTextRenderer(change.TextRenderer):
                 cmd("{0}", l)
             cmd("---- {0} ends ----", name)
 
-    def output(self, returncode, stdout, stderr):
-        if self.verbose >= 1 and returncode != 0:
+    def output(self, returncode, stdout, stderr, passthru):
+        if self.verbose >= 1 and returncode != 0 and not passthru:
             self.logger.notice("returned {0}", returncode)
-        if self.verbose >= 2:
+        if self.verbose >= 2 and not passthru:
             self.render_output(self.logger.info, "stdout", stdout)
         if self.verbose >= 1:
             self.render_output(self.logger.info, "stderr", stderr)
