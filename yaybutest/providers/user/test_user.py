@@ -7,14 +7,14 @@ from yaybu.util import sibpath
 class TestUser(TestCase):
 
     def test_simple_user(self):
-        self.apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
             """)
 
     def test_user_with_home(self):
-        self.apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -22,7 +22,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_uid(self):
-        self.apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -30,7 +30,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_gid(self):
-        self.apply("""
+        self.check_apply("""
             resources:
                 - Group:
                     name: testgroup
@@ -41,7 +41,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_fullname(self):
-        self.apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -49,7 +49,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_password(self):
-        self.apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test

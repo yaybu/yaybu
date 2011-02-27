@@ -4,7 +4,7 @@ from yaybutest.utils import TestCase
 class TestDirectory(TestCase):
 
     def test_create_directory(self):
-        self.apply("""
+        self.check_apply("""
             resources:
               - Directory:
                   name: /etc/somedir

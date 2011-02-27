@@ -11,7 +11,7 @@ class TestExecute(TestCase):
         dst = os.path.join(self.chroot_path, "tmp", "files")
         shutil.copytree(src, dst)
 
-        self.apply("""
+        self.check_apply("""
             resources:
                 - Execute:
                     name: test

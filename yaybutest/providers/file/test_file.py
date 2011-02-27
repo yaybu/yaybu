@@ -7,7 +7,7 @@ import stat
 class TestFile(TestCase):
 
     def test_create_file(self):
-        self.apply("""
+        self.check_apply("""
             resources:
               - File:
                   name: /etc/somefile
@@ -18,7 +18,7 @@ class TestFile(TestCase):
         self.failUnlessExists("/etc/somefile")
 
     def test_attributes(self):
-        self.apply("""
+        self.check_apply("""
             resources:
               - File:
                   name: /etc/somefile2
@@ -34,7 +34,7 @@ class TestFile(TestCase):
         self.failUnless(mode == 0666)
 
     def test_create_file_template(self):
-        self.apply("""
+        self.check_apply("""
             resources:
                 - File:
                     name: /etc/templated
@@ -48,12 +48,12 @@ class TestFile(TestCase):
         self.failUnlessExists("/etc/templated")
 
     def test_remove_file(self):
-        self.apply("""
+        self.check_apply("""
             resources:
               - File:
                   name: /etc/toremove
             """)
-        self.apply("""
+        self.check_apply("""
             resources:
               - File:
                   name: /etc/toremove

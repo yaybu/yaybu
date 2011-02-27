@@ -47,6 +47,11 @@ class TestCase(testtools.TestCase):
         path = self.write_temporary_file(contents)
         return self.yaybu(path)
 
+    def check_apply(self, contents):
+        rv = self.apply(contents)
+        if rv != 0:
+            raise subprocess.CalledProcessError()
+
     def setUp(self):
         super(TestCase, self).setUp()
         self.chroot_path = os.path.realpath("tmp")

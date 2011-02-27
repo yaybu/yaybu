@@ -7,14 +7,14 @@ from yaybu.util import sibpath
 class TestGroup(TestCase):
 
     def test_simple_group(self):
-        self.apply("""
+        self.check_apply("""
             resources:
                 - Group:
                     name: test
             """)
 
     def test_group_with_gid(self):
-        self.apply("""
+        self.check_apply("""
             resources:
                 - Group:
                     name: test
