@@ -203,7 +203,7 @@ class ResourceBundle(ordereddict.OrderedDict):
         """ Maps - to _ to make resource attribute name more pleasant. """
         for k, v in kw.items():
             k = k.replace("-", "_")
-            yield k,v
+            yield str(k),v
 
     def _create(self, typename, instance):
         if not isinstance(instance, dict):
