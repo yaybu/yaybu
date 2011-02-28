@@ -83,14 +83,14 @@ class Link(provider.Provider):
 
         if isalink:
             if linkto != to:
-                shell.execute(["rm", name])
+                context.shell.execute(["rm", name])
                 isalink = False
 
         if not isalink:
             if os.path.exists(name):
-                shell.execute(["rm", "-rf", name])
+                context.shell.execute(["rm", "-rf", name])
             else:
-                shell.execute(["ln", "-s", self.resource.to, name])
+                context.shell.execute(["ln", "-s", self.resource.to, name])
 
         try:
             linkto = os.readlink(name)
@@ -105,13 +105,13 @@ class Link(provider.Provider):
             uid, gid, mode = self._stat()
 
         if owner is not None and owner != uid:
-            shell.execute(["chown", "-h", self.resource.owner, name])
+            context.shell.execute(["chown", "-h", self.resource.owner, name])
 
         if group is not None and group != gid:
-            shell.execute(["chgrp", "-h", self.resource.group, name])
+            context.shell.execute(["chgrp", "-h", self.resource.group, name])
 
         if self.resource.mode is not None and mode != self.resource.mode:
-            shell.execute(["chmod", "%o" % self.resource.mode, name])
+            context.shell.execute(["chmod", "%o" % self.resource.mode, name])
 
 class RemoveLink(provider.Provider):
 
@@ -121,11 +121,11 @@ class RemoveLink(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(RemoveLink, self).isvalid(*args, **kwargs)
 
-    def apply(self, shell):
+    def apply(self, context):
         if os.path.exists(self.resource.name):
             if not os.path.islink(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
-            shell.execute(["rm", self.resource.name])
+            context.shell.execute(["rm", self.resource.name])
             changed = True
         else:
             shell.changelog.info("File %s missing already so not removed" % self.resource.name)
