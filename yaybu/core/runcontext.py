@@ -30,7 +30,6 @@ class RunContext(object):
     simulate = False
     ypath = ()
     verbose = 0
-    html = None
 
     def __init__(self, configfile, opts=None):
         self.path = []
@@ -42,8 +41,6 @@ class RunContext(object):
             self.simulate = opts.simulate
             self.ypath = opts.ypath
             self.verbose = opts.verbose
-            if opts.html is not None:
-                self.html = open(opts.html, "w")
 
         if "PATH" in os.environ:
             for term in os.environ["PATH"].split(":"):

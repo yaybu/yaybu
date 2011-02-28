@@ -78,7 +78,6 @@ class Runner(object):
     def run(self, opts, args):
         try:
             if opts.debug:
-                opts.html = False
                 opts.logfile = "-"
                 opts.verbose = 2
             self.configure_logging(opts)
@@ -111,7 +110,6 @@ def main():
     parser.add_option("-d", "--debug", default=False, help="switch all logging to maximum, and write out to the console")
     parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
     parser.add_option("-v", "--verbose", default=1, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
-    parser.add_option("-H", "--html", default=None, help="Instead of writing progress information to the console, write an html progress log to this file.")
     parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
     parser.add_option("--remote", default=False, action="store_true", help="Run yaybu.protocol client on stdio")
 

@@ -32,9 +32,6 @@ wish to consult a changelog as a manual step to verify correct execution.
 The log is therefore formatted for easy review, rather than long term audit
 trailling - use the syslog facility for this, as described above.
 
-This log can be produced in text and/or html format. These logs can be written
-to file, or to the console.
-
 This log indicates the processing of resources, useful informational messages
 about processing decisions.  You can configure the following aspects of this log:
 
@@ -64,8 +61,6 @@ Invocation options related to logging
 
  *-d / --debug*
   switch all logging to maximum, and write out to the console
- *-h / --html*
-  Instead of writing progress information to the console, write an html progress log to this file."
  *-l / --logfile*
   The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.
  *-v / --verbose*

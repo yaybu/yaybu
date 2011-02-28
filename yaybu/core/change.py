@@ -26,7 +26,7 @@ class AttributeChange(Change):
 class ChangeRendererType(type):
 
     """ Keeps a registry of available renderers by type. The only types
-    supported are text and html and a class may not implement both. """
+    supported are text """
 
     renderers = {}
 
@@ -58,9 +58,6 @@ class ChangeRenderer:
     def render(self, logger):
         pass
 
-class HTMLRenderer(ChangeRenderer):
-    renderer_type = "html"
-
 class TextRenderer(ChangeRenderer):
     renderer_type = "text"
 
@@ -72,7 +69,6 @@ class ResourceChange(object):
     def __init__(self, changelog, resource):
         self.changelog = changelog
         self.resource = resource
-        self.html_messages = []
         self.rendered = False
 
     def __enter__(self):
@@ -105,12 +101,6 @@ class ResourceChange(object):
             self.render_resource_header()
             self.changelog.write("| %s" % message)
 
-    def html_info(self, message):
-        self.html_messages.append((0, message))
-
-    def html_notice(self, message):
-        self.html_messages.append((1, message))
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.exc_type = exc_type
         self.exc_val = exc_val
@@ -120,15 +110,6 @@ class ResourceChange(object):
         self.changelog.current_resource = None
         if self.rendered:
             self.render_resource_footer()
-        if self.html_messages:
-            self.changelog.write("<h2>%s</h2>" % self.resource)
-            self.changelog.write("<ol>")
-            for level, msg in self.html_messages:
-                if level == 0:
-                    self.changelog.write("<li>%s</li>" % msg)
-                elif level == 1:
-                    self.changelog.write("<li><b>%s</b></li>" % msg)
-            self.changelog.write("</ol>")
 
 class RendererMethodProxy:
 
@@ -161,12 +142,8 @@ class ChangeLog:
         self.verbose = self.ctx.verbose
 
     def write(self, line=""):
-        if self.ctx.html is not None:
-            self.ctx.html.write(line)
-            sys.stdout.write("\n")
-        else:
-            sys.stdout.write(line)
-            sys.stdout.write("\n")
+        sys.stdout.write(line)
+        sys.stdout.write("\n")
 
     def resource(self, resource):
         return ResourceChange(self, resource)
@@ -177,10 +154,6 @@ class ChangeLog:
         text_class = ChangeRendererType.renderers.get(("text", change.__class__), None)
         if text_class:
             renderers.append(text_class(self, self.verbose))
-        if self.ctx.html is not None:
-            html_class = ChangeRendererType.renderers.get(("html", change.__class__), None)
-            if html_class:
-                renderers.append(html_class(self, self.verbose))
         multi = MultiRenderer(*renderers)
         return change.apply(multi)
 
@@ -189,25 +162,10 @@ class ChangeLog:
         audit trail and the text console log. """
         formatted = message.format(*args, **kwargs)
         logger.info(formatted)
-        if self.ctx.html is None:
-            self.current_resource.info(formatted)
 
     def notice(self, message, *args, **kwargs):
         """ Write a textual notification message. This is used for both the
         audit trail and the text console log. """
         formatted = message.format(*args, **kwargs)
         logger.warning(formatted)
-        if self.ctx.html is None:
-            self.current_resource.notice(formatted)
 
-    def html_info(self, message, *args, **kwargs):
-        """ Write an html information message. """
-        formatted = message.format(*args, **kwargs)
-        if self.ctx.html is not None:
-            self.current_resource.html_info(formatted)
-
-    def html_notice(self, message, *args, **kwargs):
-        """ Write an html notification message. """
-        formatted = message.format(*args, **kwargs)
-        if self.ctx.html is not None:
-            self.current_resource.html_notice(formatted)
