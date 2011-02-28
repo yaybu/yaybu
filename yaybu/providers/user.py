@@ -58,7 +58,7 @@ class User(provider.Provider):
 
         return info
 
-    def apply(self, shell):
+    def apply(self, context):
         info = self.get_user_info()
 
         command = ["usermod"] if info["exists"] else ["useradd"]
@@ -92,7 +92,7 @@ class User(provider.Provider):
 
         command.extend(["-m", self.resource.name])
 
-        returncode, stdout, stderr = shell.execute(command, exceptions=False)
+        returncode, stdout, stderr = context.execute(command, exceptions=False)
         if returncode != 0:
             raise error.UserAddError("useradd returned error code %d" % returncode)
 

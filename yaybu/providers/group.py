@@ -47,7 +47,7 @@ class Group(provider.Provider):
 
         return info
 
-    def apply(self, shell):
+    def apply(self, context):
         info = self.get_group_info()
 
         command = ["groupmod"] if info["exists"] else ["groupadd"]
@@ -57,7 +57,7 @@ class Group(provider.Provider):
 
         command.extend([self.resource.name])
 
-        returncode, stdout, stderr = shell.execute(command)
+        returncode, stdout, stderr = context.shell.execute(command)
         if returncode != 0:
             raise error.GroupError("%s failed with return code %d" % (self.resource, returncode))
 
