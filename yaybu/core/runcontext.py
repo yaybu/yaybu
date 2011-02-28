@@ -19,6 +19,8 @@ import json
 import yay
 
 from yaybu.core.protocol.client import HTTPConnection
+from yaybu.core.shell import Shell
+from yaybu.core import change
 
 logger = logging.getLogger("runcontext")
 
@@ -32,6 +34,7 @@ class RunContext(object):
     def __init__(self, configfile, opts=None):
         self.path = []
         self.ypath = []
+
         if opts is not None:
             logger.debug("Invoked with ypath: %r" % opts.ypath)
             logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
@@ -52,6 +55,17 @@ class RunContext(object):
             self.ypath.append(os.getcwd())
 
         self.configfile = configfile
+
+        self.setup_shell()
+        self.setup_changelog()
+
+    def setup_shell(self):
+        self.shell = Shell(context=self,
+            verbose=self.verbose,
+            simulate=self.simulate)
+
+    def setup_changelog(self):
+        self.changelog = change.ChangeLog(self)
 
     def locate(self, paths, filename):
         if filename.startswith("/"):

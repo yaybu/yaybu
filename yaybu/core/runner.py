@@ -23,8 +23,6 @@ import subprocess
 
 import yay
 
-from yaybu.core.shell import Shell
-from yaybu.core import change
 from yaybu.core import resource
 from yaybu.core import error
 from yaybu.core import remote
@@ -94,11 +92,8 @@ class Runner(object):
 
             self.resources = resource.ResourceBundle(config.get("resources", []))
             self.resources.bind()
-            shell = Shell(context=ctx,
-                          changelog=change.ChangeLog(ctx),
-                          verbose=opts.verbose,
-                          simulate=opts.simulate)
-            self.resources.apply(shell, config)
+            self.resources.apply(ctx, config)
+
             return 0
         except error.ExecutionError, e:
             # this will have been reported by the context manager, so we wish to terminate
