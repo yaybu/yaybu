@@ -1,7 +1,15 @@
 import os, shlex, subprocess, tempfile, time
 import testtools
 
-def run_commands(commands, base_image, distro='lucid'):
+def default_distro():
+    return {
+        "Ubuntu 9.10": "karmic",
+        "Ubuntu 10.04": "lucid",
+        "Ubuntu 10.10": "maverick",
+        "Ubuntu 11.04": "natty",
+        }[open("/etc/issue.net","r").read().strip()]
+
+def run_commands(commands, base_image, distro=None):
     for command in commands:
         command = command % dict(base_image=base_image, distro=distro)
         p = subprocess.Popen(shlex.split(command))
@@ -9,7 +17,8 @@ def run_commands(commands, base_image, distro='lucid'):
             raise SystemExit("Command failed")
 
 
-def build_environment(base_image, distro='karmic'):
+def build_environment(base_image):
+    distro = default_distro()
     commands = [
         "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,python-magic,ubuntu-keyring %(distro)s %(base_image)s",
         ]
