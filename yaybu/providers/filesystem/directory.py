@@ -33,7 +33,7 @@ class Directory(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Directory, self).isvalid(*args, **kwargs)
 
-    def apply(self, shell):
+    def apply(self, context):
         changed = False
         ac = AttributeChanger(shell,
                               self.resource.name,
@@ -41,9 +41,9 @@ class Directory(provider.Provider):
                               self.resource.group,
                               self.resource.mode)
         if not os.path.exists(self.resource.name):
-            shell.execute(["mkdir", self.resource.name])
+            context.shell.execute(["mkdir", self.resource.name])
             changed = True
-        ac.apply(shell)
+        ac.apply(context)
         if changed or ac.changed:
             return True
         else:
@@ -57,11 +57,11 @@ class RemoveDirectory(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(RemoveDirectory, self).isvalid(*args, **kwargs)
 
-    def apply(self, shell):
+    def apply(self, context):
         if os.path.exists(self.resource.name) and not os.path.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if os.path.exists(self.resource.name):
-            shell.execute(["rmdir", self.resource.name])
+            context.shell.execute(["rmdir", self.resource.name])
             changed = True
         else:
             changed = False
