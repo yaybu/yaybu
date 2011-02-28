@@ -105,6 +105,9 @@ class RemoteRunContext(RunContext):
         super(RemoteRunContext, self).__init__(opts)
         self.connection = HTTPConnection()
 
+    def setup_changelog(self):
+        self.changelog = change.RemoteChangeLog(self)
+
     def get_config(self):
         self.connection.request("GET", "/config")
         rsp = self.connection.getresponse()

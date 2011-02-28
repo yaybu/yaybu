@@ -169,3 +169,20 @@ class ChangeLog:
         formatted = message.format(*args, **kwargs)
         logger.warning(formatted)
 
+
+class RemoteChangeLog(ChangeLog):
+
+    def write(self, line=""):
+        self.ctx.connection.request("POST", "/changelog/write", line)
+        rsp = self.connection.getresponse()
+
+    def info(self, message, *args, **kwargs):
+        formatted = message.format(*args, **kwargs)
+        self.ctx.connection.request("POST", "/changelog/info", formatted)
+        rsp = self.connection.getresponse()
+
+    def notice(self, message, *args, **kwargs):
+        formatted = message.format(*args, **kwargs)
+        self.ctx.connection.request("POST", "/changelog/notice", formatted)
+        rsp = self.connection.getresponse()
+
