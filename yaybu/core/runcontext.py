@@ -93,6 +93,10 @@ class RunContext(object):
     def get_config(self):
         return yay.load_uri(self.configfile)
 
+    def get_decrypted_file(self, filename):
+        p = subprocess.Popen(["gpg", "-d", self.locate_file(filename)], stdout=subprocess.PIPE)
+        return p.stdout
+
     def get_file(self, filename):
         return open(self.locate_file(filename), 'rb')
 
@@ -107,6 +111,12 @@ class RemoteRunContext(RunContext):
         self.connection.request("GET", "/config")
         rsp = self.connection.getresponse()
         return json.load(rsp)
+
+    def get_decrypted_file(self, filename):
+        self.connection.request("GET", "/encrypted/" + filename)
+        rsp = self.connection.getresponse()
+
+        return rsp
 
     def get_file(self, filename):
         self.connection.request("GET", "/files/" + filename)

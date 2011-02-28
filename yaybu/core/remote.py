@@ -18,7 +18,7 @@ import json
 import yay
 
 from yaybu.core.protocol.server import Server, HttpResource, StaticResource
-from yaybu.core.protocol.file import FileResource
+from yaybu.core.protocol.file import FileResource, EncryptedResource
 from yaybu.core.runcontext import RunContext
 
 
@@ -32,6 +32,7 @@ class RemoteRunner(object):
         root = HttpResource()
         root.put_child("config", StaticResource(json.dumps(rc.get_config())))
         root.put_child("files", FileResource())
+        root.put_child("encrypted", EncryptedResource())
         #root.put_child("changelog", Changelog())
 
         Server(rc, root, p.stdout, p.stdin).serve_forever()

@@ -181,6 +181,8 @@ class File(provider.Provider):
             contents = template.render(**self.resource.template_args)
         elif self.resource.static:
             contents = context.get_file(self.resource.static).read()
+        elif self.resource.encrypted:
+            contents = context.get_decrypted_file(self.resource.encrypted).read()
         else:
             contents = None
 

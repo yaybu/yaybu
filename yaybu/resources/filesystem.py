@@ -101,6 +101,10 @@ class File(Resource):
     """A static file to copy into this resource. The file is located on the
     yaybu path, so can be colocated with your recipes."""
 
+    encrypted = File()
+    """A static encrypted file to copy to this resource. The file is located
+    on the yaybu path, so can be colocated with your recipe."""
+
     template = File()
     """A jinja2 template, used to generate the contents of this resource. The
     template is located on the yaybu path, so can be colocated with your
@@ -121,7 +125,8 @@ class FileAppliedPolicy(Policy):
     default = True
     signature = (Present("name"),
                  NAND(Present("template"),
-                      Present("static")),
+                      Present("static"),
+                      Present("encrypted")),
                  NAND(Present("backup"),
                       Present("dated_backup")),
                  )
@@ -136,6 +141,7 @@ class FileRemovePolicy(Policy):
                  Absent("group"),
                  Absent("mode"),
                  Absent("static"),
+                 Absent("encrypted"),
                  Absent("template"),
                  Absent("template_args"),
                  NAND(Present("backup"),

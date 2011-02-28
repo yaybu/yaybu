@@ -40,3 +40,19 @@ class FileResource(HttpResource):
 
         request.write_fileobj(f)
 
+
+class EncryptedResource(HttpResource):
+
+    leaf = True
+
+    def render_GET(self, yaybu, request, restpath):
+        contents = yaybu.get_decrypted_file(restpath).read()
+
+        request.send_response(200, "OK")
+        request.send_header("Content-Type", "application/octect-stream")
+        request.send_header("Content-Length", str(len(contents)))
+        request.send_header("Content", "keep-alive")
+        request.end_headers()
+
+        request.wfile.write(contents)
+
