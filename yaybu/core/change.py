@@ -173,7 +173,7 @@ class ChangeLog:
 class RemoteChangeLog(ChangeLog):
 
     def write(self, line=""):
-        self.ctx.connection.request("POST", "/changelog/write", line, {"Content-Length": len(formatted)})
+        self.ctx.connection.request("POST", "/changelog/write", line, {"Content-Length": len(line)})
         rsp = self.ctx.connection.getresponse()
 
     def info(self, message, *args, **kwargs):
