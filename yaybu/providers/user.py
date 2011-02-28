@@ -92,7 +92,7 @@ class User(provider.Provider):
 
         command.extend(["-m", self.resource.name])
 
-        returncode, stdout, stderr = context.execute(command, exceptions=False)
+        returncode, stdout, stderr = context.shell.execute(command, exceptions=False)
         if returncode != 0:
             raise error.UserAddError("useradd returned error code %d" % returncode)
 
