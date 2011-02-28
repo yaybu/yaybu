@@ -31,31 +31,31 @@ class Svn(Provider):
     def url(self):
         return self.resource.repository + "/" + self.resource.branch
 
-    def action_checkout(self, shell):
+    def action_checkout(self, context):
         if os.path.exists(self.resource.name):
             return
 
         log.info("Checking out %s" % self.resource)
-        self.svn(shell, ["--quiet", "co"], self.url, self.resource.name)
+        self.svn(context, ["--quiet", "co"], self.url, self.resource.name)
         return True
 
-    def apply(self, shell):
+    def apply(self, context):
         if not os.path.exists(self.resource.name):
-            return self.action_checkout(shell)
+            return self.action_checkout(context)
 
         log.info("Syncing %s" % self.resource)
 
         changed = False
 
-        info = self.info(shell, self.resource.name)
-        repo_info = self.info(shell, self.url)
+        info = self.info(context, self.resource.name)
+        repo_info = self.info(context, self.url)
 
         # If the 'Repository Root' is different between the checkout and the repo, switch --relocated
         old_repo_root = info["Repository Root"]
         new_repo_root = repo_info["Repository Root"]
         if old_repo_root != new_repo_root:
             log.info("Switching repository root from '%s' to '%s'" % (old_repo_root, new_repo_root))
-            self.svn(shell, ["--quiet", "switch"], "--relocate", old_repo_root, new_repo_root, self.resource.name)
+            self.svn(context, ["--quiet", "switch"], "--relocate", old_repo_root, new_repo_root, self.resource.name)
             changed = True
 
         # If we have changed branch, switch
@@ -63,7 +63,7 @@ class Svn(Provider):
         new_url = repo_info["URL"]
         if old_url != new_url:
             log.info("Switching branch from '%s' to '%s'" % (old_url, new_url))
-            self.svn(shell, ["--quiet", "switch"], new_url, self.resource.name)
+            self.svn(context, ["--quiet", "switch"], new_url, self.resource.name)
             changed = True
 
         # If we have changed revision, svn up
@@ -72,16 +72,16 @@ class Svn(Provider):
         target_rev = repo_info["Last Changed Rev"]
         if current_rev != target_rev:
             log.info("Switching revision from %s to %s" % (current_rev, target_rev))
-            self.svn(shell, ["--quiet", "up"], "-r", target_rev, self.resource.name)
+            self.svn(context, ["--quiet", "up"], "-r", target_rev, self.resource.name)
             changed = True
 
         return changed
 
-    def action_export(self, shell):
+    def action_export(self, context):
         if os.path.exists(self.resource.name):
             return
         log.info("Exporting %s" % self.resource)
-        self.svn(shell, ["export"], self.url, self.resource.name)
+        self.svn(context, ["export"], self.url, self.resource.name)
         #self.resource.updated()
 
     def get_svn_args(self, action, *args):
@@ -99,13 +99,13 @@ class Svn(Provider):
         command.extend(list(args))
         return command
 
-    def info(self, shell, uri):
+    def info(self, context, uri):
         command = self.get_svn_args(["info"], uri)
-        returncode, stdout, stderr = shell.execute(command, passthru=True)
+        returncode, stdout, stderr = context.shell.execute(command, passthru=True)
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
-    def svn(self, shell, action, *args):
+    def svn(self, context, action, *args):
         command = self.get_svn_args(action, *args)
-        return shell.execute(command)
+        return context.shell.execute(command)
 
 
