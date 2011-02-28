@@ -60,7 +60,7 @@ class Link(provider.Provider):
         mode = stat.S_IMODE(st.st_mode)
         return uid, gid, mode
 
-    def apply(self, shell):
+    def apply(self, context):
         name = self.resource.name
         to = self.resource.to
         exists = False
