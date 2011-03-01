@@ -28,7 +28,14 @@ class RemoteRunner(object):
     def run(self, opt, args):
         rc = RunContext(args[0], opt)
 
-        p = subprocess.Popen(["ssh", "-A", opt.host, "yaybu", "--remote", "-"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        command = ["ssh", "-A", opt.host, "yaybu", "--remote"]
+
+        if opt.user:
+            command.extend(["--user", opt.user])
+
+        command.append("-")
+
+        p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
         root = HttpResource()
         root.put_child("config", StaticResource(json.dumps(rc.get_config())))
