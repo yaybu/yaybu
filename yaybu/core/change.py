@@ -106,7 +106,7 @@ class ResourceChange(object):
         self.exc_val = exc_val
         self.exc_tb = exc_tb
         if self.exc_val is not None:
-            self.notice("Exception: %s" % self.exc_val)
+            self.notice("Exception: %s" % (self.exc_val,))
         self.changelog.current_resource = None
         if self.rendered:
             self.render_resource_footer()

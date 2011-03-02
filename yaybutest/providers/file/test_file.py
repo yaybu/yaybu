@@ -80,3 +80,24 @@ class TestFile(TestCase):
         self.assertEqual(rv, 255)
 
 
+    def test_carriage_returns(self):
+        """ a template that does not end in \n will still result in a file ending in \n """
+        open(self.enpathinate("/etc/test_carriage_returns"), "w").write("foo\n")
+        rv = self.apply("""
+            resources:
+                - File:
+                    name: /etc/test_carriage_returns
+                    template: package://yaybutest.providers.file/test_carriage_returns.j2
+            """)
+        self.assertEqual(rv, 255) # nothing changed
+
+    def test_carriage_returns2(self):
+        """ a template that does end in \n will not gain an extra \n in the resulting file"""
+        open(self.enpathinate("/etc/test_carriage_returns2"), "w").write("foo\n")
+        rv = self.apply("""
+            resources:
+                - File:
+                    name: /etc/test_carriage_returns2
+                    template: package://yaybutest.providers.file/test_carriage_returns2.j2
+            """)
+        self.assertEqual(rv, 255) # nothing changed
