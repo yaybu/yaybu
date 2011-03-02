@@ -161,13 +161,13 @@ class ChangeLog:
         """ Write a textual information message. This is used for both the
         audit trail and the text console log. """
         formatted = message.format(*args, **kwargs)
-        logger.info(formatted)
+        self.current_resource.info(formatted)
 
     def notice(self, message, *args, **kwargs):
         """ Write a textual notification message. This is used for both the
         audit trail and the text console log. """
         formatted = message.format(*args, **kwargs)
-        logger.warning(formatted)
+        self.current_resource.notice(formatted)
 
 
 class RemoteChangeLog(ChangeLog):
