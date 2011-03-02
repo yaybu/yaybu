@@ -18,7 +18,12 @@ import pwd
 import grp
 import difflib
 import logging
-import magic
+import string
+
+try:
+    import magic
+except ImportError:
+    magic = None
 
 from jinja2 import Template
 
@@ -30,10 +35,15 @@ def binary_buffers(*buffers):
 
     """ Check all of the passed buffers to see if any of them are binary. If
     any of them are binary this will return True. """
-    ms = magic.open(magic.MAGIC_NONE)
-    ms.load()
+    if not magic:
+        check = lambda buff: any((c in string.printable) for c in buff)
+    else:
+        ms = magic.open(magic.MAGIC_NONE)
+        ms.load()
+        check = lambda buff: ms.buffer(buff).endswith("text")
+
     for buff in buffers:
-        if not ms.buffer(buff).endswith("text"):
+        if not check(buff):
             return True
     return False
 
