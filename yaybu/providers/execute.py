@@ -47,7 +47,7 @@ class Execute(provider.Provider):
         if expected_returncode != returncode:
             raise error.CommandError("%s failed with return code %d" % (self.resource, returncode))
 
-    def apply(self, shell):
+    def apply(self, context):
         if self.resource.creates is not None \
            and os.path.exists(self.resource.creates):
             #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
@@ -55,10 +55,10 @@ class Execute(provider.Provider):
 
         commands = [self.resource.command] if self.resource.command else self.resource.commands
         for command in commands:
-            self.execute(shell, command)
+            self.execute(context.shell, command)
 
         if self.resource.creates is not None:
-            shell.execute(["touch", self.resource.creates])
+            context.execute(["touch", self.resource.creates])
 
         return True
 

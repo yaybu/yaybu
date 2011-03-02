@@ -41,8 +41,8 @@ class AttributeChanger(change.Change):
 
     """ Make the changes required to a file's attributes """
 
-    def __init__(self, shell, filename, user=None, group=None, mode=None):
-        self.shell = shell
+    def __init__(self, context, filename, user=None, group=None, mode=None):
+        self.context = context
         self.filename = filename
         self.user = user
         self.group = group
@@ -64,16 +64,16 @@ class AttributeChanger(change.Change):
         if self.user is not None:
             owner = pwd.getpwnam(self.user)
             if owner.pw_uid != uid:
-                self.shell.execute(["chown", self.user, self.filename])
+                self.context.shell.execute(["chown", self.user, self.filename])
                 self.changed = True
         if self.group is not None:
             group = grp.getgrnam(self.group)
             if group.gr_gid != gid:
-                self.shell.execute(["chgrp", self.group, self.filename])
+                self.context.shell.execute(["chgrp", self.group, self.filename])
                 self.changed = True
         if self.mode is not None:
             if mode != self.mode:
-                self.shell.execute(["chmod", "%o" % self.mode, self.filename])
+                self.context.shell.execute(["chmod", "%o" % self.mode, self.filename])
                 self.changed = True
 
 class FileContentChanger(change.Change):
@@ -82,8 +82,8 @@ class FileContentChanger(change.Change):
     catered for. Additionally the minimum changes required to the contents are
     applied, and logs of the changes made are recorded. """
 
-    def __init__(self, shell, filename, contents, backup_filename=None):
-        self.shell = shell
+    def __init__(self, context, filename, contents, backup_filename=None):
+        self.context = context
         self.filename = filename
         self.backup_filename = backup_filename
         self.current = ""
@@ -95,12 +95,12 @@ class FileContentChanger(change.Change):
         """ Write an empty file """
         exists = os.path.exists(self.filename)
         if not exists:
-            self.shell.execute(["touch", self.filename])
+            self.context.shell.execute(["touch", self.filename])
             self.changed = True
         else:
             st = os.stat(self.filename)
             if st.st_size != 0:
-                if self.shell.simulate:
+                if self.context.simulate:
                     self.renderer.simulation_info("Emptying contents of file {0!r}" % self.filename)
                 else:
                     self.renderer.empty_file(self.filename)
@@ -111,7 +111,7 @@ class FileContentChanger(change.Change):
         """ Change the content of an existing file """
         self.current = open(self.filename).read()
         if self.current != self.contents:
-            if self.shell.simulate:
+            if self.context.simulate:
                 self.renderer.simulation_info("Overwriting new file '%s':" % self.filename)
                 if not binary_buffers(self.contents):
                     for l in self.contents.splitlines():
@@ -122,7 +122,7 @@ class FileContentChanger(change.Change):
 
     def write_new_file(self):
         """ Write contents to a new file. """
-        if self.shell.simulate:
+        if self.context.simulate:
             self.renderer.simulation_info("Writing new file '%s':" % self.filename)
             if not binary_buffers(self.contents):
                 for l in self.contents.splitlines():
@@ -173,25 +173,27 @@ class File(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(File, self).isvalid(*args, **kwargs)
 
-    def apply(self, shell):
+    def apply(self, context):
         name = self.resource.name
 
         if self.resource.template:
-            template = Template(shell.context.get_file(self.resource.template).read())
+            template = Template(context.get_file(self.resource.template).read())
             contents = template.render(**self.resource.template_args)
         elif self.resource.static:
-            contents = shell.context.get_file(self.resource.static).read()
+            contents = context.get_file(self.resource.static).read()
+        elif self.resource.encrypted:
+            contents = context.get_decrypted_file(self.resource.encrypted).read()
         else:
             contents = None
 
-        fc = FileContentChanger(shell, self.resource.name, contents)
-        shell.changelog.apply(fc)
-        ac = AttributeChanger(shell,
+        fc = FileContentChanger(context, self.resource.name, contents)
+        context.changelog.apply(fc)
+        ac = AttributeChanger(context,
                               self.resource.name,
                               self.resource.owner,
                               self.resource.group,
                               self.resource.mode)
-        shell.changelog.apply(ac)
+        context.changelog.apply(ac)
         if fc.changed or ac.changed:
             return True
 
@@ -202,14 +204,14 @@ class RemoveFile(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(RemoveFile, self).isvalid(*args, **kwargs)
 
-    def apply(self, shell):
+    def apply(self, context):
         if os.path.exists(self.resource.name):
             if not os.path.isfile(self.resource.name):
                 raise error.InvalidProviderError("%r: %s exists and is not a file" % (self, self.resource.name))
-            shell.execute(["rm", self.resource.name])
+            context.shell.execute(["rm", self.resource.name])
             changed = True
         else:
-            shell.changelog.info("File %s missing already so not removed" % self.resource.name)
+            context.shell.changelog.info("File %s missing already so not removed" % self.resource.name)
             changed = False
         return changed
 

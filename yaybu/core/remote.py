@@ -18,7 +18,8 @@ import json
 import yay
 
 from yaybu.core.protocol.server import Server, HttpResource, StaticResource
-from yaybu.core.protocol.file import FileResource
+from yaybu.core.protocol.file import FileResource, EncryptedResource
+from yaybu.core.protocol.changelog import ChangeLogResource
 from yaybu.core.runcontext import RunContext
 
 
@@ -27,12 +28,20 @@ class RemoteRunner(object):
     def run(self, opt, args):
         rc = RunContext(args[0], opt)
 
-        p = subprocess.Popen(["ssh", "-A", opt.host, "yaybu", "--remote", "-"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        command = ["ssh", "-A", opt.host, "yaybu", "--remote"]
+
+        if opt.user:
+            command.extend(["--user", opt.user])
+
+        command.append("-")
+
+        p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
         root = HttpResource()
         root.put_child("config", StaticResource(json.dumps(rc.get_config())))
         root.put_child("files", FileResource())
-        #root.put_child("changelog", Changelog())
+        root.put_child("encrypted", EncryptedResource())
+        root.put_child("changelog", ChangeLogResource())
 
         Server(rc, root, p.stdout, p.stdin).serve_forever()
 

@@ -84,11 +84,10 @@ class Shell(object):
     """ This object wraps a shell in yet another shell. When the shell is
     switched into "simulate" mode it can just print what would be done. """
 
-    def __init__(self, context, changelog, verbose=0, simulate=False):
-        self.simulate = simulate
+    def __init__(self, context, verbose=0, simulate=False):
+        self.simulate = context.simulate
+        self.verbose = context.verbose
         self.context = context
-        self.changelog = changelog
-        self.verbose = verbose
 
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
@@ -98,9 +97,9 @@ class Shell(object):
             simlog.info(" ".join(command))
             return (0, "", "")
         cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru)
-        self.changelog.apply(cmd)
+        self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
-            self.changelog.info(cmd.stdout)
-            self.changelog.notice(cmd.stderr)
+            self.context.changelog.info(cmd.stdout)
+            self.context.changelog.notice(cmd.stderr)
             raise error.SystemError(cmd.returncode)
         return (cmd.returncode, cmd.stdout, cmd.stderr)

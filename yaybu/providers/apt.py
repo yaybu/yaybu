@@ -24,11 +24,11 @@ class Apt(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Apt, self).isvalid(*args, **kwargs)
 
-    def apply(self, shell):
+    def apply(self, context):
 
         # work out if the package is already installed
         command = ["dpkg", "-s", self.resource.name]
-        returncode, stdout, stderr = shell.execute(command, exceptions=False, passthru=True)
+        returncode, stdout, stderr = context.shell.execute(command, exceptions=False, passthru=True)
 
         # if the return code is 0, the package is installed
         if returncode == 0:
@@ -41,7 +41,7 @@ class Apt(provider.Provider):
 
         # the search returned 1, package is not installed, continue and install it
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
-        returncode, stdout, stderr = shell.execute(command)
+        returncode, stdout, stderr = context.shell.execute(command)
 
         if returncode != 0:
             raise error.AptError("%s failed with return code %d" % (self.resource, returncode))

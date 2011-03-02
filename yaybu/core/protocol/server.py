@@ -27,6 +27,11 @@ class RequestHandler(BaseHTTPRequestHandler):
     def address_string(self):
         return 'stdio'
 
+    def log_message(self, format, *args):
+        # Uncomment to get HTTP request logs
+        # super(RequestHandler, self).log_message(format, *args)
+        return
+
     def handle_one_request(self):
         self.raw_requestline = self.rfile.readline()
         if not self.raw_requestline:

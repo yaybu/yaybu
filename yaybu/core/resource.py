@@ -111,7 +111,7 @@ class Resource(object):
         provider.isvalid(this_policy, self, yay)
         return True
 
-    def apply(self, shell, yay=None, policy=None):
+    def apply(self, context, yay=None, policy=None):
         """ Apply the provider for the selected policy, and then fire any
         events that are being observed. """
         if yay is None:
@@ -123,7 +123,7 @@ class Resource(object):
             pol = pol_class(self)
         prov_class = pol.get_provider(yay)
         prov = prov_class(self)
-        changed = prov.apply(shell)
+        changed = prov.apply(context)
         if changed:
             self.fire_event(pol.name)
         return changed
@@ -205,7 +205,7 @@ class ResourceBundle(ordereddict.OrderedDict):
         """ Maps - to _ to make resource attribute name more pleasant. """
         for k, v in kw.items():
             k = k.replace("-", "_")
-            yield k,v
+            yield str(k),v
 
     def _create(self, typename, instance):
         if not isinstance(instance, dict):

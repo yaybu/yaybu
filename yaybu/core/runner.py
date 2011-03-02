@@ -20,11 +20,10 @@ import logging.handlers
 import collections
 import traceback
 import subprocess
+import getpass
 
 import yay
 
-from yaybu.core.shell import Shell
-from yaybu.core import change
 from yaybu.core import resource
 from yaybu.core import error
 from yaybu.core import remote
@@ -77,10 +76,23 @@ class Runner(object):
             simhandler.setFormatter(simformatter)
             simlog.addHandler(simhandler)
 
+    def trampoline(self, username):
+        command = ["sudo", "-u", username] + sys.argv[0:1]
+
+        if "SSH_AUTH_SOCK" in os.environ:
+            command.extend(["--ssh-auth-sock", os.environ["SSH_AUTH_SOCK"]])
+
+        command.extend(sys.argv[1:])
+
+        os.execvp(command[0], command)
+
     def run(self, opts, args):
         try:
+            if opts.user and getpass.getuser() != opts.user:
+                self.trampoline(opts.user)
+                return 0
+
             if opts.debug:
-                opts.html = False
                 opts.logfile = "-"
                 opts.verbose = 2
             self.configure_logging(opts)
@@ -94,10 +106,6 @@ class Runner(object):
 
             self.resources = resource.ResourceBundle(config.get("resources", []))
             self.resources.bind()
-            shell = Shell(context=ctx,
-                          changelog=change.ChangeLog(ctx),
-                          verbose=opts.verbose,
-                          simulate=opts.simulate)
             if not self.resources.apply(shell, config):
                 # nothing changed
                 sys.exit(255)
@@ -118,10 +126,10 @@ def main():
     parser.add_option("-d", "--debug", default=False, help="switch all logging to maximum, and write out to the console")
     parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
     parser.add_option("-v", "--verbose", default=1, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
-    parser.add_option("-H", "--html", default=None, help="Instead of writing progress information to the console, write an html progress log to this file.")
     parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
+    parser.add_option("-u", "--user", default=None, action="store", help="User to attempt to run as")
     parser.add_option("--remote", default=False, action="store_true", help="Run yaybu.protocol client on stdio")
-
+    parser.add_option("--ssh-auth-sock", default=None, action="store", help="Path to SSH Agent socket")
     opts, args = parser.parse_args()
 
     if len(args) != 1:

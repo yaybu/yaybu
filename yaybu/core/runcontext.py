@@ -15,10 +15,13 @@
 import os
 import logging
 import json
+import subprocess
 
 import yay
 
 from yaybu.core.protocol.client import HTTPConnection
+from yaybu.core.shell import Shell
+from yaybu.core import change
 
 logger = logging.getLogger("runcontext")
 
@@ -27,19 +30,17 @@ class RunContext(object):
     simulate = False
     ypath = ()
     verbose = 0
-    html = None
 
     def __init__(self, configfile, opts=None):
         self.path = []
         self.ypath = []
+
         if opts is not None:
             logger.debug("Invoked with ypath: %r" % opts.ypath)
             logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
             self.simulate = opts.simulate
             self.ypath = opts.ypath
             self.verbose = opts.verbose
-            if opts.html is not None:
-                self.html = open(opts.html, "w")
 
         if "PATH" in os.environ:
             for term in os.environ["PATH"].split(":"):
@@ -52,6 +53,17 @@ class RunContext(object):
             self.ypath.append(os.getcwd())
 
         self.configfile = configfile
+
+        self.setup_shell()
+        self.setup_changelog()
+
+    def setup_shell(self):
+        self.shell = Shell(context=self,
+            verbose=self.verbose,
+            simulate=self.simulate)
+
+    def setup_changelog(self):
+        self.changelog = change.ChangeLog(self)
 
     def locate(self, paths, filename):
         if filename.startswith("/"):
@@ -79,6 +91,10 @@ class RunContext(object):
     def get_config(self):
         return yay.load_uri(self.configfile)
 
+    def get_decrypted_file(self, filename):
+        p = subprocess.Popen(["gpg", "-d", self.locate_file(filename)], stdout=subprocess.PIPE)
+        return p.stdout
+
     def get_file(self, filename):
         return open(self.locate_file(filename), 'rb')
 
@@ -89,10 +105,19 @@ class RemoteRunContext(RunContext):
         super(RemoteRunContext, self).__init__(opts)
         self.connection = HTTPConnection()
 
+    def setup_changelog(self):
+        self.changelog = change.RemoteChangeLog(self)
+
     def get_config(self):
         self.connection.request("GET", "/config")
         rsp = self.connection.getresponse()
         return json.load(rsp)
+
+    def get_decrypted_file(self, filename):
+        self.connection.request("GET", "/encrypted/" + filename)
+        rsp = self.connection.getresponse()
+
+        return rsp
 
     def get_file(self, filename):
         self.connection.request("GET", "/files/" + filename)
