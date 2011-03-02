@@ -91,10 +91,10 @@ class Link(provider.Provider):
 
         if not isalink:
             if os.path.exists(name):
-                context.execute(["rm", "-rf", name])
+                context.shell.execute(["rm", "-rf", name])
                 changed = True
             else:
-                context.execute(["ln", "-s", self.resource.to, name])
+                context.shell.execute(["ln", "-s", self.resource.to, name])
                 changed = True
         try:
             linkto = os.readlink(name)

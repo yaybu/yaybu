@@ -106,7 +106,7 @@ class Runner(object):
 
             self.resources = resource.ResourceBundle(config.get("resources", []))
             self.resources.bind()
-            if not self.resources.apply(shell, config):
+            if not self.resources.apply(ctx, config):
                 # nothing changed
                 sys.exit(255)
             sys.exit(0)
