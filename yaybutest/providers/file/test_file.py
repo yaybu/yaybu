@@ -4,6 +4,9 @@ import grp
 import os
 import stat
 
+def sibpath(filename):
+    return os.path.join(os.path.dirname(__file__), filename)
+
 class TestFile(TestCase):
 
     def test_create_file(self):
@@ -101,3 +104,6 @@ class TestFile(TestCase):
                     template: package://yaybutest.providers.file/test_carriage_returns2.j2
             """)
         self.assertEqual(rv, 255) # nothing changed
+
+    def test_unicode(self):
+        self.check_apply(open(sibpath("unicode1.yay")).read())

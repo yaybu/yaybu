@@ -1,6 +1,11 @@
 import os
 from yaybutest.utils import TestCase
 
+
+def sibpath(filename):
+    return os.path.join(os.path.dirname(__file__), filename)
+
+
 class TestDirectory(TestCase):
 
     def test_create_directory(self):
@@ -14,3 +19,6 @@ class TestDirectory(TestCase):
         self.failUnlessExists("/etc/somedir")
         path = self.enpathinate("/etc/somedir")
         self.failUnless(os.path.isdir(path))
+
+    def test_unicode(self):
+        self.check_apply(open(sibpath("unicode1.yay")).read())

@@ -3,6 +3,9 @@ import os
 from yaybutest.utils import TestCase
 from yaybu.core import error
 
+def sibpath(filename):
+    return os.path.join(os.path.dirname(__file__), filename)
+
 
 class TestLink(TestCase):
 
@@ -47,3 +50,6 @@ class TestLink(TestCase):
                  to: /etc/not_there
         """)
         self.assertEqual(rv, error.DanglingSymlink.returncode)
+
+    def test_unicode(self):
+        self.check_apply(open(sibpath("unicode1.yay")).read())

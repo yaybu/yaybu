@@ -1,0 +1,5 @@
+resources:
+    - Link:
+        name: £££££
+        to: /
+

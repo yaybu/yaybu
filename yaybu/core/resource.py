@@ -181,7 +181,7 @@ class Resource(object):
 
     def __repr__(self):
         classname = getattr(self, '__resource_name__', self.__class__.__name__)
-        return "%s[%s]" % (classname, self.name)
+        return "%s[%s]" % (classname, self.name.encode("utf-8"))
 
 class ResourceBundle(ordereddict.OrderedDict):
 

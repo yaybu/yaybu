@@ -4,6 +4,7 @@
 import abc
 import sys
 import logging
+import types
 
 from yaybu.core import error
 
@@ -142,7 +143,10 @@ class ChangeLog:
         self.verbose = self.ctx.verbose
 
     def write(self, line=""):
-        sys.stdout.write(line)
+        if type(line) is types.UnicodeType:
+            sys.stdout.write(line.encode("utf-8"))
+        else:
+            sys.stdout.write(line)
         sys.stdout.write("\n")
 
     def resource(self, resource):
