@@ -180,13 +180,3 @@ class RemoteChangeLog(ChangeLog):
         self.ctx.connection.request("POST", "/changelog/write", line, {"Content-Length": len(line)})
         rsp = self.ctx.connection.getresponse()
 
-    def info(self, message, *args, **kwargs):
-        formatted = message.format(*args, **kwargs)
-        self.ctx.connection.request("POST", "/changelog/info", formatted, {"Content-Length": len(formatted)})
-        rsp = self.ctx.connection.getresponse()
-
-    def notice(self, message, *args, **kwargs):
-        formatted = message.format(*args, **kwargs)
-        self.ctx.connection.request("POST", "/changelog/notice", formatted, {"Content-Length": len(formatted)})
-        rsp = self.ctx.connection.getresponse()
-
