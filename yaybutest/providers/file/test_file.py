@@ -31,7 +31,7 @@ class TestFile(TestCase):
         self.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
         self.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')
         mode = stat.S_IMODE(st.st_mode)
-        self.failUnless(mode == 0666)
+        self.assertEqual(mode, 0666)
 
     def test_create_file_template(self):
         self.check_apply("""
@@ -60,5 +60,23 @@ class TestFile(TestCase):
                   policy: remove
             """)
         self.failUnless(not os.path.exists(self.enpathinate("/etc/toremove")))
+
+
+    def test_empty(self):
+        open(self.enpathinate("/etc/foo"), "w").write("foo")
+        self.check_apply("""
+            resources:
+                - File:
+                    name: /etc/foo
+            """)
+
+    def test_empty_nochange(self):
+        open(self.enpathinate("/etc/foo"), "w").write("")
+        rv = self.apply("""
+            resources:
+                - File:
+                    name: /etc/foo
+            """)
+        self.assertEqual(rv, 255)
 
 

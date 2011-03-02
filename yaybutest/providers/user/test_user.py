@@ -29,7 +29,7 @@ class TestUser(TestCase):
                     name: test
                     home: /does/not/exist
             """)
-        self.failUnless(rv == error.UserAddError.returncode)
+        self.assertEqual(rv, error.UserAddError.returncode)
 
     def test_user_with_uid(self):
         self.check_apply("""

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 from argument import Argument, List, PolicyStructure, String
 import policy
 import error
@@ -125,6 +126,7 @@ class Resource(object):
         changed = prov.apply(shell)
         if changed:
             self.fire_event(pol.name)
+        return changed
 
     def fire_event(self, name):
         """ Apply the appropriate policies on the resources that are observing
@@ -225,6 +227,10 @@ class ResourceBundle(ordereddict.OrderedDict):
     def apply(self, shell, config):
         """ Apply the resources to the system, using the provided shell and
         overall configuration. """
+        something_changed = False
         for resource in self.values():
             with shell.changelog.resource(resource):
-                resource.apply(shell, config)
+                if resource.apply(shell, config):
+                    something_changed = True
+        return something_changed
+

@@ -3,11 +3,12 @@ from yaybutest.utils import TestCase
 class TestPackageInstallation(TestCase):
 
     def test_already_installed(self):
-        self.check_apply("""
+        rv = self.apply("""
             resources:
               - Package:
                   name: python
             """)
+        self.assertEqual(rv, 255)
 
     def test_installation(self):
         self.check_apply("""

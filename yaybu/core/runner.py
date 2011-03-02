@@ -98,14 +98,16 @@ class Runner(object):
                           changelog=change.ChangeLog(ctx),
                           verbose=opts.verbose,
                           simulate=opts.simulate)
-            self.resources.apply(shell, config)
-            return 0
+            if not self.resources.apply(shell, config):
+                # nothing changed
+                sys.exit(255)
+            sys.exit(0)
         except error.ExecutionError, e:
             # this will have been reported by the context manager, so we wish to terminate
             # but not to raise it further. Other exceptions should be fully reported with
             # tracebacks etc automatically
             print >>sys.stderr, "Terminated due to execution error in processing"
-            return e.returncode
+            sys.exit(e.returncode)
 
 def main():
     parser = optparse.OptionParser()
@@ -131,5 +133,5 @@ def main():
     else:
         r = Runner()
 
-    return r.run(opts, args)
+    r.run(opts, args)
 

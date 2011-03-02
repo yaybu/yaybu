@@ -30,13 +30,14 @@ class TestLink(TestCase):
 
 
     def test_already_exists(self):
-        os.system("ln -s / %s" % self.enpathinate("/etc/existing"))
-        rv = self.check_apply("""
+        os.system("ln -s %s %s" % (self.enpathinate("/"), self.enpathinate("/etc/existing")))
+        rv = self.apply("""
             resources:
               - Link:
                   name: /etc/existing
                   to: /
         """)
+        self.assertEqual(rv, 255)
 
     def test_dangling(self):
         rv = self.apply("""
@@ -45,4 +46,4 @@ class TestLink(TestCase):
                  name: /etc/test_dangling
                  to: /etc/not_there
         """)
-        self.failUnless(rv == error.DanglingSymlink.returncode)
+        self.assertEqual(rv, error.DanglingSymlink.returncode)

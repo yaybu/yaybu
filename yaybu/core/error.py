@@ -92,6 +92,12 @@ class UserAddError(ExecutionError):
     it's own. """
     returncode = 145
 
+class NothingChanged(ExecutionError):
+    """ Not really an error, but we need to know if this happens for our
+    tests. This exception is never really raised, but it's useful to keep the
+    error code here!"""
+    returncode = 255
+
 class SystemError(ExecutionError):
     """ An error represented by something in the errno list. """
 

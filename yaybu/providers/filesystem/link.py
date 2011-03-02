@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 import os
 import stat
 import pwd
@@ -61,6 +62,7 @@ class Link(provider.Provider):
         return uid, gid, mode
 
     def apply(self, shell):
+        changed = False
         name = self.resource.name
         to = self.resource.to
         exists = False
@@ -85,13 +87,15 @@ class Link(provider.Provider):
             if linkto != to:
                 shell.execute(["rm", name])
                 isalink = False
+                changed = True
 
         if not isalink:
             if os.path.exists(name):
                 shell.execute(["rm", "-rf", name])
+                changed = True
             else:
                 shell.execute(["ln", "-s", self.resource.to, name])
-
+                changed = True
         try:
             linkto = os.readlink(name)
             isalink = True
@@ -106,12 +110,17 @@ class Link(provider.Provider):
 
         if owner is not None and owner != uid:
             shell.execute(["chown", "-h", self.resource.owner, name])
+            changed = True
 
         if group is not None and group != gid:
             shell.execute(["chgrp", "-h", self.resource.group, name])
+            changed = True
 
         if self.resource.mode is not None and mode != self.resource.mode:
             shell.execute(["chmod", "%o" % self.resource.mode, name])
+            changed = True
+
+        return changed
 
 class RemoveLink(provider.Provider):
 
