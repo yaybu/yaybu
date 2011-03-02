@@ -2,12 +2,14 @@ import os, shlex, subprocess, tempfile, time
 import testtools
 
 def default_distro():
-    return {
+    options = {
         "Ubuntu 9.10": "karmic",
         "Ubuntu 10.04": "lucid",
         "Ubuntu 10.10": "maverick",
         "Ubuntu 11.04": "natty",
-        }[open("/etc/issue.net","r").read().strip()]
+        }
+    sundayname = open("/etc/issue.net","r").read().strip()
+    return options[sundayname[:12]]
 
 def run_commands(commands, base_image, distro=None):
     for command in commands:
