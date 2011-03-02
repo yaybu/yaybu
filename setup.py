@@ -21,6 +21,7 @@ setup(name='Yaybu',
       install_requires=[
           'setuptools',
           'jinja2',
+          'magic',
           'yay',
       ],
       extras_require = {
