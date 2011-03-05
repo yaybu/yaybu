@@ -61,37 +61,50 @@ class User(provider.Provider):
 
         info = self.get_user_info()
 
-        command = ["usermod"] if info["exists"] else ["useradd"]
+        if info['exists']:
+            command = ['usermod']
+            changed = False # we may not change anything yet
+        else:
+            command = ['useradd']
+            changed = True # we definitely make a change
 
         if self.resource.fullname and info["name"] != self.resource.fullname:
             command.extend(["--comment", self.resource.fullname])
+            changed = True
 
         if self.resource.password and not info["exists"]:
             command.extend(["--password", self.resource.password])
+            changed = True
 
         if self.resource.home and info["dir"] != self.resource.home:
             command.extend(["--home", self.resource.home])
+            changed = True
 
         if self.resource.uid and info["uid"] != self.resource.uid:
             command.extend(["--uid", str(self.resource.uid)])
+            changed = True
 
         if self.resource.gid and info["gid"] != self.resource.gid:
             command.extend(["--gid", str(self.resource.gid)])
+            changed = True
 
         if self.resource.shell != info["shell"]:
             command.extend(["--shell", str(self.resource.shell)])
+            changed = True
 
         if self.resource.disabled_login and not info["disabled-login"]:
             command.extend(["--password", "!"])
+            changed = True
 
         if info["exists"] is False and self.resource.system:
             command.extend(["--system"])
+            changed = True
 
         command.extend(["-m", self.resource.name])
 
-        returncode, stdout, stderr = context.shell.execute(command, exceptions=False)
-        if returncode != 0:
-            raise error.UserAddError("useradd returned error code %d" % returncode)
-
-        return True
+        if changed:
+            returncode, stdout, stderr = context.shell.execute(command, exceptions=False)
+            if returncode != 0:
+                raise error.UserAddError("useradd returned error code %d" % returncode)
+        return changed
 

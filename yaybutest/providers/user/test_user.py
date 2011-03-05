@@ -14,6 +14,21 @@ class TestUser(TestCase):
                     name: test
             """)
 
+    def test_disabled_login(self):
+        self.check_apply("""
+            resources:
+                - User:
+                    - name: test
+                      disabled-login: True
+            """)
+        rv = self.apply("""
+            resources:
+                - User:
+                    - name: test
+                      disabled-login: True
+            """)
+        self.assertEqual(rv, 255)
+
     def test_user_with_home(self):
         self.check_apply("""
             resources:
