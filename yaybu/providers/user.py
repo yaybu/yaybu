@@ -47,14 +47,16 @@ class User(provider.Provider):
             info[field] = info_tuple[i]
 
         shadow = spwd.getspnam(self.resource.name)
-        if shadow.sp_pwd == "*":
-            info["disabled-password"] = True
-        elif shadow.sp_pwd == "!":
+        info['passwd'] = shadow.sp_pwd
+        if shadow.sp_pwd == "!":
             info['disabled-login'] = True
 
         return info
 
     def apply(self, context):
+        if self.resource.password and self.resource.disabled_login:
+            raise error.ParseError("Cannot specify password and disabled login for a user")
+
         info = self.get_user_info()
 
         command = ["usermod"] if info["exists"] else ["useradd"]
@@ -77,11 +79,8 @@ class User(provider.Provider):
         if self.resource.shell != info["shell"]:
             command.extend(["--shell", str(self.resource.shell)])
 
-        if self.resource.disabled_password and not info["disabled-password"]:
-            command.extend(["--disabled-password"])
-
         if self.resource.disabled_login and not info["disabled-login"]:
-            command.extend(["--disabled-login"])
+            command.extend(["--password", "!"])
 
         if info["exists"] is False and self.resource.system:
             command.extend(["--system"])
