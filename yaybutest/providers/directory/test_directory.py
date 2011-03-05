@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import os
 from yaybutest.utils import TestCase
 
@@ -22,3 +24,4 @@ class TestDirectory(TestCase):
 
     def test_unicode(self):
         self.check_apply(open(sibpath("unicode1.yay")).read())
+        self.failUnless(os.path.isdir(self.enpathinate("/etc/££££££")))
