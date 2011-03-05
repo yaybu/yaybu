@@ -41,7 +41,7 @@ class Directory(provider.Provider):
                               self.resource.group,
                               self.resource.mode)
         if not os.path.exists(self.resource.name):
-            context.shell.execute(["mkdir", self.resource.name])
+            context.shell.execute(["mkdir", self.resource.name.encode("utf-8")])
             changed = True
         ac.apply(context)
         if changed or ac.changed:

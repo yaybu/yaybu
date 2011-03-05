@@ -1,4 +1,4 @@
-# coding: utf-8
+# coding=utf-8
 
 import os
 from yaybutest.utils import TestCase
@@ -23,5 +23,7 @@ class TestDirectory(TestCase):
         self.failUnless(os.path.isdir(path))
 
     def test_unicode(self):
+        utf8 = "/etc/£££££" # this is utf-8 encoded
         self.check_apply(open(sibpath("unicode1.yay")).read())
-        self.failUnless(os.path.isdir(self.enpathinate("/etc/££££££")))
+        self.failUnless(os.path.exists(self.enpathinate(utf8)))
+
