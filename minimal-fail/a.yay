@@ -1,0 +1,6 @@
+yay:
+    extends:
+        - b.yay
+
+foo:
+    - bar

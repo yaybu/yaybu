@@ -1,0 +1,6 @@
+yay:
+    extends:
+        - c.yay
+
+foo.append:
+    - quux
