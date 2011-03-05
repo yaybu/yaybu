@@ -33,7 +33,7 @@ class User(provider.Provider):
         return super(User, self).isvalid(*args, **kwargs)
 
     def get_user_info(self):
-        fields = ("name", "passwd", "uid", "gid", "gecos", "dir", "shell")
+        fields = ("name", "passwd", "uid", "gid", "gecos", "dir", "shell", "disabled-login", "disabled-password")
 
         try:
             info_tuple = pwd.getpwnam(self.resource.name)
@@ -42,19 +42,15 @@ class User(provider.Provider):
             info["exists"] = False
             return info
 
-        info = {"exists": True}
+        info = {"exists": True, "disabled-login": False, "disabled-password": False}
         for i, field in enumerate(fields):
             info[field] = info_tuple[i]
 
         shadow = spwd.getspnam(self.resource.name)
         if shadow.sp_pwd == "*":
             info["disabled-password"] = True
-        else:
-            info["disabled-password"] = False
-        if shadow.sp_pwd == "!":
+        elif shadow.sp_pwd == "!":
             info['disabled-login'] = True
-        else:
-            info['disabled-login'] = False
 
         return info
 
