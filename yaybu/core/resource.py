@@ -224,13 +224,13 @@ class ResourceBundle(ordereddict.OrderedDict):
                 if j > i:
                     raise error.BindingError("Attempt to bind forwards on %r" % resource)
 
-    def apply(self, shell, config):
-        """ Apply the resources to the system, using the provided shell and
+    def apply(self, ctx, config):
+        """ Apply the resources to the system, using the provided context and
         overall configuration. """
         something_changed = False
         for resource in self.values():
-            with shell.changelog.resource(resource):
-                if resource.apply(shell, config):
+            with ctx.changelog.resource(resource):
+                if resource.apply(ctx, config):
                     something_changed = True
         return something_changed
 

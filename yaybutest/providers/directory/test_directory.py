@@ -1,6 +1,9 @@
 # coding=utf-8
 
 import os
+import pwd
+import grp
+import stat
 from yaybutest.utils import TestCase
 
 
@@ -27,3 +30,18 @@ class TestDirectory(TestCase):
         self.check_apply(open(sibpath("unicode1.yay")).read())
         self.failUnless(os.path.exists(self.enpathinate(utf8)))
 
+    def test_attributes(self):
+        self.check_apply("""
+            resources:
+              - Directory:
+                  name: /etc/somedir2
+                  owner: nobody
+                  group: nogroup
+                  mode: 0777
+            """)
+        self.failUnlessExists("/etc/somedir2")
+        st = os.stat(self.enpathinate("/etc/somedir2"))
+        self.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
+        self.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')
+        mode = stat.S_IMODE(st.st_mode)
+        self.assertEqual(mode, 0777)

@@ -35,7 +35,7 @@ class Directory(provider.Provider):
 
     def apply(self, context):
         changed = False
-        ac = AttributeChanger(context.shell,
+        ac = AttributeChanger(context,
                               self.resource.name,
                               self.resource.owner,
                               self.resource.group,
