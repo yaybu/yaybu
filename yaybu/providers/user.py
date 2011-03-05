@@ -33,13 +33,15 @@ class User(provider.Provider):
         return super(User, self).isvalid(*args, **kwargs)
 
     def get_user_info(self):
-        fields = ("name", "passwd", "uid", "gid", "gecos", "dir", "shell", "disabled-login", "disabled-password")
+        fields = ("name", "passwd", "uid", "gid", "gecos", "dir", "shell")
 
         try:
             info_tuple = pwd.getpwnam(self.resource.name)
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False
+            info['disabled-login'] = False
+            info['disabled-password'] = False
             return info
 
         info = {"exists": True, "disabled-login": False, "disabled-password": False}
