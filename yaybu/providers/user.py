@@ -100,7 +100,7 @@ class User(provider.Provider):
             command.extend(["--system"])
             changed = True
 
-        command.extend(["-m", self.resource.name])
+        command.extend(["-m", "-N", self.resource.name])
 
         if changed:
             returncode, stdout, stderr = context.shell.execute(command, exceptions=False)
