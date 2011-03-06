@@ -51,10 +51,10 @@ class ChangeRenderer:
         self.verbose = verbose
 
     def simulation_info(self, message):
-        simlog.info(message)
+        self.logger.simlog_info(message)
 
     def simulation_notice(self, message):
-        simlog.notice(message)
+        self.logger.simlog_notice(message)
 
     def render(self, logger):
         pass
@@ -161,6 +161,12 @@ class ChangeLog:
         multi = MultiRenderer(*renderers)
         return change.apply(multi)
 
+    def simlog_notice(self, msg):
+        simlog.notice(msg)
+
+    def simlog_info(self, msg):
+        simlog.info(msg)
+
     def info(self, message, *args, **kwargs):
         """ Write a textual information message. This is used for both the
         audit trail and the text console log. """
@@ -176,7 +182,16 @@ class ChangeLog:
 
 class RemoteChangeLog(ChangeLog):
 
-    def write(self, line=""):
-        self.ctx.connection.request("POST", "/changelog/write", line, {"Content-Length": len(line)})
+    def do(self, method, msg):
+        self.ctx.connection.request("POST", "/changelog/" + method, msg, {"Content-Length": len(msg)})
         rsp = self.ctx.connection.getresponse()
+
+    def write(self, line=""):
+        self.do("write", line)
+
+    def simlog_notice(self, msg):
+        self.do("simlog_notice", msg)
+
+    def simlog_info(self, msg):
+        self.do("simlog_info", msg)
 

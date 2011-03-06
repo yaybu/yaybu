@@ -23,8 +23,6 @@ from yaybu.core import provider, error
 
 from files import AttributeChanger
 
-simlog = logging.getLogger("simulation")
-
 class Directory(provider.Provider):
 
     policies = (resources.filesystem.DirectoryAppliedPolicy,)

@@ -28,6 +28,6 @@ setup(name='Yaybu',
           },
       entry_points = """
       [console_scripts]
-      yaybu = yaybu.core.runner:main
+      yaybu = yaybu.core.main:main
       """
       )

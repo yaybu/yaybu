@@ -24,6 +24,12 @@ class ChangeLogResource(HttpResource):
     def do_write(self, ctx, body):
         ctx.changelog.write(body)
 
+    def do_simlog_notice(self, ctx, body):
+        ctx.changelog.simlog_notice(body)
+
+    def do_simlog_info(self, ctx, body):
+        ctx.changelog.simlog_info(body)
+
     def render_POST(self, context, request, restpath):
         body = request.rfile.read(int(request.headers["content-length"]))
 

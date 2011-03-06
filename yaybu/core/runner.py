@@ -12,28 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import optparse
 import os
 import sys
 import logging
 import logging.handlers
-import collections
-import traceback
 import subprocess
 import getpass
 
-import yay
-
 from yaybu.core import resource
 from yaybu.core import error
-from yaybu.core import remote
 from yaybu.core import runcontext
 
 logger = logging.getLogger("runner")
 
 class LoaderError(Exception):
     pass
-
 
 
 class Runner(object):
@@ -69,12 +62,13 @@ class Runner(object):
             formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
             handler.setFormatter(formatter)
             logging.getLogger().addHandler(handler)
-            simlog = logging.getLogger("simulation")
-            simlog.setLevel(logging.DEBUG)
-            simformatter = logging.Formatter("simulation: %(message)s")
-            simhandler = logging.StreamHandler(sys.stdout)
-            simhandler.setFormatter(simformatter)
-            simlog.addHandler(simhandler)
+
+        simlog = logging.getLogger("simulation")
+        simlog.setLevel(logging.DEBUG)
+        simformatter = logging.Formatter("simulation: %(message)s")
+        simhandler = logging.StreamHandler(sys.stdout)
+        simhandler.setFormatter(simformatter)
+        simlog.addHandler(simhandler)
 
     def trampoline(self, username):
         command = ["sudo", "-u", username] + sys.argv[0:1]
@@ -117,36 +111,4 @@ class Runner(object):
             print >>sys.stderr, "Terminated due to execution error in processing"
             sys.exit(e.returncode)
 
-def main():
-    parser = optparse.OptionParser()
-    parser.add_option("-s", "--simulate", default=False, action="store_true")
-    parser.add_option("-p", "--ypath", default=[], action="append")
-    parser.add_option("", "--log-facility", default="2", help="the syslog local facility number to which to write the audit trail")
-    parser.add_option("", "--log-level", default="info", help="the minimum log level to write to the audit trail")
-    parser.add_option("-d", "--debug", default=False, action="store_true", help="switch all logging to maximum, and write out to the console")
-    parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
-    parser.add_option("-v", "--verbose", default=1, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
-    parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
-    parser.add_option("-u", "--user", default=None, action="store", help="User to attempt to run as")
-    parser.add_option("--remote", default=False, action="store_true", help="Run yaybu.protocol client on stdio")
-    parser.add_option("--ssh-auth-sock", default=None, action="store", help="Path to SSH Agent socket")
-    parser.add_option("--expand-only", default=False, action="store_true", help="Set to parse config, expand it and exit")
-    opts, args = parser.parse_args()
-
-    if len(args) != 1:
-        parser.print_help()
-        return 1
-
-    if opts.expand_only:
-        import yaml
-        ctx = runcontext.RunContext(args[0], opts)
-        print yaml.dump(ctx.get_config(), default_flow_style=False)
-        return 0
-
-    if opts.host:
-        r = remote.RemoteRunner()
-    else:
-        r = Runner()
-
-    r.run(opts, args)
 
