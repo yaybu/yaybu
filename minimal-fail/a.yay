@@ -2,5 +2,5 @@ yay:
     extends:
         - b.yay
 
-foo:
+foo.append:
     - bar

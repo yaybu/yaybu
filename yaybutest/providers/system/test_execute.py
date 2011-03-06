@@ -18,3 +18,19 @@ class TestExecute(TestCase):
                     command: test_execute_on_path.sh
             """)
 
+    def test_execute_touches(self):
+        src = sibpath(__file__, os.path.join("..", "..", "files"))
+        dst = os.path.join(self.chroot_path, "tmp", "files")
+        shutil.copytree(src, dst)
+
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test
+                    command: test_touches.sh
+                    creates: /etc/test_execute_touches
+
+            """)
+
+
+
