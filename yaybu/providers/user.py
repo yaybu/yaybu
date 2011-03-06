@@ -48,10 +48,14 @@ class User(provider.Provider):
         for i, field in enumerate(fields):
             info[field] = info_tuple[i]
 
-        shadow = spwd.getspnam(self.resource.name)
-        info['passwd'] = shadow.sp_pwd
-        if shadow.sp_pwd == "!":
-            info['disabled-login'] = True
+        try:
+            shadow = spwd.getspnam(self.resource.name)
+            info['passwd'] = shadow.sp_pwd
+            if shadow.sp_pwd == "!":
+                info['disabled-login'] = True
+        except KeyError:
+            info['passwd'] = ''
+            info['disabled-login'] = False
 
         return info
 
