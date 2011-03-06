@@ -138,9 +138,8 @@ def main():
         return 1
 
     if opts.expand_only:
-        import yaml
         ctx = runcontext.RunContext(args[0], opts)
-        print yaml.dump(ctx.get_config(), default_flow_style=False)
+        print yay.dump(ctx.get_config())
         return 0
 
     if opts.host:
