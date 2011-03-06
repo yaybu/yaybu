@@ -25,13 +25,19 @@ from yaybu.core.runcontext import RunContext
 
 class RemoteRunner(object):
 
-    def run(self, opt, args):
-        rc = RunContext(args[0], opt)
+    def run(self, opts, args):
+        rc = RunContext(args[0], opts)
 
-        command = ["ssh", "-A", opt.host, "yaybu", "--remote"]
+        command = ["ssh", "-A", opts.host, "yaybu", "--remote"]
 
-        if opt.user:
-            command.extend(["--user", opt.user])
+        if opts.user:
+            command.extend(["--user", opts.user])
+
+        if opts.simulate:
+            command.append("-s")
+
+        if opts.verbose:
+            command.extend(list("-v" for x in range(opts.verbose)))
 
         command.append("-")
 
