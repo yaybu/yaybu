@@ -20,12 +20,16 @@ import yay
 from yaybu.core.protocol.server import Server, HttpResource, StaticResource
 from yaybu.core.protocol.file import FileResource, EncryptedResource
 from yaybu.core.protocol.changelog import ChangeLogResource
+
+from yaybu.core.runner import Runner
 from yaybu.core.runcontext import RunContext
 
 
-class RemoteRunner(object):
+class RemoteRunner(Runner):
 
     def run(self, opts, args):
+        self.configure_logging(opts)
+
         rc = RunContext(args[0], opts)
 
         command = ["ssh", "-A", opts.host, "yaybu", "--remote"]
