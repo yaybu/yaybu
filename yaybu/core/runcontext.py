@@ -102,7 +102,7 @@ class RunContext(object):
 class RemoteRunContext(RunContext):
 
     def __init__(self, configfile, opts=None):
-        super(RemoteRunContext, self).__init__(opts)
+        super(RemoteRunContext, self).__init__(configfile, opts)
         self.connection = HTTPConnection()
 
     def setup_changelog(self):
