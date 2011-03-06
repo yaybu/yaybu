@@ -22,8 +22,6 @@ import logging
 from yaybu import resources
 from yaybu.core import provider, error
 
-simlog = logging.getLogger("simulation")
-
 class Link(provider.Provider):
 
     policies = (resources.filesystem.LinkAppliedPolicy,)

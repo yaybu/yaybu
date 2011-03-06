@@ -18,8 +18,6 @@ import StringIO
 import change
 import error
 
-simlog = logging.getLogger("simulation")
-
 class ShellCommand(change.Change):
 
     """ Execute and log a change """
@@ -94,7 +92,7 @@ class Shell(object):
 
     def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True):
         if self.simulate and not passthru:
-            simlog.info(" ".join(command))
+            self.context.changelog.simlog_info(" ".join(command))
             return (0, "", "")
         cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru)
         self.context.changelog.apply(cmd)
