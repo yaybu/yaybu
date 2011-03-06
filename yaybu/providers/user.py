@@ -65,7 +65,7 @@ class User(provider.Provider):
             command = ['usermod']
             changed = False # we may not change anything yet
         else:
-            command = ['useradd']
+            command = ['useradd', '-N']
             changed = True # we definitely make a change
 
         if self.resource.fullname and info["name"] != self.resource.fullname:
@@ -100,7 +100,7 @@ class User(provider.Provider):
             command.extend(["--system"])
             changed = True
 
-        command.extend(["-m", "-N", self.resource.name])
+        command.extend(["-m", self.resource.name])
 
         if changed:
             returncode, stdout, stderr = context.shell.execute(command, exceptions=False)
