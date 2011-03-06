@@ -99,7 +99,7 @@ class Shell(object):
         cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
-            self.context.changelog.info(cmd.stdout)
-            self.context.changelog.notice(cmd.stderr)
+            self.context.changelog.info("{0}", cmd.stdout)
+            self.context.changelog.notice("{0}", cmd.stderr)
             raise error.SystemError(cmd.returncode)
         return (cmd.returncode, cmd.stdout, cmd.stderr)
