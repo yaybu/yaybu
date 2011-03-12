@@ -94,6 +94,7 @@ class Svn(Provider):
             command.append("--no-auth-cache")
 
         command.extend(list(args))
+
         return command
 
     def info(self, context, uri):

@@ -36,13 +36,13 @@ class ShellCommand(change.Change):
     def apply(self, renderer):
         command = self.command[:]
         if self.user and getpass.getuser() != self.user:
-            command = ["sudo", "-u", self.user] + command
+            command = ["sudo", "-u", self.user] + self.command[:]
 
         if not self.passthru:
-            renderer.command(self.command)
+            renderer.command(command)
 
         try:
-            p = subprocess.Popen(self.command,
+            p = subprocess.Popen(command,
                                  shell=self.shell,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
@@ -53,7 +53,7 @@ class ShellCommand(change.Change):
             self.returncode = p.returncode
             renderer.output(p.returncode, self.stdout, self.stderr, self.passthru)
         except Exception, e:
-            logging.error("Exception when running %r" % self.command)
+            logging.error("Exception when running %r" % command)
             renderer.exception(e)
             raise
 
