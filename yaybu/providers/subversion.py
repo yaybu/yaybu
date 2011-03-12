@@ -83,10 +83,10 @@ class Svn(Provider):
         log.info("Exporting %s" % self.resource)
         self.svn(context, "export", self.url, self.resource.name)
 
-    def get_svn_args(self, action, *args, quiet=False):
+    def get_svn_args(self, action, *args, **kwargs):
         command = ["svn"]
 
-        if quiet:
+        if kwargs.get("quiet", False):
             command.append("--quiet")
 
         command.extend(["svn", action, "--non-interactive"])
