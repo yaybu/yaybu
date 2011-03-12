@@ -89,7 +89,7 @@ class Svn(Provider):
         if kwargs.get("quiet", False):
             command.append("--quiet")
 
-        command.extend(["svn", action, "--non-interactive"])
+        command.extend([action, "--non-interactive"])
 
         if self.resource.scm_username:
             command.extend(["--username", self.resource.scm_username])
