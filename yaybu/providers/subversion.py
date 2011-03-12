@@ -84,7 +84,7 @@ class Svn(Provider):
         self.svn(context, ["export"], self.url, self.resource.name)
 
     def get_svn_args(self, action, *args):
-        command.extend(["svn", action, "--non-interactive"])
+        command = ["svn", action, "--non-interactive"]
 
         if self.resource.scm_username:
             command.extend(["--username", self.resource.scm_username])
