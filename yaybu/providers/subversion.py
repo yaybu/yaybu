@@ -82,19 +82,16 @@ class Svn(Provider):
             return
         log.info("Exporting %s" % self.resource)
         self.svn(context, ["export"], self.url, self.resource.name)
-        #self.resource.updated()
 
     def get_svn_args(self, action, *args):
-        command = ["sudo", "-u", self.resource.user, "svn"]
-        command.extend(action)
-        command.extend(["--non-interactive"])
+        command.extend(["svn", action, "--non-interactive"])
 
         if self.resource.scm_username:
             command.extend(["--username", self.resource.scm_username])
         if self.resource.scm_password:
             command.extend(["--password", self.resource.scm_password])
-        #if self.resource.scm_username or self.resource.scm_password:
-            #command.append("--no-auth-cache")
+        if self.resource.scm_username or self.resource.scm_password:
+            command.append("--no-auth-cache")
 
         command.extend(list(args))
         return command
@@ -106,6 +103,6 @@ class Svn(Provider):
 
     def svn(self, context, action, *args):
         command = self.get_svn_args(action, *args)
-        return context.shell.execute(command)
+        return context.shell.execute(command, user=self.resource.user)
 
 

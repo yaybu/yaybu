@@ -17,12 +17,13 @@ import subprocess
 import StringIO
 import change
 import error
+import getpass
 
 class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0, passthru=False):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0, passthru=False, user=None):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -30,10 +31,16 @@ class ShellCommand(change.Change):
         self.env = env
         self.verbose = verbose
         self.passthru = passthru
+        self.user = None
 
     def apply(self, renderer):
+        command = self.command[:]
+        if self.user and getpass.getuser() != self.user:
+            command = ["sudo", "-u", self.user] + command
+
         if not self.passthru:
             renderer.command(self.command)
+
         try:
             p = subprocess.Popen(self.command,
                                  shell=self.shell,
@@ -90,11 +97,11 @@ class Shell(object):
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
 
-    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True):
+    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None):
         if self.simulate and not passthru:
             self.context.changelog.simlog_info(" ".join(command))
             return (0, "", "")
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru)
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru, user)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             self.context.changelog.info("{0}", cmd.stdout)
