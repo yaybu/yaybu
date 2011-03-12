@@ -107,8 +107,8 @@ class Svn(Provider):
         returncode, stdout, stderr = context.shell.execute(command, passthru=True)
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
-    def svn(self, context, action, *args):
-        command = self.get_svn_args(action, *args)
+    def svn(self, context, action, *args, **kwargs):
+        command = self.get_svn_args(action, *args, **kwargs)
         return context.shell.execute(command, user=self.resource.user)
 
 
