@@ -14,7 +14,10 @@
 
 import os
 import pwd
-import spwd
+try:
+    import spwd
+except ImportError:
+    spwd = None
 
 from yaybu.core import provider
 from yaybu.core import error
