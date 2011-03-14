@@ -35,7 +35,7 @@ class Group(provider.Provider):
         fields = ("name", "passwd", "gid", "members",)
 
         try:
-            info_tuple = grp.getgrnam(self.resource.name)
+            info_tuple = grp.getgrnam(self.resource.name.encode("utf-8"))
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False

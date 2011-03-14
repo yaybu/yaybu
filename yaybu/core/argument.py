@@ -13,12 +13,23 @@
 # limitations under the License.
 
 import error
+import datetime
 import dateutil.parser
 import types
 import urlparse
+import sys
 import os
 from abc import ABCMeta, abstractmethod, abstractproperty
 from yaybu import recipe
+import unicodedata
+import random
+
+unicode_glyphs = ''.join(
+    unichr(char)
+    for char in xrange(1114112) # 0x10ffff + 1
+    if unicodedata.category(unichr(char))[0] in ('LMNPSZ')
+    )
+
 
 # we abuse urlparse for our parsing needs
 urlparse.uses_netloc.append("package")
@@ -53,7 +64,6 @@ class Argument(object):
     def __set__(self, instance, value):
         """ Set the property. The value will be a UTF-8 encoded string read from the yaml source file. """
 
-
 class Boolean(Argument):
     def __set__(self, instance, value):
         if type(value) in types.StringTypes:
@@ -73,12 +83,23 @@ class String(Argument):
             value = unicode(value, 'utf-8')
         setattr(instance, self.arg_id, value)
 
+    @classmethod
+    def _generate_valid(self):
+        l = []
+        for i in range(random.randint(0, 1024)):
+            l.append(random.choice(unicode_glyphs))
+        return "".join(l)
+
 class Integer(Argument):
 
     def __set__(self, instance, value):
         if not isinstance(value, int):
             value = int(value)
         setattr(instance, self.arg_id, value)
+
+    @classmethod
+    def _generate_valid(self):
+        return random.randint(0,sys.maxint)
 
 class DateTime(Argument):
 
@@ -87,7 +108,11 @@ class DateTime(Argument):
             value = dateutil.parser.parse(value)
         setattr(instance, self.arg_id, value)
 
-class Octal(Argument):
+    @classmethod
+    def _generate_valid(self):
+        return datetime.datetime.fromtimestamp(random.randint(0, sys.maxint))
+
+class Octal(Integer):
 
     def __set__(self, instance, value):
         if isinstance(value, int):
@@ -101,9 +126,17 @@ class Dict(Argument):
     def __set__(self, instance, value):
         setattr(instance, self.arg_id, value)
 
+    @classmethod
+    def _generate_valid(self):
+        return {}
+
 class List(Argument):
     def __set__(self, instance, value):
         setattr(instance, self.arg_id, value)
+
+    @classmethod
+    def _generate_valid(self):
+        return []
 
 class File(Argument):
 
