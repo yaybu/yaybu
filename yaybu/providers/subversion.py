@@ -103,7 +103,7 @@ class Svn(Provider):
         return command
 
     def info(self, context, uri):
-        command = self.get_svn_args(["info"], uri)
+        command = self.get_svn_args("info", uri)
         returncode, stdout, stderr = context.shell.execute(command, passthru=True)
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
