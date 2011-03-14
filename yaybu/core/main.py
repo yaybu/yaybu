@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import optparse
 import yay
 from yaybu.core import runner, remote, runcontext
@@ -41,6 +42,9 @@ def main():
         ctx = runcontext.RunContext(args[0], opts)
         print yay.dump(ctx.get_config())
         return 0
+
+    if opts.ssh_auth_sock:
+        os.environ["SSH_AUTH_SOCK"] = opts.ssh_auth_sock
 
     if opts.host:
         r = remote.RemoteRunner()
