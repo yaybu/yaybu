@@ -22,6 +22,7 @@ from yaybu.core.policy import (
 
 from yaybu.core.argument import (
     String,
+    Boolean,
     Integer,
     Octal,
     File,
@@ -33,7 +34,7 @@ from yaybu.core.argument import (
 class Service(Resource):
 
     name = String()
-    enabled = Bool()
+    enabled = Boolean()
 
     start = String()
     stop = String()
