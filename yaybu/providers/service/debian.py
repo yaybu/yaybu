@@ -49,8 +49,8 @@ class _ServiceMixin(object):
                 return "running"
             elif status.startswith("stop/waiting"):
                 return "stopped"
-        else:
-            raise error.CommandError("Cannot figure out status!")
+
+        return "unknown"
 
     def do(self, context, action):
         returncode, stdout, stderr = context.shell.execute(command)
@@ -85,7 +85,7 @@ class Stop(provider.Provider, _ServiceMixin):
         return super(Stop, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if self.status() != "running":
+        if self.status() == "stopped":
             return False
 
         self.do(context, "stop")
@@ -102,7 +102,7 @@ class Restart(provider.Provider, _ServiceMixin):
         return super(Restart, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if self.status() != "running":
+        if self.status() == "stopped":
             self.do(context, "start")
             return True
 
