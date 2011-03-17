@@ -12,14 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.resources import (
-    system,
-    filesystem,
-    group,
-    checkout,
-    package,
-    user,
-    prompt,
-    service
-    )
-
+import yaybu.providers.service.debian
