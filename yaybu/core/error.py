@@ -92,6 +92,14 @@ class UserAddError(ExecutionError):
     it's own. """
     returncode = 145
 
+class PathComponentMissing(ExecutionError):
+    """ A component of the path is not present """
+    returncode = 146
+
+class PathComponentNotDirectory(ExecutionError):
+    """ A component of the path is in fact not a directory """
+    returncode = 147
+
 class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our
     tests. This exception is never really raised, but it's useful to keep the
