@@ -31,6 +31,7 @@ from jinja2 import Template
 from yaybu import resources
 from yaybu.core import provider
 from yaybu.core import change
+from yaybu.core import error
 
 def binary_buffers(*buffers):
 
@@ -184,8 +185,20 @@ class File(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(File, self).isvalid(*args, **kwargs)
 
+    def check_path(self, directory):
+        frags = directory.split("/")
+        path = "/"
+        for i in frags:
+            path = os.path.join(path, i)
+            if not os.path.exists(path):
+                raise error.PathComponentMissing(path)
+            if not os.path.isdir(path):
+                raise error.PathComponentNotDirectory(path)
+
     def apply(self, context):
         name = self.resource.name
+
+        self.check_path(os.path.dirname(name))
 
         if self.resource.template:
             template = Template(context.get_file(self.resource.template).read())

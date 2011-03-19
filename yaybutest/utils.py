@@ -54,12 +54,26 @@ class TestCase(testtools.TestCase):
         filespath = os.path.join(self.chroot_path, "tmp", "files")
         return self.call(["yaybu", "--ypath", filespath] + list(args))
 
+    def simulate(self, *args):
+        """ Run yaybu in simulate mode """
+        filespath = os.path.join(self.chroot_path, "tmp", "files")
+        return self.call(["yaybu", "--simulate", "--ypath", filespath] + list(args))
+
     def apply(self, contents):
         path = self.write_temporary_file(contents)
         return self.yaybu(path)
 
+    def apply_simulate(self, contents):
+        path = self.write_temporary_file(contents)
+        return self.simulate(path)
+
     def check_apply(self, contents):
         rv = self.apply(contents)
+        if rv != 0:
+            raise subprocess.CalledProcessError(rv, "yaybu")
+
+    def check_apply_simulate(self, contents):
+        rv = self.apply_simulate(contents)
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "yaybu")
 

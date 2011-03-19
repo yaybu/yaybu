@@ -1,13 +1,31 @@
 from yaybutest.utils import TestCase
+from yaybu.core import error
 import pwd
 import grp
 import os
 import stat
+import errno
 
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
 class TestFile(TestCase):
+
+    def test_create_missing_component(self):
+        rv = self.apply("""
+            resources:
+              - File:
+                  name: /etc/missing/filename
+            """)
+        self.assertEqual(rv, error.PathComponentMissing.returncode)
+
+    def test_create_missing_component_simulate(self):
+        rv = self.apply_simulate("""
+            resources:
+              - File:
+                  name: /etc/missing/filename
+            """)
+        self.assertEqual(rv, error.PathComponentMissing.returncode)
 
     def test_create_file(self):
         self.check_apply("""
