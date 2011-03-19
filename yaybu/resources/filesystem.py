@@ -20,6 +20,7 @@ from yaybu.core.policy import (Policy,
                                NAND)
 
 from yaybu.core.argument import (
+    FullPath,
     String,
     Integer,
     Octal,
@@ -77,10 +78,34 @@ class File(Resource):
 
     """ A provider for this resource will create or amend an existing file to
     the provided specification.
+
+    For example, the following will create the /etc/hosts file based on a static local file::
+
+        File:
+          name: /etc/hosts
+          owner: root
+          group: root
+          mode: 644
+          static: my_hosts_file
+
+    The following will create a file using a jinja2 template, and will back up
+    the old version of the file if necessary::
+
+        File:
+          name: /etc/email_addresses
+          owner: root
+          group: root
+          mode: 644
+          template: email_addresses.j2
+          template_args:
+              foo: foo@example.com
+              bar: bar@example.com
+          backup: /etc/email_addresses.{year}-{month}-{day}
+
     """
 
     name = String()
-    """The name of the file this resource represents."""
+    """The full path to the file this resource represents."""
 
     owner = String()
     """A unix username or UID who will own created objects. An owner that
@@ -149,14 +174,34 @@ class FileRemovePolicy(Policy):
                  )
 
 class Directory(Resource):
-    name = String()
+
+    """ A directory on disk. Directories have limited metadata, so this resource is quite limited.
+
+    For example::
+
+        Directory:
+          name: /var/local/data
+          owner: root
+          group: root
+          mode: 644
+
+    """
+
+    name = FullPath()
+    """ The full path to the directory on disk """
+
     owner = String()
+    """ The unix username who should own this directory """
+
     group = String()
+    """ The unix group who should own this directory """
+
     mode = Octal()
+    """ The octal mode that represents this directory's permissions """
 
 class DirectoryAppliedPolicy(Policy):
     resource = Directory
-    name = "applied"
+    name = "apply"
     default = True
     signature = (Present("name"),
                  Present("owner"),
@@ -166,7 +211,7 @@ class DirectoryAppliedPolicy(Policy):
 
 class DirectoryRemovedPolicy(Policy):
     resource = Directory
-    name = "removed"
+    name = "remove"
     default = False
     signature = (Present("name"),
                  Absent("owner"),
@@ -241,16 +286,42 @@ class LinkRemovedPolicy(Policy):
         )
 
 class Special(Resource):
-    name = String()
+
+    """ A special file, as created by mknod. """
+
+    name = FullPath()
+    """ The full path to the special file on disk. """
+
     owner = String()
+    """ The unix user who should own this special file. """
+
     group = String()
+    """ The unix group who should own this special file. """
+
     mode = Octal()
+    """ The octal representation of the permissions for this special file. """
+
     type_ = String()
+    """ One of the following strings:
+
+      block
+        create a block (buffered) special file
+      character
+        create a character (unbuffered) special file
+      fifo
+        create a fifo
+    """
+
     major = Integer()
+    """ The major number for the special file. If the type of the special file
+    is block or character, then this must be specified. """
+
     minor = Integer()
+    """ The minor number for the special file. If the type of the special file
+    is block or character, then this must be specified. """
 
 class SpecialAppliedPolicy(Policy):
-    name = "applied"
+    name = "apply"
     default = True
     signature = (Present("name"),
                  Present("owner"),
@@ -262,7 +333,7 @@ class SpecialAppliedPolicy(Policy):
                  )
 
 class SpecialRemovedPolicy(Policy):
-    name = "removed"
+    name = "remove"
     default = False
     signature = (Present("name"),
                  Absent("owner"),

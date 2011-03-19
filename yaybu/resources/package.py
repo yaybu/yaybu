@@ -22,12 +22,17 @@ from yaybu.core.argument import (
 
 class Package(Resource):
 
+    """ Represents an operating system package, installed and managed via the OS package management system. """
+
     name = String()
+    """ The name of the package """
+
     version = String()
+    """ The version of the package """
 
     # To deploy a particular .deb for example
     file = File()
-
+    """ A file on disk that is used as the package source, if you wish to provide it yourself. """
 
 class PackageInstallPolicy(Policy):
 
