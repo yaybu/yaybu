@@ -23,7 +23,7 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0, passthru=False, user=None):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0, passthru=False, user=None, group=None):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -32,11 +32,19 @@ class ShellCommand(change.Change):
         self.verbose = verbose
         self.passthru = passthru
         self.user = None
+        self.group = None
 
     def apply(self, renderer):
-        command = self.command[:]
-        if self.user and getpass.getuser() != self.user:
-            command = ["sudo", "-u", self.user] + self.command[:]
+        command = []
+
+        if self.user and getpass.getuser() != self.user or self.group:
+            command = ["sudo"]
+            if self.user:
+                command.extend("-u", self.user)
+            if self.group:
+                command.extend("-g", self.group)
+
+        command.extend(self.command)
 
         if not self.passthru:
             renderer.command(command)
@@ -97,11 +105,11 @@ class Shell(object):
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
 
-    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None):
+    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None):
         if self.simulate and not passthru:
             self.context.changelog.simlog_info(" ".join(command))
             return (0, "", "")
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru, user)
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru, user, group)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             self.context.changelog.info("{0}", cmd.stdout)
