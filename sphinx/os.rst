@@ -2,20 +2,21 @@
 Operating System Management
 ===========================
 
+.. automodule:: yaybu.resources.package
 Package
 =======
 
-.. autoclass:: yaybu.resources.package.Package
+.. autoclass:: Package()
    :members:
 
 `install` (Default)
 -------------------
 
-.. autoclass:: yaybu.resources.package.PackageInstallPolicy
+.. autoclass:: PackageInstallPolicy()
 
 
 `uninstall`
 -----------
 
-.. autoclass:: yaybu.resources.package.PackageUninstallPolicy
+.. autoclass:: PackageUninstallPolicy()
 

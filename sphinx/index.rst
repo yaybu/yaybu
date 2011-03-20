@@ -1,14 +1,12 @@
-.. Yaybu documentation master file, created by
-   sphinx-quickstart on Sun Feb 13 17:37:59 2011.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Yaybu configuration management software
 =======================================
 
 Yaybu manages your deployed computer systems, in much the same was as Puppet_
 or Chef_. Yaybu has many advantages over these other systems, but it is an
 awful lot less mature.
+
+.. _Puppet: http://www.puppetlabs.com/
+.. _Chef: http://www.opscode.com/chef
 
 Yaybu aims to provide a system that is familiar for system administrators -
 they should be able to define and use complex configurations without having to

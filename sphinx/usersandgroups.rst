@@ -4,7 +4,8 @@ Users and Groups
 
 User
 ====
-.. py:module:: yaybu.resources.user
+
+.. automodule:: yaybu.resources.user
 
 .. autoclass:: User()
    :members:
@@ -35,7 +36,7 @@ NOTE: No providers have been implemented for this policy yet.
 Group
 =====
 
-.. py:module:: yaybu.resources.group
+.. automodule:: yaybu.resources.group
 
 .. autoclass:: Group()
    :members:
