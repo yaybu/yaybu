@@ -8,13 +8,14 @@ Package
 .. autoclass:: yaybu.resources.package.Package
    :members:
 
-Policies
---------
+`install` (Default)
+-------------------
 
-Install (Default)
-~~~~~~~~~~~~~~~~~
+.. autoclass:: yaybu.resources.package.PackageInstallPolicy
 
-Uninstall
-~~~~~~~~~
 
+`uninstall`
+-----------
+
+.. autoclass:: yaybu.resources.package.PackageUninstallPolicy
 

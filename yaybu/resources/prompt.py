@@ -21,10 +21,21 @@ from yaybu.core.argument import (
 
 class Prompt(Resource):
 
+    """ Ask a question of the operator. This is useful if manual steps are
+    required as part of implementing a configuration. For example, changes to
+    off-system web interfaces or databases may be required as part of applying
+    a change. """
+
+
     name = String()
+    """ A unique descriptive name for the resource. """
+
     question = String()
+    """ The question to ask the operator. """
 
 class PromptPolicy(Policy):
+
+    """ Prompt the operator. """
 
     resource = Prompt
     name = "prompt"

@@ -2,18 +2,21 @@
 Source Code Management
 ======================
 
+.. automodule:: yaybu.resources.checkout
+
 Checkout
 ========
 
-.. autoclass:: yaybu.resources.checkout.Checkout
+.. autoclass:: Checkout()
    :members:
 
 
-Policies
+`sync`
+------
+
+.. autoclass:: CheckoutSyncPolicy()
+
+`export`
 --------
 
-Sync
-~~~~
-
-Export
-~~~~~~
+.. autoclass:: CheckoutExportPolicy()

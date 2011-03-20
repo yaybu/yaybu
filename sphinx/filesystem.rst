@@ -2,50 +2,44 @@
 Other filesystem resources
 ==========================
 
+.. automodule:: yaybu.resources.filesystem
+
 Directory
 =========
 
-.. autoclass:: yaybu.resources.filesystem.Directory
+.. autoclass:: Directory()
    :members:
 
-Policies
+`apply`
+-------
+
+`remove`
 --------
-
-Apply
-~~~~~
-
-Remove
-~~~~~~
 
 Link
 ====
 
-.. autoclass:: yaybu.resources.filesystem.Link
+.. autoclass:: Link()
    :members:
 
-Policies
---------
-
-The following policies are available for Links:
-
-Apply
-~~~~~
+`apply`
+-------
 
 Create or change the symbolic link.
 
 Raises
 ######
-BinaryMissing
+:py:exc:`~yaybu.core.error.BinaryMissing`
     The system binary for one of the required binaries cannot be found. For    example, ln, rm, chmod etc.
-InvalidUser
+:py:exc:`~yaybu.core.error.InvalidUser`
     The specified `owner` is not a valid unix user.
-InvalidGroup
+:py:exc:`~yaybu.core.error.InvalidGroup`
     The specified `group` is not a valid unix group.
-DanglingSymlink
+:py:exc:`~yaybu.core.error.DanglingSymlink`
     The destination of the symbolic link does not exist.
-OperationFailed
+:py:exc:`~yaybu.core.error.OperationFailed`
     For an undetermined reason we didn't get a link. This should not happen.
-SystemError
+:py:exc:`~yaybu.core.error.SystemError`
     If an error is returned from one of the system calls used.
 
 System Errors
@@ -76,15 +70,12 @@ System Errors
 Special
 =======
 
-.. autoclass:: yaybu.resources.filesystem.Special
+.. autoclass:: Special()
    :members:
 
-Policies
+`apply`
+-------
+
+`remove`
 --------
-
-Apply (Default)
-~~~~~~~~~~~~~~~
-
-Remove
-~~~~~~
 

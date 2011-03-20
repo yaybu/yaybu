@@ -25,7 +25,7 @@ class Group(Resource):
 
     """ A resource representing a unix group.
 
-    For example:
+    For example::
 
         Group:
             name: zope
@@ -45,6 +45,8 @@ class Group(Resource):
     """ The password for the group, if required """
 
 class GroupApplyPolicy(Policy):
+
+    """ Create the group, or ensure it has the specified attributes. """
 
     resource = Group
     name = "apply"

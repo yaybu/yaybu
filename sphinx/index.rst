@@ -22,15 +22,18 @@ write and deploy configurations easily.
 Contents:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    intro
+   installation
    terminology
    tutorial
    logging
+   errorhandling
    resources
    yay_reference
    hacking
+   todo
 
 Indices and tables
 ==================

@@ -21,8 +21,9 @@ because it will be capitalised.
    :maxdepth: 2
 
    os
+   system
    usersandgroups
    scm
    files
-   otherfilesystem
-   misc
+   filesystem
+   prompt

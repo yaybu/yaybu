@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Interactions with the system. Right now it's just an Execute command. """
+
 from yaybu.core.resource import Resource
 from yaybu.core.policy import (
     Policy,
@@ -21,6 +23,7 @@ from yaybu.core.policy import (
     NAND)
 
 from yaybu.core.argument import (
+    FullPath,
     String,
     Integer,
     Octal,
@@ -28,24 +31,82 @@ from yaybu.core.argument import (
     Dict,
     List,
     )
-
-
 class Execute(Resource):
 
+    """ Execute a command. This command is not executed in a shell - if you
+    want a shell, run it (for example bash -c).
+
+    For example::
+
+        Execute:
+          name: core_packages_apt_key
+          command: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys ${source.key}
+
+    A much more complex example. This shows executing a command if a checkout synchronises::
+
+        Execute.foreach bi in ${flavour.base_images}:
+          name: base-image-${bi}
+          policy:
+              apply:
+                  when: sync
+                  on: /var/local/checkouts/ci
+          command: ./vmbuilder-${bi}
+          cwd: /var/local/checkouts/ci
+          user: root
+
+    """
+
     name = String()
+    """ The name of this resource. This should be unique and descriptive, and
+    is used so that resources can reference each other. """
+
     command = String()
+    """ If you wish to run a single command, then this is the command. """
+
     commands = List()
+    """ If you wish to run multiple commands, provide a list """
+
     cwd = String()
+    """ The current working directory in which to execute the command. """
+
     environment = Dict()
-    returncode = Integer()
+    """
+
+    The environment to provide to the command, for example::
+
+        Execute:
+            name: example
+            command: echo $FOO
+            environment:
+                FOO: bar
+    """
+
+    returncode = Integer(default=0)
+    """ The expected return code from the command, defaulting to 0. If the
+    command does not return this return code then the resource is considered
+    to be in error. """
 
     user = String()
-    group = String()
+    """ The user to execute the command as.
 
-    creates = String()
+    .. todo:: user is not yet implemented.
+    """
+
+    group = String()
+    """ The group to execute the command as.
+
+    .. todo:: group is not yet implemented.
+    """
+
+    creates = FullPath()
+    """ The full path to a file that execution of this command creates. This
+    is used like a "touch test" in a Makefile. If this file exists then the
+    execute command will NOT be executed. """
 
 
 class ExecutePolicy(Policy):
+
+    """ Execute the resource. """
 
     resource = Execute
     name = "execute"

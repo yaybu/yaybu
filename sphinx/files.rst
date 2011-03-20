@@ -2,11 +2,22 @@
 Files
 =====
 
-
+.. automodule:: yaybu.resources.files
 
 File
 ====
 
-.. autoclass:: yaybu.resources.filesystem.File
+.. autoclass:: File()
    :members:
+
+`apply`
+-------
+
+.. autoclass:: FileApplyPolicy()
+
+`remove`
+--------
+
+.. autoclass:: FileRemovePolicy()
+
 
