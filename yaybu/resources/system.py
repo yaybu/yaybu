@@ -88,14 +88,10 @@ class Execute(Resource):
 
     user = String()
     """ The user to execute the command as.
-
-    .. todo:: user is not yet implemented.
     """
 
     group = String()
     """ The group to execute the command as.
-
-    .. todo:: group is not yet implemented.
     """
 
     creates = FullPath()
