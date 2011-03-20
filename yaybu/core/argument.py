@@ -90,6 +90,24 @@ class String(Argument):
             l.append(random.choice(unicode_glyphs))
         return "".join(l)
 
+class FullPath(Argument):
+    def __set__(self, instance, value):
+        if value is None:
+            pass
+        elif not isinstance(value, unicode):
+            value = unicode(value, 'utf-8')
+        if not value.startswith("/"):
+            raise error.ParseError("%s is not a full path" % value)
+        setattr(instance, self.arg_id, value)
+
+    @classmethod
+    def _generate_valid(self):
+        # TODO: needs work
+        l = []
+        for i in range(random.randint(0, 1024)):
+            l.append(random.choice(unicode_glyphs))
+        return "/" + "".join(l)
+
 class Integer(Argument):
 
     def __set__(self, instance, value):

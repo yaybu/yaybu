@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Resources dealing with filesystem objects other than files. """
+
 from yaybu.core.resource import Resource
 from yaybu.core.policy import (Policy,
                                Absent,
@@ -20,6 +22,7 @@ from yaybu.core.policy import (Policy,
                                NAND)
 
 from yaybu.core.argument import (
+    FullPath,
     String,
     Integer,
     Octal,
@@ -27,136 +30,35 @@ from yaybu.core.argument import (
     Dict,
     )
 
-"""
-Failure Modes
-=============
+class Directory(Resource):
 
- General failure modes we detect ourselves:
- * Cannot find ln binary
- * Unexpected return code from binary
- * Binary unexpectedly did not create expected symlink
- * User does not exist
- * Group does not exist
- * Template failures
+    """ A directory on disk. Directories have limited metadata, so this resource is quite limited.
 
+    For example::
 
- These are standard C error codes that apply to the underlying calls from these resources.
+        Directory:
+          name: /var/local/data
+          owner: root
+          group: root
+          mode: 644
 
- * EACCESS Search permission is denied on a component of the path prefix
- * EINVAL mode requested creation of something other than a regular file, device special file, FIFO or socket (mknod only)
- * EIO An I/O error occurred
- * ELOOP To many symbolic links were encountered in resolving pathname
- * EMLINK The file referred to by oldpath already has the maximum number of links to it
- * ENAMETOOLONG The pathname was too long
- * ENFILE The system limit on the total number of open files has been reached
- * ENXIO pathname refers to a device special file and no corresponding device exists
- * ENOENT A directory component in pathname does not exist, or is a dangling symbolic link
- * ENOSPC Insufficient disk space
- * ENOTDIR A component used as a directory in pathname is not in fact a directory
- * EOVERFLOW file is too large to open
- * EPERM The calling process did not have the required permissions
- * EPERM The filesystem does not support the creation of directories
- * EROFS Read only filesystem
- * ETXTBSY pathname refers to an executable image which is currently being executed and write access was requested
- * EXDEV paths are not on the same mounted filesystem (for hardlinks)
-
-
- * Above errors for backup file - consider if different reporting needed
- * Disk quota exhausted
- * SELinux Policy does not allow (EPERM or EACCESS?)
- * Insufficient inodes
- * Linked to object does not exist
- * Link name not supported by filesystem
- * Cannot remove existing object (e.g. loopback devices)
- * Stale NFS handles
- * Faulty media
- * Invalid mode
- """
-
-class File(Resource):
-
-    """ A provider for this resource will create or amend an existing file to
-    the provided specification.
     """
 
-    name = String()
-    """The name of the file this resource represents."""
+    name = FullPath()
+    """ The full path to the directory on disk """
 
     owner = String()
-    """A unix username or UID who will own created objects. An owner that
-    begins with a digit will be interpreted as a UID, otherwise it will be
-    looked up using the python 'pwd' module."""
+    """ The unix username who should own this directory """
 
     group = String()
-    """A unix group or GID who will own created objects. A group that begins
-    with a digit will be interpreted as a GID, otherwise it will be looked up
-    using the python 'grp' module."""
+    """ The unix group who should own this directory """
 
     mode = Octal()
-    """A mode representation as an octal. This can begin with leading zeros if
-    you like, but this is not required. DO NOT use yaml Octal representation
-    (0o666), this will NOT work."""
-
-    static = File()
-    """A static file to copy into this resource. The file is located on the
-    yaybu path, so can be colocated with your recipes."""
-
-    encrypted = File()
-    """A static encrypted file to copy to this resource. The file is located
-    on the yaybu path, so can be colocated with your recipe."""
-
-    template = File()
-    """A jinja2 template, used to generate the contents of this resource. The
-    template is located on the yaybu path, so can be colocated with your
-    recipes"""
-
-    template_args = Dict(default={})
-    """The arguments passed to the template."""
-
-    backup = String()
-    """A fully qualified pathname to which to copy this resource before it is
-    overwritten. If you wish to include a date or timestamp, specify format
-    args such as {year}, {month}, {day}, {hour}, {minute}, {second}"""
-
-class FileAppliedPolicy(Policy):
-
-    resource = File
-    name = "apply"
-    default = True
-    signature = (Present("name"),
-                 NAND(Present("template"),
-                      Present("static"),
-                      Present("encrypted")),
-                 NAND(Present("backup"),
-                      Present("dated_backup")),
-                 )
-
-class FileRemovePolicy(Policy):
-
-    resource = File
-    name = "remove"
-    default = False
-    signature = (Present("name"),
-                 Absent("owner"),
-                 Absent("group"),
-                 Absent("mode"),
-                 Absent("static"),
-                 Absent("encrypted"),
-                 Absent("template"),
-                 Absent("template_args"),
-                 NAND(Present("backup"),
-                      Present("dated_backup")),
-                 )
-
-class Directory(Resource):
-    name = String()
-    owner = String()
-    group = String()
-    mode = Octal()
+    """ The octal mode that represents this directory's permissions """
 
 class DirectoryAppliedPolicy(Policy):
     resource = Directory
-    name = "applied"
+    name = "apply"
     default = True
     signature = (Present("name"),
                  Present("owner"),
@@ -166,7 +68,7 @@ class DirectoryAppliedPolicy(Policy):
 
 class DirectoryRemovedPolicy(Policy):
     resource = Directory
-    name = "removed"
+    name = "remove"
     default = False
     signature = (Present("name"),
                  Absent("owner"),
@@ -241,16 +143,42 @@ class LinkRemovedPolicy(Policy):
         )
 
 class Special(Resource):
-    name = String()
+
+    """ A special file, as created by mknod. """
+
+    name = FullPath()
+    """ The full path to the special file on disk. """
+
     owner = String()
+    """ The unix user who should own this special file. """
+
     group = String()
+    """ The unix group who should own this special file. """
+
     mode = Octal()
+    """ The octal representation of the permissions for this special file. """
+
     type_ = String()
+    """ One of the following strings:
+
+      block
+        create a block (buffered) special file
+      character
+        create a character (unbuffered) special file
+      fifo
+        create a fifo
+    """
+
     major = Integer()
+    """ The major number for the special file. If the type of the special file
+    is block or character, then this must be specified. """
+
     minor = Integer()
+    """ The minor number for the special file. If the type of the special file
+    is block or character, then this must be specified. """
 
 class SpecialAppliedPolicy(Policy):
-    name = "applied"
+    name = "apply"
     default = True
     signature = (Present("name"),
                  Present("owner"),
@@ -262,7 +190,7 @@ class SpecialAppliedPolicy(Policy):
                  )
 
 class SpecialRemovedPolicy(Policy):
-    name = "removed"
+    name = "remove"
     default = False
     signature = (Present("name"),
                  Absent("owner"),

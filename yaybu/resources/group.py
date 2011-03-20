@@ -17,16 +17,36 @@ from yaybu.core.policy import Policy
 from yaybu.core.argument import (
     String,
     Integer,
+    Boolean,
     )
 
 
 class Group(Resource):
 
-    name = String()
-    gid = Integer()
+    """ A resource representing a unix group.
 
+    For example::
+
+        Group:
+            name: zope
+            system: true
+    """
+
+    name = String()
+    """ The name of the unix group. """
+
+    gid = Integer()
+    """ The group ID associated with the group. If this is not specified one will be chosen. """
+
+    system = Boolean()
+    """ Whether or not this is a system group. """
+
+    password = String()
+    """ The password for the group, if required """
 
 class GroupApplyPolicy(Policy):
+
+    """ Create the group, or ensure it has the specified attributes. """
 
     resource = Group
     name = "apply"

@@ -22,20 +22,42 @@ from yaybu.core.argument import (
 
 class Package(Resource):
 
+    """ Represents an operating system package, installed and managed via the
+    OS package management system. For example, to ensure these three packages
+    are installed::
+
+        Package:
+            - name: apache2
+            - name: zip
+            - name: xsltproc
+
+    """
+
     name = String()
+    """ The name of the package. This can be a single package or a list can be supplied. """
+
     version = String()
+    """ The version of the package, if only a single package is specified. """
 
     # To deploy a particular .deb for example
     file = File()
-
+    """ Instead of a name you can specify one or more files on disk that are
+    used as the package source, if you do not wish to use a remote source. """
 
 class PackageInstallPolicy(Policy):
+
+    """ Install the specified package. If the package is already installed it
+    will not be upgraded or changed. Your package upgrade and patching
+    strategy should be independent of Yaybu in general.
+    """
 
     resource = Package
     name = "install"
     default = True
 
 class PackageUninstallPolicy(Policy):
+
+    """ Uninstall the specified package, if it is installed. """
 
     resource = Package
     name = "uninstall"
