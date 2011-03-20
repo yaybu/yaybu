@@ -3,6 +3,7 @@ Operating System Management
 ===========================
 
 .. automodule:: yaybu.resources.package
+
 Package
 =======
 
