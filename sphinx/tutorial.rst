@@ -81,7 +81,7 @@ resources.
 
 We provide 3 attributes for our Execute resource. Everything has to have a
 unique name, and Execute has to have a command to execute. We can also
-specify a :py:meth:`creates` attribute. This is a way of making sure our command is
+specify a :py:meth:`yaybu.resources.system.Execute.creates` attribute. This is a way of making sure our command is
 only executed once.
 
 Lets use our recipe in `mybox.yay`::
@@ -100,12 +100,12 @@ Lets use our recipe in `mybox.yay`::
             - name: apache2
             - name: libapache2-mod-php5
 
-yay, our underlying configuration language, has an extends list. Currently
+yay, our underlying configuration language, has an `extends` list. Currently
 the yay section must be the first one in the file for this to work. If
 you want you can expand the config and remove all the foreach and variable
 expansion. To do this do::
 
-    yaybu --expand-only `mybox.yay`
+    yaybu --expand-only mybox.yay
 
 You can execute this using the same invokation as before.
 
@@ -154,7 +154,7 @@ of resource.append would not be valid in YAML it works just fine in yay.
 
 This time Execute has a policy. We have policies like 'apply' and 'remove' and
 can be thought of like like 'Ensure this file is removed if present' or 'Ensure
-the following config is applied to a resource'. This example is conditonally
+the following config is applied to a resource'. This example is conditionally
 applying the execute policy when the apply policy has occured on one of the
 File resources we set up previously. This is how we make sure the apache
 graceful step only happens when vhost configuration has changed.
@@ -237,8 +237,8 @@ So here is lamp.yay::
         .foreach customer in customers:
             - Checkout:
                   name: /var/local/sites/${customer.sitename}
-                  repository: http://svn.localhost/svn/${customer.sitename}
-                  branch: tags/${customer.version}
+                  repository: http://svn.localhost/${customer.sitename}
+                  branch: /tags/${customer.version}
 
 
 And `mybox.yay` is now::
