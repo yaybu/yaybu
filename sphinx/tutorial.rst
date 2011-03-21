@@ -5,10 +5,11 @@ Simple PHP Host
 ---------------
 
 We have a computer "mybox" on which we wish to deploy a simple PHP application
-from Subversion, based on tagged versions of the php content.
+from Subversion, based on tagged versions of the php content: i.e. we tag our
+trunk each time we wish to release a new version, as good boys do.
 
 We'll use yay to make several reusable parts, starting at a simple recipe that
-just installs packages and working up to having a mybox.yay that just has a
+just installs packages and working up to having a `mybox.yay` that just has a
 list of sites to deploy.
 
 This is meant to introduce you to the core concepts of yaybu and yay. It is
@@ -20,7 +21,7 @@ Your first recipe: installing some packages
 
 We'll meet our first resource type and how to get them to apply.
 
-In mybox.yay add the following::
+In `mybox.yay` add the following::
 
     resources.append:
         - Package
@@ -30,14 +31,12 @@ In mybox.yay add the following::
 
 You can deploy this on the current machine with::
 
-    sudo yaybu mybox.yay
+    sudo yaybu `mybox.yay`
 
-The goal of all your recipes is to add resource objects to the resources list.
+The goal of all your recipes is to add resource objects to the `resources` list.
 Resources always start with a capital letter and describe things on a server
 that you want to manage. They are meant to be declarative: They describe
-the state you want to achieve. "When this application is deployed correctly,
-a up to date checkout of foo will exist at /var/local/foo" over "Do a checkout foo
-to /var/local/foo".
+the state you want to achieve. 
 
 There are 2 forms you can use when appending to the resource list. The first
 is::
@@ -76,16 +75,16 @@ Lets add a new file. In apache_modules.yay add::
               creates: /etc/apache2/mods-enabled/${module}.load
 
 We just created a new list called modules. By default it will be empty. We'll
-be appending to it in mybox.yay later. We then append to resources using a
-foreach. Every item in the modules list will add a new Execute resource to
+be appending to it in `mybox.yay` later. We then append to resources using a
+foreach. Every item in the modules list will add a new :py:class:`yaybu.resources.system.Execute` resource to
 resources.
 
 We provide 3 attributes for our Execute resource. Everything has to have a
 unique name, and Execute has to have a command to execute. We can also
-specify a creates attribute. This is a way of making sure our command is
+specify a :py:meth:`creates` attribute. This is a way of making sure our command is
 only executed once.
 
-Lets use our recipe in mybox.yay::
+Lets use our recipe in `mybox.yay`::
 
     yay:
         extends:
@@ -106,7 +105,7 @@ the yay section must be the first one in the file for this to work. If
 you want you can expand the config and remove all the foreach and variable
 expansion. To do this do::
 
-    yaybu --expand-only mybox.yay
+    yaybu --expand-only `mybox.yay`
 
 You can execute this using the same invokation as before.
 
@@ -171,7 +170,7 @@ Pretty straightforward to Django developers, for the rest of us anything
 between a pair of {{ }} brackets will be evaluated against whatever we
 provided in template_args.
 
-Finally we need to update mybox.yay to use it::
+Finally we need to update `mybox.yay` to use it::
 
     yay:
         extends:
@@ -202,7 +201,7 @@ Seperating the metadata from the configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We'll polish what we've gotten so far into a reusable config called lamp.yay and
-only put the project and specific stuff in mybox.yay.
+only put the project and specific stuff in `mybox.yay`.
 
 We're going to pretend that we are deploying from an svn server with a sane
 repository layout and that the sitename is conventiently the same as the
@@ -242,7 +241,7 @@ So here is lamp.yay::
                   branch: tags/${customer.version}
 
 
-And mybox.yay is now::
+And `mybox.yay` is now::
 
     yay:
         extends:
@@ -259,7 +258,7 @@ And mybox.yay is now::
         - sitename: www.customer2.com
           version: 1.3
 
-Releasing version 1.4 of customer1.com is a 1 line change to mybox.yay
+Releasing version 1.4 of customer1.com is a 1 line change to `mybox.yay`
 and a yaybu invocation away.
 
 
