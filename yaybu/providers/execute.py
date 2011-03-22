@@ -25,7 +25,7 @@ logger = logging.getLogger("provider")
 
 class Execute(provider.Provider):
 
-    policies = (resources.system.ExecutePolicy,)
+    policies = (resources.execute.ExecutePolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
