@@ -1,14 +1,17 @@
-===========================
-Operating System Management
-===========================
-
-.. automodule:: yaybu.resources.package
-
+=======
 Package
 =======
 
+.. automodule:: yaybu.resources.package
+
+Resource
+========
+
 .. autoclass:: Package()
    :members:
+
+Policies
+========
 
 `install` (Default)
 -------------------

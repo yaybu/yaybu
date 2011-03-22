@@ -1,14 +1,17 @@
-================
-Users and Groups
-================
-
+====
 User
 ====
 
 .. automodule:: yaybu.resources.user
 
+Resource
+========
+
 .. autoclass:: User()
    :members:
+
+Policies
+========
 
 `apply`
 -------
@@ -33,22 +36,4 @@ Raises
 
 NOTE: No providers have been implemented for this policy yet.
 
-Group
-=====
-
-.. automodule:: yaybu.resources.group
-
-.. autoclass:: Group()
-   :members:
-
-
-`apply`
--------
-
-.. autoclass:: GroupApplyPolicy()
-
-`remove`
---------
-
-.. todo:: The group remove policy is not yet implemented
 

@@ -20,10 +20,14 @@ because it will be capitalised.
 .. toctree::
    :maxdepth: 2
 
-   os
-   system
-   usersandgroups
-   scm
-   files
-   filesystem
-   prompt
+   resources/package
+   resources/execute
+   resources/file
+   resources/directory
+   resources/link
+   resources/special
+   resources/user
+   resources/group
+   resources/checkout
+   resources/prompt
+
