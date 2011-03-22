@@ -80,9 +80,10 @@ foreach. Every item in the modules list will add a new :py:class:`yaybu.resource
 resources.
 
 We provide 3 attributes for our Execute resource. Everything has to have a
-unique name, and Execute has to have a command to execute. We can also
-specify a :py:meth:`yaybu.resources.system.Execute.creates` attribute. This is a way of making sure our command is
-only executed once.
+unique :py:meth:`yaybu.resources.system.Execute.name`, and Execute has to 
+have a :py:meth:`yaybu.resources.system.Execute.command` to execute. We can also
+specify a :py:meth:`yaybu.resources.system.Execute.creates` attribute. This 
+is a way of making sure our command is only executed once.
 
 Lets use our recipe in `mybox.yay`::
 
@@ -145,15 +146,16 @@ This recipe should do 3 things. Fill in a template called apache_vhost.j2,
 link it into the apache2 sites-enabled folder and any time we change
 the config file make sure that apache2ctl graceful is called.
 
-To base a file on a template we use the template and template_args attributes.
+To base a file on a template we use the :py:meth:`yaybu.resources.files.File.template`
+and :py:meth:`yaybu.resources.files.File.template_args` attributes.
 The template_args can be a dict containing any valid yay. We'll see a valid
 template in a minute.
 
 While yay is based on YAML it behaves quite differently. While 2 occurences
 of resource.append would not be valid in YAML it works just fine in yay.
 
-This time Execute has a policy. We have policies like 'apply' and 'remove' and
-can be thought of like like 'Ensure this file is removed if present' or 'Ensure
+This time Execute has a :py:meth:`yaybu.resources.system.Execute.policy`.
+We have policies like 'apply' and 'remove' and can be thought of like like 'Ensure this file is removed if present' or 'Ensure
 the following config is applied to a resource'. This example is conditionally
 applying the execute policy when the apply policy has occured on one of the
 File resources we set up previously. This is how we make sure the apache
