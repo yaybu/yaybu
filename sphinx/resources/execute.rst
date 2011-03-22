@@ -2,7 +2,7 @@
 Execute
 =======
 
-.. automodule:: yaybu.resources.system
+.. automodule:: yaybu.resources.execute
 
 Resource
 ========
