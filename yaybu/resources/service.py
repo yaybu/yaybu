@@ -34,15 +34,54 @@ from yaybu.core.argument import (
 class Service(Resource):
 
     name = String()
+    """ A unique name representing an initd service.
+
+    This would normally match the name as it appears in /etc/init.d.
+    """
+
     enabled = Boolean()
+    """" Is the service set to automatically start, or is it started manually """
+
+    priority = Integer()
+    """ Priority of the service within the boot order.
+
+    This attribute will have no effect when using a dependency or event based
+    init.d subsystem like upstart or systemd. """
 
     start = String()
-    stop = String()
-    restart = String()
-    reconfig = String()
-    status = String()
+     """ A command that when executed will start the service.
 
-    actions = ["nothing", "start", "stop", "restart", "reload"]
+    If not provided, the provider will use the default service start invocation
+    for the init.d system in use.
+    """
+
+    stop = String()
+    """ A command that when executed will start the service.
+
+    If not provided, the provider will use the default service stop invocation
+    for the init.d system in use.
+    """
+
+    restart = String()
+    """ A command that when executed will restart the service.
+
+    If not provided, the provider will use the default service restart invocation
+    for the init.d system in use. If it is not possible to automatically determine
+    if the restart script is avilable the service will be stopped and started instead.
+    """
+
+    reconfig = String()
+    """ A command that when executed will make the service reload its configuration file. """
+
+    status = String()
+    """ A command that will report whether or not a service is responding """
+
+    pidfile = FullPath()
+    """ Where the service creates its pid file.
+
+    This can be provided instead of a status command as an alternative way of checking if
+    a service is running or not.
+    """
 
 
 class ServiceStartPolicy(Policy):
@@ -52,7 +91,10 @@ class ServiceStartPolicy(Policy):
     resource = Service
     name = "start"
     default = True
-    signature = (Present("name"), )
+    signature = (
+        Present("name"),
+        NAND(Present("status"), Present("pidfile")),
+        )
 
 
 class ServiceStopPolicy(Policy):
@@ -61,7 +103,10 @@ class ServiceStopPolicy(Policy):
 
     resource = Service
     name = "stop"
-    signature = (Present("name"), )
+    signature = (
+        Present("name"),
+        NAND(Present("status"), Present("pidfile")),
+        )
 
 
 class ServiceRestartPolicy(Policy):
@@ -73,7 +118,10 @@ class ServiceRestartPolicy(Policy):
 
     resource = Service
     name = "restart"
-    signature = (Present("name"), )
+    signature = (
+        Present("name"),
+        NAND(Present("status"), Present("pidfile")),
+        )
 
 
 class ServiceReloadPolicy(Policy):
@@ -85,5 +133,8 @@ class ServiceReloadPolicy(Policy):
 
     resource = Service
     name = "reconfig"
-    signature = (Present("name"), )
+    signature = (
+        Present("name"),
+        NAND(Present("status"), Present("pidfile")),
+        )
 
