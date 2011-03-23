@@ -21,5 +21,5 @@ Policies
 `remove`
 --------
 
-.. todo:: The group remove policy is not yet implemented
+.. autoclass:: GroupRemovePolicy()
 

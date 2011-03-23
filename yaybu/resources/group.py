@@ -44,6 +44,7 @@ class Group(Resource):
     password = String()
     """ The password for the group, if required """
 
+
 class GroupApplyPolicy(Policy):
 
     """ Create the group, or ensure it has the specified attributes. """
@@ -51,3 +52,13 @@ class GroupApplyPolicy(Policy):
     resource = Group
     name = "apply"
     default = True
+
+
+class GroupRemovePolicy(Policy):
+
+    """ Remove an existing group if it still exists. """
+
+    resource = Group
+    name = "remove"
+    default = False
+

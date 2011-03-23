@@ -16,6 +16,15 @@ Policies
 `apply`
 -------
 
+.. autoclass:: DirectoryAppliedPolicy()
+
 `remove`
 --------
+
+.. autoclass:: DirectoryRemovedPolicy()
+
+`removed-recursive`
+--------
+
+.. autoclass:: DirectoryRemovedRecursivePolicy()
 
