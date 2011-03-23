@@ -154,8 +154,8 @@ template in a minute.
 While yay is based on YAML it behaves quite differently. While 2 occurences
 of resource.append would not be valid in YAML it works just fine in yay.
 
-This time Execute has a :py:meth:`yaybu.resources.execute.Execute.policy`.
-We have policies like 'apply' and 'remove' and can be thought of like like 'Ensure this file is removed if present' or 'Ensure
+This time Execute has a policy. We have policies like 'apply' and 'remove'
+and can be thought of like like 'Ensure this file is removed if present' or 'Ensure
 the following config is applied to a resource'. This example is conditionally
 applying the execute policy when the apply policy has occured on one of the
 File resources we set up previously. This is how we make sure the apache
