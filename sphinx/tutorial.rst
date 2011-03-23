@@ -76,13 +76,13 @@ Lets add a new file. In apache_modules.yay add::
 
 We just created a new list called modules. By default it will be empty. We'll
 be appending to it in `mybox.yay` later. We then append to resources using a
-foreach. Every item in the modules list will add a new :py:class:`yaybu.resources.system.Execute` resource to
+foreach. Every item in the modules list will add a new :py:class:`yaybu.resources.execute.Execute` resource to
 resources.
 
 We provide 3 attributes for our Execute resource. Everything has to have a
-unique :py:meth:`yaybu.resources.system.Execute.name`, and Execute has to 
-have a :py:meth:`yaybu.resources.system.Execute.command` to execute. We can also
-specify a :py:meth:`yaybu.resources.system.Execute.creates` attribute. This 
+unique :py:meth:`yaybu.resources.execute.Execute.name`, and Execute has to 
+have a :py:meth:`yaybu.resources.execute.Execute.command` to execute. We can also
+specify a :py:meth:`yaybu.resources.execute.Execute.creates` attribute. This 
 is a way of making sure our command is only executed once.
 
 Lets use our recipe in `mybox.yay`::
@@ -146,15 +146,15 @@ This recipe should do 3 things. Fill in a template called apache_vhost.j2,
 link it into the apache2 sites-enabled folder and any time we change
 the config file make sure that apache2ctl graceful is called.
 
-To base a file on a template we use the :py:meth:`yaybu.resources.files.File.template`
-and :py:meth:`yaybu.resources.files.File.template_args` attributes.
+To base a file on a template we use the :py:meth:`yaybu.resources.file.File.template`
+and :py:meth:`yaybu.resources.file.File.template_args` attributes.
 The template_args can be a dict containing any valid yay. We'll see a valid
 template in a minute.
 
 While yay is based on YAML it behaves quite differently. While 2 occurences
 of resource.append would not be valid in YAML it works just fine in yay.
 
-This time Execute has a :py:meth:`yaybu.resources.system.Execute.policy`.
+This time Execute has a :py:meth:`yaybu.resources.execute.Execute.policy`.
 We have policies like 'apply' and 'remove' and can be thought of like like 'Ensure this file is removed if present' or 'Ensure
 the following config is applied to a resource'. This example is conditionally
 applying the execute policy when the apply policy has occured on one of the
