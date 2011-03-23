@@ -29,5 +29,6 @@ because it will be capitalised.
    resources/user
    resources/group
    resources/checkout
+   resources/service
    resources/prompt
 
