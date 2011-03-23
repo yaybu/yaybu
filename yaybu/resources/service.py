@@ -49,7 +49,7 @@ class Service(Resource):
     init.d subsystem like upstart or systemd. """
 
     start = String()
-     """ A command that when executed will start the service.
+    """ A command that when executed will start the service.
 
     If not provided, the provider will use the default service start invocation
     for the init.d system in use.
