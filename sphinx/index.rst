@@ -26,10 +26,10 @@ Contents:
    installation
    terminology
    tutorial
-   logging
-   errorhandling
    resources
+   errorhandling
    yay_reference
+   logging
    hacking
    todo
 
