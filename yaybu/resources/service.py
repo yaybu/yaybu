@@ -47,6 +47,8 @@ class Service(Resource):
 
 class ServiceStartPolicy(Policy):
 
+    """ Start a service if it isn't running """
+
     resource = Service
     name = "start"
     default = True
@@ -55,6 +57,8 @@ class ServiceStartPolicy(Policy):
 
 class ServiceStopPolicy(Policy):
 
+    """ Stop a service if it is running """
+
     resource = Service
     name = "stop"
     signature = (Present("name"), )
@@ -62,12 +66,22 @@ class ServiceStopPolicy(Policy):
 
 class ServiceRestartPolicy(Policy):
 
+    """ Restart a service
+
+    If a service isn't running it will just be started instead.
+    """
+
     resource = Service
     name = "restart"
     signature = (Present("name"), )
 
 
 class ServiceReloadPolicy(Policy):
+
+    """ Get the service to reload its configuration
+
+    If a service isn't running it will just be started instead.
+    """
 
     resource = Service
     name = "reconfig"

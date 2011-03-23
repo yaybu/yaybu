@@ -28,7 +28,7 @@ Policies
 
 .. autoclass:: ServiceRestartPolicy()
 
-`reload`
+`reconfig`
 ----------
 
 .. autoclass:: ServiceReloadPolicy()
