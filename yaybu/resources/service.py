@@ -21,13 +21,10 @@ from yaybu.core.policy import (
     NAND)
 
 from yaybu.core.argument import (
+    FullPath,
     String,
     Boolean,
     Integer,
-    Octal,
-    File,
-    Dict,
-    List,
     )
 
 
