@@ -75,13 +75,19 @@ class User(Resource):
     disabled_login = Boolean(default=False)
     """ A boolean for whether this entire account is locked or not. """
 
+
 class UserApplyPolicy(Policy):
 
-    """ Create or change the specified user. """
+    """ Create or change the specified user.
+
+    It might not be possible to apply some changes to existing users, for example
+    the systeam attribute only makes sense at the point a user is created.
+    """
 
     resource = User
     name = "apply"
     default = True
+
 
 class UserRemovePolicy(Policy):
 

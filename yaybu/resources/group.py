@@ -13,7 +13,11 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
-from yaybu.core.policy import Policy
+from yaybu.core.policy import (
+    Policy,
+    Absent,
+    Present,
+    )
 from yaybu.core.argument import (
     String,
     Integer,
@@ -52,13 +56,24 @@ class GroupApplyPolicy(Policy):
     resource = Group
     name = "apply"
     default = True
+    signature = (
+        Present("name"),
+        )
 
 
 class GroupRemovePolicy(Policy):
 
-    """ Remove an existing group if it still exists. """
+    """ Remove an existing group if it still exists.
+
+    You should only specify the name of the group when using this policy."""
 
     resource = Group
     name = "remove"
     default = False
+    signature = (
+        Present("name"),
+        Absent("gid"),
+        Absent("system"),
+        Absent("password"),
+        )
 

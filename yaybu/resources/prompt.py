@@ -13,7 +13,11 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
-from yaybu.core.policy import Policy
+from yaybu.core.policy import (
+    Policy,
+    Absent,
+    Present,
+    )
 from yaybu.core.argument import (
     String,
     Integer,
@@ -33,10 +37,19 @@ class Prompt(Resource):
     question = String()
     """ The question to ask the operator. """
 
+
 class PromptPolicy(Policy):
 
-    """ Prompt the operator. """
+    """ Prompt the operator.
+
+    The value of the question attribute will be displayed to the operator and
+    deployment will not continue until they acknowledge the prompt."""
 
     resource = Prompt
     name = "prompt"
     default = True
+    signature = (
+        Present("name"),
+        Present("question"),
+        )
+

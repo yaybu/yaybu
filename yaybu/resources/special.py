@@ -67,6 +67,9 @@ class Special(Resource):
 
 
 class SpecialAppliedPolicy(Policy):
+
+    """ Ensure a block or character special file exists """
+
     name = "apply"
     default = True
     signature = (Present("name"),
@@ -80,6 +83,12 @@ class SpecialAppliedPolicy(Policy):
 
 
 class SpecialRemovedPolicy(Policy):
+
+    """ If the special file specified exists, remove it.
+
+    You should only specify the special file to remove, the other fields are
+    not needed """
+
     name = "remove"
     default = False
     signature = (Present("name"),
@@ -90,3 +99,4 @@ class SpecialRemovedPolicy(Policy):
                  Absent("major"),
                  Absent("minor"),
                  )
+

@@ -102,7 +102,9 @@ class Execute(Resource):
 
 class ExecutePolicy(Policy):
 
-    """ Execute the resource. """
+    """ Execute the the command or commands provided.
+
+    If user or group attributes are provided the command will be run using sudo."""
 
     resource = Execute
     name = "execute"

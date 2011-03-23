@@ -56,7 +56,12 @@ class Directory(Resource):
     mode = Octal()
     """ The octal mode that represents this directory's permissions """
 
+
 class DirectoryAppliedPolicy(Policy):
+
+    """ Ensure a directory exists and matches the specification provided
+    by the resource. """
+
     resource = Directory
     name = "apply"
     default = True
@@ -66,7 +71,17 @@ class DirectoryAppliedPolicy(Policy):
                  Present("mode"),
                  )
 
+
 class DirectoryRemovedPolicy(Policy):
+
+    """ If a directory described by this resource exists then remove it.
+
+    This isn't recursive, if you want to remove a directory and all its contents
+    use `removed-recursive`.
+
+    You should only provided the path to the directory when using this policy.
+    """
+
     resource = Directory
     name = "remove"
     default = False
@@ -76,7 +91,15 @@ class DirectoryRemovedPolicy(Policy):
                  Absent("mode"),
                  )
 
+
 class DirectoryRemovedRecursivePolicy(Policy):
+
+    """ If a directory described by this resource exists then remove it and
+    its children.
+
+    You should only provided the path to the directory when using this policy.
+    """
+
     resource = Directory
     name = "removed-recursive"
     default = False

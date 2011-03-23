@@ -30,6 +30,7 @@ from yaybu.core.argument import (
     Dict,
     )
 
+
 class Link(Resource):
 
     """ A resource representing a symbolic link. The link will be from `name`
@@ -68,6 +69,7 @@ class Link(Resource):
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work."""
 
+
 class LinkAppliedPolicy(Policy):
     resource = Link
     name = "apply"
@@ -76,6 +78,7 @@ class LinkAppliedPolicy(Policy):
         Present("name"),
         Present("to"),
         )
+
 
 class LinkRemovedPolicy(Policy):
     resource = Link

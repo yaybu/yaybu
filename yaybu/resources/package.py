@@ -13,7 +13,11 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
-from yaybu.core.policy import Policy
+from yaybu.core.policy import (
+    Policy,
+    Absent,
+    Present,
+    )
 from yaybu.core.argument import (
     String,
     File,
@@ -44,6 +48,7 @@ class Package(Resource):
     """ Instead of a name you can specify one or more files on disk that are
     used as the package source, if you do not wish to use a remote source. """
 
+
 class PackageInstallPolicy(Policy):
 
     """ Install the specified package. If the package is already installed it
@@ -54,6 +59,9 @@ class PackageInstallPolicy(Policy):
     resource = Package
     name = "install"
     default = True
+    signature = (
+        Present("name"),
+        )
 
 class PackageUninstallPolicy(Policy):
 
@@ -62,3 +70,9 @@ class PackageUninstallPolicy(Policy):
     resource = Package
     name = "uninstall"
     default = False
+    signature = (
+        Present("name"),
+        Absent("version"),
+        Absent("file"),
+        )
+

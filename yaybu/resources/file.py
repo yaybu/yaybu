@@ -101,6 +101,7 @@ class File(Resource):
     overwritten. If you wish to include a date or timestamp, specify format
     args such as {year}, {month}, {day}, {hour}, {minute}, {second}"""
 
+
 class FileApplyPolicy(Policy):
 
     """ Create a file and populate it's contents if required.
@@ -118,6 +119,7 @@ class FileApplyPolicy(Policy):
                       Present("static"),
                       Present("encrypted")),
                  )
+
 
 class FileRemovePolicy(Policy):
 

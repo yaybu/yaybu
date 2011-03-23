@@ -13,7 +13,11 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
-from yaybu.core.policy import Policy
+from yaybu.core.policy import (
+    Policy,
+    Absent,
+    Present,
+    )
 from yaybu.core.argument import (
     FullPath,
     String,
@@ -65,6 +69,11 @@ class CheckoutSyncPolicy(Policy):
     resource = Checkout
     name = "sync"
     default = True
+    signature = (
+        Present("name"),
+        Present("repository"),
+        Present("branch"),
+        )
 
 
 class CheckoutExportPolicy(Policy):
@@ -76,3 +85,9 @@ class CheckoutExportPolicy(Policy):
     resource = Checkout
     name = "export"
     default = False
+    signature = (
+        Present("name"),
+        Present("repository"),
+        Present("branch"),
+        )
+
