@@ -24,7 +24,7 @@ Policies
 .. autoclass:: DirectoryRemovedPolicy()
 
 `removed-recursive`
---------
+-------------------
 
 .. autoclass:: DirectoryRemovedRecursivePolicy()
 
