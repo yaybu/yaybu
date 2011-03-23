@@ -179,7 +179,7 @@ class File(provider.Provider):
 
     """ Provides file creation using templates or static files. """
 
-    policies = (resources.files.FileApplyPolicy,)
+    policies = (resources.file.FileApplyPolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
@@ -222,7 +222,7 @@ class File(provider.Provider):
             return True
 
 class RemoveFile(provider.Provider):
-    policies = (resources.files.FileRemovePolicy,)
+    policies = (resources.file.FileRemovePolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):

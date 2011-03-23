@@ -4,11 +4,14 @@ Prompt
 
 .. automodule:: yaybu.resources.prompt
 
-Prompt
-======
+Resource
+========
 
 .. autoclass:: Prompt()
    :members:
+
+Policies
+========
 
 `prompt`
 --------

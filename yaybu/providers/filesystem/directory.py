@@ -25,7 +25,7 @@ from files import AttributeChanger
 
 class Directory(provider.Provider):
 
-    policies = (resources.filesystem.DirectoryAppliedPolicy,)
+    policies = (resources.directory.DirectoryAppliedPolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
@@ -49,7 +49,7 @@ class Directory(provider.Provider):
 
 class RemoveDirectory(provider.Provider):
 
-    policies = (resources.filesystem.DirectoryRemovedPolicy,)
+    policies = (resources.directory.DirectoryRemovedPolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):

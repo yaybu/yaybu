@@ -1,15 +1,17 @@
-======================
-Source Code Management
-======================
+========
+Checkout
+========
 
 .. automodule:: yaybu.resources.checkout
 
-Checkout
+Resource
 ========
 
 .. autoclass:: Checkout()
    :members:
 
+Policies
+========
 
 `sync`
 ------

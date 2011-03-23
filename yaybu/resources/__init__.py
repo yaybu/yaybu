@@ -13,9 +13,11 @@
 # limitations under the License.
 
 from yaybu.resources import (
-    system,
-    files,
-    filesystem,
+    execute,
+    file,
+    directory,
+    link,
+    special,
     group,
     checkout,
     package,

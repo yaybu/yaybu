@@ -1,14 +1,17 @@
-======
-System
-======
-
-.. automodule:: yaybu.resources.system
-
+=======
 Execute
 =======
 
+.. automodule:: yaybu.resources.execute
+
+Resource
+========
+
 .. autoclass:: Execute()
    :members:
+
+Policies
+========
 
 `execute`
 ---------

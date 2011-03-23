@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Interactions with the system. Right now it's just an Execute command. """
-
 from yaybu.core.resource import Resource
 from yaybu.core.policy import (
     Policy,
@@ -31,6 +29,8 @@ from yaybu.core.argument import (
     Dict,
     List,
     )
+
+
 class Execute(Resource):
 
     """ Execute a command. This command is not executed in a shell - if you
