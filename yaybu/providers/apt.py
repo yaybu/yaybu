@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from yaybu.core import provider
 from yaybu.core import error
 from yaybu import resources
@@ -27,9 +29,8 @@ class AptInstall(provider.Provider):
         return super(AptInstall, self).isvalid(policy, resource, yay)
 
     def apply(self, context):
-        env = {
-            "DEBIAN_FRONTEND": "noninteractive",
-            }
+        env = os.environ.copy()
+        env["DEBIAN_FRONTEND"] = "noninteractive"
 
         # work out if the package is already installed
         command = ["dpkg", "-s", self.resource.name]
@@ -64,11 +65,10 @@ class AptUninstall(provider.Provider):
         return super(AptUninstall, self).isvalid(policy, resource, yay)
 
     def apply(self, context):
-        env = {
-            "DEBIAN_FRONTEND": "noninteractive",
-            }
+        env = os.environ.copy()
+        env["DEBIAN_FRONTEND"] = "noninteractive"
 
-        command = ["apt-get", "remove"]
+        command = ["apt-get", "remove", "-q", "-y"]
         if self.resource.purge:
             command.append("--purge")
         command.append(self.resource.name)

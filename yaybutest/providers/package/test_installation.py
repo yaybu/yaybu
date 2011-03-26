@@ -40,22 +40,15 @@ class TestPackageRemoval(TestCase):
 
     def test_not_installed(self):
         """ Try removing a package that is not installed. """
-        rv = self.apply("""
+        self.check_apply("""
             resources:
                 - Package:
                     name: vim-tiny
                     policy: uninstall
             """)
-        self.assertEqual(rv, 132)
 
     def test_installed(self):
         """ Try removing a package that is installed. """
-        self.check_apply("""
-            resources:
-              - Package:
-                  name: vim-tiny
-            """)
-
         self.check_apply("""
             resources:
               - Package:
