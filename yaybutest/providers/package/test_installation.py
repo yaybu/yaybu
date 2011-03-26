@@ -26,15 +26,6 @@ class TestPackageInstallation(TestCase):
             """)
         self.assertEqual(rv, 132)
 
-    def test_installing_java(self):
-        """ Try to install java. """
-        return
-        self.check_apply("""
-            resources:
-              - Package:
-                  name: java
-            """)
-
 
 class TestPackageRemoval(TestCase):
 
