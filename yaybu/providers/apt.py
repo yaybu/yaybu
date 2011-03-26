@@ -16,7 +16,7 @@ from yaybu.core import provider
 from yaybu.core import error
 from yaybu import resources
 
-class Apt(provider.Provider):
+class AptInstall(provider.Provider):
 
     policies = (resources.package.PackageInstallPolicy,)
 
@@ -24,9 +24,12 @@ class Apt(provider.Provider):
     def isvalid(self, policy, resource, yay):
         if resource.version is not None:
             return False
-        return super(Apt, self).isvalid(policy, resource, yay)
+        return super(AptInstall, self).isvalid(policy, resource, yay)
 
     def apply(self, context):
+        env = {
+            "DEBIAN_FRONTEND": "noninteractive",
+            }
 
         # work out if the package is already installed
         command = ["dpkg", "-s", self.resource.name]
@@ -44,10 +47,37 @@ class Apt(provider.Provider):
 
         # the search returned 1, package is not installed, continue and install it
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
-        returncode, stdout, stderr = context.shell.execute(command)
+        returncode, stdout, stderr = context.shell.execute(command, exceptions=False, env=env)
 
         if returncode != 0:
             raise error.AptError("%s failed with return code %d" % (self.resource, returncode))
 
         return True
+
+
+class AptUninstall(provider.Provider):
+
+    policies = (resources.package.PackageUninstallPolicy,)
+
+    @classmethod
+    def isvalid(self, polcy, resource, yay):
+        return super(AptUninstall, self).isvalid(policy, resource, yay)
+
+    def apply(self, context):
+        env = {
+            "DEBIAN_FRONTEND": "noninteractive",
+            }
+
+        command = ["apt-get", "remove"]
+        if self.resource.purge:
+            command.append("--purge")
+        command.append(self.resource.name)
+
+        returncode, stdout, stderr = context.shell.execute(command, exceptions=False, env=env)
+
+        if returncode != 0:
+            raise error.AptError("%s failed to uninstall with return code %d" % (self.resource, returncode))
+
+        return True
+
 
