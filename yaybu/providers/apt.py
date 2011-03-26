@@ -60,7 +60,7 @@ class AptUninstall(provider.Provider):
     policies = (resources.package.PackageUninstallPolicy,)
 
     @classmethod
-    def isvalid(self, polcy, resource, yay):
+    def isvalid(self, policy, resource, yay):
         return super(AptUninstall, self).isvalid(policy, resource, yay)
 
     def apply(self, context):
