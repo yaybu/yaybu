@@ -21,14 +21,17 @@ class Apt(provider.Provider):
     policies = (resources.package.PackageInstallPolicy,)
 
     @classmethod
-    def isvalid(self, *args, **kwargs):
+    def isvalid(self, policy, resource, yay):
+        if resource.version is not None:
+            return False
         return super(Apt, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
 
         # work out if the package is already installed
         command = ["dpkg", "-s", self.resource.name]
-        returncode, stdout, stderr = context.shell.execute(command, exceptions=False, passthru=True)
+        returncode, stdout, stderr = context.shell.execute(command,
+                                                           exceptions=False, passthru=True)
 
         # if the return code is 0, the package is installed
         if returncode == 0:

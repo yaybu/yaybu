@@ -62,20 +62,20 @@ class File(Resource):
 
     """
 
-    name = String()
+    name = FullPath()
     """The full path to the file this resource represents."""
 
-    owner = String()
+    owner = String(default="root")
     """A unix username or UID who will own created objects. An owner that
     begins with a digit will be interpreted as a UID, otherwise it will be
     looked up using the python 'pwd' module."""
 
-    group = String()
+    group = String(default="root")
     """A unix group or GID who will own created objects. A group that begins
     with a digit will be interpreted as a GID, otherwise it will be looked up
     using the python 'grp' module."""
 
-    mode = Octal()
+    mode = Octal(default=0644)
     """A mode representation as an octal. This can begin with leading zeros if
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work."""
@@ -95,12 +95,6 @@ class File(Resource):
 
     template_args = Dict(default={})
     """The arguments passed to the template."""
-
-    backup = String()
-    """A fully qualified pathname to which to copy this resource before it is
-    overwritten. If you wish to include a date or timestamp, specify format
-    args such as {year}, {month}, {day}, {hour}, {minute}, {second}"""
-
 
 class FileApplyPolicy(Policy):
 
@@ -137,7 +131,5 @@ class FileRemovePolicy(Policy):
                  Absent("encrypted"),
                  Absent("template"),
                  Absent("template_args"),
-                 NAND(Present("backup"),
-                      Present("dated_backup")),
                  )
 

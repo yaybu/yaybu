@@ -28,11 +28,13 @@ from yaybu.core.argument import (
     Octal,
     File,
     Dict,
+    Boolean,
     )
 
 class Directory(Resource):
 
-    """ A directory on disk. Directories have limited metadata, so this resource is quite limited.
+    """ A directory on disk. Directories have limited metadata, so this
+    resource is quite limited.
 
     For example::
 
@@ -47,14 +49,18 @@ class Directory(Resource):
     name = FullPath()
     """ The full path to the directory on disk """
 
-    owner = String()
-    """ The unix username who should own this directory """
+    owner = String(default="root")
+    """ The unix username who should own this directory, by default this is 'root' """
 
-    group = String()
-    """ The unix group who should own this directory """
+    group = String(default="root")
+    """ The unix group who should own this directory, by default this is 'root' """
 
-    mode = Octal()
-    """ The octal mode that represents this directory's permissions """
+    mode = Octal(default=0644)
+    """ The octal mode that represents this directory's permissions, by default this is '644'. """
+
+    parents = Boolean(default=False)
+    """ Create parent directories as needed, using the same ownership and
+    permissions, this is False by default. """
 
 
 class DirectoryAppliedPolicy(Policy):
@@ -91,7 +97,6 @@ class DirectoryRemovedPolicy(Policy):
                  Absent("mode"),
                  )
 
-
 class DirectoryRemovedRecursivePolicy(Policy):
 
     """ If a directory described by this resource exists then remove it and
@@ -101,7 +106,7 @@ class DirectoryRemovedRecursivePolicy(Policy):
     """
 
     resource = Directory
-    name = "removed-recursive"
+    name = "remove-recursive"
     default = False
     signature = (Present("name"),
                  Absent("owner"),

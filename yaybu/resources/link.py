@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Resources dealing with filesystem objects other than files. """
+""" Resources representing symbolic links. """
 
 from yaybu.core.resource import Resource
 from yaybu.core.policy import (Policy,
@@ -47,28 +47,22 @@ class Link(Resource):
 
     """
 
-    name = String()
+    name = FullPath()
     """The name of the file this resource represents."""
 
-    owner = String()
+    owner = String(default="root")
     """A unix username or UID who will own created objects. An owner that
     begins with a digit will be interpreted as a UID, otherwise it will be
     looked up using the python 'pwd' module."""
 
-    group = String()
+    group = String(default="root")
     """A unix group or GID who will own created objects. A group that begins
     with a digit will be interpreted as a GID, otherwise it will be looked up
     using the python 'grp' module."""
 
-    to = String()
+    to = FullPath()
     """ The pathname to which to link the symlink. Dangling symlinks ARE
     considered errors in Yaybu. """
-
-    mode = Octal()
-    """A mode representation as an octal. This can begin with leading zeros if
-    you like, but this is not required. DO NOT use yaml Octal representation
-    (0o666), this will NOT work."""
-
 
 class LinkAppliedPolicy(Policy):
     resource = Link

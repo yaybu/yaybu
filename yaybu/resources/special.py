@@ -29,7 +29,6 @@ from yaybu.core.argument import (
     File,
     )
 
-
 class Special(Resource):
 
     """ A special file, as created by mknod. """
@@ -37,16 +36,16 @@ class Special(Resource):
     name = FullPath()
     """ The full path to the special file on disk. """
 
-    owner = String()
+    owner = String(default="root")
     """ The unix user who should own this special file. """
 
-    group = String()
+    group = String(default="root")
     """ The unix group who should own this special file. """
 
-    mode = Octal()
+    mode = Octal(default=0644)
     """ The octal representation of the permissions for this special file. """
 
-    type_ = String()
+    type = String(default="fifo")
     """ One of the following strings:
 
       block
@@ -55,6 +54,8 @@ class Special(Resource):
         create a character (unbuffered) special file
       fifo
         create a fifo
+
+    It defaults to fifo
     """
 
     major = Integer()
@@ -64,7 +65,6 @@ class Special(Resource):
     minor = Integer()
     """ The minor number for the special file. If the type of the special file
     is block or character, then this must be specified. """
-
 
 class SpecialAppliedPolicy(Policy):
 
@@ -76,7 +76,7 @@ class SpecialAppliedPolicy(Policy):
                  Present("owner"),
                  Present("group"),
                  Present("mode"),
-                 Present("type_"),
+                 Present("type"),
                  Present("major"),
                  Present("minor"),
                  )
@@ -95,7 +95,7 @@ class SpecialRemovedPolicy(Policy):
                  Absent("owner"),
                  Absent("group"),
                  Absent("mode"),
-                 Absent("type_"),
+                 Absent("type"),
                  Absent("major"),
                  Absent("minor"),
                  )

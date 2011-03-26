@@ -30,6 +30,8 @@ from yaybu.core.argument import (
 
 class Service(Resource):
 
+    """ This represents service startup and shutdown via an init daemon. """
+
     name = String()
     """ A unique name representing an initd service.
 
@@ -68,7 +70,8 @@ class Service(Resource):
     """
 
     reconfig = String()
-    """ A command that when executed will make the service reload its configuration file. """
+    """ A command that when executed will make the service reload its
+    configuration file. """
 
     status = String()
     """ A command that will report whether or not a service is responding """

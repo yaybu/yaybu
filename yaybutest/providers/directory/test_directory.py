@@ -25,6 +25,27 @@ class TestDirectory(TestCase):
         path = self.enpathinate("/etc/somedir")
         self.failUnless(os.path.isdir(path))
 
+    def test_remove_directory(self):
+        os.mkdir(self.enpathinate("/etc/somedir"))
+        self.check_apply("""
+            resources:
+              - Directory:
+                  name: /etc/somedir
+                  policy: remove
+        """)
+
+    def test_remove_directory(self):
+        os.mkdir(self.enpathinate("/etc/somedir"))
+        rv = self.apply("""
+            resources:
+              - Directory:
+                  name: /etc/somedir
+                  owner: root
+                  policy: remove
+        """)
+        self.assertEqual(rv, 128)
+
+
     def test_unicode(self):
         utf8 = "/etc/£££££" # this is utf-8 encoded
         self.check_apply(open(sibpath("unicode1.yay")).read())

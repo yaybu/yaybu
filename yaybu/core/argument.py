@@ -65,9 +65,13 @@ class Argument(object):
         """ Set the property. The value will be a UTF-8 encoded string read from the yaml source file. """
 
 class Boolean(Argument):
+
+    """ Represents a boolean. "1", "yes", "on" and "true" are all considered
+    to be True boolean values. Anything else is False. """
+
     def __set__(self, instance, value):
         if type(value) in types.StringTypes:
-            if value.lower() in ("yes", "on", "true"):
+            if value.lower() in ("1", "yes", "on", "true"):
                 value = True
             else:
                 value = False
@@ -76,6 +80,9 @@ class Boolean(Argument):
         setattr(instance, self.arg_id, value)
 
 class String(Argument):
+
+    """ Represents a string. """
+
     def __set__(self, instance, value):
         if value is None:
             pass
@@ -91,6 +98,10 @@ class String(Argument):
         return "".join(l)
 
 class FullPath(Argument):
+
+    """ Represents a full path on the filesystem. This should start with a
+    '/'. """
+
     def __set__(self, instance, value):
         if value is None:
             pass
@@ -110,9 +121,16 @@ class FullPath(Argument):
 
 class Integer(Argument):
 
+    """ Represents an integer argument taken from the source file. This can
+    throw an :py:exc:error.ParseError if the passed in value cannot represent
+    a base-10 integer. """
+
     def __set__(self, instance, value):
         if not isinstance(value, int):
-            value = int(value)
+            try:
+                value = int(value)
+            except ValueError:
+                raise error.ParseError("%s is not an integer" % value)
         setattr(instance, self.arg_id, value)
 
     @classmethod
@@ -120,6 +138,8 @@ class Integer(Argument):
         return random.randint(0,sys.maxint)
 
 class DateTime(Argument):
+
+    """ Represents a date and time. This is parsed in ISO8601 format. """
 
     def __set__(self, instance, value):
         if isinstance(value, basestring):
@@ -131,6 +151,8 @@ class DateTime(Argument):
         return datetime.datetime.fromtimestamp(random.randint(0, sys.maxint))
 
 class Octal(Integer):
+
+    """ An octal integer.  This is specifically used for file permission modes. """
 
     def __set__(self, instance, value):
         if isinstance(value, int):
@@ -211,11 +233,15 @@ class PolicyTrigger:
 
 class PolicyCollection:
 
+    """ A collection of policy structures. """
+
     def __init__(self, standard=None, triggers=()):
         self.standard = standard
         self.triggers = triggers
 
 class PolicyStructure(Argument):
+
+    """ Parses the policy: argument for resources, including triggers etc. """
 
     def __set__(self, instance, value):
         """ Set either a default policy or a set of triggers on the policy collection """

@@ -42,6 +42,12 @@ class TestLink(TestCase):
         """)
         self.assertEqual(rv, 255)
 
+    def test_already_exists_notalink(self):
+        """ Test for the path already existing but is not a link. """
+
+    def test_already_exists_pointing_elsewhere(self):
+        """ Test for the path already existing but being a link to somewhere else. """
+
     def test_dangling(self):
         rv = self.apply("""
         resources:

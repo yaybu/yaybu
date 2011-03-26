@@ -66,7 +66,7 @@ class Execute(Resource):
     commands = List()
     """ If you wish to run multiple commands, provide a list """
 
-    cwd = String()
+    cwd = FullPath()
     """ The current working directory in which to execute the command. """
 
     environment = Dict()
@@ -86,11 +86,11 @@ class Execute(Resource):
     command does not return this return code then the resource is considered
     to be in error. """
 
-    user = String()
+    user = String(default="root")
     """ The user to execute the command as.
     """
 
-    group = String()
+    group = String(default="root")
     """ The group to execute the command as.
     """
 
@@ -99,6 +99,10 @@ class Execute(Resource):
     is used like a "touch test" in a Makefile. If this file exists then the
     execute command will NOT be executed. """
 
+    touch = FullPath()
+    """ The full path to a file that yaybu will touch once this command has
+    completed successfully. This is used like a "touch test" in a Makefile. If
+    this file exists then the execute command will NOT be executed. """
 
 class ExecutePolicy(Policy):
 
@@ -111,5 +115,6 @@ class ExecutePolicy(Policy):
     default = True
     signature = (Present("name"),
         XOR(Present("command"), Present("commands")),
+        XOR(Present("creates"), Present("touch")),
         )
 

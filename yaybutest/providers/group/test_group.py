@@ -21,3 +21,11 @@ class TestGroup(TestCase):
                     gid: 1111
             """)
 
+    def test_existing_group(self):
+        """ Test creating a group whose name already exists. """
+
+    def test_existing_gid(self):
+        """ Test creating a group whose specified gid already exists. """
+
+
+

@@ -38,16 +38,16 @@ class Package(Resource):
     """
 
     name = String()
-    """ The name of the package. This can be a single package or a list can be supplied. """
+    """ The name of the package. This can be a single package or a list can be
+    supplied. """
 
     version = String()
-    """ The version of the package, if only a single package is specified. """
+    """ The version of the package, if only a single package is specified and
+    the appropriate provider supports it (the Apt provider does not support
+    it). """
 
-    # To deploy a particular .deb for example
-    file = File()
-    """ Instead of a name you can specify one or more files on disk that are
-    used as the package source, if you do not wish to use a remote source. """
-
+    purge = Boolean(default=False)
+    """ When removing a package, whether to purge it or not. """
 
 class PackageInstallPolicy(Policy):
 
@@ -61,6 +61,7 @@ class PackageInstallPolicy(Policy):
     default = True
     signature = (
         Present("name"),
+        Absent("purge"),
         )
 
 class PackageUninstallPolicy(Policy):
@@ -73,6 +74,5 @@ class PackageUninstallPolicy(Policy):
     signature = (
         Present("name"),
         Absent("version"),
-        Absent("file"),
         )
 

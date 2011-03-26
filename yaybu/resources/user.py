@@ -61,6 +61,12 @@ class User(Resource):
     gid = Integer()
     """ The group identifier for the user. This must be a non-negative integer. """
 
+    group = String()
+    """ The primary group for the user, if you wish to specify it by name. """
+
+    groups = List()
+    """ A list of supplementary groups that the user should be a member of. """
+
     system = Boolean(default=True) # has no effect on modification, only creation
     """ A boolean representing whether this user is a system user or not. This only takes effect on
     creation - a user cannot be changed into a system user once created

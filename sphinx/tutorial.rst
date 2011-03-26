@@ -36,7 +36,7 @@ You can deploy this on the current machine with::
 The goal of all your recipes is to add resource objects to the `resources` list.
 Resources always start with a capital letter and describe things on a server
 that you want to manage. They are meant to be declarative: They describe
-the state you want to achieve. 
+the state you want to achieve.
 
 There are 2 forms you can use when appending to the resource list. The first
 is::
@@ -80,9 +80,9 @@ foreach. Every item in the modules list will add a new :py:class:`yaybu.resource
 resources.
 
 We provide 3 attributes for our Execute resource. Everything has to have a
-unique :py:meth:`yaybu.resources.execute.Execute.name`, and Execute has to 
+unique :py:meth:`yaybu.resources.execute.Execute.name`, and Execute has to
 have a :py:meth:`yaybu.resources.execute.Execute.command` to execute. We can also
-specify a :py:meth:`yaybu.resources.execute.Execute.creates` attribute. This 
+specify a :py:meth:`yaybu.resources.execute.Execute.creates` attribute. This
 is a way of making sure our command is only executed once.
 
 Lets use our recipe in `mybox.yay`::

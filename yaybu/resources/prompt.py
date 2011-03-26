@@ -30,13 +30,11 @@ class Prompt(Resource):
     off-system web interfaces or databases may be required as part of applying
     a change. """
 
-
     name = String()
     """ A unique descriptive name for the resource. """
 
     question = String()
     """ The question to ask the operator. """
-
 
 class PromptPolicy(Policy):
 
@@ -52,4 +50,3 @@ class PromptPolicy(Policy):
         Present("name"),
         Present("question"),
         )
-

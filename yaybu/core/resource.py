@@ -107,8 +107,8 @@ class Resource(object):
         this_policy = self.get_default_policy()
         if not this_policy.conforms(self):
             raise error.NonConformingPolicy(this_policy.name)
+        # throws an exception if there is not oneandonlyone provider
         provider = this_policy.get_provider(self, yay)
-        provider.isvalid(this_policy, self, yay)
         return True
 
     def apply(self, context, yay=None, policy=None):

@@ -9,7 +9,7 @@ import errno
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
-class TestFile(TestCase):
+class TestFileApply(TestCase):
 
     def test_create_missing_component(self):
         rv = self.apply("""
@@ -125,3 +125,17 @@ class TestFile(TestCase):
 
     def test_unicode(self):
         self.check_apply(open(sibpath("unicode1.yay")).read())
+
+    def test_static(self):
+        """ Test setting the contents to that of a static file. """
+
+class TestFileRemove(TestCase):
+
+    def test_remove(self):
+        """ Test removing a file that exists. """
+
+    def test_remove_missing(self):
+        """ Test removing a file that does not exist. """
+
+    def test_remove_notafile(self):
+        """ Test removing something that is not a file. """

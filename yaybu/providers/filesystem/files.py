@@ -154,8 +154,6 @@ class FileContentChanger(change.Change):
     def apply(self, renderer):
         """ Apply the changes necessary to the file contents. """
         self.renderer = renderer
-        if self.backup_filename is not None:
-            raise NotImplementedError
         if self.contents is None:
             self.empty_file()
         else:

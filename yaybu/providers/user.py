@@ -44,7 +44,10 @@ class User(provider.Provider):
             info['disabled-password'] = False
             return info
 
-        info = {"exists": True, "disabled-login": False, "disabled-password": False}
+        info = {"exists": True,
+                "disabled-login": False,
+                "disabled-password": False,
+                }
         for i, field in enumerate(fields):
             info[field] = info_tuple[i]
 

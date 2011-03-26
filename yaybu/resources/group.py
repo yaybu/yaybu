@@ -27,7 +27,8 @@ from yaybu.core.argument import (
 
 class Group(Resource):
 
-    """ A resource representing a unix group.
+    """ A resource representing a unix group stored in the /etc/group file.
+    groupadd and groupmod are used to actually make modifications.
 
     For example::
 
@@ -42,8 +43,9 @@ class Group(Resource):
     gid = Integer()
     """ The group ID associated with the group. If this is not specified one will be chosen. """
 
-    system = Boolean()
-    """ Whether or not this is a system group. """
+    system = Boolean(default=False)
+    """ Whether or not this is a system group - i.e. the new group id will be
+    taken from the system group id list. """
 
     password = String()
     """ The password for the group, if required """
@@ -59,7 +61,6 @@ class GroupApplyPolicy(Policy):
     signature = (
         Present("name"),
         )
-
 
 class GroupRemovePolicy(Policy):
 
