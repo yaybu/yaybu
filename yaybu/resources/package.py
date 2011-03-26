@@ -21,6 +21,7 @@ from yaybu.core.policy import (
 from yaybu.core.argument import (
     String,
     File,
+    Boolean,
     )
 
 

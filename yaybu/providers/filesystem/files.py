@@ -94,10 +94,9 @@ class FileContentChanger(change.Change):
     catered for. Additionally the minimum changes required to the contents are
     applied, and logs of the changes made are recorded. """
 
-    def __init__(self, context, filename, contents, backup_filename=None):
+    def __init__(self, context, filename, contents):
         self.context = context
         self.filename = filename
-        self.backup_filename = backup_filename
         self.current = ""
         self.contents = contents
         self.changed = False

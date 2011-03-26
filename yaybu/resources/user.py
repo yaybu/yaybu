@@ -22,6 +22,7 @@ from yaybu.core.argument import (
     File,
     Dict,
     Boolean,
+    List,
     )
 
 
