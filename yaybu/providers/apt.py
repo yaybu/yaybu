@@ -24,7 +24,7 @@ class Apt(provider.Provider):
     def isvalid(self, policy, resource, yay):
         if resource.version is not None:
             return False
-        return super(Apt, self).isvalid(*args, **kwargs)
+        return super(Apt, self).isvalid(policy, resource, yay)
 
     def apply(self, context):
 
