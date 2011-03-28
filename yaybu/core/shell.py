@@ -17,7 +17,7 @@ import subprocess
 import StringIO
 import change
 import error
-import getpass
+import os, getpass, pwd, grp
 
 class ShellCommand(change.Change):
 
@@ -31,20 +31,34 @@ class ShellCommand(change.Change):
         self.env = env
         self.verbose = verbose
         self.passthru = passthru
-        self.user = None
-        self.group = None
+
+        self.user = user
+        if user:
+            self.uid = pwd.getpwnam(user).pw_uid
+        else:
+            self.uid = None
+
+        self.group = group
+        if group:
+            self.gid = grp.getgrnam(self.group).gr_gid
+        else:
+            self.gid = None
+
+    def preexec(self):
+        if self.uid is not None:
+            if self.uid != os.getuid():
+                os.setuid(self.uid)
+            if self.uid != os.geteuid():
+                os.seteuid(self.uid)
+
+        if self.gid is not None:
+            if self.gid != os.getgid():
+                os.setgid(self.gid)
+            if self.gid != os.getegid():
+                os.setegid(self.gid)
 
     def apply(self, renderer):
-        command = []
-
-        if self.user and getpass.getuser() != self.user or self.group:
-            command = ["sudo"]
-            if self.user:
-                command.extend("-u", self.user)
-            if self.group:
-                command.extend("-g", self.group)
-
-        command.extend(self.command)
+        command = self.command[:]
 
         if not self.passthru:
             renderer.command(command)
@@ -56,6 +70,7 @@ class ShellCommand(change.Change):
                                  stderr=subprocess.PIPE,
                                  cwd=self.cwd,
                                  env=self.env,
+                                 preexec_fn=self.preexec,
                                  )
             (self.stdout, self.stderr) = p.communicate(self.stdin)
             self.returncode = p.returncode

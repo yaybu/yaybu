@@ -49,12 +49,43 @@ class TestExecute(TestCase):
 
     def test_user(self):
         """ test that the user has been correctly set. """
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test_user_change
+                    command: python -c "import os; open('/foo','w').write(str(os.getuid())+'\\n'+str(os.geteuid()))"
+                    user: nobody
+            """)
+
+        check_file = open(self.enpathinate("/foo")).read().split()
+        self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_group(self):
         """ test that the group has been correctly set. """
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test_group_change
+                    command: python -c "import os; open('/foo','w').write(str(os.getgid())+'\\n'+str(os.getegid()))"
+                    group: nogroup
+        """)
+
+        check_file = open(self.enpathinate("/foo")).read().split()
+        self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_user_and_group(self):
         """ test that both user and group can be set together. """
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test_group_change
+                    command: python -c "import os; open('/foo','w').write('\\n'.join(str(x) for x in (os.getuid(),os.geteuid(),os.getgid(),os.getegid())))"
+                    user: nobody
+                    group: nogroup
+        """)
+
+        check_file = open(self.enpathinate("/foo")).read().split()
+        self.failUnlessEqual(["65534"] * 4, check_file)
 
     def test_creates(self):
         """ test that the execute will not happen if the creates parameter
@@ -68,7 +99,4 @@ class TestExecute(TestCase):
 
     def test_touch_not_present(self):
         """ test that we do execute if the touched file does not exist. """
-
-
-
 
