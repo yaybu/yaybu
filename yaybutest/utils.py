@@ -52,7 +52,7 @@ class TestCase(testtools.TestCase):
 
     def yaybu(self, *args):
         filespath = os.path.join(self.chroot_path, "tmp", "files")
-        return self.call(["yaybu", "--ypath", filespath] + list(args))
+        return self.call(["yaybu", "-d", "--ypath", filespath] + list(args))
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """
@@ -99,3 +99,14 @@ class TestCase(testtools.TestCase):
 
     def enpathinate(self, path):
         return os.path.join(self.chroot_path, *path.split(os.path.sep))
+
+    def get_user(self, user):
+        users_list = open(self.enpathinate("/etc/passwd")).read().splitlines()
+        usres = dict(u.split(":", 1) for u in users_list)
+        return users[user].split(":")
+
+    def get_group(self, group):
+        # Returns a tuple of group info if the group exists, or raises KeyError if it does not
+        groups_list = open(self.enpathinate("/etc/group")).read().splitlines()
+        groups = dict(g.split(":", 1) for g in groups_list)
+        return groups[group].split(":")
