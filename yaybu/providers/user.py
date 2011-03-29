@@ -15,6 +15,7 @@
 import os
 import pwd
 import spwd
+import grp
 
 from yaybu.core import provider
 from yaybu.core import error
@@ -103,7 +104,7 @@ class User(provider.Provider):
 
         if self.resource.groups:
             desired_groups = set(self.resource.groups)
-            current_groups = set(g.gr_name for g in grp.getgrall() if self.resource.name in g.gr_members)
+            current_groups = set(g.gr_name for g in grp.getgrall() if self.resource.name in g.gr_mem)
 
             if self.resource.append and len(desired_groups - current_groups) > 0:
                 command.extend(["-a", "-G", ",".join(desired_groups - current_groups)])
