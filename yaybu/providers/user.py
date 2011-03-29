@@ -107,7 +107,9 @@ class User(provider.Provider):
             current_groups = set(g.gr_name for g in grp.getgrall() if self.resource.name in g.gr_mem)
 
             if self.resource.append and len(desired_groups - current_groups) > 0:
-                command.extend(["-a", "-G", ",".join(desired_groups - current_groups)])
+                if info["exists"]:
+                    command.append("-a")
+                command.extend(["-G", ",".join(desired_groups - current_groups)])
                 changed = True
             elif not self.resource.append and desired_groups != current_groups:
                 command.extend(["-G", ",".join(desired_groups)])
