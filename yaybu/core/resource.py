@@ -135,7 +135,7 @@ class Resource(object):
             if immediately is False:
                 raise NotImplementedError
 
-            if resource.policy_override is not None:
+            if resource.policy_override is not None and resource.policy_override != policy:
                 raise error.ExecutionError("attempting to trigger policy '%s' on %r, but '%s' is already set" % (
                     policy, resource, resource.policy_override))
             resource.policy_override = policy
