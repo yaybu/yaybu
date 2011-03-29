@@ -128,14 +128,45 @@ class TestFileApply(TestCase):
 
     def test_static(self):
         """ Test setting the contents to that of a static file. """
+        self.check_apply("""
+            resources:
+                - File:
+                    name: /etc/foo
+                    static: package://yaybutest.providers.file/test_carriage_returns2.j2
+            """)
+
 
 class TestFileRemove(TestCase):
 
     def test_remove(self):
         """ Test removing a file that exists. """
+        open(self.enpathinate("/etc/bar"),"w").write("")
+        self.check_apply("""
+            resources:
+                - File:
+                    name: /etc/bar
+                    policy: remove
+            """)
 
     def test_remove_missing(self):
         """ Test removing a file that does not exist. """
+        self.failUnless(not os.path.exists(self.enpathinate("/etc/baz")))
+        rv = self.apply("""
+            resources:
+                - File:
+                    name: /etc/baz
+                    policy: remove
+            """)
+        self.failUnlessEqual(rv, 255)
 
     def test_remove_notafile(self):
         """ Test removing something that is not a file. """
+        os.mkdir(self.enpathinate("/etc/qux"))
+        rv = self.apply("""
+            resources:
+                - File:
+                    name: /etc/qux
+                    policy: remove
+            """)
+        self.failUnlessEqual(rv, 139)
+

@@ -228,11 +228,11 @@ class RemoveFile(provider.Provider):
     def apply(self, context):
         if os.path.exists(self.resource.name):
             if not os.path.isfile(self.resource.name):
-                raise error.InvalidProviderError("%r: %s exists and is not a file" % (self, self.resource.name))
+                raise error.InvalidProvider("%r: %s exists and is not a file" % (self, self.resource.name))
             context.shell.execute(["rm", self.resource.name])
             changed = True
         else:
-            context.shell.changelog.info("File %s missing already so not removed" % self.resource.name)
+            context.changelog.info("File %s missing already so not removed" % self.resource.name)
             changed = False
         return changed
 
