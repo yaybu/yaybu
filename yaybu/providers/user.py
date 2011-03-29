@@ -91,9 +91,15 @@ class User(provider.Provider):
             command.extend(["--uid", str(self.resource.uid)])
             changed = True
 
-        if self.resource.gid and info["gid"] != self.resource.gid:
-            command.extend(["--gid", str(self.resource.gid)])
-            changed = True
+        if self.resource.gid or self.resource.group:
+            if self.resource.gid:
+                gid = self.resource.gid
+            else:
+                gid = grp.getgrnam(self.resource.group).gr_gid
+
+            if gid != info["gid"]:
+                command.extend(["--gid", str(gid)])
+                changed = True
 
         if self.resource.shell != info["shell"]:
             command.extend(["--shell", str(self.resource.shell)])
