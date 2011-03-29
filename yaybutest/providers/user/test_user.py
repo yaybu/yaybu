@@ -81,3 +81,30 @@ class TestUser(TestCase):
                     password: password
             """)
 
+    def test_user_with_group(self):
+        self.check_apply("""
+            resources:
+                - User:
+                    name: test
+                    group: nogroup
+            """)
+
+    def test_user_with_groups(self):
+        self.check_apply("""
+            resources:
+                - User:
+                    name: test
+                    groups:
+                        - nogroup
+            """)
+
+    def test_user_with_groups_replace(self):
+        self.check_apply("""
+            resources:
+                - User:
+                    name: test
+                    groups:
+                        - nogroup
+                    append: False
+            """)
+
