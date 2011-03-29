@@ -135,3 +135,28 @@ class User(provider.Provider):
                 raise error.UserAddError("useradd returned error code %d" % returncode)
         return changed
 
+
+class UserRemove(provider.Provider):
+
+    policies = (resources.user.UserRemovePolicy,)
+
+    @classmethod
+    def isvalid(self, *args, **kwargs):
+        return super(UserRemove, self).isvalid(*args, **kwargs)
+
+    def apply(self, context):
+        try:
+            existing = pwd.getpwnam(self.resource.name.encode("utf-8"))
+        except KeyError:
+            # If we get a key errror then there is no such user. This is good.
+            return False
+
+        command = ["userdel", self.resource.name]
+
+        returncode, stdout, stderr = context.shell.execute(command)
+        if returncode != 0:
+            raise error.UserAddError("Removing user %s failed with return code %d" % (self.resource, returncode))
+
+        return True
+
+

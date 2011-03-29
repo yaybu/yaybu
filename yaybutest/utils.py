@@ -102,7 +102,7 @@ class TestCase(testtools.TestCase):
 
     def get_user(self, user):
         users_list = open(self.enpathinate("/etc/passwd")).read().splitlines()
-        usres = dict(u.split(":", 1) for u in users_list)
+        users = dict(u.split(":", 1) for u in users_list)
         return users[user].split(":")
 
     def get_group(self, group):

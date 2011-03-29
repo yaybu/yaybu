@@ -108,3 +108,32 @@ class TestUser(TestCase):
                     append: False
             """)
 
+
+class TestUserRemove(TestCase):
+
+    def test_remove_existing(self):
+        self.failUnless(self.get_user("nobody"))
+
+        self.check_apply("""
+            resources:
+                - User:
+                    name: nobody
+                    policy: remove
+            """)
+
+        self.failUnlessRaises(KeyError, self.get_user, "nobody")
+
+    def test_remove_non_existing(self):
+        self.failUnlessRaises(KeyError, self.get_user, "zzidontexistzz")
+
+        rv = self.apply("""
+            resources:
+                - User:
+                    name: zzidontexistzz
+                    policy: remove
+            """)
+
+        self.failUnlessEqual(rv, 255)
+
+        self.failUnlessRaises(KeyError, self.get_user, "zzidontexistzz")
+
