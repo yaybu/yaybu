@@ -183,6 +183,11 @@ class Resource(object):
         classname = getattr(self, '__resource_name__', self.__class__.__name__)
         return "%s[%s]" % (classname, self.name.encode("utf-8"))
 
+    def __unicode__(self):
+        classname = getattr(self, '__resource_name__', self.__class__.__name__)
+        return u"%s[%s]" % (classname, self.name)
+
+
 class ResourceBundle(ordereddict.OrderedDict):
 
     """ An ordered, indexed collection of resources. Pass in a specification
