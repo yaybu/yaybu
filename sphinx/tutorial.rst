@@ -24,7 +24,7 @@ We'll meet our first resource type and how to get them to apply.
 In `mybox.yay` add the following::
 
     resources.append:
-        - Package
+        - Package:
             - name: openssh-server
             - name: apache2
             - name: libapache2-mod-php5
