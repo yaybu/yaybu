@@ -33,15 +33,15 @@ class AptInstall(provider.Provider):
         env["DEBIAN_FRONTEND"] = "noninteractive"
 
         # work out if the package is already installed
-        command = ["dpkg", "-s", self.resource.name]
+        command = ["dpkg-query", "-W", "-f='${Status}'", self.resource.name]
         returncode, stdout, stderr = context.shell.execute(command,
                                                            exceptions=False, passthru=True)
 
-        # if the return code is 0, the package is installed
-        if returncode == 0:
+        # if the return code is 0, dpkg is aware of the package
+        if returncode == 0 and "install ok installed" in stdout:
             return False
 
-        # if the return code is 1, it is not installed, if it's anything else, we have a problem
+        # if the return code is anything but zero or one, we have a problem
         if returncode > 1:
             raise error.DpkgError("%s search failed with return code %s" % (self.resource, returncode))
 
