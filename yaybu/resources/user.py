@@ -68,6 +68,12 @@ class User(Resource):
     groups = List()
     """ A list of supplementary groups that the user should be a member of. """
 
+    append = Boolean(default=True)
+    """ A boolean that sets how to apply the groups a user is in. If true then yaybu will
+    add the user to groups as needed but will not remove a user from a group. If false then yaybu will replace
+    all groups the user is a member of. Thus if a process outside of yaybu adds you to a group,
+    the next deployment would remove you again. """
+
     system = Boolean(default=True) # has no effect on modification, only creation
     """ A boolean representing whether this user is a system user or not. This only takes effect on
     creation - a user cannot be changed into a system user once created
