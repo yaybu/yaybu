@@ -21,7 +21,7 @@ import logging
 from yaybu import resources
 from yaybu.core import provider, error
 
-from files import AttributeChanger
+from yaybu.providers.filesystem.files import AttributeChanger
 
 class Directory(provider.Provider):
 
