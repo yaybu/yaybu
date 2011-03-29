@@ -52,7 +52,11 @@ class Directory(provider.Provider):
                               self.resource.group,
                               self.resource.mode)
         if not os.path.exists(self.resource.name):
-            context.shell.execute(["mkdir", self.resource.name.encode("utf-8")])
+            command = ["mkdir"]
+            if self.resource.parents:
+                command.append("-p")
+            command.append(self.resource.name.encode("utf-8"))
+            context.shell.execute(command)
             changed = True
         ac.apply(context)
         if changed or ac.changed:
@@ -77,3 +81,4 @@ class RemoveDirectory(provider.Provider):
         else:
             changed = False
         return changed
+

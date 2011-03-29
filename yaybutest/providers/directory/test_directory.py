@@ -25,6 +25,15 @@ class TestDirectory(TestCase):
         path = self.enpathinate("/etc/somedir")
         self.failUnless(os.path.isdir(path))
 
+    def test_create_directory_and_parents(self):
+        self.check_apply("""
+            resources:
+                - Directory:
+                    name: /etc/foo/bar/baz
+                    parents: True
+            """)
+        self.failUnless(os.path.isdir(self.enpathinate("/etc/foo/bar/baz")))
+
     def test_remove_directory(self):
         os.mkdir(self.enpathinate("/etc/somedir"))
         self.check_apply("""
