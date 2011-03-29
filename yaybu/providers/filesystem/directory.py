@@ -82,3 +82,21 @@ class RemoveDirectory(provider.Provider):
             changed = False
         return changed
 
+class RemoveDirectoryRecursive(provider.Provider):
+
+    policies = (resources.directory.DirectoryRemovedRecursivePolicy,)
+
+    @classmethod
+    def isvalid(self, *args, **kwargs):
+        return super(RemoveDirectoryRecursive, self).isvalid(*args, **kwargs)
+
+    def apply(self, context):
+        if os.path.exists(self.resource.name) and not os.path.isdir(self.resource.name):
+            raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
+        if os.path.exists(self.resource.name):
+            context.shell.execute(["rm", "-rf", self.resource.name])
+            changed = True
+        else:
+            changed = False
+        return changed
+
