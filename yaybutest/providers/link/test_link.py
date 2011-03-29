@@ -41,12 +41,32 @@ class TestLink(TestCase):
                   to: /
         """)
         self.assertEqual(rv, 255)
+        self.failUnlessEqual(os.readlink(self.enpathinate("/etc/existing")), self.enpathinate("/"))
 
     def test_already_exists_notalink(self):
         """ Test for the path already existing but is not a link. """
+        open(self.enpathinate("/bar_notalkink"), "w").write("")
+        open(self.enpathinate("/foo"), "w").write("")
+        self.check_apply("""
+            resources:
+                - Link:
+                    name: /bar_notalink
+                    to: /foo
+            """)
+        self.failUnlessEqual(os.readlink(self.enpathinate("/bar_notalink")), self.enpathinate("/foo"))
 
     def test_already_exists_pointing_elsewhere(self):
         """ Test for the path already existing but being a link to somewhere else. """
+        open(self.enpathinate("/baz"), "w").write("")
+        open(self.enpathinate("/foo"), "w").write("")
+        os.symlink(self.enpathinate("/baz"), self.enpathinate("/bar_elsewhere"))
+        self.check_apply("""
+            resources:
+                - Link:
+                    name: /bar_elsewhere
+                    to: /foo
+            """)
+        self.failUnlessEqual(os.readlink(self.enpathinate("/bar_elsewhere")), self.enpathinate("/foo"))
 
     def test_dangling(self):
         rv = self.apply("""
