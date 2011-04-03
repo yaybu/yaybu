@@ -12,39 +12,72 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from yaybu.core import provider
 from yaybu.core import error
 from yaybu import resources
 
-class Apt(provider.Provider):
+class AptInstall(provider.Provider):
 
     policies = (resources.package.PackageInstallPolicy,)
 
     @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(Apt, self).isvalid(*args, **kwargs)
+    def isvalid(self, policy, resource, yay):
+        if resource.version is not None:
+            return False
+        return super(AptInstall, self).isvalid(policy, resource, yay)
 
     def apply(self, context):
+        env = os.environ.copy()
+        env["DEBIAN_FRONTEND"] = "noninteractive"
 
         # work out if the package is already installed
-        command = ["dpkg", "-s", self.resource.name]
-        returncode, stdout, stderr = context.shell.execute(command, exceptions=False, passthru=True)
+        command = ["dpkg-query", "-W", "-f='${Status}'", self.resource.name]
+        returncode, stdout, stderr = context.shell.execute(command,
+                                                           exceptions=False, passthru=True)
 
-        # if the return code is 0, the package is installed
-        if returncode == 0:
+        # if the return code is 0, dpkg is aware of the package
+        if returncode == 0 and "install ok installed" in stdout:
             return False
 
-        # if the return code is 1, it is not installed, if it's anything else, we have a problem
+        # if the return code is anything but zero or one, we have a problem
         if returncode > 1:
             raise error.DpkgError("%s search failed with return code %s" % (self.resource, returncode))
 
 
         # the search returned 1, package is not installed, continue and install it
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
-        returncode, stdout, stderr = context.shell.execute(command)
+        returncode, stdout, stderr = context.shell.execute(command, exceptions=False, env=env)
 
         if returncode != 0:
             raise error.AptError("%s failed with return code %d" % (self.resource, returncode))
 
         return True
+
+
+class AptUninstall(provider.Provider):
+
+    policies = (resources.package.PackageUninstallPolicy,)
+
+    @classmethod
+    def isvalid(self, policy, resource, yay):
+        return super(AptUninstall, self).isvalid(policy, resource, yay)
+
+    def apply(self, context):
+        env = os.environ.copy()
+        env["DEBIAN_FRONTEND"] = "noninteractive"
+
+        command = ["apt-get", "remove", "-q", "-y"]
+        if self.resource.purge:
+            command.append("--purge")
+        command.append(self.resource.name)
+
+        returncode, stdout, stderr = context.shell.execute(command, exceptions=False, env=env)
+
+        if returncode != 0:
+            raise error.AptError("%s failed to uninstall with return code %d" % (self.resource, returncode))
+
+        return True
+
 

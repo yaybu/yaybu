@@ -17,106 +17,18 @@ python.
 You can recognise when a resource is used in a yay configuration file,
 because it will be capitalised.
 
-Users
-=====
+.. toctree::
+   :maxdepth: 2
 
-.. autoclass:: yaybu.resources.user.User
-.. autoattribute:: yaybu.resources.user.User.name
-.. autoattribute:: yaybu.resources.user.User.password
-.. autoattribute:: yaybu.resources.user.User.fullname
-.. autoattribute:: yaybu.resources.user.User.home
-.. autoattribute:: yaybu.resources.user.User.uid
-.. autoattribute:: yaybu.resources.user.User.gid
-.. autoattribute:: yaybu.resources.user.User.system
-.. autoattribute:: yaybu.resources.user.User.shell
-.. autoattribute:: yaybu.resources.user.User.disabled_password
-.. autoattribute:: yaybu.resources.user.User.disabled_login
-
-Policies
---------
-
-Apply
-~~~~~
-
-Raises
-######
-BinaryMissing
-    The system binary for one of the required binaries cannot be found. For    example, ln, rm, chmod etc.
-InvalidUser
-    The specified `owner` is not a valid unix user.
-InvalidGroup
-    The specified `group` is not a valid unix group.
-OperationFailed
-    For an undetermined reason we didn't get a link. This should not happen.
-
-
-
-File
-====
-
-.. autoclass:: yaybu.resources.filesystem.File
-.. autoattribute:: yaybu.resources.filesystem.File.name
-.. autoattribute:: yaybu.resources.filesystem.File.owner
-.. autoattribute:: yaybu.resources.filesystem.File.group
-.. autoattribute:: yaybu.resources.filesystem.File.mode
-.. autoattribute:: yaybu.resources.filesystem.File.static
-.. autoattribute:: yaybu.resources.filesystem.File.template
-.. autoattribute:: yaybu.resources.filesystem.File.template_args
-.. autoattribute:: yaybu.resources.filesystem.File.backup
-
-Link
-====
-
-.. autoclass:: yaybu.resources.filesystem.Link
-.. autoattribute:: yaybu.resources.filesystem.Link.name
-.. autoattribute:: yaybu.resources.filesystem.Link.owner
-.. autoattribute:: yaybu.resources.filesystem.Link.group
-.. autoattribute:: yaybu.resources.filesystem.Link.to
-.. autoattribute:: yaybu.resources.filesystem.Link.mode
-
-Policies
---------
-
-Apply
-~~~~~
-
-Raises
-######
-BinaryMissing
-    The system binary for one of the required binaries cannot be found. For    example, ln, rm, chmod etc.
-InvalidUser
-    The specified `owner` is not a valid unix user.
-InvalidGroup
-    The specified `group` is not a valid unix group.
-DanglingSymlink
-    The destination of the symbolic link does not exist.
-OperationFailed
-    For an undetermined reason we didn't get a link. This should not happen.
-SystemError
-    If an error is returned from one of the system calls used.
-
-System Errors
-#############
- EACCESS
-  Search permission is denied on a component of the path prefix
- EEXIST
-  `name` already exists
- EIO
-  An I/O error occurred
- ELOOP
-  Too many symbolic links were encountered in resolving `name` or `to`
- ENAMETOOLONG
-  The pathname for `name` or `to` is too long
- ENOENT
-  A directory component in oldpath or newpath does not exist or is a dangling symbolic link.
- ENOMEM
-  Insufficient kernel memory was available
- ENOSPC
-  Insufficient disk space
- ENOTDIR
-  A component used as a directory in `name` or `to` is not, in fact, a directory.
- EPERM
-  The filesystem containing `name` does not support the creation of symbolic links
- EROFS
-  `name` is on a read-only file system
+   resources/package
+   resources/execute
+   resources/file
+   resources/directory
+   resources/link
+   resources/special
+   resources/user
+   resources/group
+   resources/checkout
+   resources/service
+   resources/prompt
 

@@ -13,30 +13,67 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
-from yaybu.core.policy import Policy
+from yaybu.core.policy import (
+    Policy,
+    Absent,
+    Present,
+    )
 from yaybu.core.argument import (
     String,
     File,
+    Boolean,
     )
 
 
 class Package(Resource):
 
+    """ Represents an operating system package, installed and managed via the
+    OS package management system. For example, to ensure these three packages
+    are installed::
+
+        Package:
+            - name: apache2
+            - name: zip
+            - name: xsltproc
+
+    """
+
     name = String()
+    """ The name of the package. This can be a single package or a list can be
+    supplied. """
+
     version = String()
+    """ The version of the package, if only a single package is specified and
+    the appropriate provider supports it (the Apt provider does not support
+    it). """
 
-    # To deploy a particular .deb for example
-    file = File()
-
+    purge = Boolean(default=False)
+    """ When removing a package, whether to purge it or not. """
 
 class PackageInstallPolicy(Policy):
+
+    """ Install the specified package. If the package is already installed it
+    will not be upgraded or changed. Your package upgrade and patching
+    strategy should be independent of Yaybu in general.
+    """
 
     resource = Package
     name = "install"
     default = True
+    signature = (
+        Present("name"),
+        Absent("purge"),
+        )
 
 class PackageUninstallPolicy(Policy):
+
+    """ Uninstall the specified package, if it is installed. """
 
     resource = Package
     name = "uninstall"
     default = False
+    signature = (
+        Present("name"),
+        Absent("version"),
+        )
+

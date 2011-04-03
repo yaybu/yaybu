@@ -35,7 +35,7 @@ class Group(provider.Provider):
         fields = ("name", "passwd", "gid", "members",)
 
         try:
-            info_tuple = grp.getgrnam(self.resource.name)
+            info_tuple = grp.getgrnam(self.resource.name.encode("utf-8"))
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False
@@ -48,18 +48,49 @@ class Group(provider.Provider):
         return info
 
     def apply(self, context):
+        changed = False
         info = self.get_group_info()
 
-        command = ["groupmod"] if info["exists"] else ["groupadd"]
+        if info["exists"]:
+            command = ["groupmod"]
+        else:
+            command = ["groupadd"]
+            changed = True
 
         if self.resource.gid and info["gid"] != self.resource.gid:
             command.extend(["--gid", str(self.resource.gid)])
 
         command.extend([self.resource.name])
 
+        if not changed:
+            return False
+
         returncode, stdout, stderr = context.shell.execute(command)
         if returncode != 0:
             raise error.GroupError("%s failed with return code %d" % (self.resource, returncode))
+
+        return True
+
+class GroupRemove(provider.Provider):
+
+    policies = (resources.group.GroupRemovePolicy,)
+
+    @classmethod
+    def isvalid(self, *args, **kwargs):
+        return super(GroupRemove, self).isvalid(*args, **kwargs)
+
+    def apply(self, context):
+        try:
+            existing = grp.getgrnam(self.resource.name.encode("utf-8"))
+        except KeyError:
+            # If we get a key errror then there is no such group. This is good.
+            return False
+
+        command = ["groupdel", self.resource.name]
+
+        returncode, stdout, stderr = context.shell.execute(command)
+        if returncode != 0:
+            raise error.GroupError("Removing group %s failed with return code %d" % (self.resource, returncode))
 
         return True
 

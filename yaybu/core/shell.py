@@ -17,13 +17,13 @@ import subprocess
 import StringIO
 import change
 import error
-import getpass
+import os, getpass, pwd, grp
 
 class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0, passthru=False, user=None):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0, passthru=False, user=None, group=None):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -31,12 +31,34 @@ class ShellCommand(change.Change):
         self.env = env
         self.verbose = verbose
         self.passthru = passthru
-        self.user = None
+
+        self.user = user
+        if user:
+            self.uid = pwd.getpwnam(user).pw_uid
+        else:
+            self.uid = None
+
+        self.group = group
+        if group:
+            self.gid = grp.getgrnam(self.group).gr_gid
+        else:
+            self.gid = None
+
+    def preexec(self):
+        if self.uid is not None:
+            if self.uid != os.getuid():
+                os.setuid(self.uid)
+            if self.uid != os.geteuid():
+                os.seteuid(self.uid)
+
+        if self.gid is not None:
+            if self.gid != os.getgid():
+                os.setgid(self.gid)
+            if self.gid != os.getegid():
+                os.setegid(self.gid)
 
     def apply(self, renderer):
         command = self.command[:]
-        if self.user and getpass.getuser() != self.user:
-            command = ["sudo", "-u", self.user] + self.command[:]
 
         if not self.passthru:
             renderer.command(command)
@@ -48,6 +70,7 @@ class ShellCommand(change.Change):
                                  stderr=subprocess.PIPE,
                                  cwd=self.cwd,
                                  env=self.env,
+                                 preexec_fn=self.preexec,
                                  )
             (self.stdout, self.stderr) = p.communicate(self.stdin)
             self.returncode = p.returncode
@@ -97,11 +120,11 @@ class Shell(object):
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
 
-    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None):
+    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None):
         if self.simulate and not passthru:
             self.context.changelog.simlog_info(" ".join(command))
             return (0, "", "")
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru, user)
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru, user, group)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             self.context.changelog.info("{0}", cmd.stdout)

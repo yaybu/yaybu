@@ -18,6 +18,7 @@ try:
     import spwd
 except ImportError:
     spwd = None
+import grp
 
 from yaybu.core import provider
 from yaybu.core import error
@@ -47,7 +48,10 @@ class User(provider.Provider):
             info['disabled-password'] = False
             return info
 
-        info = {"exists": True, "disabled-login": False, "disabled-password": False}
+        info = {"exists": True,
+                "disabled-login": False,
+                "disabled-password": False,
+                }
         for i, field in enumerate(fields):
             info[field] = info_tuple[i]
 
@@ -91,9 +95,28 @@ class User(provider.Provider):
             command.extend(["--uid", str(self.resource.uid)])
             changed = True
 
-        if self.resource.gid and info["gid"] != self.resource.gid:
-            command.extend(["--gid", str(self.resource.gid)])
-            changed = True
+        if self.resource.gid or self.resource.group:
+            if self.resource.gid:
+                gid = self.resource.gid
+            else:
+                gid = grp.getgrnam(self.resource.group).gr_gid
+
+            if gid != info["gid"]:
+                command.extend(["--gid", str(gid)])
+                changed = True
+
+        if self.resource.groups:
+            desired_groups = set(self.resource.groups)
+            current_groups = set(g.gr_name for g in grp.getgrall() if self.resource.name in g.gr_mem)
+
+            if self.resource.append and len(desired_groups - current_groups) > 0:
+                if info["exists"]:
+                    command.append("-a")
+                command.extend(["-G", ",".join(desired_groups - current_groups)])
+                changed = True
+            elif not self.resource.append and desired_groups != current_groups:
+                command.extend(["-G", ",".join(desired_groups)])
+                changed = True
 
         if self.resource.shell != info["shell"]:
             command.extend(["--shell", str(self.resource.shell)])
@@ -114,4 +137,29 @@ class User(provider.Provider):
             if returncode != 0:
                 raise error.UserAddError("useradd returned error code %d" % returncode)
         return changed
+
+
+class UserRemove(provider.Provider):
+
+    policies = (resources.user.UserRemovePolicy,)
+
+    @classmethod
+    def isvalid(self, *args, **kwargs):
+        return super(UserRemove, self).isvalid(*args, **kwargs)
+
+    def apply(self, context):
+        try:
+            existing = pwd.getpwnam(self.resource.name.encode("utf-8"))
+        except KeyError:
+            # If we get a key errror then there is no such user. This is good.
+            return False
+
+        command = ["userdel", self.resource.name]
+
+        returncode, stdout, stderr = context.shell.execute(command)
+        if returncode != 0:
+            raise error.UserAddError("Removing user %s failed with return code %d" % (self.resource, returncode))
+
+        return True
+
 

@@ -25,6 +25,35 @@ class TestDirectory(TestCase):
         path = self.enpathinate("/etc/somedir")
         self.failUnless(os.path.isdir(path))
 
+    def test_create_directory_and_parents(self):
+        self.check_apply("""
+            resources:
+                - Directory:
+                    name: /etc/foo/bar/baz
+                    parents: True
+            """)
+        self.failUnless(os.path.isdir(self.enpathinate("/etc/foo/bar/baz")))
+
+    def test_remove_directory(self):
+        os.mkdir(self.enpathinate("/etc/somedir"))
+        self.check_apply("""
+            resources:
+              - Directory:
+                  name: /etc/somedir
+                  policy: remove
+        """)
+
+    def test_remove_directory_recursive(self):
+        os.mkdir(self.enpathinate("/etc/somedir"))
+        open(self.enpathinate("/etc/somedir/child"), "w").write("")
+        self.check_apply("""
+            resources:
+                - Directory:
+                    name: /etc/somedir
+                    policy: remove-recursive
+            """)
+        self.failUnless(not os.path.exists(self.enpathinate("/etc/somedir")))
+
     def test_unicode(self):
         utf8 = "/etc/£££££" # this is utf-8 encoded
         self.check_apply(open(sibpath("unicode1.yay")).read())

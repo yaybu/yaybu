@@ -31,6 +31,7 @@ from jinja2 import Template
 from yaybu import resources
 from yaybu.core import provider
 from yaybu.core import change
+from yaybu.core import error
 
 def binary_buffers(*buffers):
 
@@ -93,10 +94,9 @@ class FileContentChanger(change.Change):
     catered for. Additionally the minimum changes required to the contents are
     applied, and logs of the changes made are recorded. """
 
-    def __init__(self, context, filename, contents, backup_filename=None):
+    def __init__(self, context, filename, contents):
         self.context = context
         self.filename = filename
-        self.backup_filename = backup_filename
         self.current = ""
         self.contents = contents
         self.changed = False
@@ -153,8 +153,6 @@ class FileContentChanger(change.Change):
     def apply(self, renderer):
         """ Apply the changes necessary to the file contents. """
         self.renderer = renderer
-        if self.backup_filename is not None:
-            raise NotImplementedError
         if self.contents is None:
             self.empty_file()
         else:
@@ -178,14 +176,26 @@ class File(provider.Provider):
 
     """ Provides file creation using templates or static files. """
 
-    policies = (resources.filesystem.FileAppliedPolicy,)
+    policies = (resources.file.FileApplyPolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
         return super(File, self).isvalid(*args, **kwargs)
 
+    def check_path(self, directory):
+        frags = directory.split("/")
+        path = "/"
+        for i in frags:
+            path = os.path.join(path, i)
+            if not os.path.exists(path):
+                raise error.PathComponentMissing(path)
+            if not os.path.isdir(path):
+                raise error.PathComponentNotDirectory(path)
+
     def apply(self, context):
         name = self.resource.name
+
+        self.check_path(os.path.dirname(name))
 
         if self.resource.template:
             template = Template(context.get_file(self.resource.template).read())
@@ -209,7 +219,7 @@ class File(provider.Provider):
             return True
 
 class RemoveFile(provider.Provider):
-    policies = (resources.filesystem.FileRemovePolicy,)
+    policies = (resources.file.FileRemovePolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
@@ -218,11 +228,11 @@ class RemoveFile(provider.Provider):
     def apply(self, context):
         if os.path.exists(self.resource.name):
             if not os.path.isfile(self.resource.name):
-                raise error.InvalidProviderError("%r: %s exists and is not a file" % (self, self.resource.name))
+                raise error.InvalidProvider("%r: %s exists and is not a file" % (self, self.resource.name))
             context.shell.execute(["rm", self.resource.name])
             changed = True
         else:
-            context.shell.changelog.info("File %s missing already so not removed" % self.resource.name)
+            context.changelog.info("File %s missing already so not removed" % self.resource.name)
             changed = False
         return changed
 

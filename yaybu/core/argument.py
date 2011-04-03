@@ -13,12 +13,23 @@
 # limitations under the License.
 
 import error
+import datetime
 import dateutil.parser
 import types
 import urlparse
+import sys
 import os
 from abc import ABCMeta, abstractmethod, abstractproperty
 from yaybu import recipe
+import unicodedata
+import random
+
+unicode_glyphs = ''.join(
+    unichr(char)
+    for char in xrange(1114112) # 0x10ffff + 1
+    if unicodedata.category(unichr(char))[0] in ('LMNPSZ')
+    )
+
 
 # we abuse urlparse for our parsing needs
 urlparse.uses_netloc.append("package")
@@ -53,11 +64,14 @@ class Argument(object):
     def __set__(self, instance, value):
         """ Set the property. The value will be a UTF-8 encoded string read from the yaml source file. """
 
-
 class Boolean(Argument):
+
+    """ Represents a boolean. "1", "yes", "on" and "true" are all considered
+    to be True boolean values. Anything else is False. """
+
     def __set__(self, instance, value):
         if type(value) in types.StringTypes:
-            if value.lower() in ("yes", "on", "true"):
+            if value.lower() in ("1", "yes", "on", "true"):
                 value = True
             else:
                 value = False
@@ -66,6 +80,9 @@ class Boolean(Argument):
         setattr(instance, self.arg_id, value)
 
 class String(Argument):
+
+    """ Represents a string. """
+
     def __set__(self, instance, value):
         if value is None:
             pass
@@ -73,21 +90,69 @@ class String(Argument):
             value = unicode(value, 'utf-8')
         setattr(instance, self.arg_id, value)
 
+    @classmethod
+    def _generate_valid(self):
+        l = []
+        for i in range(random.randint(0, 1024)):
+            l.append(random.choice(unicode_glyphs))
+        return "".join(l)
+
+class FullPath(Argument):
+
+    """ Represents a full path on the filesystem. This should start with a
+    '/'. """
+
+    def __set__(self, instance, value):
+        if value is None:
+            pass
+        elif not isinstance(value, unicode):
+            value = unicode(value, 'utf-8')
+        if not value.startswith("/"):
+            raise error.ParseError("%s is not a full path" % value)
+        setattr(instance, self.arg_id, value)
+
+    @classmethod
+    def _generate_valid(self):
+        # TODO: needs work
+        l = []
+        for i in range(random.randint(0, 1024)):
+            l.append(random.choice(unicode_glyphs))
+        return "/" + "".join(l)
+
 class Integer(Argument):
+
+    """ Represents an integer argument taken from the source file. This can
+    throw an :py:exc:error.ParseError if the passed in value cannot represent
+    a base-10 integer. """
 
     def __set__(self, instance, value):
         if not isinstance(value, int):
-            value = int(value)
+            try:
+                value = int(value)
+            except ValueError:
+                raise error.ParseError("%s is not an integer" % value)
         setattr(instance, self.arg_id, value)
 
+    @classmethod
+    def _generate_valid(self):
+        return random.randint(0,sys.maxint)
+
 class DateTime(Argument):
+
+    """ Represents a date and time. This is parsed in ISO8601 format. """
 
     def __set__(self, instance, value):
         if isinstance(value, basestring):
             value = dateutil.parser.parse(value)
         setattr(instance, self.arg_id, value)
 
-class Octal(Argument):
+    @classmethod
+    def _generate_valid(self):
+        return datetime.datetime.fromtimestamp(random.randint(0, sys.maxint))
+
+class Octal(Integer):
+
+    """ An octal integer.  This is specifically used for file permission modes. """
 
     def __set__(self, instance, value):
         if isinstance(value, int):
@@ -101,9 +166,17 @@ class Dict(Argument):
     def __set__(self, instance, value):
         setattr(instance, self.arg_id, value)
 
+    @classmethod
+    def _generate_valid(self):
+        return {}
+
 class List(Argument):
     def __set__(self, instance, value):
         setattr(instance, self.arg_id, value)
+
+    @classmethod
+    def _generate_valid(self):
+        return []
 
 class File(Argument):
 
@@ -160,11 +233,15 @@ class PolicyTrigger:
 
 class PolicyCollection:
 
+    """ A collection of policy structures. """
+
     def __init__(self, standard=None, triggers=()):
         self.standard = standard
         self.triggers = triggers
 
 class PolicyStructure(Argument):
+
+    """ Parses the policy: argument for resources, including triggers etc. """
 
     def __set__(self, instance, value):
         """ Set either a default policy or a set of triggers on the policy collection """

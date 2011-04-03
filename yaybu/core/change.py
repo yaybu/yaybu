@@ -79,14 +79,16 @@ class ResourceChange(object):
         if self.rendered:
             return
         self.rendered = True
-        rl = len(str(self.resource))
+        rl = len(unicode(self.resource))
         if rl < 80:
-            minuses = (77 - rl)/2
+            total_minuses = 77 - rl
+            minuses = total_minuses/2
+            leftover = total_minuses % 2
         else:
             minuses = 4
         self.changelog.write("/%s %r %s" % ("-"*minuses,
                                             self.resource,
-                                            "-"*minuses))
+                                            "-"*(minuses + leftover)))
 
     def render_resource_footer(self):
         self.changelog.write("\%s" % ("-" *79,))

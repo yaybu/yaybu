@@ -107,8 +107,8 @@ class Resource(object):
         this_policy = self.get_default_policy()
         if not this_policy.conforms(self):
             raise error.NonConformingPolicy(this_policy.name)
+        # throws an exception if there is not oneandonlyone provider
         provider = this_policy.get_provider(self, yay)
-        provider.isvalid(this_policy, self, yay)
         return True
 
     def apply(self, context, yay=None, policy=None):
@@ -135,7 +135,7 @@ class Resource(object):
             if immediately is False:
                 raise NotImplementedError
 
-            if resource.policy_override is not None:
+            if resource.policy_override is not None and resource.policy_override != policy:
                 raise error.ExecutionError("attempting to trigger policy '%s' on %r, but '%s' is already set" % (
                     policy, resource, resource.policy_override))
             resource.policy_override = policy
@@ -182,6 +182,11 @@ class Resource(object):
     def __repr__(self):
         classname = getattr(self, '__resource_name__', self.__class__.__name__)
         return "%s[%s]" % (classname, self.name.encode("utf-8"))
+
+    def __unicode__(self):
+        classname = getattr(self, '__resource_name__', self.__class__.__name__)
+        return u"%s[%s]" % (classname, self.name)
+
 
 class ResourceBundle(ordereddict.OrderedDict):
 

@@ -13,21 +13,68 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
-from yaybu.core.policy import Policy
+from yaybu.core.policy import (
+    Policy,
+    Absent,
+    Present,
+    )
 from yaybu.core.argument import (
     String,
     Integer,
+    Boolean,
     )
 
 
 class Group(Resource):
 
+    """ A resource representing a unix group stored in the /etc/group file.
+    groupadd and groupmod are used to actually make modifications.
+
+    For example::
+
+        Group:
+            name: zope
+            system: true
+    """
+
     name = String()
+    """ The name of the unix group. """
+
     gid = Integer()
+    """ The group ID associated with the group. If this is not specified one will be chosen. """
+
+    system = Boolean(default=False)
+    """ Whether or not this is a system group - i.e. the new group id will be
+    taken from the system group id list. """
+
+    password = String()
+    """ The password for the group, if required """
 
 
 class GroupApplyPolicy(Policy):
 
+    """ Create the group, or ensure it has the specified attributes. """
+
     resource = Group
     name = "apply"
     default = True
+    signature = (
+        Present("name"),
+        )
+
+class GroupRemovePolicy(Policy):
+
+    """ Remove an existing group if it still exists.
+
+    You should only specify the name of the group when using this policy."""
+
+    resource = Group
+    name = "remove"
+    default = False
+    signature = (
+        Present("name"),
+        Absent("gid"),
+        Absent("system"),
+        Absent("password"),
+        )
+

@@ -24,7 +24,7 @@ from yaybu.core import provider, error
 
 class Link(provider.Provider):
 
-    policies = (resources.filesystem.LinkAppliedPolicy,)
+    policies = (resources.link.LinkAppliedPolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
@@ -114,15 +114,11 @@ class Link(provider.Provider):
             context.execute(["chgrp", "-h", self.resource.group, name])
             changed = True
 
-        if self.resource.mode is not None and mode != self.resource.mode:
-            context.execute(["chmod", "%o" % self.resource.mode, name])
-            changed = True
-
         return changed
 
 class RemoveLink(provider.Provider):
 
-    policies = (resources.filesystem.LinkRemovedPolicy,)
+    policies = (resources.link.LinkRemovedPolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):

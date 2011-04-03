@@ -25,7 +25,7 @@ logger = logging.getLogger("provider")
 
 class Execute(provider.Provider):
 
-    policies = (resources.system.ExecutePolicy,)
+    policies = (resources.execute.ExecutePolicy,)
 
     @classmethod
     def isvalid(self, *args, **kwargs):
@@ -40,7 +40,7 @@ class Execute(provider.Provider):
         if not command[0].startswith("."):
             command[0] = shell.locate_bin(command[0])
 
-        returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env)
+        returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env, user=self.resource.user, group=self.resource.group)
 
         expected_returncode = self.resource.returncode or 0
 
