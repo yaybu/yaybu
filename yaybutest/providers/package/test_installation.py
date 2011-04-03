@@ -1,4 +1,5 @@
 from yaybutest.utils import TestCase
+from time import sleep
 
 class TestPackageInstallation(TestCase):
 
@@ -25,6 +26,27 @@ class TestPackageInstallation(TestCase):
                   name: zzzz
             """)
         self.assertEqual(rv, 132)
+
+    def test_package_reinstallation(self):
+        """ Try reinstalling a previously-removed package """
+        hello_install = """
+            resources:
+              - Package:
+                  name: hello
+            """
+
+        hello_remove = """
+            resources:
+              - Package:
+                  name: hello
+                  policy: uninstall
+            """
+
+        self.check_apply(hello_install)
+        sleep(5)
+        self.check_apply(hello_remove)
+        sleep(5)
+        self.check_apply(hello_install)
 
 
 class TestPackageRemoval(TestCase):

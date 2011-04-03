@@ -14,7 +14,10 @@
 
 import os
 import pwd
-import spwd
+try:
+    import spwd
+except ImportError:
+    spwd = None
 import grp
 
 from yaybu.core import provider
