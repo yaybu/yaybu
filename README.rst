@@ -12,6 +12,10 @@ To get a development environment with required dependencies::
 Running the tests
 -----------------
 
+NOTE: Currently the testrunner will try and run a set of integration tests
+against an ubuntu chroot. Because of that we are a bit ubuntu-specific.
+We'll be fixing that asap!
+
 You first need to build a fake environment in which to run the tests::
 
     ./bin/build-environment
