@@ -66,7 +66,7 @@ class Git(Provider):
         if self.resource.branch:
             git_parameters.extend([
                 "-t", self.resource.branch,
-                "-m", "self.resource.branch",
+                "-m", self.resource.branch,
             ])
 
         self.git(context, *git_parameters)
