@@ -48,6 +48,9 @@ class Checkout(Resource):
     revision = String()
     """ The revision to check out or move to. """
 
+    scm_name = String()
+    """ The source control management system to use, e.g. subversion, git. """
+
     scm_username = String()
     """ The username for the remote repository """
 
