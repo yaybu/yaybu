@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os, logging
+import re
 
 from yaybu.core.provider import Provider
 from yaybu import resources
@@ -49,24 +50,26 @@ class Git(Provider):
         """
         if not os.path.exists(os.path.join(self.resource.name, ".git")):
             self.git(context, "init", self.resource.name)
-            git_parameters = [
-                "remote", "add",
-                self.REMOTE_NAME,
-                self.resource.repository,
-            ]
-
-            # If necessary, only fetch the branch we need
-            if self.resource.branch:
-                git_parameters.extend([
-                    "-t", self.resource.branch,
-                    "-m", "self.resource.branch",
-                ])
-
-            self.git(context, *git_parameters)
-
+            self.action_set_remote(context)
             return True
         else:
             return False
+
+    def action_set_remote(self, context):
+        git_parameters = [
+            "remote", "add",
+            self.REMOTE_NAME,
+            self.resource.repository,
+        ]
+
+        # If necessary, only fetch the branch we need
+        if self.resource.branch:
+            git_parameters.extend([
+                "-t", self.resource.branch,
+                "-m", "self.resource.branch",
+            ])
+
+        self.git(context, *git_parameters)
 
     def action_checkout(self, context):
         # Revision takes precedent over branch
@@ -75,7 +78,7 @@ class Git(Provider):
         elif self.resource.branch:
             newref = "%s/%s" % (self.REMOTE_NAME, self.resource.branch)
         else:
-            raise ParseError("You must specify either a revision or a branch")
+            raise CheckoutError("You must specify either a revision or a branch")
 
         # check to see if anything has changed
         returncode, stdout, stderr = self.git(context, "diff", "--shortstat", newref)
@@ -91,6 +94,16 @@ class Git(Provider):
         # If necessary, clone the repository
         if not os.path.exists(os.path.join(self.resource.name, ".git")):
             self.action_clone(context)
+
+        # Determine if the remote repository has changed
+        remote_re = re.compile(self.REMOTE_NAME + r"\t(.*) \(.*\)\n")
+        returncode, stdout, stderr = self.git(context, "remote", "-v")
+        remote = remote_re.search(stdout)
+        if remote:
+            if not self.resource.repository == remote.group(1):
+                log.info("The remote repository has changed.")
+                self.git(context, "remote", "rm", self.REMOTE_NAME)
+                self.action_set_remote(context)
 
         # Always update the remotes
         self.git(context, "remote", "update")
