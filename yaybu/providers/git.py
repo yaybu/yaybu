@@ -28,7 +28,7 @@ class Git(Provider):
 
     @classmethod
     def isvalid(self, policy, resource, yay):
-        return resource.scm_name and resource.scm_name.lower() == "git"
+        return resource.scm and resource.scm.lower() == "git"
 
     def git(self, context, action, *args, **kwargs):
         command = [

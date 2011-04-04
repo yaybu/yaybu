@@ -30,8 +30,8 @@ class Svn(Provider):
             'subversion',
         ]
 
-        if resource.scm_name:
-            return resource.scm_name.lower() in identities
+        if resource.scm:
+            return resource.scm.lower() in identities
 
         # TODO: ensure that this should be made default provider
         return True
