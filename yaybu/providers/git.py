@@ -16,6 +16,7 @@ import os, logging
 import re
 
 from yaybu.core.provider import Provider
+from yaybu.core.error import CheckoutError
 from yaybu import resources
 
 log = logging.getLogger("git")
@@ -49,7 +50,9 @@ class Git(Provider):
 
         """
         if not os.path.exists(os.path.join(self.resource.name, ".git")):
-            self.git(context, "init", self.resource.name)
+            rv, out, err = self.git(context, "init", self.resource.name)
+            if not rv == 0:
+                raise CheckoutError("Cannot initialise local repository '%s'")
             self.action_set_remote(context)
             return True
         else:
@@ -69,7 +72,10 @@ class Git(Provider):
                 "-m", self.resource.branch,
             ])
 
-        self.git(context, *git_parameters)
+        rv, out, err = self.git(context, *git_parameters)
+
+        if not rv == 0:
+            raise CheckoutError("Could not set the remote repository.")
 
     def action_checkout(self, context):
         # Revision takes precedent over branch
@@ -81,11 +87,17 @@ class Git(Provider):
             raise CheckoutError("You must specify either a revision or a branch")
 
         # check to see if anything has changed
-        returncode, stdout, stderr = self.git(context, "diff", "--shortstat", newref)
+        rv, stdout, stderr = self.git(context, "diff", "--shortstat", newref)
+        if not rv == 0:
+            raise CheckoutError("Could not diff the work-copy against your ref")
+
         if stdout.strip() == "":
             return False
         else:
-            self.git(context, "checkout", newref)
+            rv, stdout, stderr = self.git(context, "checkout", newref)
+            if not rv == 0:
+                raise CheckoutError("Could not check out '%s'" % newref)
+
             return True
 
     def apply(self, context):
@@ -97,13 +109,15 @@ class Git(Provider):
 
         # Determine if the remote repository has changed
         remote_re = re.compile(self.REMOTE_NAME + r"\t(.*) \(.*\)\n")
-        returncode, stdout, stderr = self.git(context, "remote", "-v")
+        rv, stdout, stderr = self.git(context, "remote", "-v")
         remote = remote_re.search(stdout)
         if remote:
             if not self.resource.repository == remote.group(1):
                 log.info("The remote repository has changed.")
                 self.git(context, "remote", "rm", self.REMOTE_NAME)
                 self.action_set_remote(context)
+        else:
+            raise CheckoutError("Cannot determine repository remote.")
 
         # Always update the REMOTE_NAME remote
         self.git(context, "fetch", self.REMOTE_NAME)
