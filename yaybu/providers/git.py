@@ -105,7 +105,7 @@ class Git(Provider):
                 self.git(context, "remote", "rm", self.REMOTE_NAME)
                 self.action_set_remote(context)
 
-        # Always update the remotes
-        self.git(context, "remote", "update")
+        # Always update the REMOTE_NAME remote
+        self.git(context, "fetch", self.REMOTE_NAME)
 
         return self.action_checkout(context)
