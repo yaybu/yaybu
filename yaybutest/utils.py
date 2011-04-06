@@ -77,6 +77,12 @@ class TestCase(testtools.TestCase):
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "yaybu")
 
+    def cp_dir_to_env(self, path, to='/tmp'):
+        """ Recursively copy a directory to the test environment """
+        to_path = self.enpathinate(to)
+        path = os.path.realpath(path)
+        shutil.copytree(path, topath)
+
     def setUp(self):
         super(TestCase, self).setUp()
         self.chroot_path = os.path.realpath("tmp")
