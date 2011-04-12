@@ -22,6 +22,7 @@ import getpass
 from yaybu.core import resource
 from yaybu.core import error
 from yaybu.core import runcontext
+from yaybu.core import event
 
 logger = logging.getLogger("runner")
 
@@ -96,14 +97,17 @@ class Runner(object):
                 opts.verbose = 2
             self.configure_logging(opts)
 
-            if not os.path.exists("/var/run/yaybu"):
-                os.mkdir("/var/run/yaybu")
+            event.save_file = "/var/run/yaybu/events.saved"
 
-            if os.path.exists("/var/run/yaybu/events.saved"):
+            save_parent = os.path.realpath(os.path.join(event.savefile, os.path.pardir))
+            if not os.path.exists(save_parent):
+                os.mkdir(save_parent)
+
+            if os.path.exists(event.save_file):
                 if opts.resume:
                     self.resume()
                 elif opts.no_resume:
-                    os.unlink("/var/run/yaybu/events.saved")
+                    os.unlink(event.save_file)
                 else:
                     raise error.SavedEventsAndNoInstruction()
 
@@ -126,5 +130,3 @@ class Runner(object):
             # tracebacks etc automatically
             print >>sys.stderr, "Terminated due to execution error in processing"
             sys.exit(e.returncode)
-
-

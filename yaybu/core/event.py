@@ -1,4 +1,8 @@
 import policy
+import yaml
+
+# this is overridden by the runner to point to a runtime location
+save_file = "events.saved"
 
 class EventState(object):
 
@@ -8,11 +12,15 @@ class EventState(object):
     """ A mapping of resource names to the overridden policy name for that
     resource, if there is one. """
 
-    def __init__(self):
-        self.overrides = {}
+    def __init__(self, load=False):
+        if load:
+            self.overrides = yaml.load(open(save_file))
+        else:
+            self.overrides = {}
 
     def override(self, resource, policy):
         self.overrides[resource.name] = policy
+        yaml.dump(self.overrides, open(save_file, "w"))
 
     def overridden_policy(self, resource):
         """ Return the policy class for this resource, or None if there is not
