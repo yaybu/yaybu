@@ -80,7 +80,12 @@ class Runner(object):
 
         os.execvp(command[0], command)
 
+    def resume(self):
+        pass
+
+
     def run(self, opts, args):
+        """ Run locally. """
         try:
             if opts.user and getpass.getuser() != opts.user:
                 self.trampoline(opts.user)
@@ -90,6 +95,17 @@ class Runner(object):
                 opts.logfile = "-"
                 opts.verbose = 2
             self.configure_logging(opts)
+
+            if not os.path.exists("/var/run/yaybu"):
+                os.mkdir("/var/run/yaybu")
+
+            if os.path.exists("/var/run/yaybu/events.saved"):
+                if opts.resume:
+                    self.resume()
+                elif opts.no_resume:
+                    os.unlink("/var/run/yaybu/events.saved")
+                else:
+                    raise error.SavedEventsAndNoInstruction()
 
             if not opts.remote:
                 ctx = runcontext.RunContext(args[0], opts)
