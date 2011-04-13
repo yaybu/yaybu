@@ -4,7 +4,6 @@ Hacking and extending Yaybu
 
 Information for those wishing to write their own providers, or add new classes of resource.
 
-=======
 Unicode
 =======
 
@@ -12,7 +11,6 @@ Your provider methods will be called with unicode arguments. Make sure you can
 handle unicode appropriately - in general these days that means serialising to
 UTF-8 when interacting with the environment outside the interpreter.
 
-=========
 Resources
 =========
 
