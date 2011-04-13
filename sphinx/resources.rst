@@ -18,7 +18,7 @@ You can recognise when a resource is used in a yay configuration file,
 because it will be capitalised.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    resources/package
    resources/execute
