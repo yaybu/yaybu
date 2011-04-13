@@ -1,7 +1,7 @@
 Yaybu configuration management software
 =======================================
 
-Yaybu manages your deployed computer systems, in much the same was as Puppet_
+Yaybu manages your deployed computer systems, in much the same way as Puppet_
 or Chef_. Yaybu has many advantages over these other systems, but it is an
 awful lot less mature.
 
