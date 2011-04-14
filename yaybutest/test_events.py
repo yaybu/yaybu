@@ -13,9 +13,6 @@ class TestEvents(TestCase):
                   name: /etc/somedir
 
               - Directory:
-                  name: /frob
-
-              - Directory:
                   name: /frob/somedir
 
               - File:
@@ -25,9 +22,7 @@ class TestEvents(TestCase):
                          when: apply
                          on: /etc/somedir
             """)
-        #open("/tmp/events.saved", "w").write(open(self.enpathinate("/var/run/yaybu/events.saved")).read())
-        #self.assertEqual(rv, error.PathComponentMissing.returncode)
-        print >>sys.stderr, "XXXXX"
+        self.assertEqual(rv, error.PathComponentMissing.returncode)
         self.check_apply("""
             resources:
               - Directory:
@@ -45,5 +40,7 @@ class TestEvents(TestCase):
                      apply:
                          when: apply
                          on: /etc/somedir
-            """)
+
+            """,
+               "--resume")
         self.failUnlessExists("/frob/somedir/foo")

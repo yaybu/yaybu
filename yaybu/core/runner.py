@@ -97,17 +97,18 @@ class Runner(object):
                 opts.verbose = 2
             self.configure_logging(opts)
 
-            event.save_file = "/var/run/yaybu/events.saved"
+            print >>sys.stderr, "XXXXXXXXXXXXXXXXXX"
+            event.EventState.save_file = "/var/run/yaybu/events.saved"
 
-            save_parent = os.path.realpath(os.path.join(event.save_file, os.path.pardir))
+            save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
             if not os.path.exists(save_parent):
                 os.mkdir(save_parent)
 
-            if os.path.exists(event.save_file):
+            if os.path.exists(event.EventState.save_file):
                 if opts.resume:
                     self.resume()
                 elif opts.no_resume:
-                    os.unlink(event.save_file)
+                    os.unlink(event.EventState.save_file)
                 else:
                     raise error.SavedEventsAndNoInstruction()
 

@@ -12,29 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import policy
 import yaml
-
-# this is overridden by the runner to point to a runtime location
-save_file = "events.saved"
 
 class EventState(object):
 
     """ Represents the current state of events """
+
+    save_file = "events.saved"
+    """ The file to save to.  This is touched by the runner. """
+
 
     overrides = {}
     """ A mapping of resource names to the overridden policy name for that
     resource, if there is one. """
 
     def __init__(self, load=False):
-        if load:
-            self.overrides = yaml.load(open(save_file))
-        else:
-            self.overrides = {}
+        self.loaded = not load
+        self.overrides = {}
+
+    def load(self):
+        if self.loaded:
+            return
+        if os.path.exists(self.save_file):
+            self.overrides = yaml.load(open(self.save_file))
+        self.loaded = True
 
     def override(self, resource, policy):
+        self.load()
         self.overrides[resource.name] = policy
-        yaml.dump(self.overrides, open(save_file, "w"))
+        yaml.dump(self.overrides, open(self.save_file, "w"))
 
     def overridden_policy(self, resource):
         """ Return the policy class for this resource, or None if there is not
@@ -46,8 +54,9 @@ class EventState(object):
             return None
 
     def policy(self, resource):
+        self.load()
         selected = self.overridden_policy(resource)
-        if not selected:
+        if selected is None:
             if resource.policy is not None:
                 selected = resource.policy.literal_policy(resource)
             else:
@@ -55,8 +64,8 @@ class EventState(object):
         return selected(resource)
 
 # module level global to preserve event state
-# may get rolled in to context eventually if we can do it without
-# making life hell
+# yes this is ugly
+# alternatives may be uglier
 state = EventState()
 
 def reset():
