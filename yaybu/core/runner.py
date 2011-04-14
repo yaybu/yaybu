@@ -99,7 +99,7 @@ class Runner(object):
 
             event.save_file = "/var/run/yaybu/events.saved"
 
-            save_parent = os.path.realpath(os.path.join(event.savefile, os.path.pardir))
+            save_parent = os.path.realpath(os.path.join(event.save_file, os.path.pardir))
             if not os.path.exists(save_parent):
                 os.mkdir(save_parent)
 
