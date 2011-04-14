@@ -1,3 +1,10 @@
+==============================
+Yaybu Configuration Management
+==============================
+
+Yaybu provides a simple configuration format for describing your infrastructure,
+and tools to turn that configuration into a running server.
+
 
 Hacking on yaybu
 ================
@@ -8,6 +15,8 @@ To get a development environment with required dependencies::
     source venv/bin/activate
     python bootstrap.py
     bin/buildout
+
+(The virtualenv is not strictly required).
 
 Running the tests
 -----------------
