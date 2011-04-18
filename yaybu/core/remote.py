@@ -32,7 +32,13 @@ class RemoteRunner(Runner):
 
         rc = RunContext(args[0], opts)
 
-        command = ["ssh", "-A", opts.host, "yaybu", "--remote"]
+        if ":" in opts.host:
+            host, port = opts.host.rsplit(":", 1)
+            connect_args = [host, "-p", port]
+        else:
+            connect_args = [host]
+
+        command = ["ssh", "-A"] + connect_args + ["yaybu", "--remote"]
 
         if opts.user:
             command.extend(["--user", opts.user])
