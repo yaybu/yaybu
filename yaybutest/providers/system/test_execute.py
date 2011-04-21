@@ -19,6 +19,7 @@ class TestExecute(TestCase):
             """)
 
     def test_execute_touches(self):
+        """ test that command works as expected """
         src = sibpath(__file__, os.path.join("..", "..", "files"))
         dst = os.path.join(self.chroot_path, "tmp", "files")
         shutil.copytree(src, dst)
@@ -33,19 +34,65 @@ class TestExecute(TestCase):
             """)
 
     def test_command(self):
-        """ test that command works as expected """
+        """ test that commands works as expected """
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test
+                    command: touch /etc/foo
+            """)
+        self.failUnlessExists("/etc/foo")
 
     def test_commands(self):
-        """ test that commands works as expected """
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test
+                    commands:
+                        - touch /etc/foo
+                        - touch /etc/bar
+            """)
+        self.failUnlessExists("/etc/foo")
+        self.failUnlessExists("/etc/bar")
 
     def test_cwd(self):
         """ test that cwd works as expected. """
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test
+                    command: touch foo
+                    cwd: /etc
+            """)
+        self.failUnlessExists("/etc/foo")
 
     def test_environment(self):
         """ test that the environment is passed as expected. """
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test
+                    command: sh -c "touch $FOO"
+                    environment:
+                        FOO: /etc/foo
+            """)
+        self.failUnlessExists("/etc/foo")
 
     def test_returncode(self):
         """ test that the returncode is interpreted as expected. """
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test-true
+                    command: true
+            """)
+
+        self.check_apply("""
+            resources:
+                - Execute:
+                    name: test-false
+                    command: false
+            """)
 
     def test_user(self):
         """ test that the user has been correctly set. """
