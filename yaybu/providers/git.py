@@ -65,13 +65,6 @@ class Git(Provider):
             self.resource.repository,
         ]
 
-        # If necessary, only fetch the branch we need
-        if self.resource.branch:
-            git_parameters.extend([
-                "-t", self.resource.branch,
-                "-m", self.resource.branch,
-            ])
-
         rv, out, err = self.git(context, *git_parameters)
 
         if not rv == 0:
@@ -82,7 +75,7 @@ class Git(Provider):
         if self.resource.revision:
             newref = self.resource.revision
         elif self.resource.branch:
-            newref = "%s/%s" % (self.REMOTE_NAME, self.resource.branch)
+            newref = "remotes/%s/%s" % (self.REMOTE_NAME, self.resource.branch)
         else:
             raise CheckoutError("You must specify either a revision or a branch")
 
