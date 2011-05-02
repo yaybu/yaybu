@@ -22,7 +22,7 @@ def run_commands(commands, base_image, distro=None):
 def build_environment(base_image):
     distro = default_distro()
     commands = [
-        "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,python-magic,ubuntu-keyring %(distro)s %(base_image)s",
+        "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,python-magic,git-core,ubuntu-keyring %(distro)s %(base_image)s",
         ]
     if not os.path.exists(base_image):
         run_commands(commands, base_image, distro)

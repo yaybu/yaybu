@@ -17,14 +17,6 @@ class GitTest(TestCase):
 
     OTHER_UPSTREAM_REF = "0.0.5"
 
-    def setUp(self):
-        super(GitTest, self).setUp()
-        self.apply("""
-            resources:
-                - Package:
-                    name: git-arch
-            """)
-
     def test_clone(self):
         CLONED_REPO = "/tmp/test_clone"
         self.check_apply("""
