@@ -199,7 +199,7 @@ class File(provider.Provider):
 
         if self.resource.template:
             template = Template(context.get_file(self.resource.template).read())
-            contents = template.render(**self.resource.template_args) + "\n" # yuk
+            contents = template.render(self.resource.template_args) + "\n" # yuk
         elif self.resource.static:
             contents = context.get_file(self.resource.static).read()
         elif self.resource.encrypted:
