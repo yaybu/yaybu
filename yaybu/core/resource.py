@@ -179,9 +179,13 @@ class Resource(object):
             d[a] = getattr(self, a, None)
         return d
 
-    def __repr__(self):
+    @property
+    def id(self):
         classname = getattr(self, '__resource_name__', self.__class__.__name__)
         return "%s[%s]" % (classname, self.name.encode("utf-8"))
+
+    def __repr__(self):
+        return self.id
 
     def __unicode__(self):
         classname = getattr(self, '__resource_name__', self.__class__.__name__)
@@ -216,7 +220,7 @@ class ResourceBundle(ordereddict.OrderedDict):
         if not isinstance(instance, dict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
         kls = ResourceType.resources[typename](**dict(self.key_remap(instance)))
-        self[kls.name] = kls
+        self[kls.id] = kls
 
     def bind(self):
         """ Bind all the resources so they can observe each others for policy
