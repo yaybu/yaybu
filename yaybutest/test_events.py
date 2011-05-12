@@ -20,7 +20,7 @@ class TestEvents(TestCase):
                   policy:
                      apply:
                          when: apply
-                         on: /etc/somedir
+                         on: Directory[/etc/somedir]
             """)
         self.assertEqual(rv, error.PathComponentMissing.returncode)
         self.check_apply("""
@@ -39,7 +39,7 @@ class TestEvents(TestCase):
                   policy:
                      apply:
                          when: apply
-                         on: /etc/somedir
+                         on: Directory[/etc/somedir]
 
             """,
                "--resume")
