@@ -63,13 +63,20 @@ class ShellCommand(change.Change):
         if not self.passthru:
             renderer.command(command)
 
+        # Inherit parent environment
+        if not self.env:
+            env = None
+        else:
+            env = os.environ.copy()
+            env.update(self.env)
+
         try:
             p = subprocess.Popen(command,
                                  shell=self.shell,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
                                  cwd=self.cwd,
-                                 env=self.env,
+                                 env=env,
                                  preexec_fn=self.preexec,
                                  )
             (self.stdout, self.stderr) = p.communicate(self.stdin)
