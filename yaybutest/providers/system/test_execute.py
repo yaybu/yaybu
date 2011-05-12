@@ -84,14 +84,15 @@ class TestExecute(TestCase):
             resources:
                 - Execute:
                     name: test-true
-                    command: /usr/bin/true
+                    command: /bin/true
             """)
 
         self.check_apply("""
             resources:
                 - Execute:
                     name: test-false
-                    command: /usr/bin/false
+                    command: /bin/false
+                    returncode: 1
             """)
 
     def test_user(self):

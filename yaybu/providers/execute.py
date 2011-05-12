@@ -40,7 +40,7 @@ class Execute(provider.Provider):
         if not command[0].startswith("."):
             command[0] = shell.locate_bin(command[0])
 
-        returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env, user=self.resource.user, group=self.resource.group)
+        returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env, user=self.resource.user, group=self.resource.group, exceptions=False)
 
         expected_returncode = self.resource.returncode or 0
 
