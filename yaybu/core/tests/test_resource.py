@@ -187,7 +187,7 @@ class TestResourceBundle(unittest.TestCase):
                 "mode": "666",
                 }]
              }])
-        self.assertEqual(resources["/etc/foo"].mode, 438)
+        self.assertEqual(resources["File[/etc/foo]"].mode, 438)
 
     def test_firing(self):
         Ev1Provider.applied = 0
@@ -200,14 +200,14 @@ class TestResourceBundle(unittest.TestCase):
                   "policy":
                       {"baz": [{
                           "when": "foo",
-                          "on": "e1",
+                          "on": "Ev1[e1]",
                           }],
                        },
                   },
             ]}])
 
-        e1 = resources['e1']
-        e2 = resources['e2']
+        e1 = resources['Ev1[e1]']
+        e2 = resources['Ev1[e2]']
         resources.bind()
         self.assertEqual(dict(e2.observers), {})
         self.assertEqual(dict(e1.observers),
@@ -235,13 +235,13 @@ class TestResourceBundle(unittest.TestCase):
                   "policy":
                       {"baz": [{
                           "when": "baz",
-                          "on": "e1",
+                          "on": "Ev1[e1]",
                           }],
                        },
                   },
             ]}])
-        e1 = resources['e1']
-        e2 = resources['e2']
+        e1 = resources['Ev1[e1]']
+        e2 = resources['Ev1[e2]']
         resources.bind()
         self.assertEqual(dict(e2.observers), {})
         self.assertEqual(dict(e1.observers),
@@ -266,7 +266,7 @@ class TestResourceBundle(unittest.TestCase):
                   "policy":
                       {"baz": [{
                           "when": "baz",
-                          "on": "e2",
+                          "on": "Ev1[e2]",
                           }],
                        },
                 }, {
@@ -274,8 +274,8 @@ class TestResourceBundle(unittest.TestCase):
                   "policy": "foo",
                   }
             ]}])
-        e1 = resources['e1']
-        e2 = resources['e2']
+        e1 = resources['Ev1[e1]']
+        e2 = resources['Ev1[e2]']
         self.assertRaises(error.BindingError, resources.bind)
 
     def test_structure(self):
