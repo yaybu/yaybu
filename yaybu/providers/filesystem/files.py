@@ -86,6 +86,15 @@ class AttributeChanger(change.Change):
         if self.mode is not None:
             if mode != self.mode:
                 self.context.shell.execute(["chmod", "%o" % self.mode, self.filename])
+
+                # Clear the user and group bits
+                # We don't need to set them as chmod will *set* this bits with an octal
+                # but won't clear them without a symbolic mode
+                if mode & stat.S_ISGID and not self.mode & stat.S_ISGID:
+                    self.context.shell.execute(["chmod", "g-s", self.filename])
+                if mode & stat.S_ISUID and not self.mode & stat.S_ISUID:
+                    self.context.shell.execute(["chmod", "u-s", self.filename])
+
                 self.changed = True
 
 class FileContentChanger(change.Change):
