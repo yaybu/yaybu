@@ -180,6 +180,10 @@ class Ev1Provider(provider.Provider):
 
 class TestResourceBundle(unittest.TestCase):
 
+    def setUp(self):
+        from yaybu.core import event
+        event.reset()
+
     def test_creation(self):
         resources = resource.ResourceBundle([
             {"File": [{

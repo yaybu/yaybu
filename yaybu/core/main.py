@@ -32,6 +32,8 @@ def main():
     parser.add_option("--remote", default=False, action="store_true", help="Run yaybu.protocol client on stdio")
     parser.add_option("--ssh-auth-sock", default=None, action="store", help="Path to SSH Agent socket")
     parser.add_option("--expand-only", default=False, action="store_true", help="Set to parse config, expand it and exit")
+    parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
+    parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
     opts, args = parser.parse_args()
 
     if len(args) != 1:
@@ -49,7 +51,7 @@ def main():
     if opts.host:
         r = remote.RemoteRunner()
     else:
-        r = remote.Runner()
+        r = runner.Runner()
 
     r.run(opts, args)
 

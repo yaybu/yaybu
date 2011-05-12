@@ -30,7 +30,7 @@ def build_environment(base_image):
 
 def refresh_environment(base_image):
     commands = [
-        "fakeroot fakechroot -s chroot %(base_image)s apt-get update",
+        #"fakeroot fakechroot -s chroot %(base_image)s apt-get update",
         "rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
         "python setup.py sdist --dist-dir %(base_image)s",
         "fakeroot fakechroot -s chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
@@ -59,16 +59,16 @@ class TestCase(testtools.TestCase):
         filespath = os.path.join(self.chroot_path, "tmp", "files")
         return self.call(["yaybu", "--simulate", "--ypath", filespath] + list(args))
 
-    def apply(self, contents):
+    def apply(self, contents, *args):
         path = self.write_temporary_file(contents)
-        return self.yaybu(path)
+        return self.yaybu(path, *args)
 
     def apply_simulate(self, contents):
         path = self.write_temporary_file(contents)
         return self.simulate(path)
 
-    def check_apply(self, contents):
-        rv = self.apply(contents)
+    def check_apply(self, contents, *args):
+        rv = self.apply(contents, *args)
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "yaybu")
 

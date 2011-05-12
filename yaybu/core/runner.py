@@ -22,6 +22,7 @@ import getpass
 from yaybu.core import resource
 from yaybu.core import error
 from yaybu.core import runcontext
+from yaybu.core import event
 
 logger = logging.getLogger("runner")
 
@@ -80,7 +81,12 @@ class Runner(object):
 
         os.execvp(command[0], command)
 
+    def resume(self):
+        pass
+
+
     def run(self, opts, args):
+        """ Run locally. """
         try:
             if opts.user and getpass.getuser() != opts.user:
                 self.trampoline(opts.user)
@@ -90,6 +96,21 @@ class Runner(object):
                 opts.logfile = "-"
                 opts.verbose = 2
             self.configure_logging(opts)
+
+            print >>sys.stderr, "XXXXXXXXXXXXXXXXXX"
+            event.EventState.save_file = "/var/run/yaybu/events.saved"
+
+            save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
+            if not os.path.exists(save_parent):
+                os.mkdir(save_parent)
+
+            if os.path.exists(event.EventState.save_file):
+                if opts.resume:
+                    self.resume()
+                elif opts.no_resume:
+                    os.unlink(event.EventState.save_file)
+                else:
+                    raise error.SavedEventsAndNoInstruction()
 
             if not opts.remote:
                 ctx = runcontext.RunContext(args[0], opts)
@@ -110,5 +131,3 @@ class Runner(object):
             # tracebacks etc automatically
             print >>sys.stderr, "Terminated due to execution error in processing"
             sys.exit(e.returncode)
-
-

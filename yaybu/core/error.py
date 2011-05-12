@@ -24,7 +24,7 @@ class Error(Exception):
     """ Base class for all yaybu specific exceptions. """
     returncode = 255
 
-    def __init__(self, msg):
+    def __init__(self, msg=""):
         self.msg = msg
 
     def __str__(self):
@@ -139,6 +139,12 @@ class PathComponentNotDirectory(ExecutionError):
     """ A component of the path is in fact not a directory """
     returncode = 147
     """ returns error code 147 to the invoking environment. """
+
+class SavedEventsAndNoInstruction(ExecutionError):
+    """ There is a saved events file and the user has not decided what to do
+    about it. Invoke with --resume or --no-resume. """
+    returncode = 148
+    """ returns error code 148 to the invoking environment. """
 
 class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our

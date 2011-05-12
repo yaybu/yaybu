@@ -235,11 +235,24 @@ class PolicyCollection:
 
     """ A collection of policy structures. """
 
-    def __init__(self, standard=None, triggers=()):
-        self.standard = standard
+    literal = None
+    """ The policy that is set as the "standard" policy, not one that depends on a trigger. """
+
+    triggers = ()
+    """ A list of PolicyTrigger objects that represent optional triggered policies. """
+
+    def __init__(self, literal=None, triggers=()):
+        self.literal = literal
         self.triggers = triggers
 
-class PolicyStructure(Argument):
+    def literal_policy(self, resource):
+        if self.literal is not None:
+            return resource.policies[self.literal.policy_name]
+        else:
+            import policy
+            return policy.NullPolicy
+
+class PolicyArgument(Argument):
 
     """ Parses the policy: argument for resources, including triggers etc. """
 

@@ -13,12 +13,13 @@
 # limitations under the License.
 
 import sys
-from argument import Argument, List, PolicyStructure, String
+from argument import Argument, List, PolicyArgument, String
 import policy
 import error
 from yaybu import recipe
 import collections
 import ordereddict
+import event
 
 class ResourceType(type):
 
@@ -33,7 +34,7 @@ class ResourceType(type):
         for b in bases:
             if hasattr(b, "__args__"):
                 cls.__args__.extend(b.__args__)
-        cls.policies = {}
+        cls.policies = AvailableResourcePolicies()
         if class_name != 'Resource':
             rname = new_attrs.get("__resource_name__", class_name)
             if rname in meta.resources:
@@ -48,6 +49,19 @@ class ResourceType(type):
     @classmethod
     def clear(self):
         self.resources = {}
+
+class AvailableResourcePolicies(dict):
+
+    """ A collection of the policies available for a resource, with some logic
+    to work out which of them is the one and only default policy. """
+
+    def default(self):
+        default = [p for p in self.values() if p.default]
+        if default:
+            return default[0]
+        else:
+            return policy.NullPolicy
+
 
 class Resource(object):
 
@@ -66,12 +80,26 @@ class Resource(object):
 
     # The arguments for this resource, set in the metaclass
     __args__ = []
-    # the policies for this resource, registered as policies are created
-    policies = {}
-    # the list of policies provided by configuration
-    policy = PolicyStructure()
-    # any policy applied by a policy trigger
-    policy_override = None
+
+    policies = AvailableResourcePolicies()
+    """ A dictionary of policy names mapped to policy classes (not objects).
+
+    These are the policies for this resource class.
+
+    Here be metaprogramming magic.
+
+    Dynamically allocated as Yaybu starts up this is effectively static once
+    we're up and running. The combination of this attribute and the policy
+    argument below is sufficient to determine which provider might be
+    appropriate for this resource.
+
+    """
+
+    policy = PolicyArgument()
+    """ The list of policies provided by configuration. This is an argument
+    like any other, but has a complex representation that holds the conditions
+    and options for the policies as specified in the input file. """
+
     name = String()
 
     def __init__(self, **kwargs):
@@ -134,11 +162,7 @@ class Resource(object):
         for immediately, resource, policy in  self.observers[name]:
             if immediately is False:
                 raise NotImplementedError
-
-            if resource.policy_override is not None and resource.policy_override != policy:
-                raise error.ExecutionError("attempting to trigger policy '%s' on %r, but '%s' is already set" % (
-                    policy, resource, resource.policy_override))
-            resource.policy_override = policy
+            event.state.override(resource, policy)
 
     def bind(self, resources):
         """ Bind this resource to all the resources on which it triggers.
@@ -151,22 +175,7 @@ class Resource(object):
 
     def get_default_policy(self):
         """ Return an instantiated policy for this resource. """
-        if self.policy is not None:
-            if self.policy.standard is not None:
-                return self.policies[self.policy.standard.policy_name](self)
-            else:
-                if self.policy_override is not None:
-                    return self.policies[self.policy_override](self)
-                else:
-                    return policy.NullPolicy(self)
-        else:
-            if self.policy_override is not None:
-                return self.policies[self.policy_override](self)
-            for p in self.policies.values():
-                if p.default is True:
-                    return p(self)
-            else:
-                return policy.NullPolicy(self)
+        return event.state.policy(self)
 
     def dict_args(self):
 
