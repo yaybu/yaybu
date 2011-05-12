@@ -97,7 +97,6 @@ class Runner(object):
                 opts.verbose = 2
             self.configure_logging(opts)
 
-            print >>sys.stderr, "XXXXXXXXXXXXXXXXXX"
             event.EventState.save_file = "/var/run/yaybu/events.saved"
 
             save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
