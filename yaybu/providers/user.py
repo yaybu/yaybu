@@ -79,7 +79,7 @@ class User(provider.Provider):
             command = ['useradd', '-N']
             changed = True # we definitely make a change
 
-        if self.resource.fullname and info["name"] != self.resource.fullname:
+        if self.resource.fullname and info["gecos"] != self.resource.fullname:
             command.extend(["--comment", self.resource.fullname])
             changed = True
 
