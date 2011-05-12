@@ -48,7 +48,9 @@ class TestCase(testtools.TestCase):
 
     def call(self, command):
         chroot = ["fakeroot", "fakechroot", "-s", "cow-shell", "chroot", self.chroot_path]
-        return subprocess.call(chroot + command, cwd=self.chroot_path)
+        retval = subprocess.call(chroot + command, cwd=self.chroot_path)
+        self.wait_for_cowdancer()
+        return retval
 
     def yaybu(self, *args):
         filespath = os.path.join(self.chroot_path, "tmp", "files")
@@ -77,6 +79,13 @@ class TestCase(testtools.TestCase):
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "yaybu")
 
+    def wait_for_cowdancer(self):
+        # give cowdancer a few seconds to exit (avoids a race where it delets another sessions .ilist)
+        for i in range(20):
+            if not os.path.exists(os.path.join(self.chroot_path, ".ilist")):
+                break
+            time.sleep(0.1)
+
     def setUp(self):
         super(TestCase, self).setUp()
         self.chroot_path = os.path.realpath("tmp")
@@ -84,12 +93,6 @@ class TestCase(testtools.TestCase):
 
     def tearDown(self):
         super(TestCase, self).tearDown()
-
-        # give cowdancer a few seconds to exit (avoids a race where it delets another sessions .ilist)
-        for i in range(20):
-            if not os.path.exists(os.path.join(self.chroot_path, ".ilist")):
-                break
-            time.sleep(0.1)
 
         subprocess.check_call(["rm", "-rf", self.chroot_path])
 

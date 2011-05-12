@@ -2,7 +2,6 @@ import os
 import sys
 from yaybutest.utils import TestCase
 from yaybu.core import error
-import time
 
 class TestEvents(TestCase):
 
@@ -23,6 +22,7 @@ class TestEvents(TestCase):
                          on: Directory[/etc/somedir]
             """)
         self.assertEqual(rv, error.PathComponentMissing.returncode)
+
         self.check_apply("""
             resources:
               - Directory:
