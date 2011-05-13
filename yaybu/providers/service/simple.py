@@ -22,8 +22,12 @@ from yaybu.providers.service import utils
 class _LsbServiceMixin(utils._ServiceMixin):
 
     @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(_LsbServiceMixin, self).isvalid(*args, **kwargs)
+    def isvalid(self, policy, resource, yay):
+        if not super(_LsbServiceMixin, self).isvalid(policy, resource, yay):
+            return False
+        if not getattr(self.resource, policy.name):
+            return False
+        return True
 
     def get_command(self, action):
         return shlex.split(getattr(self.resource, action))

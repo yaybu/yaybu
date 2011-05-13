@@ -21,8 +21,12 @@ from yaybu.providers.service import utils
 class _LsbServiceMixin(utils._ServiceMixin):
 
     @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(_LsbServiceMixin, self).isvalid(*args, **kwargs)
+    def isvalid(self, policy, resource, yay):
+        if not super(_LsbServiceMixin, self).isvalid(policy, resource, yay):
+            return False
+        if os.path.exists("/sbin/start") and os.path.exists("/etc/init/%s.conf" % self.resource.name):
+            return False
+        return os.path.exists("/etc/init.d/%s" % self.resource.name)
 
     def get_command(self, action):
         return ["/etc/init.d/%s" % self.resource.name, action]
