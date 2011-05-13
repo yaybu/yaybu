@@ -38,9 +38,6 @@ class Service(Resource):
     This would normally match the name as it appears in /etc/init.d.
     """
 
-    enabled = Boolean()
-    """" Is the service set to automatically start, or is it started manually """
-
     priority = Integer()
     """ Priority of the service within the boot order.
 
@@ -72,9 +69,6 @@ class Service(Resource):
     reconfig = String()
     """ A command that when executed will make the service reload its
     configuration file. """
-
-    status = String()
-    """ A command that will report whether or not a service is responding """
 
     pidfile = FullPath()
     """ Where the service creates its pid file.
