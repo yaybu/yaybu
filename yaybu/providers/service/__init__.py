@@ -12,4 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import yaybu.providers.service.debian
+from yaybu.providers.service import (
+    lsb,
+    upstart,
+    simple,
+    )
+
