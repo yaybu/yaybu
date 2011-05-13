@@ -23,6 +23,7 @@ def build_environment(base_image):
     distro = default_distro()
     commands = [
         "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv %(distro)s %(base_image)s",
+        "fakeroot fakechroot -s chroot %(base_image)s apt-get update",
         ]
     if not os.path.exists(base_image):
         run_commands(commands, base_image, distro)
@@ -30,7 +31,6 @@ def build_environment(base_image):
 
 def refresh_environment(base_image):
     commands = [
-        #"fakeroot fakechroot -s chroot %(base_image)s apt-get update",
         "rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
         "python setup.py sdist --dist-dir %(base_image)s",
         "fakeroot fakechroot -s chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
