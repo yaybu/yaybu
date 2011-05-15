@@ -21,6 +21,8 @@ from yaybu import resources
 
 class _LsbServiceMixin(utils._ServiceMixin):
 
+    features = ["restart", ]
+
     @classmethod
     def isvalid(cls, policy, resource, yay):
         if not super(_LsbServiceMixin, cls).isvalid(policy, resource, yay):

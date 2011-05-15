@@ -20,6 +20,8 @@ from yaybu import resources
 
 class _ServiceMixin(object):
 
+    features = []
+
     def status(self, context):
         if not self.resource.pidfile:
             return "unknown"
@@ -79,7 +81,7 @@ class _Restart(object):
             self.do(context, "start")
             return True
 
-        if self.resource.supports_restart:
+        if "restart" in self.features:
             self.do(context, "restart")
         else:
             self.do(context, "stop")
