@@ -19,13 +19,13 @@ from yaybu.core import provider
 from yaybu.providers.service import utils
 
 
-class _LsbServiceMixin(utils._ServiceMixin):
+class _SimpleServiceMixin(utils._ServiceMixin):
 
     features = ["restart", ]
 
     @classmethod
     def isvalid(cls, policy, resource, yay):
-        if not super(_LsbServiceMixin, cls).isvalid(policy, resource, yay):
+        if not super(_SimpleServiceMixin, cls).isvalid(policy, resource, yay):
             return False
         if not getattr(resource, policy.name):
             return False
@@ -35,12 +35,12 @@ class _LsbServiceMixin(utils._ServiceMixin):
         return shlex.split(getattr(self.resource, action).encode("UTF-8"))
 
 
-class Start(_LsbServiceMixin, utils._Start, provider.Provider):
+class Start(_SimpleServiceMixin, utils._Start, provider.Provider):
     pass
 
-class Stop(_LsbServiceMixin, utils._Stop, provider.Provider):
+class Stop(_SimpleServiceMixin, utils._Stop, provider.Provider):
     pass
 
-class Restart(_LsbServiceMixin, utils._Restart, provider.Provider):
+class Restart(_SimpleServiceMixin, utils._Restart, provider.Provider):
     pass
 

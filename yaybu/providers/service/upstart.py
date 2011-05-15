@@ -19,13 +19,13 @@ from yaybu.providers.service import utils
 from yaybu import resources
 
 
-class _LsbServiceMixin(utils._ServiceMixin):
+class _UpstartServiceMixin(utils._ServiceMixin):
 
     features = ["restart", ]
 
     @classmethod
     def isvalid(cls, policy, resource, yay):
-        if not super(_LsbServiceMixin, cls).isvalid(policy, resource, yay):
+        if not super(_UpstartServiceMixin, cls).isvalid(policy, resource, yay):
             return False
         if getattr(resource, policy.name):
             return False
@@ -35,15 +35,15 @@ class _LsbServiceMixin(utils._ServiceMixin):
         return ["/sbin/" + action, self.resource.name]
 
 
-class Start(_LsbServiceMixin, utils._Start, provider.Provider):
+class Start(_UpstartServiceMixin, utils._Start, provider.Provider):
     pass
 
 
-class Stop(_LsbServiceMixin, utils._Stop, provider.Provider):
+class Stop(_UpstartServiceMixin, utils._Stop, provider.Provider):
     pass
 
 
-class Restart(_LsbServiceMixin, utils._Restart, provider.Provider):
+class Restart(_UpstartServiceMixin, utils._Restart, provider.Provider):
     pass
 
 
