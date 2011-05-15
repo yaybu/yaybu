@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-from yaybu import resources
+
 from yaybu.core import error
 
 
@@ -45,8 +45,6 @@ class _ServiceMixin(object):
 
 class _Start(object):
 
-    policies = (resources.service.ServiceStartPolicy,)
-
     def apply(self, context):
         if self.status() == "running":
             return False
@@ -58,8 +56,6 @@ class _Start(object):
 
 class _Stop(object):
 
-    policies = (resources.service.ServiceStopPolicy,)
-
     def apply(self, context):
         if self.status() == "not-running":
             return False
@@ -70,8 +66,6 @@ class _Stop(object):
 
 
 class _Restart(object):
-
-    policies = (resources.service.ServiceRestartPolicy,)
 
     def apply(self, context):
         if self.status() == "not-running":
@@ -85,4 +79,5 @@ class _Restart(object):
             self.do(context, "start")
 
         return True
+
 

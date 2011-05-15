@@ -16,6 +16,7 @@ import os
 
 from yaybu.core import provider
 from yaybu.providers.service import utils
+from yaybu import resources
 
 
 class _LsbServiceMixin(utils._ServiceMixin):
@@ -24,6 +25,8 @@ class _LsbServiceMixin(utils._ServiceMixin):
     def isvalid(self, policy, resource, yay):
         if not super(_LsbServiceMixin, self).isvalid(policy, resource, yay):
             return False
+        if getattr(self.resource, policy.name):
+            return False
         return os.path.exists("/sbin/start") and os.path.exists("/etc/init/%s.conf" % self.resource.name)
 
     def get_command(self, action):
@@ -31,13 +34,13 @@ class _LsbServiceMixin(utils._ServiceMixin):
 
 
 class Start(provider.Provider, _LsbServiceMixin, utils._Start):
-    pass
+    policies = (resources.service.ServiceStartPolicy,)
 
 
 class Stop(provider.Provider, _LsbServiceMixin, utils._Stop):
-    pass
+    policies = (resources.service.ServiceStopPolicy,)
 
 
 class Restart(provider.Provider, _LsbServiceMixin, utils._Restart):
-    pass
+    policies = (resources.service.ServiceRestartPolicy,)
 
