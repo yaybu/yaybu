@@ -45,6 +45,8 @@ class Execute(provider.Provider):
         if expected_returncode and expected_returncode != returncode:
             raise error.CommandError("%s failed with return code %d" % (self.resource, returncode))
 
+        return returncode
+
     def apply(self, context):
         if self.resource.creates is not None \
            and os.path.exists(self.resource.creates):

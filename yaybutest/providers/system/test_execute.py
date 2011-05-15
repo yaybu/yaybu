@@ -148,3 +148,31 @@ class TestExecute(TestCase):
     def test_touch_not_present(self):
         """ test that we do execute if the touched file does not exist. """
 
+    def test_unless_true(self):
+        """ test that an Execute wont execute if the unless expression
+        is true """
+
+        rv = self.apply("""
+            resources:
+              - Execute:
+                  name: test
+                  command: touch /test_unless_true
+                  unless: /bin/true
+            """)
+
+        self.failUnlessEqual(rv, 255)
+
+    def test_unless_false(self):
+        """ test that an Execute will execute when the unless expression
+        is false """
+
+        self.check_apply("""
+            resources:
+              - Execute:
+                  name: test
+                  command: touch /test_unless_false
+                  unless: /bin/false
+            """)
+
+        self.failUnlessExists("/test_unless_false")
+
