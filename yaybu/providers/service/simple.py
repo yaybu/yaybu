@@ -23,10 +23,10 @@ from yaybu import resources
 class _LsbServiceMixin(utils._ServiceMixin):
 
     @classmethod
-    def isvalid(self, policy, resource, yay):
-        if not super(_LsbServiceMixin, self).isvalid(policy, resource, yay):
+    def isvalid(cls, policy, resource, yay):
+        if not super(_LsbServiceMixin, cls).isvalid(policy, resource, yay):
             return False
-        if not getattr(self.resource, policy.name):
+        if not getattr(resource, policy.name):
             return False
         return True
 
