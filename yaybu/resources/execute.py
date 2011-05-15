@@ -94,6 +94,10 @@ class Execute(Resource):
     """ The group to execute the command as.
     """
 
+    unless = String(default="")
+    """ A command to run to determine is this execute should be actioned
+    """
+
     creates = FullPath()
     """ The full path to a file that execution of this command creates. This
     is used like a "touch test" in a Makefile. If this file exists then the

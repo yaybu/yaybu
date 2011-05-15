@@ -31,7 +31,7 @@ class Execute(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Execute, self).isvalid(*args, **kwargs)
 
-    def execute(self, shell, command):
+    def execute(self, shell, command, expected_returncode=None):
         # Filter out empty strings...
         cwd = self.resource.cwd or None
         env = self.resource.environment or None
@@ -42,9 +42,7 @@ class Execute(provider.Provider):
 
         returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env, user=self.resource.user, group=self.resource.group, exceptions=False)
 
-        expected_returncode = self.resource.returncode or 0
-
-        if expected_returncode != returncode:
+        if expected_returncode and expected_returncode != returncode:
             raise error.CommandError("%s failed with return code %d" % (self.resource, returncode))
 
     def apply(self, context):
@@ -53,9 +51,13 @@ class Execute(provider.Provider):
             #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
             return
 
+        if self.resource.unless:
+            if self.execute(context.shell, self.resource.unless) == 0:
+                return
+
         commands = [self.resource.command] if self.resource.command else self.resource.commands
         for command in commands:
-            self.execute(context.shell, command)
+            self.execute(context.shell, command, self.resource.returncode)
 
         if self.resource.creates is not None:
             context.shell.execute(["touch", self.resource.creates])
