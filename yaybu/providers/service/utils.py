@@ -15,6 +15,7 @@
 import os
 
 from yaybu.core import error
+from yaybu import resources
 
 
 class _ServiceMixin(object):
@@ -36,7 +37,6 @@ class _ServiceMixin(object):
             return "not-running"
 
     def do(self, context, action):
-        print self.get_command(action)
         returncode, stdout, stderr = context.shell.execute(self.get_command(action), exceptions=False)
 
         if returncode != 0:
@@ -45,6 +45,8 @@ class _ServiceMixin(object):
 
 
 class _Start(object):
+
+    policies = (resources.service.ServiceStartPolicy,)
 
     def apply(self, context):
         if self.status(context) == "running":
@@ -57,6 +59,8 @@ class _Start(object):
 
 class _Stop(object):
 
+    policies = (resources.service.ServiceStopPolicy,)
+
     def apply(self, context):
         if self.status(context) == "not-running":
             return False
@@ -67,6 +71,8 @@ class _Stop(object):
 
 
 class _Restart(object):
+
+    policies = (resources.service.ServiceRestartPolicy,)
 
     def apply(self, context):
         if self.status(context) == "not-running":

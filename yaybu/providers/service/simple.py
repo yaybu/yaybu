@@ -17,7 +17,6 @@ import shlex
 
 from yaybu.core import provider
 from yaybu.providers.service import utils
-from yaybu import resources
 
 
 class _LsbServiceMixin(utils._ServiceMixin):
@@ -35,14 +34,11 @@ class _LsbServiceMixin(utils._ServiceMixin):
 
 
 class Start(_LsbServiceMixin, utils._Start, provider.Provider):
-    policies = (resources.service.ServiceStartPolicy,)
-
+    pass
 
 class Stop(_LsbServiceMixin, utils._Stop, provider.Provider):
-    policies = (resources.service.ServiceStopPolicy,)
-
+    pass
 
 class Restart(_LsbServiceMixin, utils._Restart, provider.Provider):
-    policies = (resources.service.ServiceRestartPolicy,)
-
+    pass
 
