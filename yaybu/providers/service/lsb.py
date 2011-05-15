@@ -22,27 +22,27 @@ from yaybu import resources
 class _LsbServiceMixin(utils._ServiceMixin):
 
     @classmethod
-    def isvalid(self, policy, resource, yay):
-        if not super(_LsbServiceMixin, self).isvalid(policy, resource, yay):
+    def isvalid(cls, policy, resource, yay):
+        if not super(_LsbServiceMixin, cls).isvalid(policy, resource, yay):
             return False
-        if getattr(self.resource, policy.name):
+        if getattr(resource, policy.name):
             return False
-        if os.path.exists("/sbin/start") and os.path.exists("/etc/init/%s.conf" % self.resource.name):
+        if os.path.exists("/sbin/start") and os.path.exists("/etc/init/%s.conf" % resource.name):
             return False
-        return os.path.exists("/etc/init.d/%s" % self.resource.name)
+        return os.path.exists("/etc/init.d/%s" % resource.name)
 
     def get_command(self, action):
         return ["/etc/init.d/%s" % self.resource.name, action]
 
 
-class Start(provider.Provider, _LsbServiceMixin, utils._Start):
+class Start(_LsbServiceMixin, utils._Start, provider.Provider):
     policies = (resources.service.ServiceStartPolicy,)
 
 
-class Stop(provider.Provider, _LsbServiceMixin, utils._Stop):
+class Stop(_LsbServiceMixin, utils._Stop, provider.Provider):
     policies = (resources.service.ServiceStopPolicy,)
 
 
-class Restart(provider.Provider, _LsbServiceMixin, utils._Restart):
+class Restart(_LsbServiceMixin, utils._Restart, provider.Provider):
     policies = (resources.service.ServiceRestartPolicy,)
 

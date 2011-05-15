@@ -36,17 +36,18 @@ class _ServiceMixin(object):
             return "not-running"
 
     def do(self, context, action):
-        returncode, stdout, stderr = context.shell.execute(command)
+        print self.get_command(action)
+        returncode, stdout, stderr = context.shell.execute(self.get_command(action), exceptions=False)
 
         if returncode != 0:
-            raise error.CommandError("%s failed with return code %d" % (" ".join(command), returncode))
+            raise error.CommandError("%s failed with return code %d" % (" ".join(action), returncode))
 
 
 
 class _Start(object):
 
     def apply(self, context):
-        if self.status() == "running":
+        if self.status(context) == "running":
             return False
 
         self.do(context, "start")
@@ -57,7 +58,7 @@ class _Start(object):
 class _Stop(object):
 
     def apply(self, context):
-        if self.status() == "not-running":
+        if self.status(context) == "not-running":
             return False
 
         self.do(context, "stop")
@@ -68,7 +69,7 @@ class _Stop(object):
 class _Restart(object):
 
     def apply(self, context):
-        if self.status() == "not-running":
+        if self.status(context) == "not-running":
             self.do(context, "start")
             return True
 
