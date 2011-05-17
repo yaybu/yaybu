@@ -49,7 +49,8 @@ class RunContext(object):
         if "YAYBUPATH" in os.environ:
             for term in os.environ["YAYBUPATH"].split(":"):
                 self.ypath.append(term)
-        else:
+
+        if not len(self.ypath)
             self.ypath.append(os.getcwd())
 
         self.configfile = configfile
