@@ -1,12 +1,26 @@
 auto lo
 iface lo inet loopback
 
-{% for interface in interfaces %}
-{% if interface['auto-up'] is defined %}{% if interface['auto-up'] in ('yes', 'true', 'on') %}auto {{ interface.name }}{% endif %}{% endif %}
+% for interface in interfaces
+% if interface['auto-up'] is defined 
+% if interface['auto-up'] in ('yes', 'true', 'on') 
+auto {{ interface.name }}
+% endif 
+% endif 
 iface {{ interface.name }} inet {{ interface.type }}
-{% if interface.address is defined %}    address {{ interface.address }}{% endif %}
-{% if interface.netmask is defined %}    netmask {{ interface.netmask }}{% endif %}
-{% if interface.network is defined %}    network {{ interface.network }}{% endif %}
-{% if interface.broadcast is defined %}    broadcast {{ interface.broadcast }}{% endif %}
-{% if interface.gateway is defined %}    gateway {{ interface.gateway }}{% endif %}
-{% endfor %}
+% if interface.address is defined 
+    address {{ interface.address }}
+% endif
+% if interface.netmask is defined 
+    netmask {{ interface.netmask }}
+% endif
+% if interface.network is defined
+    network {{ interface.network }}
+% endif
+% if interface.broadcast is defined
+    broadcast {{ interface.broadcast }}
+% endif
+% if interface.gateway is defined 
+    gateway {{ interface.gateway }}
+% endif
+% endfor
