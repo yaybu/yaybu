@@ -26,7 +26,7 @@ try:
 except ImportError:
     magic = None
 
-from jinja2 import Template
+from jinja2 import Environment
 
 from yaybu import resources
 from yaybu.core import provider
@@ -207,7 +207,11 @@ class File(provider.Provider):
         self.check_path(os.path.dirname(name))
 
         if self.resource.template:
-            template = Template(context.get_file(self.resource.template).read())
+            # set a special line ending
+            # this strips the \n from the template line meaning no blank line,
+            # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
+            env = Environment(line_statement_prefix='%')
+            template = env.from_string(context.get_file(self.resource.template).read())
             contents = template.render(self.resource.template_args) + "\n" # yuk
         elif self.resource.static:
             contents = context.get_file(self.resource.static).read()
