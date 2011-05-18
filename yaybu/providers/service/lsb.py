@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+import os, shlex, glob
 
 from yaybu.core import provider
 from yaybu.providers.service import utils
@@ -33,6 +33,44 @@ class _LsbServiceMixin(utils._ServiceMixin):
 
     def get_command(self, action):
         return ["/etc/init.d/%s" % self.resource.name, action]
+
+    def _enabled_links(self):
+        for x in (2, 3, 4, 5):
+            yield "/etc/rc%s.d/S%s%s" % (x, self.resource.priority, self.resource.name)
+        for x in (0, 1, 6):
+            yield "/etc/rc%s.d/K%s%s" % (x, 100-self.resouce.priority, self.resource.name)
+
+    def _disabled_links(self):
+        for x in (0, 1, 2, 3, 4, 5, 6):
+            yield "/etc/rc%s.d/K%s%s" % (x, 100-self.resource.priority, self.resource.name)
+
+    def _update_links(self, context, goal):
+        # We turn our "goal" symlinks into a set and use a glob to get a set of
+        # all symlinks in an rc.d directory for the current service name
+        # The difference between the 2 sets are the links we need to create
+        # and the links we need to remove
+        target = set(goal)
+        current = set(glob.glob("/etc/rc*.d/*%s"  % self.resource.name))
+
+        need_deleting = current - target
+        need_creating = target - current
+
+        if not need_deleting and not need_creating:
+            return False
+
+        for ln in need_deleting:
+            context.shell.execute(["rm", ln])
+
+        for ln in need_creating:
+            context.shell.execute(["ln", "-s", "/etc/init.d/%s" % self.resource.name, ln])
+
+        return True
+
+    def ensure_enabled(self, context):
+        return self._update_links(context, self._enabled_links())
+
+    def ensure_disabled(self, context):
+        return self._update_links(context, self._disabled_links())
 
 
 class Start(_LsbServiceMixin, utils._Start, provider.Provider):
