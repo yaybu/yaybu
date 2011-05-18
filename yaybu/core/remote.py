@@ -51,15 +51,21 @@ class RemoteRunner(Runner):
 
         command.append("-")
 
-        p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        try:
+            p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
-        root = HttpResource()
-        root.put_child("config", StaticResource(json.dumps(rc.get_config())))
-        root.put_child("files", FileResource())
-        root.put_child("encrypted", EncryptedResource())
-        root.put_child("changelog", ChangeLogResource())
+            root = HttpResource()
+            root.put_child("config", StaticResource(json.dumps(rc.get_config())))
+            root.put_child("files", FileResource())
+            root.put_child("encrypted", EncryptedResource())
+            root.put_child("changelog", ChangeLogResource())
 
-        Server(rc, root, p.stdout, p.stdin).serve_forever()
+            Server(rc, root, p.stdout, p.stdin).serve_forever()
+            sys.exit(p.wait())
 
-        return p.wait()
+        except error.Error, e:
+            p.kill()
+            sys.exit(e.returncode)
+
+        return 0
 
