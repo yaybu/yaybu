@@ -61,5 +61,5 @@ class RemoteRunner(Runner):
 
         Server(rc, root, p.stdout, p.stdin).serve_forever()
 
-        return p.exitcode
+        return p.wait()
 
