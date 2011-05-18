@@ -19,6 +19,7 @@ import subprocess
 
 import yay
 
+from yaybu.core.error import ParseError
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.core.shell import Shell
 from yaybu.core import change
@@ -90,7 +91,10 @@ class RunContext(object):
         return self.locate(self.ypath + self.path, filename)
 
     def get_config(self):
-        return yay.load_uri(self.configfile)
+        try:
+            return yay.load_uri(self.configfile)
+        except yay.error.Error, e:
+            raise ParseError(e.get_string())
 
     def get_decrypted_file(self, filename):
         p = subprocess.Popen(["gpg", "-d", self.locate_file(filename)], stdout=subprocess.PIPE)

@@ -124,7 +124,7 @@ class Runner(object):
                 # nothing changed
                 sys.exit(255)
             sys.exit(0)
-        except error.ExecutionError, e:
+        except error.Error, e:
             # this will have been reported by the context manager, so we wish to terminate
             # but not to raise it further. Other exceptions should be fully reported with
             # tracebacks etc automatically
