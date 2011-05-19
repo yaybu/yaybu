@@ -16,6 +16,8 @@
 both the metadata associated with the file (for example owner and permission)
 and the contents of the files themselves. """
 
+import os, hashlib
+
 from yaybu.core.resource import Resource
 from yaybu.core.policy import (Policy,
                                Absent,
