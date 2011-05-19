@@ -17,7 +17,7 @@ import subprocess
 import StringIO
 import change
 import error
-import os, getpass, pwd, grp
+import os, getpass, pwd, grp, select
 
 class ShellCommand(change.Change):
 
@@ -63,16 +63,19 @@ class ShellCommand(change.Change):
             p.stdin.close()
 
         callbacks = {}
+        out = {}
 
-        if self.stdout:
-            callbacks[self.stdout] = stdout_fn
+        if p.stdout:
+            callbacks[p.stdout] = stdout_fn
+            out[p.stdout] = []
 
-        if self.stderr:
-            callbacks[self.stderr] = stderr_fn
+        if p.stderr:
+            callbacks[p.stderr] = stderr_fn
+            out[p.stderr] = []
 
         while len(callbacks.keys()):
             try:
-                rlist, wlist, xlist = select.select(r.keys(), [], [])
+                rlist, wlist, xlist = select.select(callbacks.keys(), [], [])
             except select.error, e:
                 if e.args[0] == errno.EINTR:
                     continue
@@ -81,19 +84,36 @@ class ShellCommand(change.Change):
             for r in rlist:
                 data = os.read(r.fileno(), 1024)
                 if data == "":
-                    r.close()
                     del callbacks[r]
-                if self.universal_newlines and hasattr(file, 'newlines'):
-                    data = self._translate_newlines(data)
-                callbacks[r](data)
+                    r.close()
+                else:
+                    out[r].append
+                    if p.universal_newlines and hasattr(file, 'newlines'):
+                        data = p._translate_newlines(data)
+                    callbacks[r](data)
 
-        self.wait()
+        returncode = p.wait()
+
+        if p.stdout:
+            stdout = ''.join(out[p.stdout])
+            if p.universal_newlines and hasattr(file, 'newlines'):
+                stdout = p._translate_newlines(stdout)
+        else:
+            stdout = ''
+
+        if p.stderr:
+            stderr = ''.join(out[p.stderr])
+            if p.universal_newlines and hasattr(file, 'newlines'):
+                stderr = p._translate_newlines(stderr)
+        else:
+            stderr = ''
+
+        return returncode, stdout, stderr
 
     def apply(self, renderer):
         command = self.command[:]
 
-        if not self.passthru:
-            renderer.command(command)
+        renderer.passthru = self.passthru
 
         # Inherit parent environment
         if not self.env:
@@ -111,9 +131,8 @@ class ShellCommand(change.Change):
                                  env=env,
                                  preexec_fn=self.preexec,
                                  )
-            (self.stdout, self.stderr) = p.communicate(self.stdin)
-            self.returncode = p.returncode
-            renderer.output(p.returncode, self.stdout, self.stderr, self.passthru)
+            self.returncode, self.stdout, self.stderr = self.communicate(p, renderer.stdout, renderer.stderr)
+            renderer.output(p.returncode)
         except Exception, e:
             logging.error("Exception when running %r" % command)
             renderer.exception(e)
@@ -124,24 +143,25 @@ class ShellTextRenderer(change.TextRenderer):
     """ Render a ShellCommand on a textual changelog. """
 
     renderer_for = ShellCommand
+    passthru = False
 
     def command(self, command):
-        self.logger.notice(" ".join(command))
+        if not self.passthru:
+            self.logger.notice("$ " + " ".join(command))
 
-    def render_output(self, cmd, name, data):
-        if data:
-            cmd("---- {0} follows ----", name)
-            for l in data.splitlines():
-                cmd("{0}", l)
-            cmd("---- {0} ends ----", name)
-
-    def output(self, returncode, stdout, stderr, passthru):
-        if self.verbose >= 1 and returncode != 0 and not passthru:
+    def output(self, returncode):
+        if self.verbose >= 1 and returncode != 0 and not self.passthru:
             self.logger.notice("returned {0}", returncode)
-        if self.verbose >= 2 and not passthru:
-            self.render_output(self.logger.info, "stdout", stdout)
+
+    def stdout(self, data):
+       if self.verbose >= 2 and not self.passthru:
+           for l in data.splitlines():
+               self.logger.info(l)
+
+    def stderr(self, data):
         if self.verbose >= 1:
-            self.render_output(self.logger.info, "stderr", stderr)
+            for l in data.splitlines():
+                self.logger.info(l)
 
     def exception(self, exception):
         self.logger.notice("Exception: %r" % exception)
@@ -170,3 +190,4 @@ class Shell(object):
             self.context.changelog.notice("{0}", cmd.stderr)
             raise error.SystemError(cmd.returncode)
         return (cmd.returncode, cmd.stdout, cmd.stderr)
+
