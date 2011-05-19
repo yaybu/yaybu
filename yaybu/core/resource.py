@@ -167,8 +167,6 @@ class Resource(object):
     def apply(self, context, yay=None, policy=None):
         """ Apply the provider for the selected policy, and then fire any
         events that are being observed. """
-        self.watch_preapply()
-
         if yay is None:
             yay = {}
         if policy is None:
@@ -181,7 +179,6 @@ class Resource(object):
         changed = prov.apply(context)
         if changed:
             self.fire_event(pol.name)
-
         return changed
 
     def fire_event(self, name):
@@ -200,19 +197,6 @@ class Resource(object):
             for trigger in self.policy.triggers:
                 bound.append(trigger.bind(resources, self))
         return bound
-
-    def watch_preapply(self):
-        for resource in self.watched_resources:
-            resource._original_hash = resource.hash()
-
-    def watch_bind(self, resources):
-        """ Bind this resource to the resources it is watching. """
-        self.watched_resources = {}
-        if not self.watch:
-            return
-        for watched in self.watch:
-            r = resources["File[%s]" % watched]
-            self.watched_resources[r] = ""
 
     def get_default_policy(self):
         """ Return an instantiated policy for this resource. """
@@ -275,10 +259,13 @@ class ResourceBundle(ordereddict.OrderedDict):
 
         # Create implicit File[] nodes for any watched files
         for watched in instance.get("watch", []):
-           self._create("File", {
-               "name": watched,
-               "policy": "watched",
-               })
+            w = self._create("File", {
+                "name": watched,
+                "policy": "watched",
+                })
+            w._original_hash = w.hash()
+
+        return kls
 
     def bind(self):
         """ Bind all the resources so they can observe each others for policy
@@ -290,7 +277,6 @@ class ResourceBundle(ordereddict.OrderedDict):
                 j = self.values().index(bound)
                 if j > i:
                     raise error.BindingError("Attempt to bind forwards on %r" % resource)
-            resource.watch_bind(self)
 
     def apply(self, ctx, config):
         """ Apply the resources to the system, using the provided context and
