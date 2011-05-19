@@ -282,15 +282,15 @@ class ResourceBundle(ordereddict.OrderedDict):
         if not isinstance(instance, dict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
 
+        kls = ResourceType.resources[typename](**dict(self.key_remap(instance)))
+        self[kls.id] = kls
+
         # Create implicit File[] nodes for any watched files
         for watched in instance.get("watch", []):
            self._create("File", {
                "name": watched,
                "policy": "watched",
                })
-
-        kls = ResourceType.resources[typename](**dict(self.key_remap(instance)))
-        self[kls.id] = kls
 
     def bind(self):
         """ Bind all the resources so they can observe each others for policy
