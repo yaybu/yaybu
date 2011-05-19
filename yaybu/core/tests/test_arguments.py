@@ -10,7 +10,7 @@ class TestArguments(unittest.TestCase):
     def test_octal(self):
         class R_test_octal(resource.Resource):
             a = argument.Octal()
-        r = R_test_octal()
+        r = R_test_octal(name="test")
         r.a = "666"
         self.assertEqual(r.a, 438)
         r.a = 666
@@ -19,7 +19,7 @@ class TestArguments(unittest.TestCase):
     def test_string(self):
         class R_test_string(resource.Resource):
             a = argument.String()
-        r = R_test_string()
+        r = R_test_string(name="test")
         r.a = "foo"
         self.assertEqual(r.a, "foo")
         r.a = u"foo"
@@ -32,7 +32,7 @@ class TestArguments(unittest.TestCase):
     def test_integer(self):
         class R_test_integer(resource.Resource):
             a = argument.Integer()
-        r = R_test_integer()
+        r = R_test_integer(name="test")
         r.a = 10
         self.assertEqual(r.a, 10)
         r.a = "10"
@@ -43,7 +43,7 @@ class TestArguments(unittest.TestCase):
     def test_datetime(self):
         class R_test_datetime(resource.Resource):
             a = argument.DateTime()
-        r = R_test_datetime()
+        r = R_test_datetime(name="test")
         r.a = "2011-02-20"
         self.assertEqual(r.a, datetime.datetime(2011, 02, 20))
 

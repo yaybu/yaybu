@@ -51,10 +51,10 @@ class Prov2(provider.Provider):
 class TestOrchestration(unittest.TestCase):
 
     def test_validate(self):
-        r = R(foo="a", bar="b")
+        r = R(name="1", foo="a", bar="b")
         pol = r.get_default_policy()
         self.assertEqual(r.get_default_policy().get_provider({}), Prov1)
-        r = R()
+        r = R(name="2")
         self.assertRaises(error.NonConformingPolicy, r.validate)
-        r = R(policy="p1")
+        r = R(name="3", policy="p1")
         self.assertRaises(error.NonConformingPolicy, r.validate)
