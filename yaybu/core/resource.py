@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
+import sys, os, hashlib
 from argument import Argument, List, PolicyArgument, String
 import policy
 import error
@@ -102,9 +102,34 @@ class Resource(object):
 
     name = String()
 
+    watch = List()
+    """ A list of files to monitor while this resource is applied
+
+    The file will be hashed before and after a resource is applied.
+    If the hash changes, then it will be like a policy has been applied
+    on that file.
+
+    For example::
+
+        resources.append:
+          - Execute:
+              name: buildout-foobar
+              command: buildout2.6
+              watch:
+                - /var/local/sites/foobar/apache/apache.cfg
+
+          - Service:
+              name: apache2
+              policy:
+                restart:
+                  when: watched
+                  on: File[/var/local/sites/foobar/apache/apache.cfg]
+    """
+
     def __init__(self, **kwargs):
         """ Pass a dictionary of arguments and they will be updated from the
         supplied data. """
+        setattr(self, "name", kwargs["name"])
         for key, value in kwargs.items():
             if not key in self.__args__:
                 raise AttributeError("Cannot assign argument '%s' to resource %s" % (key, self))
@@ -228,8 +253,19 @@ class ResourceBundle(ordereddict.OrderedDict):
     def _create(self, typename, instance):
         if not isinstance(instance, dict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
+
         kls = ResourceType.resources[typename](**dict(self.key_remap(instance)))
         self[kls.id] = kls
+
+        # Create implicit File[] nodes for any watched files
+        for watched in instance.get("watch", []):
+            w = self._create("File", {
+                "name": watched,
+                "policy": "watched",
+                })
+            w._original_hash = w.hash()
+
+        return kls
 
     def bind(self):
         """ Bind all the resources so they can observe each others for policy

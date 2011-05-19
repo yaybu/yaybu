@@ -42,6 +42,7 @@ class TestResource(unittest.TestCase):
 
     def test_init(self):
         h = H(**{
+            'name': 'test',
             'foo': u'42',
             'bar': u'20100501',
             })
@@ -52,10 +53,10 @@ class TestResource(unittest.TestCase):
 class TestArgument(unittest.TestCase):
 
     def test_storage(self):
-        f1 = F()
-        f2 = F()
-        g1 = G()
-        g2 = G()
+        f1 = F(name="test")
+        f2 = F(name="test")
+        g1 = G(name="test")
+        g2 = G(name="test")
         f1.foo = "a"
         f1.bar = "b"
         f2.foo = "c"
@@ -74,26 +75,26 @@ class TestArgument(unittest.TestCase):
         self.assertEqual(g2.bar, "h")
 
     def test_default(self):
-        f = F()
+        f = F(name="test")
         self.assertEqual(f.foo, "42")
 
     def test_integer(self):
-        h = H()
+        h = H(name="test")
         h.foo = u"42"
         self.assertEqual(h.foo, 42)
 
     def test_datetime(self):
-        h = H()
+        h = H(name="test")
         h.bar = "20100105"
         self.assertEqual(h.bar, datetime.datetime(2010, 1, 5))
 
     def test_package_file(self):
-        h = H()
+        h = H(name="test")
         h.baz = "package://yaybu.core/tests/example.txt"
         self.assertEqual(h.baz, os.path.join(os.path.dirname(__file__), "example.txt"))
 
     def test_recipe_file(self):
-        h = H()
+        h = H(name="test")
         h.baz = "recipe://yaybu.distro/interfaces.j2"
         self.assertEqual(h.baz,
                          os.path.join(
@@ -113,7 +114,7 @@ class TestArgumentAssertion(unittest.TestCase):
             signature = [policy.Present("bar")]
         class R(policy.Policy):
             signature = [policy.Present("baz")]
-        f = F()
+        f = F(name="test")
         self.assertEqual(P.conforms(f), True)
         self.assertEqual(Q.conforms(f), False)
         self.assertRaises(AttributeError, R.conforms, f)
@@ -125,7 +126,7 @@ class TestArgumentAssertion(unittest.TestCase):
             signature = [policy.Absent("bar")]
         class R(policy.Policy):
             signature = [policy.Absent("baz")]
-        f = F()
+        f = F(name="test")
         self.assertEqual(P.conforms(f), False)
         self.assertEqual(Q.conforms(f), True)
         self.assertRaises(AttributeError, R.conforms, f)
@@ -135,7 +136,7 @@ class TestArgumentAssertion(unittest.TestCase):
             signature = [policy.Present("foo"),
                          policy.Absent("bar"),
                          ]
-        f = F()
+        f = F(name="test")
         self.assertEqual(P.conforms(f), True)
 
     def test_xor(self):
@@ -144,7 +145,7 @@ class TestArgumentAssertion(unittest.TestCase):
                               policy.Present("foo"),
                               policy.Present("bar"),
                          )]
-        g = G()
+        g = G(name="test")
         self.assertEqual(P.conforms(g), False)
         g.foo = "yes"
         self.assertEqual(P.conforms(g), True)

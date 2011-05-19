@@ -16,6 +16,8 @@
 both the metadata associated with the file (for example owner and permission)
 and the contents of the files themselves. """
 
+import os, hashlib
+
 from yaybu.core.resource import Resource
 from yaybu.core.policy import (Policy,
                                Absent,
@@ -96,6 +98,12 @@ class File(Resource):
     template_args = Dict(default={})
     """The arguments passed to the template."""
 
+    def hash(self):
+        if not os.path.exists(self.name):
+            return ""
+        return hashlib.sha1(open(self.name).read()).hexdigest()
+
+
 class FileApplyPolicy(Policy):
 
     """ Create a file and populate it's contents if required.
@@ -132,4 +140,17 @@ class FileRemovePolicy(Policy):
                  Absent("template"),
                  Absent("template_args"),
                  )
+
+
+class FileWatchedPolicy(Policy):
+
+    """ Watches a file to see if it changes when a resource a file.
+
+    This policy is used internally and shouldn't be used directly.
+    """
+
+    resource = File
+    name = "watched"
+    default = False
+    signature = FileRemovePolicy.signature
 

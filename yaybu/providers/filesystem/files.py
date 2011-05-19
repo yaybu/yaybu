@@ -249,3 +249,15 @@ class RemoveFile(provider.Provider):
             changed = False
         return changed
 
+
+class WatchFile(provider.Provider):
+    policies = (resources.file.FileWatchedPolicy, )
+
+    @classmethod
+    def isvalid(self, *args, **kwargs):
+        return super(WatchFile, self).isvalid(*args, **kwargs)
+
+    def apply(self, context):
+        """ Watched files don't have any policy applied to them """
+        return self.resource.hash() != self.resource._original_hash
+
