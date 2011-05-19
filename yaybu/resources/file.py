@@ -133,3 +133,16 @@ class FileRemovePolicy(Policy):
                  Absent("template_args"),
                  )
 
+
+class FileWatchedPolicy(Policy):
+
+    """ Watches a file to see if it changes when a resource a file.
+
+    This policy is used internally and shouldn't be used directly.
+    """
+
+    resource = File
+    name = "watched"
+    default = False
+    signature = FileRemovePolicy.signature
+
