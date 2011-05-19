@@ -102,6 +102,30 @@ class Resource(object):
 
     name = String()
 
+    watch = List()
+    """ A list of files to monitor while this resource is applied
+
+    The file will be hashed before and after a resource is applied.
+    If the hash changes, then it will be like a policy has been applied
+    on that file.
+
+    For example::
+
+        resources.append:
+          - Execute:
+              name: buildout-foobar
+              command: buildout2.6
+              watch:
+                - /var/local/sites/foobar/apache/apache.cfg
+
+          - Service:
+              name: apache2
+              policy:
+                restart:
+                  when: changed
+                  on: File[/var/local/sites/foobar/apache/apache.cfg]
+    """
+
     def __init__(self, **kwargs):
         """ Pass a dictionary of arguments and they will be updated from the
         supplied data. """
