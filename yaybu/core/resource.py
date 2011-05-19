@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
+import sys, os, hashlib
 from argument import Argument, List, PolicyArgument, String
 import policy
 import error
@@ -129,6 +129,7 @@ class Resource(object):
     def __init__(self, **kwargs):
         """ Pass a dictionary of arguments and they will be updated from the
         supplied data. """
+        setattr(self, "name", kwargs["name"])
         for key, value in kwargs.items():
             if not key in self.__args__:
                 raise AttributeError("Cannot assign argument '%s' to resource %s" % (key, self))
@@ -166,6 +167,8 @@ class Resource(object):
     def apply(self, context, yay=None, policy=None):
         """ Apply the provider for the selected policy, and then fire any
         events that are being observed. """
+        self.watch_preapply()
+
         if yay is None:
             yay = {}
         if policy is None:
@@ -178,6 +181,9 @@ class Resource(object):
         changed = prov.apply(context)
         if changed:
             self.fire_event(pol.name)
+
+        self.watch_postapply()
+
         return changed
 
     def fire_event(self, name):
@@ -196,6 +202,29 @@ class Resource(object):
             for trigger in self.policy.triggers:
                 bound.append(trigger.bind(resources, self))
         return bound
+
+    def hash(self, resource):
+        if not os.path.exists(resource.name):
+            return ""
+        return hashlib.sha1(open(resource.name).read()).hexdigest()
+
+    def watch_preapply(self):
+        for resource in self.watched_resources:
+            self.watched_resources[resource] = self.hash(resource)
+
+    def watch_postapply(self):
+        for resource in self.watched_resources:
+            if self.watched_resources[resource] != self.hash(resource):
+                resource.fire_event("watched")
+
+    def watch_bind(self, resources):
+        """ Bind this resource to the resources it is watching. """
+        self.watched_resources = {}
+        if not self.watch:
+            return
+        for watched in self.watch:
+            r = resources["File[%s]" % watched]
+            self.watched_resources[r] = ""
 
     def get_default_policy(self):
         """ Return an instantiated policy for this resource. """
@@ -273,6 +302,7 @@ class ResourceBundle(ordereddict.OrderedDict):
                 j = self.values().index(bound)
                 if j > i:
                     raise error.BindingError("Attempt to bind forwards on %r" % resource)
+            resource.watch_bind(self)
 
     def apply(self, ctx, config):
         """ Apply the resources to the system, using the provided context and
