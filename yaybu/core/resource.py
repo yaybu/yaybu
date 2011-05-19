@@ -122,7 +122,7 @@ class Resource(object):
               name: apache2
               policy:
                 restart:
-                  when: changed
+                  when: watched
                   on: File[/var/local/sites/foobar/apache/apache.cfg]
     """
 
@@ -252,6 +252,14 @@ class ResourceBundle(ordereddict.OrderedDict):
     def _create(self, typename, instance):
         if not isinstance(instance, dict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
+
+        # Create implicit File[] nodes for any watched files
+        for watched in instances.get("watch", []):
+           self._create("File", {
+               "name": watched,
+               "policy": "watched",
+               })
+
         kls = ResourceType.resources[typename](**dict(self.key_remap(instance)))
         self[kls.id] = kls
 
