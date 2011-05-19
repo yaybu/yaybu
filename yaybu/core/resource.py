@@ -254,7 +254,7 @@ class ResourceBundle(ordereddict.OrderedDict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
 
         # Create implicit File[] nodes for any watched files
-        for watched in instances.get("watch", []):
+        for watched in instance.get("watch", []):
            self._create("File", {
                "name": watched,
                "policy": "watched",
