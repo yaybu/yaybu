@@ -57,6 +57,38 @@ class ShellCommand(change.Change):
             if self.gid != os.getegid():
                 os.setegid(self.gid)
 
+    def communicate(self, p, stdout_fn=lambda x: None, stderr_fn=lambda x: None):
+        if p.stdin:
+            p.stdin.flush()
+            p.stdin.close()
+
+        callbacks = {}
+
+        if self.stdout:
+            callbacks[self.stdout] = stdout_fn
+
+        if self.stderr:
+            callbacks[self.stderr] = stderr_fn
+
+        while len(callbacks.keys()):
+            try:
+                rlist, wlist, xlist = select.select(r.keys(), [], [])
+            except select.error, e:
+                if e.args[0] == errno.EINTR:
+                    continue
+                raise
+
+            for r in rlist:
+                data = os.read(r.fileno(), 1024)
+                if data == "":
+                    r.close()
+                    del callbacks[r]
+                if self.universal_newlines and hasattr(file, 'newlines'):
+                    data = self._translate_newlines(data)
+                callbacks[r](data)
+
+        self.wait()
+
     def apply(self, renderer):
         command = self.command[:]
 
