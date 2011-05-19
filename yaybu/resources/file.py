@@ -96,6 +96,12 @@ class File(Resource):
     template_args = Dict(default={})
     """The arguments passed to the template."""
 
+    def hash(self):
+        if not os.path.exists(self.name):
+            return ""
+        return hashlib.sha1(open(self.name).read()).hexdigest()
+
+
 class FileApplyPolicy(Policy):
 
     """ Create a file and populate it's contents if required.

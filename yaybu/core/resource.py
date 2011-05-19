@@ -182,8 +182,6 @@ class Resource(object):
         if changed:
             self.fire_event(pol.name)
 
-        self.watch_postapply()
-
         return changed
 
     def fire_event(self, name):
@@ -203,19 +201,9 @@ class Resource(object):
                 bound.append(trigger.bind(resources, self))
         return bound
 
-    def hash(self, resource):
-        if not os.path.exists(resource.name):
-            return ""
-        return hashlib.sha1(open(resource.name).read()).hexdigest()
-
     def watch_preapply(self):
         for resource in self.watched_resources:
-            self.watched_resources[resource] = self.hash(resource)
-
-    def watch_postapply(self):
-        for resource in self.watched_resources:
-            if self.watched_resources[resource] != self.hash(resource):
-                resource.fire_event("watched")
+            resource._original_hash = resource.hash()
 
     def watch_bind(self, resources):
         """ Bind this resource to the resources it is watching. """

@@ -259,5 +259,5 @@ class WatchFile(provider.Provider):
 
     def apply(self, context):
         """ Watched files don't have any policy applied to them """
-        return False
+        return self.resource.hash() != self.resource._original_hash
 
