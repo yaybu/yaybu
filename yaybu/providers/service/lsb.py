@@ -38,7 +38,7 @@ class _LsbServiceMixin(utils._ServiceMixin):
         for x in (2, 3, 4, 5):
             yield "/etc/rc%s.d/S%s%s" % (x, self.resource.priority, self.resource.name)
         for x in (0, 1, 6):
-            yield "/etc/rc%s.d/K%s%s" % (x, 100-self.resouce.priority, self.resource.name)
+            yield "/etc/rc%s.d/K%s%s" % (x, 100-self.resource.priority, self.resource.name)
 
     def _disabled_links(self):
         for x in (0, 1, 2, 3, 4, 5, 6):
