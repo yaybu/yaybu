@@ -19,6 +19,40 @@ import change
 import error
 import os, getpass, pwd, grp, select
 
+
+class Handle(object):
+
+    def __init__(self, handle, callback=None):
+        self.handle = handle
+        self.callback = callback
+        self._output = []
+
+    def fileno(self):
+        return self.handle.fileno()
+
+    def read(self):
+        data = os.read(self.fileno(), 1024)
+        if data == "":
+            self.handle.close()
+            return False
+
+        self._output.append(data)
+
+        if self.callback:
+            for l in data.splitlines():
+                self.callback(l + "\r")
+
+        return True
+
+    def isready(self):
+        return bool(self.handle)
+
+    @property
+    def output(self):
+        out = ''.join(self._output)
+        return out
+
+
 class ShellCommand(change.Change):
 
     """ Execute and log a change """
@@ -57,54 +91,35 @@ class ShellCommand(change.Change):
             if self.gid != os.getegid():
                 os.setegid(self.gid)
 
-    def communicate(self, p, stdout_fn=lambda x: None, stderr_fn=lambda x: None):
+    def communicate(self, p, stdout_fn=None, stderr_fn=None):
         if p.stdin:
             p.stdin.flush()
             p.stdin.close()
 
-        callbacks = {}
-        out = {}
+        stdout = Handle(p.stdout, stdout_fn)
+        stderr = Handle(p.stderr, stderr_fn)
 
-        if p.stdout:
-            callbacks[p.stdout] = stdout_fn
-            out[p.stdout] = []
+        # Initial readlist is any handle that is valid
+        readlist = [h for h in (stdout, stderr) if h.isready()]
 
-        if p.stderr:
-            callbacks[p.stderr] = stderr_fn
-            out[p.stderr] = []
-
-        while len(callbacks.keys()):
+        while readlist:
             try:
-                rlist, wlist, xlist = select.select(callbacks.keys(), [], [])
+                rlist, wlist, xlist = select.select(readlist, [], [])
             except select.error, e:
                 if e.args[0] == errno.EINTR:
                     continue
                 raise
 
+            # Read from all handles that select told us can be read from
+            # If they return false then we are at the end of the stream
+            # and stop reading from them
             for r in rlist:
-                data = os.read(r.fileno(), 1024)
-                if data == "":
-                    del callbacks[r]
-                    r.close()
-                else:
-                    out[r].append(data)
-
-                    for l in data.splitlines():
-                        callbacks[r](l + "\r")
+                if not r.read():
+                    readlist.remove(r)
 
         returncode = p.wait()
 
-        if p.stdout:
-            stdout = ''.join(out[p.stdout])
-        else:
-            stdout = ''
-
-        if p.stderr:
-            stderr = ''.join(out[p.stderr])
-        else:
-            stderr = ''
-
-        return returncode, stdout, stderr
+        return returncode, stdout.output, stderr.output
 
     def apply(self, renderer):
         command = self.command[:]
