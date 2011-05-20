@@ -38,7 +38,7 @@ class Service(Resource):
     This would normally match the name as it appears in /etc/init.d.
     """
 
-    priority = Integer()
+    priority = Integer(default=99)
     """ Priority of the service within the boot order.
 
     This attribute will have no effect when using a dependency or event based
