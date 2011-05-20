@@ -44,10 +44,10 @@ class _ServiceMixin(object):
         if returncode != 0:
             raise error.CommandError("%s failed with return code %d" % (" ".join(action), returncode))
 
-    def ensure_enabled(self):
+    def ensure_enabled(self, context):
         pass
 
-    def ensure_disabled(self):
+    def ensure_disabled(self, context):
         pass
 
 
@@ -56,7 +56,7 @@ class _Start(object):
     policies = (resources.service.ServiceStartPolicy,)
 
     def apply(self, context):
-        changed = self.ensure_enabled()
+        changed = self.ensure_enabled(context)
 
         if self.status(context) == "running":
             return changed
@@ -71,7 +71,7 @@ class _Stop(object):
     policies = (resources.service.ServiceStopPolicy,)
 
     def apply(self, context):
-        changed = self.ensure_disabled()
+        changed = self.ensure_disabled(context)
 
         if self.status(context) == "not-running":
             return changed
@@ -86,7 +86,7 @@ class _Restart(object):
     policies = (resources.service.ServiceRestartPolicy,)
 
     def apply(self, context):
-        changed = self.ensure_enabled()
+        changed = self.ensure_enabled(context)
 
         if self.status(context) == "not-running":
             self.do(context, "start")
