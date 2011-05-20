@@ -17,7 +17,41 @@ import subprocess
 import StringIO
 import change
 import error
-import os, getpass, pwd, grp
+import os, getpass, pwd, grp, select
+
+
+class Handle(object):
+
+    def __init__(self, handle, callback=None):
+        self.handle = handle
+        self.callback = callback
+        self._output = []
+
+    def fileno(self):
+        return self.handle.fileno()
+
+    def read(self):
+        data = os.read(self.fileno(), 1024)
+        if data == "":
+            self.handle.close()
+            return False
+
+        self._output.append(data)
+
+        if self.callback:
+            for l in data.splitlines():
+                self.callback(l + "\r")
+
+        return True
+
+    def isready(self):
+        return bool(self.handle)
+
+    @property
+    def output(self):
+        out = ''.join(self._output)
+        return out
+
 
 class ShellCommand(change.Change):
 
@@ -57,11 +91,41 @@ class ShellCommand(change.Change):
             if self.gid != os.getegid():
                 os.setegid(self.gid)
 
+    def communicate(self, p, stdout_fn=None, stderr_fn=None):
+        if p.stdin:
+            p.stdin.flush()
+            p.stdin.close()
+
+        stdout = Handle(p.stdout, stdout_fn)
+        stderr = Handle(p.stderr, stderr_fn)
+
+        # Initial readlist is any handle that is valid
+        readlist = [h for h in (stdout, stderr) if h.isready()]
+
+        while readlist:
+            try:
+                rlist, wlist, xlist = select.select(readlist, [], [])
+            except select.error, e:
+                if e.args[0] == errno.EINTR:
+                    continue
+                raise
+
+            # Read from all handles that select told us can be read from
+            # If they return false then we are at the end of the stream
+            # and stop reading from them
+            for r in rlist:
+                if not r.read():
+                    readlist.remove(r)
+
+        returncode = p.wait()
+
+        return returncode, stdout.output, stderr.output
+
     def apply(self, renderer):
         command = self.command[:]
 
-        if not self.passthru:
-            renderer.command(command)
+        renderer.passthru = self.passthru
+        renderer.command(command)
 
         # Inherit parent environment
         if not self.env:
@@ -79,9 +143,8 @@ class ShellCommand(change.Change):
                                  env=env,
                                  preexec_fn=self.preexec,
                                  )
-            (self.stdout, self.stderr) = p.communicate(self.stdin)
-            self.returncode = p.returncode
-            renderer.output(p.returncode, self.stdout, self.stderr, self.passthru)
+            self.returncode, self.stdout, self.stderr = self.communicate(p, renderer.stdout, renderer.stderr)
+            renderer.output(p.returncode)
         except Exception, e:
             logging.error("Exception when running %r" % command)
             renderer.exception(e)
@@ -92,24 +155,23 @@ class ShellTextRenderer(change.TextRenderer):
     """ Render a ShellCommand on a textual changelog. """
 
     renderer_for = ShellCommand
+    passthru = False
 
     def command(self, command):
-        self.logger.notice(" ".join(command))
+        if not self.passthru:
+            self.logger.notice(u"{0}", u"$ " + u" ".join(command))
 
-    def render_output(self, cmd, name, data):
-        if data:
-            cmd("---- {0} follows ----", name)
-            for l in data.splitlines():
-                cmd("{0}", l)
-            cmd("---- {0} ends ----", name)
-
-    def output(self, returncode, stdout, stderr, passthru):
-        if self.verbose >= 1 and returncode != 0 and not passthru:
+    def output(self, returncode):
+        if self.verbose >= 1 and returncode != 0 and not self.passthru:
             self.logger.notice("returned {0}", returncode)
-        if self.verbose >= 2 and not passthru:
-            self.render_output(self.logger.info, "stdout", stdout)
+
+    def stdout(self, data):
+       if self.verbose >= 2 and not self.passthru:
+            self.logger.info(data)
+
+    def stderr(self, data):
         if self.verbose >= 1:
-            self.render_output(self.logger.info, "stderr", stderr)
+            self.logger.info(data)
 
     def exception(self, exception):
         self.logger.notice("Exception: %r" % exception)
@@ -126,8 +188,17 @@ class Shell(object):
 
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
+    
+    def _tounicode(self, l):
+        """ Ensure all elements of the list are unicode """
+        def uni(x):
+            if type(x) is type(u""):
+                return x
+            return unicode(x, "utf-8")
+        return map(uni, l)
 
     def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None):
+        command = self._tounicode(command)
         if self.simulate and not passthru:
             self.context.changelog.simlog_info(" ".join(command))
             return (0, "", "")
@@ -138,3 +209,4 @@ class Shell(object):
             self.context.changelog.notice("{0}", cmd.stderr)
             raise error.SystemError(cmd.returncode)
         return (cmd.returncode, cmd.stdout, cmd.stderr)
+
