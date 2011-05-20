@@ -159,7 +159,7 @@ class ShellTextRenderer(change.TextRenderer):
 
     def command(self, command):
         if not self.passthru:
-            self.logger.notice(u"{0}", "$ " + " ".join(command))
+            self.logger.notice(u"{0}", u"$ " + u" ".join(command))
 
     def output(self, returncode):
         if self.verbose >= 1 and returncode != 0 and not self.passthru:
@@ -188,8 +188,17 @@ class Shell(object):
 
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
+    
+    def _tounicode(self, l):
+        """ Ensure all elements of the list are unicode """
+        def uni(x):
+            if type(x) is type(u""):
+                return x
+            return unicode(x, "utf-8")
+        return map(uni, l)
 
     def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None):
+        command = self._tounicode(command)
         if self.simulate and not passthru:
             self.context.changelog.simlog_info(" ".join(command))
             return (0, "", "")
