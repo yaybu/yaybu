@@ -43,9 +43,7 @@ class TestPackageInstallation(TestCase):
             """
 
         self.check_apply(hello_install)
-        sleep(5)
         self.check_apply(hello_remove)
-        sleep(5)
         self.check_apply(hello_install)
 
 

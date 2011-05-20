@@ -87,24 +87,20 @@ class ShellCommand(change.Change):
                     del callbacks[r]
                     r.close()
                 else:
-                    out[r].append
-                    if p.universal_newlines and hasattr(file, 'newlines'):
-                        data = p._translate_newlines(data)
-                    callbacks[r](data)
+                    out[r].append(data)
+
+                    for l in data.splitlines():
+                        callbacks[r](l + "\r")
 
         returncode = p.wait()
 
         if p.stdout:
             stdout = ''.join(out[p.stdout])
-            if p.universal_newlines and hasattr(file, 'newlines'):
-                stdout = p._translate_newlines(stdout)
         else:
             stdout = ''
 
         if p.stderr:
             stderr = ''.join(out[p.stderr])
-            if p.universal_newlines and hasattr(file, 'newlines'):
-                stderr = p._translate_newlines(stderr)
         else:
             stderr = ''
 
@@ -114,6 +110,7 @@ class ShellCommand(change.Change):
         command = self.command[:]
 
         renderer.passthru = self.passthru
+        renderer.command(command)
 
         # Inherit parent environment
         if not self.env:
@@ -147,7 +144,7 @@ class ShellTextRenderer(change.TextRenderer):
 
     def command(self, command):
         if not self.passthru:
-            self.logger.notice("$ " + " ".join(command))
+            self.logger.notice(u"{0}", "$ " + " ".join(command))
 
     def output(self, returncode):
         if self.verbose >= 1 and returncode != 0 and not self.passthru:
@@ -155,13 +152,11 @@ class ShellTextRenderer(change.TextRenderer):
 
     def stdout(self, data):
        if self.verbose >= 2 and not self.passthru:
-           for l in data.splitlines():
-               self.logger.info(l)
+            self.logger.info(data)
 
     def stderr(self, data):
         if self.verbose >= 1:
-            for l in data.splitlines():
-                self.logger.info(l)
+            self.logger.info(data)
 
     def exception(self, exception):
         self.logger.notice("Exception: %r" % exception)
