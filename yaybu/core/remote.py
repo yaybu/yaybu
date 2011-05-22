@@ -14,6 +14,7 @@
 
 import subprocess
 import json
+import sys
 
 import yay
 
@@ -23,6 +24,7 @@ from yaybu.core.protocol.changelog import ChangeLogResource
 
 from yaybu.core.runner import Runner
 from yaybu.core.runcontext import RunContext
+from yaybu.core import error
 
 
 class RemoteRunner(Runner):
