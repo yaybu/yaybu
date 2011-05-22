@@ -1,0 +1,18 @@
+Changelog for yaybu
+===================
+
+0.1.2 (2011-05-22)
+------------------
+
+- Basic upstart, debian and 'simple' service providers
+- Catches yay.errors.Error
+- Add 'live logging' of shell steps (so you can see buildout progress)
+- Add ability to watch files that might be updated by other providerss
+- More tests
+- Test env deals with races from cow-shell automatically
+- Fix comment field of User provider
+- Fix group and user bit of File/Directory/etc
+- Resources are now referred to as Type[name] as otherwise Group and
+  User can very easily crash
+- Jinja use is now more tolerant of unicode dictionary keys
+- Observation state is now preserved on failure
