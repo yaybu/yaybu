@@ -93,7 +93,7 @@ class RunContext(object):
     def get_config(self):
         try:
             return yay.load_uri(self.configfile)
-        except yay.error.Error, e:
+        except yay.errors.Error, e:
             raise ParseError(e.get_string())
 
     def get_decrypted_file(self, filename):
