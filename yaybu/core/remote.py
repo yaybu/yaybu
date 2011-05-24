@@ -38,7 +38,7 @@ class RemoteRunner(Runner):
             host, port = opts.host.rsplit(":", 1)
             connect_args = [host, "-p", port]
         else:
-            connect_args = [host]
+            connect_args = [opts.host]
 
         command = ["ssh", "-A"] + connect_args + ["yaybu", "--remote"]
 
