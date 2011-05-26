@@ -52,10 +52,10 @@ class RemoteRunner(Runner):
             command.extend(list("-v" for x in range(opts.verbose)))
 
         if opts.resume:
-            command.extend("--resume")
+            command.append("--resume")
 
         if opts.no_resume:
-            command.execute("--no-resume")
+            command.append("--no-resume")
 
         command.append("-")
 
