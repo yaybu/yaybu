@@ -26,6 +26,9 @@ class _ServiceMixin(object):
         if not self.resource.pidfile:
             return "unknown"
 
+        if not os.path.exists(self.resource.pidfile):
+            return "not-running"
+
         pid = open(self.resource.pidfile).read().strip()
         try:
             pid = int(pid)
