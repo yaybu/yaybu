@@ -167,11 +167,11 @@ class ShellTextRenderer(change.TextRenderer):
 
     def stdout(self, data):
        if self.verbose >= 2 and not self.passthru:
-            self.logger.info(data)
+            self.logger.info("{0}", data)
 
     def stderr(self, data):
         if self.verbose >= 1:
-            self.logger.info(data)
+            self.logger.info("{0}", data)
 
     def exception(self, exception):
         self.logger.notice("Exception: %r" % exception)
