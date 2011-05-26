@@ -114,7 +114,7 @@ class Runner(object):
                 elif opts.no_resume:
                     os.unlink(event.EventState.save_file)
                 else:
-                    raise error.SavedEventsAndNoInstruction()
+                    raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
 
             config = ctx.get_config()
 
