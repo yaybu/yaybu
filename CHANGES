@@ -5,7 +5,8 @@ Changelog for yaybu
 ------------------
 
 - RemoteRunner fixes
-
+- Fix catching errors in remote
+- Fix passing --resume and --no-resume to remote
 
 0.1.2 (2011-05-22)
 ------------------
