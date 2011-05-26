@@ -6,6 +6,25 @@ from yaybu.core import error
 class TestEvents(TestCase):
 
     def test_recover(self):
+        self.check_apply("""
+            resources:
+              - Directory:
+                  name: /etc/wibble
+            """)
+
+        rv = self.apply("""
+            resources:
+              - Directory:
+                  name: /etc/wibble
+
+              - File:
+                  name: /frob/somedir/foo
+                  policy:
+                     apply:
+                         when: apply
+                         on: /etc/wibble
+            """)
+        self.assertEqual(rv, error.NothingChanged.returncode)
         rv = self.apply("""
             resources:
               - Directory:
