@@ -72,6 +72,8 @@ class RemoteRunner(Runner):
             sys.exit(p.wait())
 
         except error.Error, e:
+            print >>sys.stderr, "Error: %s" % str(e)
+
             p.kill()
             sys.exit(e.returncode)
 
