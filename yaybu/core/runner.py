@@ -132,7 +132,7 @@ class Runner(object):
             print >>sys.stderr, "Terminated due to execution error in processing"
             sys.exit(e.returncode)
         except error.Error, e:
-            ctx.changelog.notice("{0}", e)
+            ctx.changelog.write(str(e))
             print >>sys.stderr, "Terminated due to execution error in processing"
             sys.exit(e.returncode)
 
