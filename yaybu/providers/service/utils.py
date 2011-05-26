@@ -42,7 +42,7 @@ class _ServiceMixin(object):
         returncode, stdout, stderr = context.shell.execute(self.get_command(action), exceptions=False)
 
         if returncode != 0:
-            raise error.CommandError("%s failed with return code %d" % (" ".join(action), returncode))
+            raise error.CommandError("%s failed with return code %d" % (action, returncode))
 
     def ensure_enabled(self, context):
         pass
