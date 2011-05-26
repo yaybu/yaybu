@@ -87,21 +87,26 @@ class Runner(object):
 
     def run(self, opts, args):
         """ Run locally. """
+        if opts.user and getpass.getuser() != opts.user:
+            self.trampoline(opts.user)
+            return 0
+
+        if opts.debug:
+            opts.logfile = "-"
+            opts.verbose = 2
+        self.configure_logging(opts)
+
+        event.EventState.save_file = "/var/run/yaybu/events.saved"
+
+        save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
+        if not os.path.exists(save_parent):
+            os.mkdir(save_parent)
+
         try:
-            if opts.user and getpass.getuser() != opts.user:
-                self.trampoline(opts.user)
-                return 0
-
-            if opts.debug:
-                opts.logfile = "-"
-                opts.verbose = 2
-            self.configure_logging(opts)
-
-            event.EventState.save_file = "/var/run/yaybu/events.saved"
-
-            save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
-            if not os.path.exists(save_parent):
-                os.mkdir(save_parent)
+            if not opts.remote:
+                ctx = runcontext.RunContext(args[0], opts)
+            else:
+                ctx = runcontext.RemoteRunContext(args[0], opts)
 
             if os.path.exists(event.EventState.save_file):
                 if opts.resume:
@@ -111,11 +116,6 @@ class Runner(object):
                 else:
                     raise error.SavedEventsAndNoInstruction()
 
-            if not opts.remote:
-                ctx = runcontext.RunContext(args[0], opts)
-            else:
-                ctx = runcontext.RemoteRunContext(args[0], opts)
-
             config = ctx.get_config()
 
             self.resources = resource.ResourceBundle(config.get("resources", []))
@@ -124,9 +124,15 @@ class Runner(object):
                 # nothing changed
                 sys.exit(255)
             sys.exit(0)
-        except error.Error, e:
+
+        except error.ExecutionError, e:
             # this will have been reported by the context manager, so we wish to terminate
             # but not to raise it further. Other exceptions should be fully reported with
             # tracebacks etc automatically
             print >>sys.stderr, "Terminated due to execution error in processing"
             sys.exit(e.returncode)
+        except error.Error, e:
+            logging.notice("{0}", e)
+            print >>sys.stderr, "Terminated due to execution error in processing"
+            sys.exit(e.returncode)
+

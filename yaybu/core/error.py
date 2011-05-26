@@ -140,7 +140,7 @@ class PathComponentNotDirectory(ExecutionError):
     returncode = 147
     """ returns error code 147 to the invoking environment. """
 
-class SavedEventsAndNoInstruction(ExecutionError):
+class SavedEventsAndNoInstruction(Error):
     """ There is a saved events file and the user has not decided what to do
     about it. Invoke with --resume or --no-resume. """
     returncode = 148
