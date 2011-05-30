@@ -56,13 +56,14 @@ class RunContext(object):
 
         self.configfile = configfile
 
-        self.setup_shell()
+        self.setup_shell(opts.env_passthrough)
         self.setup_changelog()
 
-    def setup_shell(self):
+    def setup_shell(self, environment):
         self.shell = Shell(context=self,
             verbose=self.verbose,
-            simulate=self.simulate)
+            simulate=self.simulate
+            environment=environment)
 
     def setup_changelog(self):
         self.changelog = change.ChangeLog(self)

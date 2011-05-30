@@ -34,6 +34,7 @@ def main():
     parser.add_option("--expand-only", default=False, action="store_true", help="Set to parse config, expand it and exit")
     parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
     parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
+    parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
     opts, args = parser.parse_args()
 
     if len(args) != 1:

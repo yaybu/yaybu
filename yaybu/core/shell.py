@@ -57,20 +57,24 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, verbose=0, passthru=False, user=None, group=None):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, passthru=False, user=None, group=None):
         self.command = command
         self.shell = shell
         self.stdin = stdin
         self.cwd = cwd
         self.env = env
+        self.env_passthru = env_passthru
         self.verbose = verbose
         self.passthru = passthru
 
         self.user = user
         if user:
-            self.uid = pwd.getpwnam(user).pw_uid
+            u = pwd.getpwnam(user)
+            self.uid = u.pw_uid
+            self.homedir = u.pw_dir
         else:
             self.uid = None
+            self.homedir = pwd.getpwuid(self.getuid()).pw_dir
 
         self.group = group
         if group:
@@ -127,11 +131,18 @@ class ShellCommand(change.Change):
         renderer.passthru = self.passthru
         renderer.command(command)
 
-        # Inherit parent environment
-        if not self.env:
-            env = None
-        else:
-            env = os.environ.copy()
+        env = {
+            "HOME": self.homedir,
+            "LOGNAME": self.user,
+            "PATH": "/usr/bin:/usr/sbin",
+            "SHELL": "/usr/bin/sh",
+            }
+
+        if self.env_passthru:
+            for var in self.env_passthru:
+                env[var] = os.environ[var]
+
+        if self.env:
             env.update(self.env)
 
         try:
@@ -181,10 +192,14 @@ class Shell(object):
     """ This object wraps a shell in yet another shell. When the shell is
     switched into "simulate" mode it can just print what would be done. """
 
-    def __init__(self, context, verbose=0, simulate=False):
+    def __init__(self, context, verbose=0, simulate=False, environment=None):
         self.simulate = context.simulate
         self.verbose = context.verbose
         self.context = context
+
+        self.environment = ["SSH_AUTH_SOCK"]
+        if environment:
+            self.environment.extend(environment)
 
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
@@ -202,7 +217,7 @@ class Shell(object):
         if self.simulate and not passthru:
             self.context.changelog.simlog_info(" ".join(command))
             return (0, "", "")
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.verbose, passthru, user, group)
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             self.context.changelog.info("{0}", cmd.stdout)
