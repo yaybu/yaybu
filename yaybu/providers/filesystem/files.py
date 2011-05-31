@@ -97,6 +97,11 @@ class AttributeChanger(change.Change):
 
                 self.changed = True
 
+
+class AttributeChangeRenderer(change.TextRenderer):
+    renderer_for = AttributeChanger
+
+
 class FileContentChanger(change.Change):
 
     """ Apply a content change to a file in a managed way. Simulation mode is
@@ -120,10 +125,8 @@ class FileContentChanger(change.Change):
         else:
             st = os.stat(self.filename)
             if st.st_size != 0:
-                if self.context.simulate:
-                    self.renderer.simulation_info("Emptying contents of file {0!r}" % self.filename)
-                else:
-                    self.renderer.empty_file(self.filename)
+                self.renderer.empty_file(self.filename)
+                if not self.context.simulate:
                     open(self.filename, "w").close()
                 self.changed = True
 
@@ -131,23 +134,15 @@ class FileContentChanger(change.Change):
         """ Change the content of an existing file """
         self.current = open(self.filename).read()
         if self.current != self.contents:
-            if self.context.simulate:
-                self.renderer.simulation_info("Overwriting new file '%s':" % self.filename)
-                if not binary_buffers(self.contents):
-                    for l in self.contents.splitlines():
-                        self.renderer.simulation_info("    %s" % l)
-            else:
+            self.renderer.changed_file(self.filename, self.current, self.contents)
+            if not self.context.simulate:
                 open(self.filename, "w").write(self.contents)
             self.changed = True
 
     def write_new_file(self):
         """ Write contents to a new file. """
-        if self.context.simulate:
-            self.renderer.simulation_info("Writing new file '%s':" % self.filename)
-            if not binary_buffers(self.contents):
-                for l in self.contents.splitlines():
-                    self.renderer.simulation_info("    %s" % l)
-        else:
+        self.renderer.new_file(self.filename, self.contents)
+        if not self.context.simulate:
             open(self.filename, "w").write(self.contents)
         self.changed = True
 
@@ -167,19 +162,29 @@ class FileContentChanger(change.Change):
         else:
             self.write_file()
 
+
 class FileChangeTextRenderer(change.TextRenderer):
     renderer_for = FileContentChanger
 
     def empty_file(self, filename):
         self.logger.notice("Emptied file {0!r}", filename)
 
+    def new_file(self, filename, contents):
+        self.logger.notice("Writting new file '%s'" % filename)
+        self.diff("", contents)
+
     def changed_file(self, filename, previous, replacement):
         self.logger.notice("Changed file {0!r}", filename)
-        if replacement is not None:
-            if not binary_buffers(previous, replacement):
-                diff = "".join(difflib.context_diff(previous.splitlines(1), replacement.splitlines(1)))
-                for l in diff.splitlines():
-                    self.logger.info("    {0}", l)
+        self.diff(previous, replacement)
+
+    def diff(self, previous, replacement):
+        if not binary_buffers(previous, replacement):
+            diff = "".join(difflib.unified_diff(previous.splitlines(1), replacement.splitlines(1)))
+            for l in diff.splitlines():
+                self.logger.info("    {0}", l)
+        else:
+            self.logger.notice("Binary contents; not showing delta")
+
 
 class File(provider.Provider):
 

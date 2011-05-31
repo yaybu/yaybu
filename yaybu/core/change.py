@@ -123,18 +123,6 @@ class RendererMethodProxy:
     def __call__(self, *args, **kwargs):
         self.multi.delegate(self.name, args, kwargs)
 
-class MultiRenderer:
-
-    def __init__(self, *renderers):
-        self.renderers = renderers
-
-    def __getattr__(self, name):
-        return RendererMethodProxy(self, name)
-
-    def delegate(self, name, args, kwargs):
-        for renderer in self.renderers:
-            getattr(renderer, name)(*args, **kwargs)
-
 class ChangeLog:
 
     """ Orchestrate writing output to a changelog. """
@@ -158,10 +146,7 @@ class ChangeLog:
         """ Execute the change, passing it the appropriate renderer to use. """
         renderers = []
         text_class = ChangeRendererType.renderers.get(("text", change.__class__), None)
-        if text_class:
-            renderers.append(text_class(self, self.verbose))
-        multi = MultiRenderer(*renderers)
-        return change.apply(multi)
+        return change.apply(text_class(self, self.verbose))
 
     def simlog_notice(self, msg):
         simlog.notice(msg)

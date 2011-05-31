@@ -68,6 +68,18 @@ class TestFileApply(TestCase):
                     """)
         self.failUnlessExists("/etc/templated")
 
+    def test_modify_file(self):
+        open(self.enpathinate("/etc/test_modify_file"), "w").write("foo\nbar\nbaz")
+        self.check_apply("""
+            resources:
+                - File:
+                    name: /etc/test_modify_file
+                    template: package://yaybutest.providers.file/template1.j2
+                    template_args:
+                        foo: this is a modified file
+                        bar: 37
+            """)
+
     def test_remove_file(self):
         self.check_apply("""
             resources:
