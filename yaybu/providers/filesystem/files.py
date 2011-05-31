@@ -45,7 +45,7 @@ def binary_buffers(*buffers):
         check = lambda buff: ms.buffer(buff).endswith("text")
 
     for buff in buffers:
-        if not check(buff):
+        if buff and not check(buff):
             return True
     return False
 
