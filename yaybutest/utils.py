@@ -54,7 +54,17 @@ class TestCase(testtools.TestCase):
 
     def yaybu(self, *args):
         filespath = os.path.join(self.chroot_path, "tmp", "files")
-        return self.call(["yaybu", "-d", "--ypath", filespath] + list(args))
+        env = [
+            "--env-passthrough", "COWDANCER_ILISTFILE",
+            "--env-passthrough", "FAKECHROOT",
+            "--env-passthrough", "FAKECHROOT_VERSION",
+            "--env-passthrough", "FAKECHROOT_BASE",
+            "--env-passthrough", "FAKED_MODE",
+            "--env-passthrough", "FAKEROOTKEY",
+            "--env-passthrough", "LD_PRELOAD",
+            "--env-passthrough", "LD_LIBRARY_PATH",
+            ]
+        return self.call(["yaybu"] + env + ["-d", "--ypath", filespath] + list(args))
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """

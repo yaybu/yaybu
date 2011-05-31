@@ -62,7 +62,7 @@ class RunContext(object):
     def setup_shell(self, environment):
         self.shell = Shell(context=self,
             verbose=self.verbose,
-            simulate=self.simulate
+            simulate=self.simulate,
             environment=environment)
 
     def setup_changelog(self):

@@ -76,24 +76,24 @@ class AttributeChanger(change.Change):
         if self.user is not None:
             owner = pwd.getpwnam(self.user)
             if owner.pw_uid != uid:
-                self.context.shell.execute(["chown", self.user, self.filename])
+                self.context.shell.execute(["/bin/chown", self.user, self.filename])
                 self.changed = True
         if self.group is not None:
             group = grp.getgrnam(self.group)
             if group.gr_gid != gid:
-                self.context.shell.execute(["chgrp", self.group, self.filename])
+                self.context.shell.execute(["/bin/chgrp", self.group, self.filename])
                 self.changed = True
         if self.mode is not None:
             if mode != self.mode:
-                self.context.shell.execute(["chmod", "%o" % self.mode, self.filename])
+                self.context.shell.execute(["/bin/chmod", "%o" % self.mode, self.filename])
 
                 # Clear the user and group bits
                 # We don't need to set them as chmod will *set* this bits with an octal
                 # but won't clear them without a symbolic mode
                 if mode & stat.S_ISGID and not self.mode & stat.S_ISGID:
-                    self.context.shell.execute(["chmod", "g-s", self.filename])
+                    self.context.shell.execute(["/bin/chmod", "g-s", self.filename])
                 if mode & stat.S_ISUID and not self.mode & stat.S_ISUID:
-                    self.context.shell.execute(["chmod", "u-s", self.filename])
+                    self.context.shell.execute(["/bin/chmod", "u-s", self.filename])
 
                 self.changed = True
 
@@ -242,7 +242,7 @@ class RemoveFile(provider.Provider):
         if os.path.exists(self.resource.name):
             if not os.path.isfile(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a file" % (self, self.resource.name))
-            context.shell.execute(["rm", self.resource.name])
+            context.shell.execute(["/bin/rm", self.resource.name])
             changed = True
         else:
             context.changelog.info("File %s missing already so not removed" % self.resource.name)

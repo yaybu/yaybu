@@ -83,16 +83,16 @@ class Link(provider.Provider):
 
         if isalink:
             if linkto != to:
-                context.shell.execute(["rm", name])
+                context.shell.execute(["/bin/rm", name])
                 isalink = False
                 changed = True
 
         if not isalink:
             if os.path.exists(name):
-                context.shell.execute(["rm", "-rf", name])
+                context.shell.execute(["/bin/rm", "-rf", name])
                 changed = True
             else:
-                context.shell.execute(["ln", "-s", self.resource.to, name])
+                context.shell.execute(["/bin/ln", "-s", self.resource.to, name])
                 changed = True
         try:
             linkto = os.readlink(name)
@@ -107,11 +107,11 @@ class Link(provider.Provider):
             uid, gid, mode = self._stat()
 
         if owner is not None and owner != uid:
-            context.execute(["chown", "-h", self.resource.owner, name])
+            context.execute(["/bin/chown", "-h", self.resource.owner, name])
             changed = True
 
         if group is not None and group != gid:
-            context.execute(["chgrp", "-h", self.resource.group, name])
+            context.execute(["/bin/chgrp", "-h", self.resource.group, name])
             changed = True
 
         return changed
@@ -128,7 +128,7 @@ class RemoveLink(provider.Provider):
         if os.path.exists(self.resource.name):
             if not os.path.islink(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
-            context.shell.execute(["rm", self.resource.name])
+            context.shell.execute(["/bin/rm", self.resource.name])
             changed = True
         else:
             shell.changelog.info("File %s missing already so not removed" % self.resource.name)

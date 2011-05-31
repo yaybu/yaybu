@@ -74,7 +74,8 @@ class ShellCommand(change.Change):
             self.homedir = u.pw_dir
         else:
             self.uid = None
-            self.homedir = pwd.getpwuid(self.getuid()).pw_dir
+            self.homedir = pwd.getpwuid(os.getuid()).pw_dir
+            self.user = pwd.getpwuid(os.getuid()).pw_name
 
         self.group = group
         if group:
@@ -135,11 +136,12 @@ class ShellCommand(change.Change):
             "HOME": self.homedir,
             "LOGNAME": self.user,
             "PATH": "/usr/bin:/usr/sbin",
-            "SHELL": "/usr/bin/sh",
+            "SHELL": "/bin/sh",
             }
 
         if self.env_passthru:
-            for var in self.env_passthru:
+            #for var in self.env_passthru:
+            for var in os.environ.keys():
                 env[var] = os.environ[var]
 
         if self.env:

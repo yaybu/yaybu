@@ -52,7 +52,7 @@ class Directory(provider.Provider):
                               self.resource.group,
                               self.resource.mode)
         if not os.path.exists(self.resource.name):
-            command = ["mkdir"]
+            command = ["/bin/mkdir"]
             if self.resource.parents:
                 command.append("-p")
             command.append(self.resource.name.encode("utf-8"))
@@ -76,7 +76,7 @@ class RemoveDirectory(provider.Provider):
         if os.path.exists(self.resource.name) and not os.path.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if os.path.exists(self.resource.name):
-            context.shell.execute(["rmdir", self.resource.name])
+            context.shell.execute(["/bin/rmdir", self.resource.name])
             changed = True
         else:
             changed = False
@@ -94,7 +94,7 @@ class RemoveDirectoryRecursive(provider.Provider):
         if os.path.exists(self.resource.name) and not os.path.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if os.path.exists(self.resource.name):
-            context.shell.execute(["rm", "-rf", self.resource.name])
+            context.shell.execute(["/bin/rm", "-rf", self.resource.name])
             changed = True
         else:
             changed = False
