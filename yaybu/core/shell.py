@@ -66,6 +66,7 @@ class ShellCommand(change.Change):
         self.env_passthru = env_passthru
         self.verbose = verbose
         self.passthru = passthru
+        self._generated_env = {}
 
         self.user = user
         if user:
@@ -95,6 +96,9 @@ class ShellCommand(change.Change):
                 os.setgid(self.gid)
             if self.gid != os.getegid():
                 os.setegid(self.gid)
+
+        os.environ.clear()
+        os.environ.update(self._generated_env)
 
     def communicate(self, p, stdout_fn=None, stderr_fn=None):
         if p.stdin:
@@ -140,12 +144,14 @@ class ShellCommand(change.Change):
             }
 
         if self.env_passthru:
-            #for var in self.env_passthru:
-            for var in os.environ.keys():
-                env[var] = os.environ[var]
+            for var in self.env_passthru:
+                if var in os.environ:
+                    env[var] = os.environ[var]
 
         if self.env:
             env.update(self.env)
+
+        self._generated_env = env
 
         try:
             p = subprocess.Popen(command,
@@ -153,7 +159,7 @@ class ShellCommand(change.Change):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
                                  cwd=self.cwd,
-                                 env=env,
+                                 env=None,
                                  preexec_fn=self.preexec,
                                  )
             self.returncode, self.stdout, self.stderr = self.communicate(p, renderer.stdout, renderer.stderr)
