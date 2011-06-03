@@ -139,7 +139,7 @@ class ShellCommand(change.Change):
         env = {
             "HOME": self.homedir,
             "LOGNAME": self.user,
-            "PATH": "/usr/bin:/usr/sbin",
+            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
             "SHELL": "/bin/sh",
             }
 

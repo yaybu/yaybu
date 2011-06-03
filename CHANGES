@@ -4,7 +4,13 @@ Changelog for yaybu
 0.1.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- More sensible default PATH
+- Don't consider empty files to be binary
+- Simplify logging, and fix logging of diffs
+- Set environment from preexec function
+- Lock down environment - don't leak environment from user
+- Be more forgiving of mising PID files (Service provider)
+- Better error handling in remote mode
 
 
 0.1.3 (2011-05-26)
