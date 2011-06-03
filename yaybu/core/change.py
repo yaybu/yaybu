@@ -86,6 +86,7 @@ class ResourceChange(object):
             leftover = total_minuses % 2
         else:
             minuses = 4
+            leftover = 0
         self.changelog.write("/%s %r %s" % ("-"*minuses,
                                             self.resource,
                                             "-"*(minuses + leftover)))

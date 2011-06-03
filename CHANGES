@@ -4,6 +4,7 @@ Changelog for yaybu
 0.1.4 (unreleased)
 ------------------
 
+- Fix logging issue for long resource ids
 - More sensible default PATH
 - Don't consider empty files to be binary
 - Simplify logging, and fix logging of diffs
