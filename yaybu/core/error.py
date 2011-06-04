@@ -146,6 +146,12 @@ class SavedEventsAndNoInstruction(Error):
     returncode = 148
     """ returns error code 148 to the invoking environment. """
 
+class MissingAsset(ExecutionError):
+    """ An asset referenced by a resource could not be found on the Yaybu
+    search path. """
+    return code = 149
+    """ returns error code 149 to the invoking environment. """
+
 class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our
     tests. This exception is never really raised, but it's useful to keep the

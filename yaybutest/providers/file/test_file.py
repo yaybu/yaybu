@@ -147,6 +147,16 @@ class TestFileApply(TestCase):
                     static: package://yaybutest.providers.file/test_carriage_returns2.j2
             """)
 
+    def test_missing(self):
+        """ Test trying to use a file that isn't in the yaybu path """
+        rv = self.apply("""
+            resources:
+                - File:
+                    name: /etc/foo
+                    static: this-doesnt-exist
+            """)
+        self.failUnlessEqual(rv, error.MissingAsset.returncode)
+
 
 class TestFileRemove(TestCase):
 

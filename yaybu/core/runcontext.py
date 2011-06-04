@@ -19,7 +19,7 @@ import subprocess
 
 import yay
 
-from yaybu.core.error import ParseError
+from yaybu.core.error import ParseError, MissingAsset
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.core.shell import Shell
 from yaybu.core import change
@@ -77,7 +77,7 @@ class RunContext(object):
             if os.path.exists(candidate):
                 return candidate
             logger.debug("%r does not exist" % candidate)
-        raise ValueError("Cannot locate file %r" % filename)
+        raise MissingAsset("Cannot locate file %r" % filename)
 
     def locate_file(self, filename):
         """ Locates a file by referring to the defined yaybu path. If the
@@ -129,8 +129,8 @@ class RemoteRunContext(RunContext):
         self.connection.request("GET", "/files/" + filename)
         rsp = self.connection.getresponse()
 
-        #if rsp.status == 404:
-        #    raise NotFoundError
+        if rsp.status == 404:
+            raise MissingAsset("Cannot fetch %r" % filename)
 
         return rsp
 
