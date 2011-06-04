@@ -149,7 +149,7 @@ class SavedEventsAndNoInstruction(Error):
 class MissingAsset(ExecutionError):
     """ An asset referenced by a resource could not be found on the Yaybu
     search path. """
-    return code = 149
+    returncode = 149
     """ returns error code 149 to the invoking environment. """
 
 class NothingChanged(ExecutionError):
