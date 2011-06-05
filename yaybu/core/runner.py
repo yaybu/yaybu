@@ -81,10 +81,6 @@ class Runner(object):
 
         os.execvp(command[0], command)
 
-    def resume(self):
-        pass
-
-
     def run(self, opts, args):
         """ Run locally. """
         if opts.user and getpass.getuser() != opts.user:
@@ -110,7 +106,7 @@ class Runner(object):
 
             if os.path.exists(event.EventState.save_file):
                 if opts.resume:
-                    self.resume()
+                    event.state.loaded = False
                 elif opts.no_resume:
                     os.unlink(event.EventState.save_file)
                 else:
