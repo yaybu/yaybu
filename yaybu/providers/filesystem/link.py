@@ -131,7 +131,7 @@ class RemoveLink(provider.Provider):
             context.shell.execute(["/bin/rm", self.resource.name])
             changed = True
         else:
-            shell.changelog.info("File %s missing already so not removed" % self.resource.name)
+            context.changelog.info("File %s missing already so not removed" % self.resource.name)
             changed = False
         return changed
 
