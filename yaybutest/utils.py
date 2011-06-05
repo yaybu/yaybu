@@ -1,5 +1,6 @@
 import os, shlex, subprocess, tempfile, time
 import testtools
+from yaybu.core import error
 
 def default_distro():
     options = {
@@ -84,7 +85,7 @@ class TestCase(testtools.TestCase):
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "yaybu")
         rv = self.apply(contents, *args)
-        self.failUnlessEqual(rv, 254, "Change still outstanding on 2nd run")
+        self.failUnlessEqual(rv, error.NothingChanged.returncode, "Change still outstanding on 2nd run")
 
     def check_apply_simulate(self, contents):
         rv = self.apply_simulate(contents)
