@@ -83,6 +83,8 @@ class TestCase(testtools.TestCase):
         rv = self.apply(contents, *args)
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "yaybu")
+        rv = self.apply(contents, *args)
+        self.failUnlessEqual(rv, 254, "Change still outstanding on 2nd run")
 
     def check_apply_simulate(self, contents):
         rv = self.apply_simulate(contents)
