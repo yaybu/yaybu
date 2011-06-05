@@ -11,11 +11,13 @@ class TestWatched(TestCase):
                 - Execute:
                     name: test_watched
                     command: touch /watched-file
+                    creates: /watched-file
                     watch:
                       - /watched-file
                 - Execute:
                     name: test_output
                     command: touch /event-triggered
+                    creates: /event-triggered
                     policy:
                         execute:
                             when: watched
