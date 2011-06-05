@@ -18,6 +18,24 @@ from yaybu.core import provider
 from yaybu.core import error
 from yaybu import resources
 
+
+def is_installed(context, resource):
+    # work out if the package is already installed
+    command = ["dpkg-query", "-W", "-f='${Status}'", resource.name]
+    returncode, stdout, stderr = context.shell.execute(command,
+                                                           exceptions=False, passthru=True)
+
+    # if the return code is 0, dpkg is aware of the package
+    if returncode == 0 and "install ok installed" in stdout:
+        return True
+
+    # if the return code is anything but zero or one, we have a problem
+    if returncode > 1:
+        raise error.DpkgError("%s search failed with return code %s" % (resource, returncode))
+
+    return False
+
+
 class AptInstall(provider.Provider):
 
     policies = (resources.package.PackageInstallPolicy,)
@@ -29,22 +47,12 @@ class AptInstall(provider.Provider):
         return super(AptInstall, self).isvalid(policy, resource, yay)
 
     def apply(self, context):
-        env = os.environ.copy()
-        env["DEBIAN_FRONTEND"] = "noninteractive"
-
-        # work out if the package is already installed
-        command = ["dpkg-query", "-W", "-f='${Status}'", self.resource.name]
-        returncode, stdout, stderr = context.shell.execute(command,
-                                                           exceptions=False, passthru=True)
-
-        # if the return code is 0, dpkg is aware of the package
-        if returncode == 0 and "install ok installed" in stdout:
+        if is_installed(context, self.resource):
             return False
 
-        # if the return code is anything but zero or one, we have a problem
-        if returncode > 1:
-            raise error.DpkgError("%s search failed with return code %s" % (self.resource, returncode))
-
+        env = {
+            "DEBIAN_FRONTEND": "noninteractive",
+            }
 
         # the search returned 1, package is not installed, continue and install it
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
@@ -65,8 +73,12 @@ class AptUninstall(provider.Provider):
         return super(AptUninstall, self).isvalid(policy, resource, yay)
 
     def apply(self, context):
-        env = os.environ.copy()
-        env["DEBIAN_FRONTEND"] = "noninteractive"
+        if not is_installed(context, self.resource):
+            return False
+
+        env = {
+            "DEBIAN_FRONTEND": "noninteractive",
+            }
 
         command = ["apt-get", "remove", "-q", "-y"]
         if self.resource.purge:

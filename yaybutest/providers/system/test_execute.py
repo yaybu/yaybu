@@ -16,6 +16,7 @@ class TestExecute(TestCase):
                 - Execute:
                     name: test
                     command: test_execute_on_path.sh
+                    creates: /etc/test_execute_on_path
             """)
 
     def test_execute_touches(self):
@@ -40,6 +41,7 @@ class TestExecute(TestCase):
                 - Execute:
                     name: test
                     command: touch /etc/foo
+                    creates: /etc/foo
             """)
         self.failUnlessExists("/etc/foo")
 
@@ -51,6 +53,7 @@ class TestExecute(TestCase):
                     commands:
                         - touch /etc/foo
                         - touch /etc/bar
+                    creates: /etc/bar
             """)
         self.failUnlessExists("/etc/foo")
         self.failUnlessExists("/etc/bar")
@@ -63,6 +66,7 @@ class TestExecute(TestCase):
                     name: test
                     command: touch foo
                     cwd: /etc
+                    creates: /etc/foo
             """)
         self.failUnlessExists("/etc/foo")
 
@@ -75,6 +79,7 @@ class TestExecute(TestCase):
                     command: sh -c "touch $FOO"
                     environment:
                         FOO: /etc/foo
+                    creates: /etc/foo
             """)
         self.failUnlessExists("/etc/foo")
 
@@ -83,15 +88,13 @@ class TestExecute(TestCase):
         self.check_apply("""
             resources:
                 - Execute:
-                    name: test-true
+                    name: test-execute-returncode-true
                     command: /bin/true
-            """)
-
-        self.check_apply("""
-            resources:
+                    touch: /test_returncode_marker_true
                 - Execute:
-                    name: test-false
+                    name: test-execute-returncode-false
                     command: /bin/false
+                    touch: /test_returncode_marker_false
                     returncode: 1
             """)
 
@@ -103,6 +106,7 @@ class TestExecute(TestCase):
                     name: test_user_change
                     command: python -c "import os; open('/foo','w').write(str(os.getuid())+'\\n'+str(os.geteuid()))"
                     user: nobody
+                    creates: /foo
             """)
 
         check_file = open(self.enpathinate("/foo")).read().split()
@@ -116,6 +120,7 @@ class TestExecute(TestCase):
                     name: test_group_change
                     command: python -c "import os; open('/foo','w').write(str(os.getgid())+'\\n'+str(os.getegid()))"
                     group: nogroup
+                    creates: /foo
         """)
 
         check_file = open(self.enpathinate("/foo")).read().split()
@@ -130,6 +135,7 @@ class TestExecute(TestCase):
                     command: python -c "import os; open('/foo','w').write('\\n'.join(str(x) for x in (os.getuid(),os.geteuid(),os.getgid(),os.getegid())))"
                     user: nobody
                     group: nogroup
+                    creates: /foo
         """)
 
         check_file = open(self.enpathinate("/foo")).read().split()
@@ -172,6 +178,7 @@ class TestExecute(TestCase):
                   name: test
                   command: touch /test_unless_false
                   unless: /bin/false
+                  creates: /test_unless_false
             """)
 
         self.failUnlessExists("/test_unless_false")

@@ -15,7 +15,7 @@ class TestPackageInstallation(TestCase):
         self.check_apply("""
             resources:
               - Package:
-                  name: vim-tiny
+                  name: hello
             """)
 
     def test_nonexistent_package(self):
@@ -49,21 +49,12 @@ class TestPackageInstallation(TestCase):
 
 class TestPackageRemoval(TestCase):
 
-    def test_not_installed(self):
-        """ Try removing a package that is not installed. """
-        self.check_apply("""
-            resources:
-                - Package:
-                    name: vim-tiny
-                    policy: uninstall
-            """)
-
     def test_installed(self):
         """ Try removing a package that is installed. """
         self.check_apply("""
             resources:
               - Package:
-                  name: vim-tiny
+                  name: ubuntu-keyring
                   policy: uninstall
             """)
 

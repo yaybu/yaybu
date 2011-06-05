@@ -43,4 +43,6 @@ class TestEvents(TestCase):
 
             """,
                "--resume")
+
         self.failUnlessExists("/frob/somedir/foo")
+

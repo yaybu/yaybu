@@ -1,5 +1,6 @@
-import os, shlex, subprocess, tempfile, time
+import os, signal, shlex, subprocess, tempfile, time
 import testtools
+from yaybu.core import error
 
 def default_distro():
     options = {
@@ -40,6 +41,24 @@ def refresh_environment(base_image):
 
 class TestCase(testtools.TestCase):
 
+    fakerootkey = None
+
+    def cleanup_session(self):
+        if self.faked:
+            os.kill(int(self.faked.strip()), signal.SIGTERM)
+            self.faked = None
+
+    def get_session(self):
+        if self.fakerootkey:
+            return self.fakerootkey
+
+        p = subprocess.Popen(['faked-sysv'], stdout=subprocess.PIPE)
+        self.addCleanup(self.cleanup_session)
+
+        stdout, stderr = p.communicate()
+        self.fakerootkey, self.faked = stdout.split(":")
+        return self.fakerootkey
+
     def write_temporary_file(self, contents):
         f = tempfile.NamedTemporaryFile(dir=os.path.join(self.chroot_path, 'tmp'), delete=False)
         f.write(contents)
@@ -47,8 +66,12 @@ class TestCase(testtools.TestCase):
         return f.name
 
     def call(self, command):
-        chroot = ["fakeroot", "fakechroot", "-s", "cow-shell", "chroot", self.chroot_path]
-        retval = subprocess.call(chroot + command, cwd=self.chroot_path)
+        env = os.environ.copy()
+        env['FAKEROOTKEY'] = self.get_session()
+        env['LD_PRELOAD'] = "/usr/lib/libfakeroot/libfakeroot-sysv.so"
+
+        chroot = ["fakechroot", "-s", "cow-shell", "chroot", self.chroot_path]
+        retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
         self.wait_for_cowdancer()
         return retval
 
@@ -83,6 +106,8 @@ class TestCase(testtools.TestCase):
         rv = self.apply(contents, *args)
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "yaybu")
+        rv = self.apply(contents, *args)
+        self.failUnlessEqual(rv, error.NothingChanged.returncode, "Change still outstanding on 2nd run")
 
     def check_apply_simulate(self, contents):
         rv = self.apply_simulate(contents)

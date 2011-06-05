@@ -63,6 +63,7 @@ class TestGroup(TestCase):
                 - Execute:
                     name: test-group
                     command: python -c "import os, grp; open('/etc/test2', 'w').write(grp.getgrgid(os.getgid()).gr_name)"
+                    creates: /etc/test2
                     group: test
             """)
         self.failUnlessEqual(open(self.enpathinate("/etc/test2")).read(), "test")
