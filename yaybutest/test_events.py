@@ -44,5 +44,5 @@ class TestEvents(TestCase):
             """,
                "--resume")
 
-        self.failUnlessExists(self.enpathinate("/frob/somedir/foo"))
+        self.failUnlessExists("/frob/somedir/foo")
 
