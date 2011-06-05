@@ -30,7 +30,7 @@ class TestSimpleService(TestCase):
         self.failUnlessExists("/foo")
 
     def test_restart(self):
-        self.check_apply("""
+        rv = self.apply("""
             resources:
                 - Service:
                     name: test
@@ -38,4 +38,7 @@ class TestSimpleService(TestCase):
                     restart: touch /foo
             """)
 
+        # We restart every time config is applied - so check_apply would fail the
+        # automatic idempotentcy check
+        self.failUnlessEqual(rv, 0)
         self.failUnlessExists("/foo")
