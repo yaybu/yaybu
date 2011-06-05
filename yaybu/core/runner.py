@@ -120,7 +120,12 @@ class Runner(object):
 
             self.resources = resource.ResourceBundle(config.get("resources", []))
             self.resources.bind()
-            if not self.resources.apply(ctx, config):
+            changed = self.resources.apply(ctx, config)
+
+            if os.path.exists(event.EventState.save_file):
+                os.unlink(event.EventState.save_file)
+
+            if not changed:
                 # nothing changed
                 sys.exit(255)
             sys.exit(0)
