@@ -4,6 +4,7 @@ Changelog for yaybu
 0.1.4 (unreleased)
 ------------------
 
+- Every test that uses check_apply will also be tested for simulation
 - Better use of python-magic: Use mimetypes and look for text/
 - Use a stricter glob for identifying currently active sysv services
 - EventState now records against id rather than home

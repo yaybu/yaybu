@@ -103,9 +103,18 @@ class TestCase(testtools.TestCase):
         return self.simulate(path)
 
     def check_apply(self, contents, *args):
+        # Apply the change in simulate mode
+        sim_args = args + ["-s"]
+        rv = self.apply(contents, *sim_args)
+        if rv != 0:
+            raise subprocess.CalledProcessError(rv, "yaybu")
+
+        # Apply the change for real
         rv = self.apply(contents, *args)
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "yaybu")
+
+        # If we apply the change again nothing should be changed
         rv = self.apply(contents, *args)
         self.failUnlessEqual(rv, error.NothingChanged.returncode, "Change still outstanding on 2nd run")
 
