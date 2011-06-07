@@ -50,7 +50,7 @@ class _LsbServiceMixin(utils._ServiceMixin):
         # The difference between the 2 sets are the links we need to create
         # and the links we need to remove
         target = set(goal)
-        current = set(glob.glob("/etc/rc*.d/*%s"  % self.resource.name))
+        current = set(glob.glob("/etc/rc*.d/[SK][0-9][0-9]%s"  % self.resource.name))
 
         need_deleting = current - target
         need_creating = target - current
