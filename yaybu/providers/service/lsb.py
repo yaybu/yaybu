@@ -36,13 +36,13 @@ class _LsbServiceMixin(utils._ServiceMixin):
 
     def _enabled_links(self):
         for x in (2, 3, 4, 5):
-            yield "/etc/rc%s.d/S%s%s" % (x, self.resource.priority, self.resource.name)
+            yield "/etc/rc%s.d/S%02d%s" % (x, self.resource.priority, self.resource.name)
         for x in (0, 1, 6):
-            yield "/etc/rc%s.d/K%s%s" % (x, 100-self.resource.priority, self.resource.name)
+            yield "/etc/rc%s.d/K%02d%s" % (x, 100-self.resource.priority, self.resource.name)
 
     def _disabled_links(self):
         for x in (0, 1, 2, 3, 4, 5, 6):
-            yield "/etc/rc%s.d/K%s%s" % (x, 100-self.resource.priority, self.resource.name)
+            yield "/etc/rc%s.d/K%02d%s" % (x, 100-self.resource.priority, self.resource.name)
 
     def _update_links(self, context, goal):
         # We turn our "goal" symlinks into a set and use a glob to get a set of
