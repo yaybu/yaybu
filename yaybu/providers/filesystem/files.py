@@ -40,9 +40,9 @@ def binary_buffers(*buffers):
     if not magic:
         check = lambda buff: any((c in string.printable) for c in buff)
     else:
-        ms = magic.open(magic.MAGIC_NONE)
+        ms = magic.open(magic.MAGIC_MIME)
         ms.load()
-        check = lambda buff: ms.buffer(buff).endswith("text")
+        check = lambda buff: ms.buffer(buff).startsswith("text/")
 
     for buff in buffers:
         if buff and not check(buff):
