@@ -25,7 +25,7 @@ class EventState(object):
 
 
     overrides = {}
-    """ A mapping of resource names to the overridden policy name for that
+    """ A mapping of resource ids to the overridden policy name for that
     resource, if there is one. """
 
     def __init__(self, load=False):
@@ -41,14 +41,14 @@ class EventState(object):
 
     def override(self, resource, policy):
         self.load()
-        self.overrides[resource.name] = policy
+        self.overrides[resource.id] = policy
         yaml.dump(self.overrides, open(self.save_file, "w"))
 
     def overridden_policy(self, resource):
         """ Return the policy class for this resource, or None if there is not
         an overridden policy. """
-        if resource.name in self.overrides:
-            policy_name = self.overrides[resource.name]
+        if resource.id in self.overrides:
+            policy_name = self.overrides[resource.id]
             return resource.policies[policy_name]
         else:
             return None

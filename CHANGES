@@ -4,6 +4,7 @@ Changelog for yaybu
 0.1.4 (unreleased)
 ------------------
 
+- EventState now records against id rather than home
 - Test harness now enforces idempotence of check_apply
 - Test harness now manages fakeroot by itself
 - Fix logging issue for long resource ids
