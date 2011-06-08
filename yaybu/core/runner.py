@@ -94,9 +94,14 @@ class Runner(object):
 
         event.EventState.save_file = "/var/run/yaybu/events.saved"
 
-        save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
-        if not os.path.exists(save_parent):
-            os.mkdir(save_parent)
+        # This makes me a little sad inside, but the whole
+        # context thing needs a little thought before jumping in
+        event.EventState.simulate = opts.simulate
+
+        if not opts.simulate:
+            save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
+            if not os.path.exists(save_parent):
+                os.mkdir(save_parent)
 
         try:
             if not opts.remote:

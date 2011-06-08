@@ -31,6 +31,7 @@ class EventState(object):
     def __init__(self, load=False):
         self.loaded = not load
         self.overrides = {}
+        self.simulate = False
 
     def load(self):
         if self.loaded:
@@ -42,7 +43,8 @@ class EventState(object):
     def override(self, resource, policy):
         self.load()
         self.overrides[resource.id] = policy
-        yaml.dump(self.overrides, open(self.save_file, "w"))
+        if not self.simulate:
+            yaml.dump(self.overrides, open(self.save_file, "w"))
 
     def overridden_policy(self, resource):
         """ Return the policy class for this resource, or None if there is not
