@@ -70,7 +70,9 @@ class Link(provider.Provider):
         isalink = False
 
         if not os.path.exists(to):
-            raise error.DanglingSymlink("Destination of symlink %r does not exist" % to)
+            if not context.simulate:
+                raise error.DanglingSymlink("Destination of symlink %r does not exist" % to)
+            context.change.simlog_info("Destination of sylink %r does not exist" % to)
 
         owner = self._get_owner()
         group = self._get_group()
@@ -100,18 +102,18 @@ class Link(provider.Provider):
         except OSError:
             isalink = False
 
-        if not isalink:
+        if not isalink and not context.simulate:
             raise error.OperationFailed("Did not create expected symbolic link")
 
         if isalink:
             uid, gid, mode = self._stat()
 
         if owner is not None and owner != uid:
-            context.execute(["/bin/chown", "-h", self.resource.owner, name])
+            context.shell.execute(["/bin/chown", "-h", self.resource.owner, name])
             changed = True
 
         if group is not None and group != gid:
-            context.execute(["/bin/chgrp", "-h", self.resource.group, name])
+            context.shell.execute(["/bin/chgrp", "-h", self.resource.group, name])
             changed = True
 
         return changed

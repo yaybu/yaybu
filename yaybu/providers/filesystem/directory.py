@@ -31,7 +31,7 @@ class Directory(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Directory, self).isvalid(*args, **kwargs)
 
-    def check_path(self, directory):
+    def check_path(self, directory, simulate):
         frags = directory.split("/")
         path = "/"
         for i in frags:
@@ -39,13 +39,15 @@ class Directory(provider.Provider):
             if not os.path.exists(path):
                 if self.resource.parents:
                     return
+                if simulate:
+                    return
                 raise error.PathComponentMissing(path)
             if not os.path.isdir(path):
                 raise error.PathComponentNotDirectory(path)
 
     def apply(self, context):
         changed = False
-        self.check_path(os.path.dirname(self.resource.name))
+        self.check_path(os.path.dirname(self.resource.name), context.simulate)
         ac = AttributeChanger(context,
                               self.resource.name,
                               self.resource.owner,

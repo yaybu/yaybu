@@ -104,15 +104,13 @@ class TestCase(testtools.TestCase):
 
     def check_apply(self, contents, *args):
         # Apply the change in simulate mode
-        sim_args = args + ["-s"]
+        sim_args = list(args) + ["-s"]
         rv = self.apply(contents, *sim_args)
-        if rv != 0:
-            raise subprocess.CalledProcessError(rv, "yaybu")
+        self.failUnlessEqual(rv, 0, "Simulation failed")
 
         # Apply the change for real
         rv = self.apply(contents, *args)
-        if rv != 0:
-            raise subprocess.CalledProcessError(rv, "yaybu")
+        self.failUnlessEqual(rv, 0, "Apply failed")
 
         # If we apply the change again nothing should be changed
         rv = self.apply(contents, *args)

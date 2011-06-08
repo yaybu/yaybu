@@ -20,12 +20,16 @@ class TestFileApply(TestCase):
         self.assertEqual(rv, error.PathComponentMissing.returncode)
 
     def test_create_missing_component_simulate(self):
+        """
+        Right now we treat missing directories as a warning in simulate mode, as other outside processes might have created them.
+        Later on we might not generate warnings for resources we can see will be created
+        """
         rv = self.apply_simulate("""
             resources:
               - File:
                   name: /etc/missing/filename
             """)
-        self.assertEqual(rv, error.PathComponentMissing.returncode)
+        self.assertEqual(rv, 0)
 
     def test_create_file(self):
         self.check_apply("""
