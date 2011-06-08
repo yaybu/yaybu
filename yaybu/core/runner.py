@@ -108,7 +108,9 @@ class Runner(object):
                 if opts.resume:
                     event.state.loaded = False
                 elif opts.no_resume:
-                    os.unlink(event.EventState.save_file)
+                    if not opts.simulate:
+                        os.unlink(event.EventState.save_file)
+                    event.state.loaded = True
                 else:
                     raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
 
@@ -118,7 +120,7 @@ class Runner(object):
             self.resources.bind()
             changed = self.resources.apply(ctx, config)
 
-            if os.path.exists(event.EventState.save_file):
+            if not opts.simulate and os.path.exists(event.EventState.save_file):
                 os.unlink(event.EventState.save_file)
 
             if not changed:

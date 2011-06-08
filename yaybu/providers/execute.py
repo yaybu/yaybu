@@ -43,7 +43,7 @@ class Execute(provider.Provider):
         returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env, user=self.resource.user,
             group=self.resource.group, passthru=passthru, exceptions=False)
 
-        if expected_returncode != None and expected_returncode != returncode:
+        if not shell.simulate and expected_returncode != None and expected_returncode != returncode:
             raise error.CommandError("%s failed with return code %d" % (self.resource, returncode))
 
         return returncode

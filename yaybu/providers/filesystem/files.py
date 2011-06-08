@@ -42,7 +42,7 @@ def binary_buffers(*buffers):
     else:
         ms = magic.open(magic.MAGIC_MIME)
         ms.load()
-        check = lambda buff: ms.buffer(buff).startsswith("text/")
+        check = lambda buff: ms.buffer(buff).startswith("text/")
 
     for buff in buffers:
         if buff and not check(buff):
@@ -67,23 +67,34 @@ class AttributeChanger(change.Change):
         uid = None
         gid = None
         mode = None
+
         if os.path.exists(self.filename):
             exists = True
             st = os.stat(self.filename)
             uid = st.st_uid
             gid = st.st_gid
             mode = stat.S_IMODE(st.st_mode)
+
         if self.user is not None:
             owner = pwd.getpwnam(self.user)
             if owner.pw_uid != uid:
                 self.context.shell.execute(["/bin/chown", self.user, self.filename])
                 self.changed = True
+
         if self.group is not None:
-            group = grp.getgrnam(self.group)
-            if group.gr_gid != gid:
+            try:
+                group = grp.getgrnam(self.group)
+            except KeyError:
+                if not self.context.simulate:
+                    raise InvalidGroup("No such group '%s'" % self.group)
+                self.context.changelog.simlog_info("Group '%s' not found; assuming this recipe will create it" % self.group) #FIXME
+                group = None
+
+            if group and group.gr_gid != gid:
                 self.context.shell.execute(["/bin/chgrp", self.group, self.filename])
                 self.changed = True
-        if self.mode is not None:
+
+        if self.mode is not None and mode is not None:
             if mode != self.mode:
                 self.context.shell.execute(["/bin/chmod", "%o" % self.mode, self.filename])
 
@@ -196,20 +207,21 @@ class File(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(File, self).isvalid(*args, **kwargs)
 
-    def check_path(self, directory):
+    def check_path(self, directory, simulate):
         frags = directory.split("/")
         path = "/"
         for i in frags:
             path = os.path.join(path, i)
-            if not os.path.exists(path):
-                raise error.PathComponentMissing(path)
-            if not os.path.isdir(path):
+            if not os.path.exists(path): #FIXME
+                if not simulate:
+                    raise error.PathComponentMissing(path)
+            elif not os.path.isdir(path):
                 raise error.PathComponentNotDirectory(path)
 
     def apply(self, context):
         name = self.resource.name
 
-        self.check_path(os.path.dirname(name))
+        self.check_path(os.path.dirname(name), context.simulate)
 
         if self.resource.template:
             # set a special line ending
