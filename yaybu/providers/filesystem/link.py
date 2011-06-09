@@ -72,7 +72,7 @@ class Link(provider.Provider):
         if not os.path.exists(to):
             if not context.simulate:
                 raise error.DanglingSymlink("Destination of symlink %r does not exist" % to)
-            context.change.simlog_info("Destination of sylink %r does not exist" % to)
+            context.change.info("Destination of sylink %r does not exist" % to)
 
         owner = self._get_owner()
         group = self._get_group()

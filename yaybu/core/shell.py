@@ -57,7 +57,7 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, passthru=False, user=None, group=None):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, passthru=False, user=None, group=None, simulate=False):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -66,7 +66,18 @@ class ShellCommand(change.Change):
         self.env_passthru = env_passthru
         self.verbose = verbose
         self.passthru = passthru
+        self.simulate = simulate
         self._generated_env = {}
+
+        self.user = None
+        self.uid = None
+        self.group = None
+        self.gid = None
+        self.homedir = None
+
+        if self.simulate and not self.passthru:
+            # For now, we skip this setup in simulate mode - not sure it will ever be possible
+            return
 
         self.user = user
         if user:
@@ -81,8 +92,6 @@ class ShellCommand(change.Change):
         self.group = group
         if group:
             self.gid = grp.getgrnam(self.group).gr_gid
-        else:
-            self.gid = None
 
     def preexec(self):
         if self.uid is not None:
@@ -153,6 +162,12 @@ class ShellCommand(change.Change):
 
         self._generated_env = env
 
+        if self.simulate and not self.passthru:
+            self.returncode = 0
+            self.stdout = ""
+            self.stderr = ""
+            return
+
         try:
             p = subprocess.Popen(command,
                                  shell=self.shell,
@@ -222,10 +237,7 @@ class Shell(object):
 
     def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None):
         command = self._tounicode(command)
-        if self.simulate and not passthru:
-            self.context.changelog.simlog_info(" ".join(command))
-            return (0, "", "")
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group)
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group, self.simulate)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             self.context.changelog.info("{0}", cmd.stdout)

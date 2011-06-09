@@ -64,13 +64,6 @@ class Runner(object):
             handler.setFormatter(formatter)
             logging.getLogger().addHandler(handler)
 
-        simlog = logging.getLogger("simulation")
-        simlog.setLevel(logging.DEBUG)
-        simformatter = logging.Formatter("simulation: %(message)s")
-        simhandler = logging.StreamHandler(sys.stdout)
-        simhandler.setFormatter(simformatter)
-        simlog.addHandler(simhandler)
-
     def trampoline(self, username):
         command = ["sudo", "-u", username] + sys.argv[0:1]
 

@@ -87,7 +87,7 @@ class AttributeChanger(change.Change):
             except KeyError:
                 if not self.context.simulate:
                     raise InvalidGroup("No such group '%s'" % self.group)
-                self.context.changelog.simlog_info("Group '%s' not found; assuming this recipe will create it" % self.group) #FIXME
+                self.context.changelog.info("Group '%s' not found; assuming this recipe will create it" % self.group) #FIXME
                 group = None
 
             if group and group.gr_gid != gid:

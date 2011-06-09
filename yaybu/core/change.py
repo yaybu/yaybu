@@ -9,7 +9,6 @@ import types
 from yaybu.core import error
 
 logger = logging.getLogger("audit")
-simlog = logging.getLogger("simulation")
 
 class Change(object):
     """ Base class for changes """
@@ -49,12 +48,6 @@ class ChangeRenderer:
     def __init__(self, logger, verbose):
         self.logger = logger
         self.verbose = verbose
-
-    def simulation_info(self, message):
-        self.logger.simlog_info(message)
-
-    def simulation_notice(self, message):
-        self.logger.simlog_notice(message)
 
     def render(self, logger):
         pass
@@ -149,12 +142,6 @@ class ChangeLog:
         text_class = ChangeRendererType.renderers.get(("text", change.__class__), None)
         return change.apply(text_class(self, self.verbose))
 
-    def simlog_notice(self, msg):
-        simlog.notice(msg)
-
-    def simlog_info(self, msg):
-        simlog.info(msg)
-
     def info(self, message, *args, **kwargs):
         """ Write a textual information message. This is used for both the
         audit trail and the text console log. """
@@ -176,10 +163,4 @@ class RemoteChangeLog(ChangeLog):
 
     def write(self, line=""):
         self.do("write", line)
-
-    def simlog_notice(self, msg):
-        self.do("simlog_notice", msg)
-
-    def simlog_info(self, msg):
-        self.do("simlog_info", msg)
 
