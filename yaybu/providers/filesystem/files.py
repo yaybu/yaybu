@@ -119,13 +119,14 @@ class FileContentChanger(change.Change):
     catered for. Additionally the minimum changes required to the contents are
     applied, and logs of the changes made are recorded. """
 
-    def __init__(self, context, filename, contents):
+    def __init__(self, context, filename, contents, sensitive):
         self.context = context
         self.filename = filename
         self.current = ""
         self.contents = contents
         self.changed = False
         self.renderer = None
+        self.sensitive = sensitive
 
     def empty_file(self):
         """ Write an empty file """
@@ -145,14 +146,14 @@ class FileContentChanger(change.Change):
         """ Change the content of an existing file """
         self.current = open(self.filename).read()
         if self.current != self.contents:
-            self.renderer.changed_file(self.filename, self.current, self.contents)
+            self.renderer.changed_file(self.filename, self.current, self.contents, self.sensitive)
             if not self.context.simulate:
                 open(self.filename, "w").write(self.contents)
             self.changed = True
 
     def write_new_file(self):
         """ Write contents to a new file. """
-        self.renderer.new_file(self.filename, self.contents)
+        self.renderer.new_file(self.filename, self.contents, self.sensitive)
         if not self.context.simulate:
             open(self.filename, "w").write(self.contents)
         self.changed = True
@@ -180,13 +181,15 @@ class FileChangeTextRenderer(change.TextRenderer):
     def empty_file(self, filename):
         self.logger.notice("Emptied file {0!r}", filename)
 
-    def new_file(self, filename, contents):
+    def new_file(self, filename, contents, sensitive):
         self.logger.notice("Writting new file '%s'" % filename)
-        self.diff("", contents)
+        if not sensitive:
+            self.diff("", contents)
 
-    def changed_file(self, filename, previous, replacement):
+    def changed_file(self, filename, previous, replacement, sensitive):
         self.logger.notice("Changed file {0!r}", filename)
-        self.diff(previous, replacement)
+        if not sensitive:
+            self.diff(previous, replacement)
 
     def diff(self, previous, replacement):
         if not binary_buffers(previous, replacement):
@@ -230,21 +233,27 @@ class File(provider.Provider):
             env = Environment(line_statement_prefix='%')
             template = env.from_string(context.get_file(self.resource.template).read())
             contents = template.render(self.resource.template_args) + "\n" # yuk
+            sensitive = False
         elif self.resource.static:
             contents = context.get_file(self.resource.static).read()
+            sensitive = False
         elif self.resource.encrypted:
             contents = context.get_decrypted_file(self.resource.encrypted).read()
+            sensitive = True
         else:
             contents = None
+            sensitive = False
 
-        fc = FileContentChanger(context, self.resource.name, contents)
+        fc = FileContentChanger(context, self.resource.name, contents, sensitive)
         context.changelog.apply(fc)
+
         ac = AttributeChanger(context,
                               self.resource.name,
                               self.resource.owner,
                               self.resource.group,
                               self.resource.mode)
         context.changelog.apply(ac)
+
         if fc.changed or ac.changed:
             return True
 
