@@ -99,7 +99,13 @@ class User(provider.Provider):
             if self.resource.gid:
                 gid = self.resource.gid
             else:
-                gid = grp.getgrnam(self.resource.group).gr_gid
+                try:
+                    gid = grp.getgrnam(self.resource.group).gr_gid
+                except KeyError:
+                    if not context.simulate:
+                        raise error.InvalidGroup("Group '%s' is not valid" % self.resource.group)
+                    context.changelog.info("Group '%s' doesn't exist; assuming recipe already created it" % self.resource.group)
+                    gid = "GID_CURRENTLY_UNASSIGNED"
 
             if gid != info["gid"]:
                 command.extend(["--gid", str(gid)])
