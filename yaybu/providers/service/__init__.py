@@ -16,5 +16,6 @@ from yaybu.providers.service import (
     lsb,
     upstart,
     simple,
+    simulated,
     )
 
