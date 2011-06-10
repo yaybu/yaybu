@@ -76,8 +76,15 @@ class AttributeChanger(change.Change):
             mode = stat.S_IMODE(st.st_mode)
 
         if self.user is not None:
-            owner = pwd.getpwnam(self.user)
-            if owner.pw_uid != uid:
+            try:
+                owner = pwd.getpwname(self.user)
+            except KeyError:
+                if not self.context.simulate:
+                    raise error.InvalidUser("User '%s' not found" % self.user)
+                self.context.changelog.info("User '%s' not found; assuming this recipe will create it" % self.user)
+                owner = None
+
+            if not owner or owner.pw_uid != uid:
                 self.context.shell.execute(["/bin/chown", self.user, self.filename])
                 self.changed = True
 
@@ -86,11 +93,11 @@ class AttributeChanger(change.Change):
                 group = grp.getgrnam(self.group)
             except KeyError:
                 if not self.context.simulate:
-                    raise InvalidGroup("No such group '%s'" % self.group)
+                    raise error.InvalidGroup("No such group '%s'" % self.group)
                 self.context.changelog.info("Group '%s' not found; assuming this recipe will create it" % self.group) #FIXME
                 group = None
 
-            if group and group.gr_gid != gid:
+            if not group or group.gr_gid != gid:
                 self.context.shell.execute(["/bin/chgrp", self.group, self.filename])
                 self.changed = True
 
