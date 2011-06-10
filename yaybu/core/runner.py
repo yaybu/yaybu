@@ -89,7 +89,7 @@ class Runner(object):
 
         # This makes me a little sad inside, but the whole
         # context thing needs a little thought before jumping in
-        event.EventState.simulate = opts.simulate
+        event.state.simulate = opts.simulate
 
         if not opts.simulate:
             save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
