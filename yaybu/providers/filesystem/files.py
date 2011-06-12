@@ -77,7 +77,7 @@ class AttributeChanger(change.Change):
 
         if self.user is not None:
             try:
-                owner = pwd.getpwname(self.user)
+                owner = pwd.getpwnam(self.user)
             except KeyError:
                 if not self.context.simulate:
                     raise error.InvalidUser("User '%s' not found" % self.user)

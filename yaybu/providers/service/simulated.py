@@ -25,7 +25,7 @@ class _SimulatedServiceMixin(utils._ServiceMixin):
 
     @classmethod
     def isvalid(cls, policy, resource, yay):
-        if not super(_SimpleServiceMixin, cls).isvalid(policy, resource, yay):
+        if not super(_SimulatedServiceMixin, cls).isvalid(policy, resource, yay):
             return False
         if getattr(resource, policy.name):
             return False

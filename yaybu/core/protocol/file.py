@@ -15,6 +15,7 @@
 import os
 
 from yaybu.core.protocol.server import HttpResource
+from yaybu.core import error
 
 class FileResource(HttpResource):
 
@@ -26,7 +27,7 @@ class FileResource(HttpResource):
             # newline translations, making the actual size of the content
             # transmitted *less* than the content-length!
             f = open(yaybu.locate_file(restpath), 'rb')
-        except MissingAsset:
+        except error.MissingAsset:
             request.send_error(404, "File not found")
             return None
 
