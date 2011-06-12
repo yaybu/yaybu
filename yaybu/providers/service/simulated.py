@@ -31,7 +31,7 @@ class _SimulatedServiceMixin(utils._ServiceMixin):
             return False
         if os.path.exists("/sbin/start") and os.path.exists("/etc/init/%s.conf" % resource.name):
             return False
-        if os.path.exists(os.path.exists("/etc/init.d/%s" % resource.name)):
+        if os.path.exists("/etc/init.d/%s" % resource.name):
             return False
         return True
 
