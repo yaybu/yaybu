@@ -93,17 +93,6 @@ class TestArgument(unittest.TestCase):
         h.baz = "package://yaybu.core/tests/example.txt"
         self.assertEqual(h.baz, os.path.join(os.path.dirname(__file__), "example.txt"))
 
-    def test_recipe_file(self):
-        h = H(name="test")
-        h.baz = "recipe://yaybu.distro/interfaces.j2"
-        self.assertEqual(h.baz,
-                         os.path.join(
-                             os.path.dirname(
-                                 os.path.dirname(
-                                     os.path.dirname(__file__)
-                                 )
-                            )
-                        , "recipe/interfaces.j2"))
 
 class TestArgumentAssertion(unittest.TestCase):
 

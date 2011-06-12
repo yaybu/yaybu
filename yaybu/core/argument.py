@@ -20,7 +20,6 @@ import urlparse
 import sys
 import os
 from abc import ABCMeta, abstractmethod, abstractproperty
-from yaybu import recipe
 import unicodedata
 import random
 
@@ -33,7 +32,6 @@ unicode_glyphs = ''.join(
 
 # we abuse urlparse for our parsing needs
 urlparse.uses_netloc.append("package")
-urlparse.uses_netloc.append("recipe")
 
 class Argument(object):
 
@@ -194,20 +192,12 @@ class File(Argument):
         # should really be some kind of proxy object
         setattr(instance, self.arg_id, path)
 
-    def _recipe(self, instance, netloc, subpath):
-        cookbook = recipe.get_cookbook()
-        r = cookbook.recipe[netloc]
-        # should really be some kind of proxy object
-        setattr(instance, self.arg_id, r.get_resource(subpath))
-
     def __set__(self, instance, value):
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(value)
         if scheme == "file" or not scheme:
             self._file(instance, path)
         elif scheme == "package":
             self._package(instance, netloc, path)
-        elif scheme == "recipe":
-            self._recipe(instance, netloc, path)
         else:
             raise NotImplementedError('Scheme %s on %s' % (scheme, instance))
 

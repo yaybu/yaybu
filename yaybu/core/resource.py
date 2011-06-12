@@ -16,7 +16,6 @@ import sys, os, hashlib
 from argument import Argument, List, PolicyArgument, String
 import policy
 import error
-from yaybu import recipe
 import collections
 import ordereddict
 import event
