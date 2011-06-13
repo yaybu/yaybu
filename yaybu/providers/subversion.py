@@ -55,7 +55,7 @@ class Svn(Provider):
         new_repo_root = repo_info["Repository Root"]
         if old_repo_root != new_repo_root:
             log.info("Switching repository root from '%s' to '%s'" % (old_repo_root, new_repo_root))
-            self.svn(context, "switch", "--relocate", old_repo_root, new_repo_root, self.resource.name, quiet=True)
+            self.svn(context, "switch", "--relocate", old_repo_root, new_repo_root, self.resource.name)
             changed = True
 
         # If we have changed branch, switch
@@ -63,7 +63,7 @@ class Svn(Provider):
         new_url = repo_info["URL"]
         if old_url != new_url:
             log.info("Switching branch from '%s' to '%s'" % (old_url, new_url))
-            self.svn(context, "switch", new_url, self.resource.name, quiet=True)
+            self.svn(context, "switch", new_url, self.resource.name)
             changed = True
 
         # If we have changed revision, svn up
@@ -72,7 +72,7 @@ class Svn(Provider):
         target_rev = repo_info["Last Changed Rev"]
         if current_rev != target_rev:
             log.info("Switching revision from %s to %s" % (current_rev, target_rev))
-            self.svn(context, "up", "-r", target_rev, self.resource.name, quiet=True)
+            self.svn(context, "up", "-r", target_rev, self.resource.name)
             changed = True
 
         return changed
