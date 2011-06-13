@@ -176,6 +176,7 @@ class Resource(object):
         prov_class = pol.get_provider(yay)
         prov = prov_class(self)
         changed = prov.apply(context)
+        event.state.clear_override(resource)
         if changed:
             self.fire_event(pol.name)
         return changed

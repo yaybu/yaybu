@@ -43,8 +43,13 @@ class EventState(object):
     def override(self, resource, policy):
         self.load()
         self.overrides[resource.id] = policy
-        if not self.simulate:
-            yaml.dump(self.overrides, open(self.save_file, "w"))
+        self.save()
+
+    def clear_override(self, resource):
+        self.load()
+        if resource.id in self.overrides:
+            del self.overrides[resource.id]
+            self.save()
 
     def overridden_policy(self, resource):
         """ Return the policy class for this resource, or None if there is not
@@ -64,6 +69,11 @@ class EventState(object):
             else:
                 selected = resource.policies.default()
         return selected(resource)
+
+    def save(self):
+        if not self.simulate:
+            yaml.dump(self.overrides, open(self.save_file, "w"),  default_flow_style=False)
+
 
 # module level global to preserve event state
 # yes this is ugly
