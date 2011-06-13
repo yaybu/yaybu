@@ -4,6 +4,7 @@ Changelog for yaybu
 0.1.4 (unreleased)
 ------------------
 
+- EventState removes successfully applied updates on the fly, not just at the end
 - Remove the simlog API and be as 'full-fat' as possible in simulate mode
 - File provider will no longer log diffs when updating encrypted files ;)
 - Every test that uses check_apply will also be tested for simulation
