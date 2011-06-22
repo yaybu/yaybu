@@ -38,12 +38,17 @@ class ResourceFormatter(logging.Formatter):
             if self.resource:
                 rv += self.render_resource_header()
 
-        rv += u"| " + logging.Formatter.format(self, record)
+        formatted = logging.Formatter.format(self, record)
+
+        if self.resource:
+            rv += "\n".join("| %s" % line for line in formatted.splitlines())
+        else:
+            rv += formatted
+
         return rv
 
     def render_resource_header(self):
         header = unicode(self.resource)
-        encoded = header.encode("utf-8")
 
         rl = len(header)
         if rl < 80:
@@ -55,7 +60,7 @@ class ResourceFormatter(logging.Formatter):
             leftover = 0
 
         return u"/%s %s %s\n" % ("-"*minuses,
-                                 encoded,
+                                 header,
                                  "-"*(minuses + leftover))
 
     def render_resource_footer(self):
@@ -198,7 +203,7 @@ class ChangeLog:
 
     def write(self, line=""):
         #FIXME: Very much needs removing
-        self.logger.info("%s", line)
+        self.logger.info(line)
 
     def resource(self, resource):
         return ResourceChange(self, resource)
@@ -213,7 +218,7 @@ class ChangeLog:
         """ Write a textual information message. This is used for both the
         audit trail and the text console log. """
         if self.current_resource:
-            self.current_resource.info(message)
+            self.current_resource.info(message, *args)
         else:
             self.logger.info(message, *args)
 
@@ -221,7 +226,7 @@ class ChangeLog:
         """ Write a textual notification message. This is used for both the
         audit trail and the text console log. """
         if self.current_resource:
-            self.current_resource.notice(message)
+            self.current_resource.notice(message, *args)
         else:
             self.logger.info(message, *args)
 
