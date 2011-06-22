@@ -10,6 +10,53 @@ from yaybu.core import error
 
 logger = logging.getLogger("audit")
 
+
+class ResourceHeaderHandler(object):
+
+    """ Automatically add a header and footer to log messages about particular
+    resources """
+
+    def __init__(self, target):
+        self.target = target
+        self.resource = None
+
+    def emit(self, record):
+        next_resource = getattr(record, "resource", None)
+
+        # Is the logging now about a different resource?
+        if self.resource != next_resource:
+
+            # If there was already a resource, let us add a footer
+            if self.resource:
+                self.render_resource_footer()
+
+            self.resource = next_resource
+
+            # Are we now logging for a new resource?
+            if self.resource:
+                self.render_resource_header()
+
+        self.target.emit(record)
+
+    def render_resource_header(self):
+        rl = len(unicode(self.resource))
+        if rl < 80:
+            total_minuses = 77 - rl
+            minuses = total_minuses/2
+            leftover = total_minuses % 2
+        else:
+            minuses = 4
+            leftover = 0
+
+        self.target.emit("/%s %r %s" % ("-"*minuses,
+                                 self.resource,
+                                 "-"*(minuses + leftover)))
+
+    def render_resource_footer(self):
+        self.target.emit("\%s" % ("-" *79,))
+        self.target.emit("")
+
+
 class Change(object):
     """ Base class for changes """
 
@@ -63,59 +110,31 @@ class ResourceChange(object):
     def __init__(self, changelog, resource):
         self.changelog = changelog
         self.resource = resource
-        self.rendered = False
+
+        # We wrap the logger so it always has context information
+        logger = logging.getLogger("yaybu.changelog")
+        self.logger = logging.LoggerAdapter(logger, dict(resource=unicode(resource)))
+
+    def info(self, message, *args):
+        self.logger.info(message, *args)
+
+    def notice(self, message, *args):
+        self.logger.info(message, *args)
 
     def __enter__(self):
         self.changelog.current_resource = self
-
-    def render_resource_header(self):
-        if self.rendered:
-            return
-        self.rendered = True
-        rl = len(unicode(self.resource))
-        if rl < 80:
-            total_minuses = 77 - rl
-            minuses = total_minuses/2
-            leftover = total_minuses % 2
-        else:
-            minuses = 4
-            leftover = 0
-        self.changelog.write("/%s %r %s" % ("-"*minuses,
-                                            self.resource,
-                                            "-"*(minuses + leftover)))
-
-    def render_resource_footer(self):
-        self.changelog.write("\%s" % ("-" *79,))
-        self.changelog.write()
-
-    def info(self, message):
-        if self.changelog.verbose >= 2:
-            self.render_resource_header()
-            self.changelog.write("|====> %s" % message)
-
-    def notice(self, message):
-        if self.changelog.verbose >= 1:
-            self.render_resource_header()
-            self.changelog.write("| %s" % message)
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.exc_type = exc_type
         self.exc_val = exc_val
         self.exc_tb = exc_tb
+
         if self.exc_val is not None:
             self.notice("Exception: %s" % (self.exc_val,))
+
         self.changelog.current_resource = None
-        if self.rendered:
-            self.render_resource_footer()
 
-class RendererMethodProxy:
-
-    def __init__(self, multi, name):
-        self.multi = multi
-        self.name = name
-
-    def __call__(self, *args, **kwargs):
-        self.multi.delegate(self.name, args, kwargs)
 
 class ChangeLog:
 
@@ -126,12 +145,11 @@ class ChangeLog:
         self.ctx = context
         self.verbose = self.ctx.verbose
 
+        self.logger = logging.getLogger("yaybu.changelog")
+
     def write(self, line=""):
-        if type(line) is types.UnicodeType:
-            sys.stdout.write(line.encode("utf-8"))
-        else:
-            sys.stdout.write(line)
-        sys.stdout.write("\n")
+        #FIXME: Very much needs removing
+        self.logger.info("%s", line)
 
     def resource(self, resource):
         return ResourceChange(self, resource)
@@ -145,27 +163,17 @@ class ChangeLog:
     def info(self, message, *args, **kwargs):
         """ Write a textual information message. This is used for both the
         audit trail and the text console log. """
-        formatted = message.format(*args, **kwargs)
         if self.current_resource:
-            self.current_resource.info(formatted)
+            self.current_resource.info(message)
         else:
-            self.write(formatted)
+            self.logger.info("%s", message, *args)
 
     def notice(self, message, *args, **kwargs):
         """ Write a textual notification message. This is used for both the
         audit trail and the text console log. """
-        formatted = message.format(*args, **kwargs)
         if self.current_resource:
-            self.current_resource.notice(formatted)
+            self.current_resource.notice(message)
         else:
-            self.write(formatted)
+            self.logger.info("%s", message, *args)
 
-class RemoteChangeLog(ChangeLog):
-
-    def do(self, method, msg):
-        self.ctx.connection.request("POST", "/changelog/" + method, msg, {"Content-Length": len(msg)})
-        rsp = self.ctx.connection.getresponse()
-
-    def write(self, line=""):
-        self.do("write", line)
 

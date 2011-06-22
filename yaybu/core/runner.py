@@ -34,8 +34,20 @@ class Runner(object):
 
     resources = None
 
-    def configure_logging(self, opts):
+    def configure_session_logging(self, opts):
+        root = logging.getLogger()
+        root.setLevel(logging.INFO)
+
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        root.addHandler(handler)
+
+    def configure_audit_logging(self, opts):
         """ configure the audit trail to log to file or to syslog """
+
+        if opts.simulate:
+            return
+
         levels = {
             'debug': logging.DEBUG,
             'info': logging.INFO,
@@ -47,16 +59,12 @@ class Runner(object):
         log_level = levels.get(opts.log_level, None)
         if log_level is None:
             raise KeyError("Log level %s not recognised, terminating" % opts.log_level)
-        if opts.logfile is not None:
-            if opts.logfile == "-":
-                logging.basicConfig(stream=sys.stdout,
-                                    format="%(asctime)s %(levelname)s %(message)s",
-                                    level=log_level)
-            else:
-                logging.basicConfig(filename=opts.logfile,
-                                    filemode="a",
-                                    format="%(asctime)s %(levelname)s %(message)s",
-                                    level=log_level)
+
+        if opts.logfile is not None and opts.logfile != '-':
+            logging.basicConfig(filename=opts.logfile,
+                                filemode="a",
+                                format="%(asctime)s %(levelname)s %(message)s",
+                                level=log_level)
         else:
             facility = getattr(logging.handlers.SysLogHandler, "LOG_LOCAL%s" % opts.log_facility)
             handler = logging.handlers.SysLogHandler("/dev/log", facility=facility)
@@ -83,7 +91,9 @@ class Runner(object):
         if opts.debug:
             opts.logfile = "-"
             opts.verbose = 2
-        self.configure_logging(opts)
+
+        self.configure_session_logging(opts)
+        self.configure_audit_logging(opts)
 
         event.EventState.save_file = "/var/run/yaybu/events.saved"
 
