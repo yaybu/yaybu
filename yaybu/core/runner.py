@@ -34,44 +34,6 @@ class Runner(object):
 
     resources = None
 
-    def configure_session_logging(self, opts):
-        root = logging.getLogger()
-        root.setLevel(logging.INFO)
-
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter("%(message)s"))
-        root.addHandler(handler)
-
-    def configure_audit_logging(self, opts):
-        """ configure the audit trail to log to file or to syslog """
-
-        if opts.simulate:
-            return
-
-        levels = {
-            'debug': logging.DEBUG,
-            'info': logging.INFO,
-            'warning': logging.WARNING,
-            'error': logging.ERROR,
-            'critical': logging.CRITICAL,
-            }
-
-        log_level = levels.get(opts.log_level, None)
-        if log_level is None:
-            raise KeyError("Log level %s not recognised, terminating" % opts.log_level)
-
-        if opts.logfile is not None and opts.logfile != '-':
-            logging.basicConfig(filename=opts.logfile,
-                                filemode="a",
-                                format="%(asctime)s %(levelname)s %(message)s",
-                                level=log_level)
-        else:
-            facility = getattr(logging.handlers.SysLogHandler, "LOG_LOCAL%s" % opts.log_facility)
-            handler = logging.handlers.SysLogHandler("/dev/log", facility=facility)
-            formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-            handler.setFormatter(formatter)
-            logging.getLogger().addHandler(handler)
-
     def trampoline(self, username):
         command = ["sudo", "-u", username] + sys.argv[0:1]
 
