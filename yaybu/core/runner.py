@@ -54,9 +54,6 @@ class Runner(object):
             opts.logfile = "-"
             opts.verbose = 2
 
-        self.configure_session_logging(opts)
-        self.configure_audit_logging(opts)
-
         event.EventState.save_file = "/var/run/yaybu/events.saved"
 
         # This makes me a little sad inside, but the whole

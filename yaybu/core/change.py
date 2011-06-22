@@ -11,35 +11,40 @@ from yaybu.core import error
 logger = logging.getLogger("audit")
 
 
-class ResourceHeaderHandler(object):
+class ResourceFormatter(logging.Formatter):
 
     """ Automatically add a header and footer to log messages about particular
     resources """
 
-    def __init__(self, target):
-        self.target = target
+    def __init__(self, *args):
+        logging.Formatter.__init__(self, *args)
         self.resource = None
 
-    def emit(self, record):
+    def format(self, record):
         next_resource = getattr(record, "resource", None)
+
+        rv = ""
 
         # Is the logging now about a different resource?
         if self.resource != next_resource:
 
             # If there was already a resource, let us add a footer
             if self.resource:
-                self.render_resource_footer()
+                rv += self.render_resource_footer()
 
             self.resource = next_resource
 
             # Are we now logging for a new resource?
             if self.resource:
-                self.render_resource_header()
+                rv += self.render_resource_header()
 
-        self.target.emit(record)
+        return rv + logging.Formatter.format(self, record)
 
     def render_resource_header(self):
-        rl = len(unicode(self.resource))
+        header = unicode(self.resource)
+        encoded = header.encode("utf-8")
+
+        rl = len(header)
         if rl < 80:
             total_minuses = 77 - rl
             minuses = total_minuses/2
@@ -48,13 +53,12 @@ class ResourceHeaderHandler(object):
             minuses = 4
             leftover = 0
 
-        self.target.emit("/%s %r %s" % ("-"*minuses,
-                                 self.resource,
-                                 "-"*(minuses + leftover)))
+        return "/%s %s %s\n" % ("-"*minuses,
+                                 encoded,
+                                 "-"*(minuses + leftover))
 
     def render_resource_footer(self):
-        self.target.emit("\%s" % ("-" *79,))
-        self.target.emit("")
+        return "\%s\n\n" % ("-" *79,)
 
 
 class Change(object):
@@ -155,7 +159,8 @@ class ChangeLog:
         root.setLevel(logging.INFO)
 
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter("%(message)s"))
+        #handler.setFormatter(logging.Formatter("%(message)s"))
+        handler.setFormatter(ResourceFormatter("%(message)s"))
         root.addHandler(handler)
 
     def configure_audit_logging(self):
