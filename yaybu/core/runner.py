@@ -123,7 +123,10 @@ class Runner(object):
 
             if not changed:
                 # nothing changed
+                ctx.changelog.info("No changes were required")
                 sys.exit(255)
+
+            ctx.changelog.info("All changes were applied successfully")
             sys.exit(0)
 
         except error.ExecutionError, e:
@@ -133,6 +136,8 @@ class Runner(object):
             print >>sys.stderr, "Terminated due to execution error in processing"
             sys.exit(e.returncode)
         except error.Error, e:
+            # If its not an Execution error then it won't have been logged by the
+            # Resource.apply() machinery - make sure we log it here.
             ctx.changelog.write(str(e))
             print >>sys.stderr, "Terminated due to execution error in processing"
             sys.exit(e.returncode)
