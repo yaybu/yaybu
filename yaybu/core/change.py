@@ -23,7 +23,7 @@ class ResourceFormatter(logging.Formatter):
     def format(self, record):
         next_resource = getattr(record, "resource", None)
 
-        rv = ""
+        rv = u""
 
         # Is the logging now about a different resource?
         if self.resource != next_resource:
@@ -38,7 +38,8 @@ class ResourceFormatter(logging.Formatter):
             if self.resource:
                 rv += self.render_resource_header()
 
-        return rv + logging.Formatter.format(self, record)
+        rv += u"| " + logging.Formatter.format(self, record)
+        return rv
 
     def render_resource_header(self):
         header = unicode(self.resource)
@@ -53,12 +54,12 @@ class ResourceFormatter(logging.Formatter):
             minuses = 4
             leftover = 0
 
-        return "/%s %s %s\n" % ("-"*minuses,
+        return u"/%s %s %s\n" % ("-"*minuses,
                                  encoded,
                                  "-"*(minuses + leftover))
 
     def render_resource_footer(self):
-        return "\%s\n\n" % ("-" *79,)
+        return u"\%s\n\n" % ("-" *79,)
 
 
 class Change(object):
@@ -214,7 +215,7 @@ class ChangeLog:
         if self.current_resource:
             self.current_resource.info(message)
         else:
-            self.logger.info("%s", message, *args)
+            self.logger.info(message, *args)
 
     def notice(self, message, *args, **kwargs):
         """ Write a textual notification message. This is used for both the
@@ -222,6 +223,6 @@ class ChangeLog:
         if self.current_resource:
             self.current_resource.notice(message)
         else:
-            self.logger.info("%s", message, *args)
+            self.logger.info(message, *args)
 
 
