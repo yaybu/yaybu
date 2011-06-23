@@ -110,4 +110,11 @@ class Runner(object):
             ctx.changelog.write(str(e))
             print >>sys.stderr, "Terminated due to execution error in processing"
             sys.exit(e.returncode)
+        except SystemExit:
+            # A normal sys.exit() is fine..
+            raise
+        #except:
+        #    from yaybu.core.debug import post_mortem
+        #    post_mortem()
+        #    raise
 
