@@ -80,22 +80,12 @@ class TestCase(testtools.TestCase):
 
     def yaybu(self, *args):
         filespath = os.path.join(self.chroot_path, "tmp", "files")
-        env = [
-            "--env-passthrough", "COWDANCER_ILISTFILE",
-            "--env-passthrough", "FAKECHROOT",
-            "--env-passthrough", "FAKECHROOT_VERSION",
-            "--env-passthrough", "FAKECHROOT_BASE",
-            "--env-passthrough", "FAKED_MODE",
-            "--env-passthrough", "FAKEROOTKEY",
-            "--env-passthrough", "LD_PRELOAD",
-            "--env-passthrough", "LD_LIBRARY_PATH",
-            ]
         args = list(args)
         if self.test_network:
             args.insert(0, "localhost")
             args.insert(0, "--host")
 
-        return self.call(["yaybu"] + env + ["-d", "--ypath", filespath] + list(args))
+        return self.call(["yaybu", "-d", "--ypath", filespath] + list(args))
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """
@@ -144,6 +134,10 @@ class TestCase(testtools.TestCase):
         sshsrc = sibpath(__file__, "files/ssh")
         sshdst = os.path.join(self.chroot_path, "usr", "bin", "ssh")
         shutil.copy(sshsrc, sshdst)
+
+        cfgsrc = sibpath(__file__, "files/yaybu.cfg")
+        cfgdest = os.path.join(self.chroot_path, "etc", "yaybu")
+        shutil.copy(cfgsrc, cfgdest)
 
     def tearDown(self):
         super(TestCase, self).tearDown()

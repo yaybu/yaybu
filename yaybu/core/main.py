@@ -51,6 +51,11 @@ def main():
 
     atexit.register(logging.shutdown)
 
+    # Probably not the best place to put this stuff...
+    if os.path.exists("/etc/yaybu"):
+        config = yay.load_uri("/etc/yaybu")
+        opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
+
     if opts.host:
         r = remote.RemoteRunner()
     else:

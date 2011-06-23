@@ -126,6 +126,9 @@ class RemoteRunContext(RunContext):
         return rsp
 
     def get_file(self, filename):
+        if filename.startswith("/"):
+            return super(RemoteRunContext, self).get_file(filename)
+
         self.connection.request("GET", "/files/" + filename)
         rsp = self.connection.getresponse()
 

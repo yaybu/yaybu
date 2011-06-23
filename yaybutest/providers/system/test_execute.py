@@ -7,9 +7,9 @@ from yaybu.util import sibpath
 class TestExecute(TestCase):
 
     def test_execute_on_path(self):
-        src = sibpath(__file__, os.path.join("..", "..", "files"))
-        dst = os.path.join(self.chroot_path, "tmp", "files")
-        shutil.copytree(src, dst)
+        src = sibpath(__file__, "../../files/test_execute_on_path.sh")
+        dst = os.path.join(self.chroot_path, "usr", "bin", "test_execute_on_path.sh")
+        shutil.copy(src, dst)
 
         self.check_apply("""
             resources:
@@ -21,9 +21,9 @@ class TestExecute(TestCase):
 
     def test_execute_touches(self):
         """ test that command works as expected """
-        src = sibpath(__file__, os.path.join("..", "..", "files"))
-        dst = os.path.join(self.chroot_path, "tmp", "files")
-        shutil.copytree(src, dst)
+        src = sibpath(__file__, "../../files/test_touches.sh")
+        dst = os.path.join(self.chroot_path, "usr", "bin", "test_touches.sh")
+        shutil.copy(src, dst)
 
         self.check_apply("""
             resources:
