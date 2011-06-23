@@ -231,3 +231,26 @@ class ChangeLog:
             self.logger.info(message, *args)
 
 
+class RemoteHandler(logging.Handler):
+
+    def __init__(self, connection):
+        logging.Handler.__init__(self)
+        self.connection = connection
+
+    def emit(self, record):
+        data = json.dumps(urllib.urlencode(record.__dict__))
+
+        self.connection.request("POST", "/changelog/", data, {"Content-Length": len(data)})
+        rsp = self.ctx.connection.getresponse()
+
+
+class RemoteChangelog(Changelog):
+
+    def configure_session_logging(self):
+        root = logging.getLogger()
+        root.setLevel(logging.INFO)
+
+        handler = RemoteHandler(self.ctx.connection)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        root.addHandler(handler)
+
