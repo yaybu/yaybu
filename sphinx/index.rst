@@ -29,7 +29,7 @@ Contents:
    resources
    errorhandling
    yay_reference
-   logging
+   internals
    hacking
    todo
 
