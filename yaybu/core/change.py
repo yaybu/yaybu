@@ -258,3 +258,8 @@ class RemoteChangelog(Changelog):
         handler.setFormatter(logging.Formatter("%(message)s"))
         root.addHandler(handler)
 
+    def configure_audit_logging(self):
+        # We don't want to try and log changes in syslog on the box we are pressing go on,
+        # only the box we are deploying to. So no audit logging here.
+        pass
+

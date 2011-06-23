@@ -30,8 +30,6 @@ from yaybu.core import error
 class RemoteRunner(Runner):
 
     def run(self, opts, args):
-        self.configure_logging(opts)
-
         rc = RunContext(args[0], opts)
 
         if ":" in opts.host:
