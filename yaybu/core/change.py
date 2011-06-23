@@ -245,7 +245,7 @@ class RemoteHandler(logging.Handler):
         data = json.dumps(record.__dict__)
 
         self.connection.request("POST", "/changelog/", data, {"Content-Length": len(data)})
-        rsp = self.ctx.connection.getresponse()
+        rsp = self.connection.getresponse()
 
 
 class RemoteChangeLog(ChangeLog):
