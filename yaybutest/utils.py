@@ -1,6 +1,7 @@
 import os, signal, shlex, subprocess, tempfile, time
 import testtools
 from yaybu.core import error
+from yaybu.util import sibpath
 
 def default_distro():
     options = {
@@ -42,6 +43,8 @@ def refresh_environment(base_image):
 class TestCase(testtools.TestCase):
 
     fakerootkey = None
+
+    test_network = os.environ.get("TEST_NETWORK", "0") == "1"
 
     def cleanup_session(self):
         if self.faked:
@@ -132,6 +135,10 @@ class TestCase(testtools.TestCase):
         super(TestCase, self).setUp()
         self.chroot_path = os.path.realpath("tmp")
         subprocess.check_call(["cp", "-al", os.getenv("YAYBU_TESTS_BASE"), self.chroot_path])
+
+        sshsrc = sibpath(__file__, "files/ssh")
+        sshdst = os.path.join(self.chroot_path, "usr", "bin", "ssh")
+        shutil.copy(sshsrc, sshdst)
 
     def tearDown(self):
         super(TestCase, self).tearDown()
