@@ -24,7 +24,7 @@ class ChangeLogResource(HttpResource):
     def render_POST(self, context, request, restpath):
         body = request.rfile.read(int(request.headers["content-length"]))
 
-        context.changelog.handle(logging.makeRecord(json.loads(body)))
+        context.changelog.handle(logging.makeLogRecord(json.loads(body)))
 
         request.send_response(200, "OK")
         request.send_header("Content-Type", "application/octect-stream")

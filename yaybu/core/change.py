@@ -242,13 +242,13 @@ class RemoteHandler(logging.Handler):
         self.connection = connection
 
     def emit(self, record):
-        data = json.dumps(urllib.urlencode(record.__dict__))
+        data = json.dumps(record.__dict__)
 
         self.connection.request("POST", "/changelog/", data, {"Content-Length": len(data)})
         rsp = self.ctx.connection.getresponse()
 
 
-class RemoteChangelog(Changelog):
+class RemoteChangeLog(ChangeLog):
 
     def configure_session_logging(self):
         root = logging.getLogger()
