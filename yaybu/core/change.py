@@ -5,6 +5,7 @@ import abc
 import sys
 import logging
 import types
+import json
 
 from yaybu.core import error
 
@@ -229,6 +230,9 @@ class ChangeLog:
             self.current_resource.notice(message, *args)
         else:
             self.logger.info(message, *args)
+
+    def handle(self, record):
+        self.logger.handle(record)
 
 
 class RemoteHandler(logging.Handler):
