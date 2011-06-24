@@ -231,6 +231,9 @@ class ChangeLog:
         else:
             self.logger.info(message, *args)
 
+    def error(self, message, *args):
+        self.logger.error(message, *args)
+
     def handle(self, record):
         self.logger.handle(record)
 
@@ -246,6 +249,7 @@ class RemoteHandler(logging.Handler):
 
         self.connection.request("POST", "/changelog/", data, {"Content-Length": len(data)})
         rsp = self.connection.getresponse()
+        rsp.read()
 
 
 class RemoteChangeLog(ChangeLog):
