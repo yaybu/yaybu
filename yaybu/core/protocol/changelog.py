@@ -22,9 +22,13 @@ class ChangeLogResource(HttpResource):
     leaf = True
 
     def render_POST(self, context, request, restpath):
-        body = request.rfile.read(int(request.headers["content-length"]))
+        body = json.loads(request.rfile.read(int(request.headers["content-length"])))
 
-        context.changelog.handle(logging.makeLogRecord(json.loads(body)))
+        # Python logging seems to screw up if this isnt a tuple
+        body['args'] = tuple(body.get('args', []))
+
+        logrecord = logging.makeLogRecord(body)
+        context.changelog.handle(logrecord)
 
         request.send_response(200, "OK")
         request.send_header("Content-Type", "application/octect-stream")
