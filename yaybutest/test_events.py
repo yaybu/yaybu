@@ -5,7 +5,7 @@ from yaybu.core import error
 
 class TestEvents(TestCase):
 
-    def test_recover(self):
+    def test_nochange(self):
         self.check_apply("""
             resources:
               - Directory:
@@ -25,6 +25,8 @@ class TestEvents(TestCase):
                          on: /etc/wibble
             """)
         self.assertEqual(rv, error.NothingChanged.returncode)
+
+    def test_recover(self):
         rv = self.apply("""
             resources:
               - Directory:
