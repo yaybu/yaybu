@@ -35,6 +35,10 @@ class RunContext(object):
     def __init__(self, configfile, opts=None):
         self.path = []
         self.ypath = []
+        self.options = {}
+
+        if os.path.exists("/etc/yaybu"):
+            self.options = yay.load_uri("/etc/yaybu")
 
         if opts is not None:
             logger.debug("Invoked with ypath: %r" % opts.ypath)
