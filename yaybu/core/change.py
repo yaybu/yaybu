@@ -176,7 +176,11 @@ class ChangeLog:
         if self.ctx.simulate:
             return
 
-        return
+        options = self.ctx.options.get("auditlog", {})
+        mode = options.get("mode", "off")
+
+        if mode == "off":
+            return
 
         levels = {
             'debug': logging.DEBUG,
@@ -186,17 +190,20 @@ class ChangeLog:
             'critical': logging.CRITICAL,
             }
 
-        log_level = levels.get(opts.log_level, None)
-        if log_level is None:
-            raise KeyError("Log level %s not recognised, terminating" % opts.log_level)
+        level = levels.get(options.get("level", "info"), None)
+        if level is None:
+            raise KeyError("Log level %s not recognised, terminating" % option["level"])
 
-        if opts.logfile is not None and opts.logfile != '-':
-            logging.basicConfig(filename=opts.logfile,
-                                filemode="a",
-                                format="%(asctime)s %(levelname)s %(message)s",
-                                level=log_level)
-        else:
-            facility = getattr(logging.handlers.SysLogHandler, "LOG_LOCAL%s" % opts.log_facility)
+        root = logging.getLogger()
+
+        if mode == "file":
+            handler = logging.FileHandler(options.get("logfile", "/var/log/yaybu.log"))
+            #handler.setFormatter(logging.Formatter("%(message)s"))
+            handler.setFormatter(ResourceFormatter("%(asctime)s %(message)s"))
+            root.addHandler(handler)
+
+        elif mode == "syslog":
+            facility = getattr(logging.handlers.SysLogHandler, "LOG_LOCAL%s" % options.get("facility", "7"))
             handler = logging.handlers.SysLogHandler("/dev/log", facility=facility)
             formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
             handler.setFormatter(formatter)
