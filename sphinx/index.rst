@@ -27,13 +27,11 @@ Contents:
    terminology
    tutorial
    resources
-   errorhandling
    yay_reference
    remote
    logging
    security
-   hacking
-   todo
+   hacking/index
 
 Indices and tables
 ==================

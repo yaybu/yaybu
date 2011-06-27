@@ -29,7 +29,7 @@ Ubuntu users have the option of using our experimental yaybu-nightly PPA::
 If you don't have the add-apt-repository in your installation, its
 equivalent to::
 
-    cat > /etc/apt/sources.list.d/yaybu.list < EOF
+    cat > /etc/apt/sources.list.d/yaybu.list << EOF
     deb http://ppa.launchpad.net/yaybu-team/yaybu-nightly/ubuntu lucid main
     deb-src http://ppa.launchpad.net/yaybu-team/yaybu-nightly/ubuntu lucid main
     EOF
