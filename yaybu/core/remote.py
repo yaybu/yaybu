@@ -30,8 +30,6 @@ from yaybu.core import error
 class RemoteRunner(Runner):
 
     def run(self, opts, args):
-        self.configure_logging(opts)
-
         rc = RunContext(args[0], opts)
 
         if ":" in opts.host:
@@ -69,7 +67,8 @@ class RemoteRunner(Runner):
             root.put_child("changelog", ChangeLogResource())
 
             Server(rc, root, p.stdout, p.stdin).serve_forever()
-            sys.exit(p.wait())
+            p.wait()
+            sys.exit(p.returncode)
 
         except error.Error, e:
             print >>sys.stderr, "Error: %s" % str(e)
@@ -77,5 +76,5 @@ class RemoteRunner(Runner):
             p.kill()
             sys.exit(e.returncode)
 
-        return 0
+        return p.returncode
 

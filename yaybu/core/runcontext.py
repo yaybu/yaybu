@@ -35,6 +35,10 @@ class RunContext(object):
     def __init__(self, configfile, opts=None):
         self.path = []
         self.ypath = []
+        self.options = {}
+
+        if os.path.exists("/etc/yaybu"):
+            self.options = yay.load_uri("/etc/yaybu")
 
         if opts is not None:
             logger.debug("Invoked with ypath: %r" % opts.ypath)
@@ -108,8 +112,8 @@ class RunContext(object):
 class RemoteRunContext(RunContext):
 
     def __init__(self, configfile, opts=None):
-        super(RemoteRunContext, self).__init__(configfile, opts)
         self.connection = HTTPConnection()
+        super(RemoteRunContext, self).__init__(configfile, opts)
 
     def setup_changelog(self):
         self.changelog = change.RemoteChangeLog(self)
@@ -126,6 +130,9 @@ class RemoteRunContext(RunContext):
         return rsp
 
     def get_file(self, filename):
+        if filename.startswith("/"):
+            return super(RemoteRunContext, self).get_file(filename)
+
         self.connection.request("GET", "/files/" + filename)
         rsp = self.connection.getresponse()
 

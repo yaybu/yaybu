@@ -193,19 +193,19 @@ class ShellTextRenderer(change.TextRenderer):
 
     def command(self, command):
         if not self.passthru:
-            self.logger.notice(u"{0}", u"$ " + u" ".join(command))
+            self.logger.notice(u"$ " + u" ".join(command))
 
     def output(self, returncode):
         if self.verbose >= 1 and returncode != 0 and not self.passthru:
-            self.logger.notice("returned {0}", returncode)
+            self.logger.notice("returned %s", returncode)
 
     def stdout(self, data):
        if self.verbose >= 2 and not self.passthru:
-            self.logger.info("{0}", data)
+            self.logger.info(data)
 
     def stderr(self, data):
         if self.verbose >= 1:
-            self.logger.info("{0}", data)
+            self.logger.info(data)
 
     def exception(self, exception):
         self.logger.notice("Exception: %r" % exception)
@@ -240,8 +240,8 @@ class Shell(object):
         cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group, self.simulate)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
-            self.context.changelog.info("{0}", cmd.stdout)
-            self.context.changelog.notice("{0}", cmd.stderr)
+            self.context.changelog.info(cmd.stdout)
+            self.context.changelog.notice(cmd.stderr)
             raise error.SystemError(cmd.returncode)
         return (cmd.returncode, cmd.stdout, cmd.stderr)
 

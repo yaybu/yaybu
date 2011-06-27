@@ -16,7 +16,7 @@ import os
 import optparse
 import yay
 from yaybu.core import runner, remote, runcontext
-
+import logging, atexit
 
 def main():
     parser = optparse.OptionParser()
@@ -48,6 +48,13 @@ def main():
 
     if opts.ssh_auth_sock:
         os.environ["SSH_AUTH_SOCK"] = opts.ssh_auth_sock
+
+    atexit.register(logging.shutdown)
+
+    # Probably not the best place to put this stuff...
+    if os.path.exists("/etc/yaybu"):
+        config = yay.load_uri("/etc/yaybu")
+        opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
 
     if opts.host:
         r = remote.RemoteRunner()

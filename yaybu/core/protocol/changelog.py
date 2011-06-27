@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+import os, logging, json
 
 from yaybu.core.protocol.server import HttpResource
 
@@ -21,18 +21,14 @@ class ChangeLogResource(HttpResource):
 
     leaf = True
 
-    def do_write(self, ctx, body):
-        ctx.changelog.write(body)
-
     def render_POST(self, context, request, restpath):
-        body = request.rfile.read(int(request.headers["content-length"]))
+        body = json.loads(request.rfile.read(int(request.headers["content-length"])))
 
-        if not hasattr(self, "do_" + restpath):
-            request.send_response(404, "Resource not found")
-            return
+        # Python logging seems to screw up if this isnt a tuple
+        body['args'] = tuple(body.get('args', []))
 
-        method = getattr(self, "do_" + restpath)
-        method(context, body)
+        logrecord = logging.makeLogRecord(body)
+        context.changelog.handle(logrecord)
 
         request.send_response(200, "OK")
         request.send_header("Content-Type", "application/octect-stream")

@@ -186,7 +186,7 @@ class FileChangeTextRenderer(change.TextRenderer):
     renderer_for = FileContentChanger
 
     def empty_file(self, filename):
-        self.logger.notice("Emptied file {0!r}", filename)
+        self.logger.notice("Emptied file %s", filename)
 
     def new_file(self, filename, contents, sensitive):
         self.logger.notice("Writting new file '%s'" % filename)
@@ -194,7 +194,7 @@ class FileChangeTextRenderer(change.TextRenderer):
             self.diff("", contents)
 
     def changed_file(self, filename, previous, replacement, sensitive):
-        self.logger.notice("Changed file {0!r}", filename)
+        self.logger.notice("Changed file %s", filename)
         if not sensitive:
             self.diff(previous, replacement)
 
@@ -202,7 +202,7 @@ class FileChangeTextRenderer(change.TextRenderer):
         if not binary_buffers(previous, replacement):
             diff = "".join(difflib.unified_diff(previous.splitlines(1), replacement.splitlines(1)))
             for l in diff.splitlines():
-                self.logger.info("    {0}", l)
+                self.logger.info("    %s", l)
         else:
             self.logger.notice("Binary contents; not showing delta")
 

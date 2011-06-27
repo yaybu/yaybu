@@ -1,6 +1,7 @@
-import os, signal, shlex, subprocess, tempfile, time
+import os, signal, shlex, subprocess, tempfile, time, shutil
 import testtools
 from yaybu.core import error
+from yaybu.util import sibpath
 
 def default_distro():
     options = {
@@ -24,7 +25,7 @@ def build_environment(base_image):
     distro = default_distro()
     commands = [
         "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv %(distro)s %(base_image)s",
-        "fakeroot fakechroot -s chroot %(base_image)s apt-get update",
+        "fakeroot fakechroot -s /usr/sbin/chroot %(base_image)s apt-get update",
         ]
     if not os.path.exists(base_image):
         run_commands(commands, base_image, distro)
@@ -34,7 +35,7 @@ def refresh_environment(base_image):
     commands = [
         "rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
         "python setup.py sdist --dist-dir %(base_image)s",
-        "fakeroot fakechroot -s chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
+        "fakeroot fakechroot -s /usr/sbin/chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
         ]
     run_commands(commands, base_image)
 
@@ -42,6 +43,8 @@ def refresh_environment(base_image):
 class TestCase(testtools.TestCase):
 
     fakerootkey = None
+
+    test_network = os.environ.get("TEST_NETWORK", "0") == "1"
 
     def cleanup_session(self):
         if self.faked:
@@ -70,29 +73,24 @@ class TestCase(testtools.TestCase):
         env['FAKEROOTKEY'] = self.get_session()
         env['LD_PRELOAD'] = "/usr/lib/libfakeroot/libfakeroot-sysv.so"
 
-        chroot = ["fakechroot", "-s", "cow-shell", "chroot", self.chroot_path]
+        chroot = ["fakechroot", "-s", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
         retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
         self.wait_for_cowdancer()
         return retval
 
     def yaybu(self, *args):
         filespath = os.path.join(self.chroot_path, "tmp", "files")
-        env = [
-            "--env-passthrough", "COWDANCER_ILISTFILE",
-            "--env-passthrough", "FAKECHROOT",
-            "--env-passthrough", "FAKECHROOT_VERSION",
-            "--env-passthrough", "FAKECHROOT_BASE",
-            "--env-passthrough", "FAKED_MODE",
-            "--env-passthrough", "FAKEROOTKEY",
-            "--env-passthrough", "LD_PRELOAD",
-            "--env-passthrough", "LD_LIBRARY_PATH",
-            ]
-        return self.call(["yaybu"] + env + ["-d", "--ypath", filespath] + list(args))
+        args = list(args)
+        if self.test_network:
+            args.insert(0, "localhost")
+            args.insert(0, "--host")
+
+        return self.call(["yaybu", "-d", "--ypath", filespath] + list(args))
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """
-        filespath = os.path.join(self.chroot_path, "tmp", "files")
-        return self.call(["yaybu", "--simulate", "--ypath", filespath] + list(args))
+        args = ["--simulate"] + list(args)
+        return self.yaybu(*args)
 
     def apply(self, contents, *args):
         path = self.write_temporary_file(contents)
@@ -132,6 +130,14 @@ class TestCase(testtools.TestCase):
         super(TestCase, self).setUp()
         self.chroot_path = os.path.realpath("tmp")
         subprocess.check_call(["cp", "-al", os.getenv("YAYBU_TESTS_BASE"), self.chroot_path])
+
+        sshsrc = sibpath(__file__, "files/ssh")
+        sshdst = os.path.join(self.chroot_path, "usr", "bin", "ssh")
+        shutil.copy(sshsrc, sshdst)
+
+        cfgsrc = sibpath(__file__, "files/yaybu.cfg")
+        cfgdest = os.path.join(self.chroot_path, "etc", "yaybu")
+        shutil.copy(cfgsrc, cfgdest)
 
     def tearDown(self):
         super(TestCase, self).tearDown()
