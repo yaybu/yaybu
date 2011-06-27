@@ -29,7 +29,9 @@ Contents:
    resources
    errorhandling
    yay_reference
-   internals
+   remote
+   logging
+   security
    hacking
    todo
 
