@@ -22,7 +22,7 @@ class TestEvents(TestCase):
                   policy:
                      apply:
                          when: apply
-                         on: /etc/wibble
+                         on: Directory[/etc/wibble]
             """)
         self.assertEqual(rv, error.NothingChanged.returncode)
 
