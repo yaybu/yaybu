@@ -52,6 +52,24 @@ class RequestHandler(BaseHTTPRequestHandler):
     def write_fileobj(self, fileobj):
         shutil.copyfileobj(fileobj, self.wfile)
 
+    def send_error(self, code, message=None):
+        """Send and log an error reply.
+
+        We override the standard python code *soley* to keep the connection alive
+        """
+
+        try:
+            short, long = self.responses[code]
+        except KeyError:
+            short, long = '???', '???'
+        if message is None:
+            message = short
+
+        self.send_response(code, message)
+        self.send_header("Content-Type", self.error_content_type)
+        self.send_header('Connection', 'keepalive')
+        self.end_headers()
+
 
 class Server(object):
 
