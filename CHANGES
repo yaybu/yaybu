@@ -7,6 +7,8 @@ Changelog for yaybu
 - Logging is now via python logging module
 - Audit log to syslog is working again
 - Audit log is configurable through /etc/yaybu
+- Added yaybu.core.debug to assist debugging yaybu in remote mode
+- Can run network tests with TEST_NETWORK=1 ./bin/test discover
 
 
 0.1.4 (2011-06-16)
