@@ -1,8 +1,6 @@
-Tutorial
-========
-
+===============
 Simple PHP Host
----------------
+===============
 
 We have a computer "mybox" on which we wish to deploy a simple PHP application
 from Subversion, based on tagged versions of the php content: i.e. we tag our

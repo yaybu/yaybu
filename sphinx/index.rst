@@ -24,11 +24,10 @@ Contents:
 
    intro
    installation
-   terminology
-   tutorial
-   resources
-   yay_reference
-   remote
+   tutorial/index
+   reference/index
+   examples
+   techniques
    logging
    security
    hacking/index
