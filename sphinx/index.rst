@@ -26,8 +26,8 @@ Contents:
    installation
    tutorial/index
    reference/index
-   examples
-   techniques
+   examples/index
+   techniques/index
    logging
    security
    hacking/index

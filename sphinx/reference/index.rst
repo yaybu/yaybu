@@ -6,5 +6,5 @@ Reference
    :maxdepth: 1
 
    terminology
-   yay
+   :doc:`yay <yay:/index>`
    yaybu

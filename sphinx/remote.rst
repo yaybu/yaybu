@@ -12,7 +12,7 @@ If you have this configured correctly you just::
 
 
 What happens when I use Yaybu in remote mode?
-============================================
+=============================================
 
 When you use remote mode Yaybu will SSH into the target machine and
 start another Yaybu process remotely. This process will communicate
