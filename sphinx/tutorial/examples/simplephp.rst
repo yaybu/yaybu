@@ -13,11 +13,13 @@ list of sites to deploy.
 This is meant to introduce you to the core concepts of yaybu and yay. It is
 NOT a production ready recipe for Apache and PHP on Linux!!
 
+.. todo:: add links out to appropriate parts of reference
 
 Your first recipe: installing some packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We'll meet our first resource type and how to get them to apply.
+
 
 In `mybox.yay` add the following::
 
