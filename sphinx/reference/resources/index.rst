@@ -20,15 +20,15 @@ because it will be capitalised.
 .. toctree::
    :maxdepth: 1
 
-   resources/package
-   resources/execute
-   resources/file
-   resources/directory
-   resources/link
-   resources/special
-   resources/user
-   resources/group
-   resources/checkout
-   resources/service
-   resources/prompt
+   package
+   execute
+   file
+   directory
+   link
+   special
+   user
+   group
+   checkout
+   service
+   prompt
 

@@ -26,7 +26,6 @@ Contents:
    installation
    tutorial/index
    reference/index
-   examples/index
    techniques/index
    logging
    security
