@@ -250,6 +250,19 @@ class File(provider.Provider):
 
         return iter(self.resource.template_args)
 
+    def get_template_args(self):
+        """ I return a copy of the template_args that contains only basic types (i.e. no protected strings) """
+        def _(val):
+            if isintance(val, dict):
+                return dict((k,_(v)) for (k,v) in val)
+            elif isintance(val, list):
+                return list(_(v) for v in val)
+            elif isinstance(val, ProtectedString):
+                return val.unprotected
+            else:
+                return val
+        return _(self.resource.template_args)
+
     def apply(self, context):
         name = self.resource.name
 
@@ -261,7 +274,7 @@ class File(provider.Provider):
             # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
             env = Environment(line_statement_prefix='%')
             template = env.from_string(context.get_file(self.resource.template).read())
-            contents = template.render(self.resource.template_args) + "\n" # yuk
+            contents = template.render(self.get_template_args()) + "\n" # yuk
             sensitive = self.has_protected_strings()
         elif self.resource.static:
             contents = context.get_file(self.resource.static).read()
