@@ -14,7 +14,7 @@
 
 import os
 import logging
-import json
+import pickle
 import subprocess
 
 import yay
@@ -121,7 +121,7 @@ class RemoteRunContext(RunContext):
     def get_config(self):
         self.connection.request("GET", "/config")
         rsp = self.connection.getresponse()
-        return json.load(rsp)
+        return pickle.loads(rsp.read())
 
     def get_decrypted_file(self, filename):
         self.connection.request("GET", "/encrypted/" + filename)
