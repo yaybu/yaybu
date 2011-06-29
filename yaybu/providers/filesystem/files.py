@@ -33,6 +33,9 @@ from yaybu.core import provider
 from yaybu.core import change
 from yaybu.core import error
 
+from yay.protectedstring import ProtectedString
+
+
 def binary_buffers(*buffers):
 
     """ Check all of the passed buffers to see if any of them are binary. If
@@ -228,6 +231,25 @@ class File(provider.Provider):
             elif not os.path.isdir(path):
                 raise error.PathComponentNotDirectory(path)
 
+    def has_protected_strings(self):
+        def iter(val):
+            if isinstance(val, dict):
+                for v in val.values():
+                    if iter(v):
+                        return True
+                return False
+
+            elif isinstance(val, list):
+                for v in val:
+                    if iter(v):
+                        return True
+                return False
+
+            else:
+                return isinstance(val, ProtectedString)
+
+        return iter(self.resource.template_args)
+
     def apply(self, context):
         name = self.resource.name
 
@@ -240,7 +262,7 @@ class File(provider.Provider):
             env = Environment(line_statement_prefix='%')
             template = env.from_string(context.get_file(self.resource.template).read())
             contents = template.render(self.resource.template_args) + "\n" # yuk
-            sensitive = False
+            sensitive = self.has_protected_strings()
         elif self.resource.static:
             contents = context.get_file(self.resource.static).read()
             sensitive = False

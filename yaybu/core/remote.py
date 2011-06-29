@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import subprocess
-import json
+import pickle
 import sys
 
 import yay
@@ -61,7 +61,7 @@ class RemoteRunner(Runner):
             p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
             root = HttpResource()
-            root.put_child("config", StaticResource(json.dumps(rc.get_config())))
+            root.put_child("config", StaticResource(pickle.dumps(rc.get_config())))
             root.put_child("files", FileResource())
             root.put_child("encrypted", EncryptedResource())
             root.put_child("changelog", ChangeLogResource())
