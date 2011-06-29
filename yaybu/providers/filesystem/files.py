@@ -253,9 +253,9 @@ class File(provider.Provider):
     def get_template_args(self):
         """ I return a copy of the template_args that contains only basic types (i.e. no protected strings) """
         def _(val):
-            if isintance(val, dict):
-                return dict((k,_(v)) for (k,v) in val)
-            elif isintance(val, list):
+            if isinstance(val, dict):
+                return dict((k,_(v)) for (k,v) in val.items())
+            elif isinstance(val, list):
                 return list(_(v) for v in val)
             elif isinstance(val, ProtectedString):
                 return val.unprotected
