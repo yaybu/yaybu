@@ -57,7 +57,7 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, passthru=False, user=None, group=None, simulate=False):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, passthru=False, user=None, group=None, simulate=False, logas=None):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -67,6 +67,7 @@ class ShellCommand(change.Change):
         self.verbose = verbose
         self.passthru = passthru
         self.simulate = simulate
+        self.logas = logas
         self._generated_env = {}
 
         self.user = None
@@ -143,7 +144,7 @@ class ShellCommand(change.Change):
         command = self.command[:]
 
         renderer.passthru = self.passthru
-        renderer.command(command)
+        renderer.command(self.logas or command)
 
         env = {
             "HOME": self.homedir,
@@ -235,9 +236,9 @@ class Shell(object):
             return unicode(x, "utf-8")
         return map(uni, l)
 
-    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None):
+    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None, logas=None):
         command = self._tounicode(command)
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group, self.simulate)
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group, self.simulate, logas)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             self.context.changelog.info(cmd.stdout)

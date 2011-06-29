@@ -19,9 +19,8 @@ from yaybu.core import provider
 from yaybu.core import error
 from yaybu import resources
 
-import logging
+from yay.protectedstring import ProtectedString
 
-logger = logging.getLogger("provider")
 
 class Execute(provider.Provider):
 
@@ -36,12 +35,20 @@ class Execute(provider.Provider):
         cwd = self.resource.cwd or None
         env = self.resource.environment or None
 
-        command = shlex.split(command.encode("UTF-8"))
-        if not command[0].startswith("."):
-            command[0] = shell.locate_bin(command[0])
+        if isinstance(command, ProtectedString):
+            protected = command.protected
+            unprotected = command.unprotected
+        else:
+            protected = unprotected = command
 
-        returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env, user=self.resource.user,
-            group=self.resource.group, passthru=passthru, exceptions=False)
+        unprotected = shlex.split(unprotected.encode("UTF-8"))
+        protected = shlex.split(protected.encode("UTF-8"))
+
+        if not unprotected[0].startswith("."):
+            protected[0] = unprotected[0] = shell.locate_bin(unprotected[0])
+
+        returncode, stdout, stderr = shell.execute(unprotected, cwd=cwd, env=env, user=self.resource.user,
+            group=self.resource.group, passthru=passthru, exceptions=False, logas=protected)
 
         if not shell.simulate and expected_returncode != None and expected_returncode != returncode:
             raise error.CommandError("%s failed with return code %d" % (self.resource, returncode))
