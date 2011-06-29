@@ -22,6 +22,7 @@ import os
 from abc import ABCMeta, abstractmethod, abstractproperty
 import unicodedata
 import random
+from yay.protectedstring import ProtectedString
 
 unicode_glyphs = ''.join(
     unichr(char)
@@ -84,7 +85,7 @@ class String(Argument):
     def __set__(self, instance, value):
         if value is None:
             pass
-        elif not isinstance(value, unicode):
+        elif not isinstance(value, (unicode, ProtectedString)):
             value = unicode(value, 'utf-8')
         setattr(instance, self.arg_id, value)
 
