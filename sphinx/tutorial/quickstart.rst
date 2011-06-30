@@ -21,7 +21,7 @@ Then run it::
 You should see the following::
 
     /----------------------------- Execute[helloworld] -----------------------------
-    | $ echo Hello, World!
+    | # echo Hello, World!
     | Hello, World!
     \-------------------------------------------------------------------------------
     
@@ -53,7 +53,7 @@ Run it::
 You should see the following::
 
     /----------------------------- Execute[helloworld] -----------------------------
-    | $ cowsay Hello, World!
+    | # cowsay Hello, World!
     |  _______________
     | < Hello, World! >
     |  ---------------

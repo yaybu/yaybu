@@ -69,7 +69,7 @@ Lets run yaybu and see what happens::
 
     $ sudo yaybu config.yay -v
     /-------------------------------- Execute[test] --------------------------------
-    | $ /bin/echo *****
+    | # /bin/echo *****
     | password
     \-------------------------------------------------------------------------------
 
