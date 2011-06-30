@@ -194,7 +194,7 @@ class ShellTextRenderer(change.TextRenderer):
 
     def command(self, command):
         if not self.passthru:
-            self.logger.notice(u"$ " + u" ".join(command))
+            self.logger.notice(u"# " + u" ".join(command))
 
     def output(self, returncode):
         if self.verbose >= 1 and returncode != 0 and not self.passthru:
