@@ -44,9 +44,6 @@ class Execute(provider.Provider):
         unprotected = shlex.split(unprotected.encode("UTF-8"))
         protected = shlex.split(protected.encode("UTF-8"))
 
-        if not unprotected[0].startswith("."):
-            protected[0] = unprotected[0] = shell.locate_bin(unprotected[0])
-
         returncode, stdout, stderr = shell.execute(unprotected, cwd=cwd, env=env, user=self.resource.user,
             group=self.resource.group, passthru=passthru, exceptions=False, logas=protected)
 

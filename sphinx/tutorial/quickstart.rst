@@ -19,6 +19,7 @@ Then run it::
 (It needs to run as root so it can store and retrieve state in /var/run).
 
 You should see the following::
+
     /----------------------------- Execute[helloworld] -----------------------------
     | $ echo Hello, World!
     | Hello, World!
@@ -50,6 +51,7 @@ Run it::
     sudo yaybu -v helloworld2.yay
 
 You should see the following::
+
     /----------------------------- Execute[helloworld] -----------------------------
     | $ cowsay Hello, World!
     |  _______________
