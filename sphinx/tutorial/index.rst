@@ -4,10 +4,10 @@ Tutorial
 .. todo:: write tutorial introduction
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    quickstart
-   examples/index
    production
+   examples/index
    testing/index
    documenting
