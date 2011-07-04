@@ -11,7 +11,7 @@ class TestSimpleService(TestCase):
         dst = os.path.join(self.chroot_path, "tmp", "files")
         shutil.copytree(src, dst)
 
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Service:
                     name: test
@@ -20,16 +20,16 @@ class TestSimpleService(TestCase):
                     pidfile: /simple_daemon.pid
             """)
 
-        os.kill(int(open(self.enpathinate("/simple_daemon.pid")).read()), signal.SIGTERM)
+        os.kill(int(open(self.fixture.enpathinate("/simple_daemon.pid")).read()), signal.SIGTERM)
 
     def test_stop(self):
         src = sibpath(__file__, os.path.join("..", "..", "files"))
         dst = os.path.join(self.chroot_path, "tmp", "files")
         shutil.copytree(src, dst)
 
-        self.call(["python", "/tmp/files/simple_daemon"])
+        self.fixture.call(["python", "/tmp/files/simple_daemon"])
 
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Service:
                     name: test
@@ -39,7 +39,7 @@ class TestSimpleService(TestCase):
             """)
 
     def test_restart(self):
-        rv = self.apply("""
+        rv = self.fixture.apply("""
             resources:
                 - Service:
                     name: test

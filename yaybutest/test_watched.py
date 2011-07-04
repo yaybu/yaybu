@@ -6,7 +6,7 @@ from yaybu.core import error
 class TestWatched(TestCase):
 
     def test_watched(self):
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test_watched
