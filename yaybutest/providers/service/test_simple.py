@@ -3,31 +3,63 @@ import os, shutil, grp, signal
 from yaybutest.utils import TestCase
 from yaybu.util import sibpath
 
+simpleservice = """
+#! /usr/bin/env python
+import os, select, sys
+if __name__ == "__main__":
+    if os.fork() != 0:
+        os._exit(0)
+
+    os.setsid()
+
+    if os.fork() != 0:
+        os._exit(0)
+
+    open("simple_daemon.pid", "w").write(str(os.getpid()))
+    #os.chdir("/")
+    os.umask(0)
+
+    for fd in range(0, 1024):
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+
+    os.open("/dev/null", os.O_RDWR)
+
+    os.dup2(0, 1)
+    os.dup2(0, 2)
+
+    while True:
+        select.select([sys.stdin], [], [])
+"""
+
 
 class TestSimpleService(TestCase):
 
-    def test_start(self):
-        src = sibpath(__file__, os.path.join("..", "..", "files"))
-        dst = os.path.join(self.chroot_path, "tmp", "files")
-        shutil.copytree(src, dst)
+    def setUp(self):
+        super(TestSimpleService, self).setUp()
 
+        with self.fixture.open("/bin/simple_daemon", "w") as fp:
+            fp.write(simpleservice)
+
+    def test_start(self):
         self.fixture.check_apply("""
             resources:
                 - Service:
                     name: test
                     policy: start
-                    start: python /tmp/files/simple_daemon
+                    start: python /bin/simple_daemon
                     pidfile: /simple_daemon.pid
             """)
 
-        os.kill(int(open(self.fixture.enpathinate("/simple_daemon.pid")).read()), signal.SIGTERM)
+        with self.fixture.open("/simple_daemon.pid") as fp:
+            pid = int(fp.read())
+
+        os.kill(pid, signal.SIGTERM)
 
     def test_stop(self):
-        src = sibpath(__file__, os.path.join("..", "..", "files"))
-        dst = os.path.join(self.chroot_path, "tmp", "files")
-        shutil.copytree(src, dst)
-
-        self.fixture.call(["python", "/tmp/files/simple_daemon"])
+        self.fixture.call(["python", "/bin/simple_daemon"])
 
         self.fixture.check_apply("""
             resources:
@@ -51,3 +83,4 @@ class TestSimpleService(TestCase):
         # automatic idempotentcy check
         self.failUnlessEqual(rv, 0)
         self.failUnlessExists("/foo")
+

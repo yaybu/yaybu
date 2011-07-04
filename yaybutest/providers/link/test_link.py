@@ -19,7 +19,7 @@ class TestLink(TestCase):
                   group: root
             """)
 
-        self.fixture.failUnlessExists("/etc/somelink")
+        self.failUnlessExists("/etc/somelink")
 
     def test_remove_link(self):
         os.system("ln -s / %s" % self.fixture.enpathinate("/etc/toremovelink"))
@@ -47,8 +47,10 @@ class TestLink(TestCase):
         """ Test for the path already existing but is not a link. """
         with self.fixture.open("/bar_notalink", "w") as fp:
             fp.write("")
-        open(self.fixture.enpathinate("/bar_notalkink"), "w").write("")
-        open(self.fixture.enpathinate("/foo"), "w").write("")
+        with self.fixture.open("/foo", "w") as fp:
+            fp.write("")
+
+        # 142
         self.fixture.check_apply("""
             resources:
                 - Link:
@@ -62,7 +64,7 @@ class TestLink(TestCase):
         open(self.fixture.enpathinate("/baz"), "w").write("")
         open(self.fixture.enpathinate("/foo"), "w").write("")
         os.symlink(self.fixture.enpathinate("/baz"), self.fixture.enpathinate("/bar_elsewhere"))
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Link:
                     name: /bar_elsewhere

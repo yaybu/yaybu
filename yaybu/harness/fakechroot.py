@@ -172,20 +172,23 @@ class FakeChrootFixture(Fixture):
         # Apply the change in simulate mode
         sim_args = list(args) + ["-s"]
         rv = self.apply(contents, *sim_args)
-        self.failUnlessEqual(rv, 0, "Simulation failed")
+        if rv != 0:
+            raise subprocess.CalledProcessError(rv, "Simulation failed: got rv %s" % rv)
 
         # Apply the change for real
         rv = self.apply(contents, *args)
-        self.failUnlessEqual(rv, 0, "Apply failed")
+        if rv != 0:
+            raise subprocess.CalledProcessError(rv, "Apply failed: got rv %s" % rv)
 
         # If we apply the change again nothing should be changed
         rv = self.apply(contents, *args)
-        self.failUnlessEqual(rv, error.NothingChanged.returncode, "Change still outstanding on 2nd run")
+        if rv != error.NothingChanged.returncode:
+            raise subprocess.CalledProcessError(rv, "Change still outstanding")
 
     def check_apply_simulate(self, contents):
         rv = self.apply_simulate(contents)
         if rv != 0:
-            raise subprocess.CalledProcessError(rv, "yaybu")
+            raise subprocess.CalledProcessError(rv, "Simulate failed rv %s" % rv)
 
     def wait_for_cowdancer(self):
         # give cowdancer a few seconds to exit (avoids a race where it delets another sessions .ilist)
@@ -194,11 +197,10 @@ class FakeChrootFixture(Fixture):
                 break
             time.sleep(0.1)
 
-    def failUnlessExists(self, path):
-        full_path = self.enpathinate(path)
-        self.failUnless(os.path.exists(full_path))
+    def exists(self, path):
+        return os.path.exists(self.enpathinate(path))
 
-    def open(self, path, mode):
+    def open(self, path, mode='r'):
         return open(self.enpathinate(path), mode)
 
     def chmod(self, path, mode):

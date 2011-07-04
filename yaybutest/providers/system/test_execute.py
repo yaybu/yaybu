@@ -3,13 +3,23 @@ import os, shutil
 from yaybutest.utils import TestCase
 from yaybu.util import sibpath
 
+test_execute_on_path = """
+#!/bin/sh
+touch /etc/test_execute_on_path
+""".strip()
+
+test_touches = """
+#!/bin/sh
+touch /etc/test_execute_touches
+""".strip()
+
 
 class TestExecute(TestCase):
 
     def test_execute_on_path(self):
-        src = sibpath(__file__, "../../files/test_execute_on_path.sh")
-        dst = os.path.join(self.chroot_path, "usr", "bin", "test_execute_on_path.sh")
-        shutil.copy(src, dst)
+        with self.fixture.open("/usr/bin/test_execute_on_path.sh", "w") as fp:
+            fp.write(test_execute_on_path)
+        self.fixture.chmod("/usr/bin/test_execute_on_path.sh", 0755)
 
         self.fixture.check_apply("""
             resources:
@@ -21,9 +31,9 @@ class TestExecute(TestCase):
 
     def test_execute_touches(self):
         """ test that command works as expected """
-        src = sibpath(__file__, "../../files/test_touches.sh")
-        dst = os.path.join(self.chroot_path, "usr", "bin", "test_touches.sh")
-        shutil.copy(src, dst)
+        with self.fixture.open("/usr/bin/test_touches.sh", "w") as fp:
+            fp.write(test_touches)
+        self.fixture.chmod("/usr/bin/test_touches.sh", 0755)
 
         self.fixture.check_apply("""
             resources:
@@ -43,7 +53,7 @@ class TestExecute(TestCase):
                     command: touch /etc/foo
                     creates: /etc/foo
             """)
-        self.fixture.failUnlessExists("/etc/foo")
+        self.failUnlessExists("/etc/foo")
 
     def test_commands(self):
         self.fixture.check_apply("""
@@ -55,8 +65,8 @@ class TestExecute(TestCase):
                         - touch /etc/bar
                     creates: /etc/bar
             """)
-        self.fixture.failUnlessExists("/etc/foo")
-        self.fixture.failUnlessExists("/etc/bar")
+        self.failUnlessExists("/etc/foo")
+        self.failUnlessExists("/etc/bar")
 
     def test_cwd(self):
         """ test that cwd works as expected. """
@@ -68,11 +78,11 @@ class TestExecute(TestCase):
                     cwd: /etc
                     creates: /etc/foo
             """)
-        self.fixture.failUnlessExists("/etc/foo")
+        self.failUnlessExists("/etc/foo")
 
     def test_environment(self):
         """ test that the environment is passed as expected. """
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -81,7 +91,7 @@ class TestExecute(TestCase):
                         FOO: /etc/foo
                     creates: /etc/foo
             """)
-        self.fixture.failUnlessExists("/etc/foo")
+        self.failUnlessExists("/etc/foo")
 
     def test_returncode(self):
         """ test that the returncode is interpreted as expected. """
@@ -109,7 +119,9 @@ class TestExecute(TestCase):
                     creates: /foo
             """)
 
-        check_file = open(self.enpathinate("/foo")).read().split()
+        with self.fixture.open("/foo") as fp:
+            check_file = fp.read().split()
+
         self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_group(self):
@@ -181,5 +193,5 @@ class TestExecute(TestCase):
                   creates: /test_unless_false
             """)
 
-        self.fixture.failUnlessExists("/test_unless_false")
+        self.failUnlessExists("/test_unless_false")
 

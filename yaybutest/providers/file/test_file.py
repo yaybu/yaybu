@@ -40,7 +40,7 @@ class TestFileApply(TestCase):
                   group: root
             """)
 
-        self.fixture.failUnlessExists("/etc/somefile")
+        self.failUnlessExists("/etc/somefile")
 
     def test_attributes(self):
         self.fixture.check_apply("""
@@ -51,10 +51,10 @@ class TestFileApply(TestCase):
                   group: nogroup
                   mode: 0666
             """)
-        self.fixture.failUnlessExists("/etc/somefile2")
+        self.failUnlessExists("/etc/somefile2")
         st = os.stat(self.fixture.enpathinate("/etc/somefile2"))
-        self.fixture.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
-        self.fixture.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')
+        self.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
+        self.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')
         mode = stat.S_IMODE(st.st_mode)
         self.assertEqual(mode, 0666)
 
@@ -70,10 +70,10 @@ class TestFileApply(TestCase):
                     owner: root
                     group: root
                     """)
-        self.fixture.failUnlessExists("/etc/templated")
+        self.failUnlessExists("/etc/templated")
 
     def test_modify_file(self):
-        with self.fixture.open("/etc/test_modify_file", "w") as fp
+        with self.fixture.open("/etc/test_modify_file", "w") as fp:
           fp.write("foo\nbar\nbaz")
 
         self.fixture.check_apply("""
@@ -102,8 +102,9 @@ class TestFileApply(TestCase):
 
 
     def test_empty(self):
-        with self.fixture.open("/etc/foo", "w") as fp
+        with self.fixture.open("/etc/foo", "w") as fp:
             fp.write("foo")
+
         self.fixture.check_apply("""
             resources:
                 - File:

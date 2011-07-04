@@ -42,9 +42,9 @@ class TestPackageInstallation(TestCase):
                   policy: uninstall
             """
 
-        self.check_apply(hello_install)
-        self.check_apply(hello_remove)
-        self.check_apply(hello_install)
+        self.fixture.check_apply(hello_install)
+        self.fixture.check_apply(hello_remove)
+        self.fixture.check_apply(hello_install)
 
 
 class TestPackageRemoval(TestCase):

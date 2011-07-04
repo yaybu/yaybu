@@ -21,9 +21,9 @@ class TestDirectory(TestCase):
                   owner: root
                   group: root
             """)
-        self.fixture.failUnlessExists("/etc/somedir")
+        self.failUnlessExists("/etc/somedir")
         path = self.fixture.enpathinate("/etc/somedir")
-        self.fixture.failUnless(os.path.isdir(path))
+        self.failUnless(os.path.isdir(path))
 
     def test_create_directory_and_parents(self):
         self.fixture.check_apply("""
@@ -52,7 +52,7 @@ class TestDirectory(TestCase):
                     name: /etc/somedir
                     policy: remove-recursive
             """)
-        self.failUnless(not os.path.exists(self.fixture.enpathinate("/etc/somedir")))
+        self.failIfExists("/etc/somedir")
 
     def test_unicode(self):
         utf8 = "/etc/£££££" # this is utf-8 encoded
@@ -68,7 +68,7 @@ class TestDirectory(TestCase):
                   group: nogroup
                   mode: 0777
             """)
-        self.fixture.failUnlessExists("/etc/somedir2")
+        self.failUnlessExists("/etc/somedir2")
         st = os.stat(self.fixture.enpathinate("/etc/somedir2"))
         self.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
         self.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')

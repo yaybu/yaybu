@@ -21,5 +21,5 @@ class TestAuditLog(TestCase):
                     name: /test_auditlog_simulate
             """)
 
-        self.failUnless(not os.path.exists(self.enpathinate("/var/log/yaybu.log")))
+        self.failIfExists("/var/log/yaybu.log")
 

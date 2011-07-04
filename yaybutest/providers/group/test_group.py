@@ -66,7 +66,7 @@ class TestGroup(TestCase):
                     creates: /etc/test2
                     group: test
             """)
-        self.failUnlessEqual(self.open("/etc/test2").read(), "test")
+        self.failUnlessEqual(self.fixture.open("/etc/test2").read(), "test")
 
 
 class TestGroupRemove(TestCase):

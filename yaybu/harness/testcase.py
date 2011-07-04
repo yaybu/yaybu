@@ -31,3 +31,11 @@ class TestCase(testtools.TestCase):
         self.fixture = fixture
         return super(TestCase, self).useFixture(fixture)
 
+    def failUnlessExists(self, path):
+        if not self.fixture.exists(path):
+            self.fail("Path '%s' does not exist" % path)
+
+    def failIfExists(self, path):
+        if self.fixture.exists(path):
+            self.fail("Path '%s' exists" % path)
+
