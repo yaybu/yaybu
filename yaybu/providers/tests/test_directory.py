@@ -21,9 +21,7 @@ class TestDirectory(FakeChrootTestCase):
                   owner: root
                   group: root
             """)
-        self.failUnlessExists("/etc/somedir")
-        path = self.fixture.enpathinate("/etc/somedir")
-        self.failUnless(os.path.isdir(path))
+        self.failUnless(self.fixture.isdir("/etc/somedir"))
 
     def test_create_directory_and_parents(self):
         self.fixture.check_apply("""
@@ -32,10 +30,10 @@ class TestDirectory(FakeChrootTestCase):
                     name: /etc/foo/bar/baz
                     parents: True
             """)
-        self.failUnless(os.path.isdir(self.fixture.enpathinate("/etc/foo/bar/baz")))
+        self.failUnless(self.fixture.isdir("/etc/foo/bar/baz"))
 
     def test_remove_directory(self):
-        os.mkdir(self.fixture.enpathinate("/etc/somedir"))
+        self.fixture.mkdir("/etc/somedir")
         self.fixture.check_apply("""
             resources:
               - Directory:
@@ -44,8 +42,8 @@ class TestDirectory(FakeChrootTestCase):
         """)
 
     def test_remove_directory_recursive(self):
-        os.mkdir(self.fixture.enpathinate("/etc/somedir"))
-        open(self.fixture.enpathinate("/etc/somedir/child"), "w").write("")
+        self.fixture.mkdir("/etc/somedir")
+        self.fixture.touch("/etc/somedir/child")
         self.fixture.check_apply("""
             resources:
                 - Directory:
@@ -57,7 +55,7 @@ class TestDirectory(FakeChrootTestCase):
     def test_unicode(self):
         utf8 = "/etc/£££££" # this is utf-8 encoded
         self.fixture.check_apply(open(sibpath("directory_unicode1.yay")).read())
-        self.failUnless(os.path.exists(self.fixture.enpathinate(utf8)))
+        self.failIfExists(utf8)
 
     def test_attributes(self):
         self.fixture.check_apply("""
@@ -69,7 +67,7 @@ class TestDirectory(FakeChrootTestCase):
                   mode: 0777
             """)
         self.failUnlessExists("/etc/somedir2")
-        st = os.stat(self.fixture.enpathinate("/etc/somedir2"))
+        st = self.fixture.stat("/etc/somedir2")
         self.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
         self.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')
         mode = stat.S_IMODE(st.st_mode)

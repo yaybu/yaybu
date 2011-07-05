@@ -212,25 +212,45 @@ class FakeChrootFixture(Fixture):
             time.sleep(0.1)
 
     def exists(self, path):
-        return os.path.exists(self.enpathinate(path))
+        return os.path.exists(self._enpathinate(path))
+
+    def isdir(self, path):
+        return os.path.isdir(self._enpathinate(path))
+
+    def mkdir(self, path):
+        os.mkdir(self._enpathinate(path))
 
     def open(self, path, mode='r'):
-        return open(self.enpathinate(path), mode)
+        return open(self._enpathinate(path), mode)
+
+    def touch(self, path):
+        if not self.exists(path):
+            with self.open(path) as fp:
+                fp.write("")
 
     def chmod(self, path, mode):
-        self.call(["chmod", "%04o" % mode, self.enpathinate(path)])
+        self.call(["chmod", "%04o" % mode, self._enpathinate(path)])
 
-    def enpathinate(self, path):
+    def readlink(path):
+        return "/" + os.path.relpath(os.readlink(self._enpathinate(path)), self.chroot_path)
+
+    def symlink(self, source, dest):
+        os.symlink(self._enpathinate(source), self._enpathinate(dest))
+
+    def stat(self, path):
+        return os.stat(self._enpathinate(path))
+
+    def _enpathinate(self, path):
         return os.path.join(self.chroot_path, *path.split(os.path.sep))
 
     def get_user(self, user):
-        users_list = open(self.enpathinate("/etc/passwd")).read().splitlines()
+        users_list = open(self._enpathinate("/etc/passwd")).read().splitlines()
         users = dict(u.split(":", 1) for u in users_list)
         return users[user].split(":")
 
     def get_group(self, group):
         # Returns a tuple of group info if the group exists, or raises KeyError if it does not
-        groups_list = open(self.enpathinate("/etc/group")).read().splitlines()
+        groups_list = open(self._enpathinate("/etc/group")).read().splitlines()
         groups = dict(g.split(":", 1) for g in groups_list)
         return groups[group].split(":")
 

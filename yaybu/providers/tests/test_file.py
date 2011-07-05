@@ -52,7 +52,7 @@ class TestFileApply(FakeChrootTestCase):
                   mode: 0666
             """)
         self.failUnlessExists("/etc/somefile2")
-        st = os.stat(self.fixture.enpathinate("/etc/somefile2"))
+        st = self.fixture.stat("/etc/somefile2")
         self.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
         self.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')
         mode = stat.S_IMODE(st.st_mode)
@@ -98,7 +98,7 @@ class TestFileApply(FakeChrootTestCase):
                   name: /etc/toremove
                   policy: remove
             """)
-        self.failUnless(not os.path.exists(self.fixture.enpathinate("/etc/toremove")))
+        self.failIfExists("/etc/toremove")
 
 
     def test_empty(self):
@@ -188,7 +188,7 @@ class TestFileRemove(FakeChrootTestCase):
 
     def test_remove_missing(self):
         """ Test removing a file that does not exist. """
-        self.failUnless(not os.path.exists(self.fixture.enpathinate("/etc/baz")))
+        self.failIfExists("/etc/baz")
         rv = self.fixture.apply("""
             resources:
                 - File:
@@ -199,7 +199,7 @@ class TestFileRemove(FakeChrootTestCase):
 
     def test_remove_notafile(self):
         """ Test removing something that is not a file. """
-        os.mkdir(self.fixture.enpathinate("/etc/qux"))
+        self.fixture.mkdir("/etc/qux")
         rv = self.fixture.apply("""
             resources:
                 - File:

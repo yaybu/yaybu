@@ -135,7 +135,8 @@ class TestExecute(FakeChrootTestCase):
                     creates: /foo
         """)
 
-        check_file = open(self.fixture.enpathinate("/foo")).read().split()
+        with self.open("/foo") as fp:
+            check_file = fp.read().split()
         self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_user_and_group(self):
@@ -150,7 +151,8 @@ class TestExecute(FakeChrootTestCase):
                     creates: /foo
         """)
 
-        check_file = open(self.fixture.enpathinate("/foo")).read().split()
+        with self.open("/foo") as fp:
+            check_file = fp.read().split()
         self.failUnlessEqual(["65534"] * 4, check_file)
 
     def test_creates(self):

@@ -22,18 +22,17 @@ class TestLink(FakeChrootTestCase):
         self.failUnlessExists("/etc/somelink")
 
     def test_remove_link(self):
-        os.system("ln -s / %s" % self.fixture.enpathinate("/etc/toremovelink"))
+        self.fixture.symlink("/", "/etc/toremovelink")
         rv = self.fixture.check_apply("""
             resources:
               - Link:
                   name: /etc/toremovelink
                   policy: remove
             """)
-        self.failUnless(not os.path.exists(self.fixture.enpathinate("/etc/toremovelink")))
-
+        self.failIfExists("/etc/toremovelink")
 
     def test_already_exists(self):
-        os.system("ln -s %s %s" % (self.fixture.enpathinate("/"), self.fixture.enpathinate("/etc/existing")))
+        self.fixture.symlink("/", "/etc/existing")
         rv = self.fixture.apply("""
             resources:
               - Link:
@@ -41,7 +40,7 @@ class TestLink(FakeChrootTestCase):
                   to: /
         """)
         self.assertEqual(rv, 255)
-        self.failUnlessEqual(os.readlink(self.fixture.enpathinate("/etc/existing")), self.fixture.enpathinate("/"))
+        self.failUnlessEqual(self.fixture.readlink("/etc/existing"), "/")
 
     def test_already_exists_notalink(self):
         """ Test for the path already existing but is not a link. """
@@ -56,20 +55,21 @@ class TestLink(FakeChrootTestCase):
                     name: /bar_notalink
                     to: /foo
             """)
-        self.failUnlessEqual(os.readlink(self.fixture.enpathinate("/bar_notalink")), self.fixture.enpathinate("/foo"))
+
+        self.failUnlessEqual(self.fixture.readlink("/etc/existing"), "/foo")
 
     def test_already_exists_pointing_elsewhere(self):
         """ Test for the path already existing but being a link to somewhere else. """
-        open(self.fixture.enpathinate("/baz"), "w").write("")
-        open(self.fixture.enpathinate("/foo"), "w").write("")
-        os.symlink(self.fixture.enpathinate("/baz"), self.fixture.enpathinate("/bar_elsewhere"))
+        self.fixture.touch("/baz")
+        self.fixture.touch("/foo")
+        self.fixture.symlink("/baz", "/bar_elsewhere")
         self.fixture.check_apply("""
             resources:
                 - Link:
                     name: /bar_elsewhere
                     to: /foo
             """)
-        self.failUnlessEqual(os.readlink(self.fixture.enpathinate("/bar_elsewhere")), self.fixture.enpathinate("/foo"))
+        self.failUnlessEqual(self.fixture.readlink("/bar_elsewhere"), "/foo")
 
     def test_dangling(self):
         rv = self.fixture.apply("""
