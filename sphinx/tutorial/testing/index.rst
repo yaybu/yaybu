@@ -18,10 +18,38 @@ changes can be interdependent it can't do this with 100% reliability, but for
 smaller changes this can be a very useful way of checking if a change is going
 to do what you expect.
 
+If you are new to Yaybu, or your configuration is still new, we strongly suggest
+running in simulation mode before every deployment.
+
 Unit Testing: Testing recipes in isolation
 ==========================================
 
-.. todo:: shiny new unit tests for recipes
+You can test your recipes in a user space chroot using standard python
+unittesting techniques.
+
+Let's test something simple. Here is foo.yay::
+
+    resources.append:
+        - File:
+            name: /etc/importantfile
+
+In your test case you can write::
+
+    from yaybu.harness import FakeChrootTestCase
+
+    class TestMyRecipe(FakeChrootTestCase):
+        def test_file_deployed(self):
+            self.fixture.check_apply("""
+                yay:
+                  extends:
+                    - foo.yay
+                """)
+            self.failUnlessExists("/etc/importantfile")
+
+The fixture object provides methods for interfacing with a test environment,
+in this case a user space chroot created using fakeroot, fakechroot and
+cowdancer. Using sidekick, you can control multiple test VM's with the
+same interface and exercise interfaces between those VM's.
 
 
 Integration Testing: Testing entire configurations
@@ -38,6 +66,6 @@ new config, why not test it regularly and automatically?
 
 .. toctree::
    :maxdepth: 1
-   
+
    :doc:`sidekick <sidekick:/index>`
 
