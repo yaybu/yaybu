@@ -82,5 +82,5 @@ class TestLink(TestCase):
         self.assertEqual(rv, error.DanglingSymlink.returncode)
 
     def test_unicode(self):
-        self.fixture.check_apply(open(sibpath("unicode1.yay")).read())
+        self.fixture.check_apply(open(sibpath("link_unicode1.yay")).read())
 

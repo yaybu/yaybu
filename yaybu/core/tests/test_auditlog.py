@@ -1,9 +1,9 @@
 import os
 import sys
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.core import error
 
-class TestAuditLog(TestCase):
+class TestAuditLog(FakeChrootTestCase):
 
     def test_auditlog_apply(self):
         self.fixture.check_apply("""

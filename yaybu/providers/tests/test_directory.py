@@ -56,7 +56,7 @@ class TestDirectory(TestCase):
 
     def test_unicode(self):
         utf8 = "/etc/£££££" # this is utf-8 encoded
-        self.fixture.check_apply(open(sibpath("unicode1.yay")).read())
+        self.fixture.check_apply(open(sibpath("directory_unicode1.yay")).read())
         self.failUnless(os.path.exists(self.fixture.enpathinate(utf8)))
 
     def test_attributes(self):
