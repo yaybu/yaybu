@@ -113,7 +113,7 @@ class FakeChrootFixture(Fixture):
                 raise SystemExit("Command failed")
 
     def build_environment(self):
-        distro = default_distro()
+        distro = self.default_distro()
         commands = [
             "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv %(distro)s %(base_image)s",
             "fakeroot fakechroot -s /usr/sbin/chroot %(base_image)s apt-get update",
