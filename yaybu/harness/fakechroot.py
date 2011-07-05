@@ -65,7 +65,9 @@ class FakeChrootFixture(Fixture):
         if not os.path.exists(self.testbase):
             self.build_environment()
         #self.refresh_environment()
+        self.clone()
 
+    def clone(self):
         self.chroot_path = os.path.realpath("tmp")
         subprocess.check_call(["cp", "-al", self.testbase, self.chroot_path])
 
@@ -80,6 +82,10 @@ class FakeChrootFixture(Fixture):
     def cleanUp(self):
         self.cleanup_session()
         subprocess.check_call(["rm", "-rf", self.chroot_path])
+
+    def reset(self):
+        self.cleanUp()
+        self.clone()
 
     def default_distro(self):
         options = {
