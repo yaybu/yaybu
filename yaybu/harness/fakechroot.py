@@ -45,7 +45,7 @@ while args and not args[0] == "yaybu":
     del args[0]
 if args:
     os.execvp(args[0], args)
-"""
+""".strip()
 
 
 class FakeChrootFixture(Fixture):
