@@ -56,15 +56,23 @@ class FakeChrootFixture(Fixture):
     I am used for some of Yaybu's internal tests.
     """
 
+    firstrun = True
+
     fakerootkey = None
 
     testbase = os.getenv("YAYBU_TESTS_BASE", "base-image")
     test_network = os.environ.get("TEST_NETWORK", "0") == "1"
 
     def setUp(self):
-        if not os.path.exists(self.testbase):
-            self.build_environment()
-        #self.refresh_environment()
+        if self.firstrun:
+            if not os.path.exists(self.testbase):
+                self.build_environment()
+            self.refresh_environment()
+
+            # We only refresh the base environment once, so
+            # set this on the class to make sure any other fixtures pick it up
+            FakeChrootFixture.firstrun = False
+
         self.clone()
 
     def clone(self):
