@@ -1,6 +1,6 @@
 import os, shutil, grp, signal
 
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.util import sibpath
 
 simpleservice = """
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 """
 
 
-class TestSimpleService(TestCase):
+class TestSimpleService(FakeChrootTestCase):
 
     def setUp(self):
         super(TestSimpleService, self).setUp()

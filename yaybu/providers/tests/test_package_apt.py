@@ -1,7 +1,7 @@
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from time import sleep
 
-class TestPackageInstallation(TestCase):
+class TestPackageInstallation(FakeChrootTestCase):
 
     def test_already_installed(self):
         rv = self.fixture.apply("""
@@ -47,7 +47,7 @@ class TestPackageInstallation(TestCase):
         self.fixture.check_apply(hello_install)
 
 
-class TestPackageRemoval(TestCase):
+class TestPackageRemoval(FakeChrootTestCase):
 
     def test_installed(self):
         """ Try removing a package that is installed. """

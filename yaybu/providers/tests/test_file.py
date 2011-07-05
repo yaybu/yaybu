@@ -1,4 +1,4 @@
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.core import error
 import pwd
 import grp
@@ -9,7 +9,7 @@ import errno
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
-class TestFileApply(TestCase):
+class TestFileApply(FakeChrootTestCase):
 
     def test_create_missing_component(self):
         rv = self.fixture.apply("""
@@ -63,7 +63,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/templated
-                    template: package://yaybutest.providers.file/template1.j2
+                    template: package://yaybu.providers.tests/template1.j2
                     template_args:
                         foo: this is foo
                         bar: 42
@@ -80,7 +80,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_modify_file
-                    template: package://yaybutest.providers.file/template1.j2
+                    template: package://yaybu.providers.tests/template1.j2
                     template_args:
                         foo: this is a modified file
                         bar: 37
@@ -132,7 +132,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_carriage_returns
-                    template: package://yaybutest.providers.file/test_carriage_returns.j2
+                    template: package://yaybu.providers.tests/test_carriage_returns.j2
             """)
         self.assertEqual(rv, 255) # nothing changed
 
@@ -145,7 +145,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_carriage_returns2
-                    template: package://yaybutest.providers.file/test_carriage_returns2.j2
+                    template: package://yaybu.providers.tests/test_carriage_returns2.j2
             """)
         self.assertEqual(rv, 255) # nothing changed
 
@@ -158,7 +158,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/foo
-                    static: package://yaybutest.providers.file/test_carriage_returns2.j2
+                    static: package://yaybu.providers.tests/test_carriage_returns2.j2
             """)
 
     def test_missing(self):
@@ -172,7 +172,7 @@ class TestFileApply(TestCase):
         self.failUnlessEqual(rv, error.MissingAsset.returncode)
 
 
-class TestFileRemove(TestCase):
+class TestFileRemove(FakeChrootTestCase):
 
     def test_remove(self):
         """ Test removing a file that exists. """

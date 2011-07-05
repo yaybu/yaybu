@@ -1,13 +1,13 @@
 
 import os
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.core import error
 
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
 
-class TestLink(TestCase):
+class TestLink(FakeChrootTestCase):
 
     def test_create_link(self):
         self.fixture.check_apply("""
@@ -50,7 +50,6 @@ class TestLink(TestCase):
         with self.fixture.open("/foo", "w") as fp:
             fp.write("")
 
-        # 142
         self.fixture.check_apply("""
             resources:
                 - Link:

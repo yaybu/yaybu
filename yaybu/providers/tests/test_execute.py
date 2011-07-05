@@ -1,6 +1,6 @@
 import os, shutil
 
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.util import sibpath
 
 test_execute_on_path = """
@@ -14,7 +14,7 @@ touch /etc/test_execute_touches
 """.strip()
 
 
-class TestExecute(TestCase):
+class TestExecute(FakeChrootTestCase):
 
     def test_execute_on_path(self):
         with self.fixture.open("/usr/bin/test_execute_on_path.sh", "w") as fp:
