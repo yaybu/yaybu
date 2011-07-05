@@ -83,19 +83,13 @@ class Link(provider.Provider):
         except OSError:
             isalink = False
 
-        if isalink:
-            if linkto != to:
-                context.shell.execute(["/bin/rm", name])
-                isalink = False
-                changed = True
-
-        if not isalink:
+        if not isalink or linkto != to:
             if os.path.exists(name):
                 context.shell.execute(["/bin/rm", "-rf", name])
-                changed = True
-            else:
-                context.shell.execute(["/bin/ln", "-s", self.resource.to, name])
-                changed = True
+
+            context.shell.execute(["/bin/ln", "-s", self.resource.to, name])
+            changed = True
+
         try:
             linkto = os.readlink(name)
             isalink = True

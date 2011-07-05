@@ -1,18 +1,18 @@
 import os
 import sys
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.core import error
 
-class TestEvents(TestCase):
+class TestEvents(FakeChrootTestCase):
 
     def test_nochange(self):
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
               - Directory:
                   name: /etc/wibble
             """)
 
-        rv = self.apply("""
+        rv = self.fixture.apply("""
             resources:
               - Directory:
                   name: /etc/wibble
@@ -27,7 +27,7 @@ class TestEvents(TestCase):
         self.assertEqual(rv, error.NothingChanged.returncode)
 
     def test_recover(self):
-        rv = self.apply("""
+        rv = self.fixture.apply("""
             resources:
               - Directory:
                   name: /etc/somedir
@@ -44,7 +44,7 @@ class TestEvents(TestCase):
             """)
         self.assertEqual(rv, error.PathComponentMissing.returncode)
 
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
               - Directory:
                   name: /etc/somedir

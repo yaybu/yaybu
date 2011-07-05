@@ -1,4 +1,4 @@
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.core import error
 import pwd
 import grp
@@ -9,10 +9,10 @@ import errno
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
-class TestFileApply(TestCase):
+class TestFileApply(FakeChrootTestCase):
 
     def test_create_missing_component(self):
-        rv = self.apply("""
+        rv = self.fixture.apply("""
             resources:
               - File:
                   name: /etc/missing/filename
@@ -24,7 +24,7 @@ class TestFileApply(TestCase):
         Right now we treat missing directories as a warning in simulate mode, as other outside processes might have created them.
         Later on we might not generate warnings for resources we can see will be created
         """
-        rv = self.apply_simulate("""
+        rv = self.fixture.apply_simulate("""
             resources:
               - File:
                   name: /etc/missing/filename
@@ -32,7 +32,7 @@ class TestFileApply(TestCase):
         self.assertEqual(rv, 0)
 
     def test_create_file(self):
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
               - File:
                   name: /etc/somefile
@@ -43,7 +43,7 @@ class TestFileApply(TestCase):
         self.failUnlessExists("/etc/somefile")
 
     def test_attributes(self):
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
               - File:
                   name: /etc/somefile2
@@ -52,18 +52,18 @@ class TestFileApply(TestCase):
                   mode: 0666
             """)
         self.failUnlessExists("/etc/somefile2")
-        st = os.stat(self.enpathinate("/etc/somefile2"))
+        st = self.fixture.stat("/etc/somefile2")
         self.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
         self.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')
         mode = stat.S_IMODE(st.st_mode)
         self.assertEqual(mode, 0666)
 
     def test_create_file_template(self):
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - File:
                     name: /etc/templated
-                    template: package://yaybutest.providers.file/template1.j2
+                    template: package://yaybu.providers.tests/template1.j2
                     template_args:
                         foo: this is foo
                         bar: 42
@@ -73,43 +73,49 @@ class TestFileApply(TestCase):
         self.failUnlessExists("/etc/templated")
 
     def test_modify_file(self):
-        open(self.enpathinate("/etc/test_modify_file"), "w").write("foo\nbar\nbaz")
-        self.check_apply("""
+        with self.fixture.open("/etc/test_modify_file", "w") as fp:
+          fp.write("foo\nbar\nbaz")
+
+        self.fixture.check_apply("""
             resources:
                 - File:
                     name: /etc/test_modify_file
-                    template: package://yaybutest.providers.file/template1.j2
+                    template: package://yaybu.providers.tests/template1.j2
                     template_args:
                         foo: this is a modified file
                         bar: 37
             """)
 
     def test_remove_file(self):
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
               - File:
                   name: /etc/toremove
             """)
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
               - File:
                   name: /etc/toremove
                   policy: remove
             """)
-        self.failUnless(not os.path.exists(self.enpathinate("/etc/toremove")))
+        self.failIfExists("/etc/toremove")
 
 
     def test_empty(self):
-        open(self.enpathinate("/etc/foo"), "w").write("foo")
-        self.check_apply("""
+        with self.fixture.open("/etc/foo", "w") as fp:
+            fp.write("foo")
+
+        self.fixture.check_apply("""
             resources:
                 - File:
                     name: /etc/foo
             """)
 
     def test_empty_nochange(self):
-        open(self.enpathinate("/etc/foo"), "w").write("")
-        rv = self.apply("""
+        with self.fixture.open("/etc/foo", "w") as fp:
+            fp.write("")
+
+        rv = self.fixture.apply("""
             resources:
                 - File:
                     name: /etc/foo
@@ -119,41 +125,45 @@ class TestFileApply(TestCase):
 
     def test_carriage_returns(self):
         """ a template that does not end in \n will still result in a file ending in \n """
-        open(self.enpathinate("/etc/test_carriage_returns"), "w").write("foo\n")
-        rv = self.apply("""
+        with self.fixture.open("/etc/test_carriage_returns", "w") as fp:
+            fp.write("foo\n")
+
+        rv = self.fixture.apply("""
             resources:
                 - File:
                     name: /etc/test_carriage_returns
-                    template: package://yaybutest.providers.file/test_carriage_returns.j2
+                    template: package://yaybu.providers.tests/test_carriage_returns.j2
             """)
         self.assertEqual(rv, 255) # nothing changed
 
     def test_carriage_returns2(self):
         """ a template that does end in \n will not gain an extra \n in the resulting file"""
-        open(self.enpathinate("/etc/test_carriage_returns2"), "w").write("foo\n")
-        rv = self.apply("""
+        with self.fixture.open("/etc/test_carriage_returns2", "w") as fp:
+            fp.write("foo\n")
+
+        rv = self.fixture.apply("""
             resources:
                 - File:
                     name: /etc/test_carriage_returns2
-                    template: package://yaybutest.providers.file/test_carriage_returns2.j2
+                    template: package://yaybu.providers.tests/test_carriage_returns2.j2
             """)
         self.assertEqual(rv, 255) # nothing changed
 
     def test_unicode(self):
-        self.check_apply(open(sibpath("unicode1.yay")).read())
+        self.fixture.check_apply(open(sibpath("unicode1.yay")).read())
 
     def test_static(self):
         """ Test setting the contents to that of a static file. """
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - File:
                     name: /etc/foo
-                    static: package://yaybutest.providers.file/test_carriage_returns2.j2
+                    static: package://yaybu.providers.tests/test_carriage_returns2.j2
             """)
 
     def test_missing(self):
         """ Test trying to use a file that isn't in the yaybu path """
-        rv = self.apply("""
+        rv = self.fixture.apply("""
             resources:
                 - File:
                     name: /etc/foo
@@ -162,12 +172,14 @@ class TestFileApply(TestCase):
         self.failUnlessEqual(rv, error.MissingAsset.returncode)
 
 
-class TestFileRemove(TestCase):
+class TestFileRemove(FakeChrootTestCase):
 
     def test_remove(self):
         """ Test removing a file that exists. """
-        open(self.enpathinate("/etc/bar"),"w").write("")
-        self.check_apply("""
+        with self.fixture.open("/etc/bar","w") as fp:
+            fp.write("")
+
+        self.fixture.check_apply("""
             resources:
                 - File:
                     name: /etc/bar
@@ -176,8 +188,8 @@ class TestFileRemove(TestCase):
 
     def test_remove_missing(self):
         """ Test removing a file that does not exist. """
-        self.failUnless(not os.path.exists(self.enpathinate("/etc/baz")))
-        rv = self.apply("""
+        self.failIfExists("/etc/baz")
+        rv = self.fixture.apply("""
             resources:
                 - File:
                     name: /etc/baz
@@ -187,8 +199,8 @@ class TestFileRemove(TestCase):
 
     def test_remove_notafile(self):
         """ Test removing something that is not a file. """
-        os.mkdir(self.enpathinate("/etc/qux"))
-        rv = self.apply("""
+        self.fixture.mkdir("/etc/qux")
+        rv = self.fixture.apply("""
             resources:
                 - File:
                     name: /etc/qux

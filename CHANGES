@@ -9,7 +9,8 @@ Changelog for yaybu
 - Audit log is configurable through /etc/yaybu
 - Added yaybu.core.debug to assist debugging yaybu in remote mode
 - Can run network tests with TEST_NETWORK=1 ./bin/test discover
-
+- New yaybu.harness module to house testing harness related code
+- Tests have moved into sensible locations within yaybu module
 
 0.1.4 (2011-06-16)
 ------------------

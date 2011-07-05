@@ -1,16 +1,16 @@
 
 import os
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.core import error
 
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
 
-class TestLink(TestCase):
+class TestLink(FakeChrootTestCase):
 
     def test_create_link(self):
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
               - Link:
                   name: /etc/somelink
@@ -22,54 +22,57 @@ class TestLink(TestCase):
         self.failUnlessExists("/etc/somelink")
 
     def test_remove_link(self):
-        os.system("ln -s / %s" % self.enpathinate("/etc/toremovelink"))
-        rv = self.check_apply("""
+        self.fixture.symlink("/", "/etc/toremovelink")
+        rv = self.fixture.check_apply("""
             resources:
               - Link:
                   name: /etc/toremovelink
                   policy: remove
             """)
-        self.failUnless(not os.path.exists(self.enpathinate("/etc/toremovelink")))
-
+        self.failIfExists("/etc/toremovelink")
 
     def test_already_exists(self):
-        os.system("ln -s %s %s" % (self.enpathinate("/"), self.enpathinate("/etc/existing")))
-        rv = self.apply("""
+        self.fixture.symlink("/", "/etc/existing")
+        rv = self.fixture.apply("""
             resources:
               - Link:
                   name: /etc/existing
                   to: /
         """)
         self.assertEqual(rv, 255)
-        self.failUnlessEqual(os.readlink(self.enpathinate("/etc/existing")), self.enpathinate("/"))
+        self.failUnlessEqual(self.fixture.readlink("/etc/existing"), "/")
 
     def test_already_exists_notalink(self):
         """ Test for the path already existing but is not a link. """
-        open(self.enpathinate("/bar_notalkink"), "w").write("")
-        open(self.enpathinate("/foo"), "w").write("")
-        self.check_apply("""
+        with self.fixture.open("/bar_notalink", "w") as fp:
+            fp.write("")
+        with self.fixture.open("/foo", "w") as fp:
+            fp.write("")
+
+        self.fixture.check_apply("""
             resources:
                 - Link:
                     name: /bar_notalink
                     to: /foo
             """)
-        self.failUnlessEqual(os.readlink(self.enpathinate("/bar_notalink")), self.enpathinate("/foo"))
+
+        self.failUnlessEqual(self.fixture.readlink("/etc/existing"), "/foo")
 
     def test_already_exists_pointing_elsewhere(self):
         """ Test for the path already existing but being a link to somewhere else. """
-        open(self.enpathinate("/baz"), "w").write("")
-        open(self.enpathinate("/foo"), "w").write("")
-        os.symlink(self.enpathinate("/baz"), self.enpathinate("/bar_elsewhere"))
-        self.check_apply("""
+        self.fixture.touch("/baz")
+        self.fixture.touch("/foo")
+        self.fixture.symlink("/baz", "/bar_elsewhere")
+        self.fixture.check_apply("""
             resources:
                 - Link:
                     name: /bar_elsewhere
                     to: /foo
             """)
-        self.failUnlessEqual(os.readlink(self.enpathinate("/bar_elsewhere")), self.enpathinate("/foo"))
+        self.failUnlessEqual(self.fixture.readlink("/bar_elsewhere"), "/foo")
 
     def test_dangling(self):
-        rv = self.apply("""
+        rv = self.fixture.apply("""
         resources:
              - Link:
                  name: /etc/test_dangling
@@ -78,4 +81,5 @@ class TestLink(TestCase):
         self.assertEqual(rv, error.DanglingSymlink.returncode)
 
     def test_unicode(self):
-        self.check_apply(open(sibpath("unicode1.yay")).read())
+        self.fixture.check_apply(open(sibpath("link_unicode1.yay")).read())
+

@@ -1,17 +1,27 @@
 import os, shutil
 
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.util import sibpath
 
+test_execute_on_path = """
+#!/bin/sh
+touch /etc/test_execute_on_path
+""".strip()
 
-class TestExecute(TestCase):
+test_touches = """
+#!/bin/sh
+touch /etc/test_execute_touches
+""".strip()
+
+
+class TestExecute(FakeChrootTestCase):
 
     def test_execute_on_path(self):
-        src = sibpath(__file__, "../../files/test_execute_on_path.sh")
-        dst = os.path.join(self.chroot_path, "usr", "bin", "test_execute_on_path.sh")
-        shutil.copy(src, dst)
+        with self.fixture.open("/usr/bin/test_execute_on_path.sh", "w") as fp:
+            fp.write(test_execute_on_path)
+        self.fixture.chmod("/usr/bin/test_execute_on_path.sh", 0755)
 
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -21,11 +31,11 @@ class TestExecute(TestCase):
 
     def test_execute_touches(self):
         """ test that command works as expected """
-        src = sibpath(__file__, "../../files/test_touches.sh")
-        dst = os.path.join(self.chroot_path, "usr", "bin", "test_touches.sh")
-        shutil.copy(src, dst)
+        with self.fixture.open("/usr/bin/test_touches.sh", "w") as fp:
+            fp.write(test_touches)
+        self.fixture.chmod("/usr/bin/test_touches.sh", 0755)
 
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -36,7 +46,7 @@ class TestExecute(TestCase):
 
     def test_command(self):
         """ test that commands works as expected """
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -46,7 +56,7 @@ class TestExecute(TestCase):
         self.failUnlessExists("/etc/foo")
 
     def test_commands(self):
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -60,7 +70,7 @@ class TestExecute(TestCase):
 
     def test_cwd(self):
         """ test that cwd works as expected. """
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -72,7 +82,7 @@ class TestExecute(TestCase):
 
     def test_environment(self):
         """ test that the environment is passed as expected. """
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -85,7 +95,7 @@ class TestExecute(TestCase):
 
     def test_returncode(self):
         """ test that the returncode is interpreted as expected. """
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test-execute-returncode-true
@@ -100,7 +110,7 @@ class TestExecute(TestCase):
 
     def test_user(self):
         """ test that the user has been correctly set. """
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test_user_change
@@ -109,12 +119,14 @@ class TestExecute(TestCase):
                     creates: /foo
             """)
 
-        check_file = open(self.enpathinate("/foo")).read().split()
+        with self.fixture.open("/foo") as fp:
+            check_file = fp.read().split()
+
         self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_group(self):
         """ test that the group has been correctly set. """
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test_group_change
@@ -123,12 +135,13 @@ class TestExecute(TestCase):
                     creates: /foo
         """)
 
-        check_file = open(self.enpathinate("/foo")).read().split()
+        with self.open("/foo") as fp:
+            check_file = fp.read().split()
         self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_user_and_group(self):
         """ test that both user and group can be set together. """
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test_group_change
@@ -138,7 +151,8 @@ class TestExecute(TestCase):
                     creates: /foo
         """)
 
-        check_file = open(self.enpathinate("/foo")).read().split()
+        with self.open("/foo") as fp:
+            check_file = fp.read().split()
         self.failUnlessEqual(["65534"] * 4, check_file)
 
     def test_creates(self):
@@ -158,7 +172,7 @@ class TestExecute(TestCase):
         """ test that an Execute wont execute if the unless expression
         is true """
 
-        rv = self.apply("""
+        rv = self.fixture.apply("""
             resources:
               - Execute:
                   name: test
@@ -172,7 +186,7 @@ class TestExecute(TestCase):
         """ test that an Execute will execute when the unless expression
         is false """
 
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
               - Execute:
                   name: test

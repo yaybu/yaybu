@@ -1,12 +1,13 @@
 import os
 import sys
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 from yaybu.core import error
 
-class TestWatched(TestCase):
+
+class TestWatched(FakeChrootTestCase):
 
     def test_watched(self):
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Execute:
                     name: test_watched
