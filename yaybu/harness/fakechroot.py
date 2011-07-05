@@ -225,14 +225,18 @@ class FakeChrootFixture(Fixture):
 
     def touch(self, path):
         if not self.exists(path):
-            with self.open(path) as fp:
+            with self.open(path, "w") as fp:
                 fp.write("")
 
     def chmod(self, path, mode):
         self.call(["chmod", "%04o" % mode, self._enpathinate(path)])
 
-    def readlink(path):
-        return "/" + os.path.relpath(os.readlink(self._enpathinate(path)), self.chroot_path)
+    def readlink(self, path):
+        relpath = os.path.relpath(os.readlink(self._enpathinate(path)), self.chroot_path)
+        for x in (".", "/"):
+            if relpath.startswith(x):
+                relpath = relpath[1:]
+        return "/" + relpath
 
     def symlink(self, source, dest):
         os.symlink(self._enpathinate(source), self._enpathinate(dest))

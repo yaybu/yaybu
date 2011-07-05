@@ -135,7 +135,7 @@ class TestExecute(FakeChrootTestCase):
                     creates: /foo
         """)
 
-        with self.open("/foo") as fp:
+        with self.fixture.open("/foo") as fp:
             check_file = fp.read().split()
         self.failUnlessEqual(["65534"] * 2, check_file)
 
@@ -151,7 +151,7 @@ class TestExecute(FakeChrootTestCase):
                     creates: /foo
         """)
 
-        with self.open("/foo") as fp:
+        with self.fixture.open("/foo") as fp:
             check_file = fp.read().split()
         self.failUnlessEqual(["65534"] * 4, check_file)
 

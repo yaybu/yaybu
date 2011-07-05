@@ -56,7 +56,7 @@ class TestLink(FakeChrootTestCase):
                     to: /foo
             """)
 
-        self.failUnlessEqual(self.fixture.readlink("/etc/existing"), "/foo")
+        self.failUnlessEqual(self.fixture.readlink("/bar_notalink"), "/foo")
 
     def test_already_exists_pointing_elsewhere(self):
         """ Test for the path already existing but being a link to somewhere else. """
