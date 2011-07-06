@@ -31,7 +31,7 @@ In `mybox.yay` add the following::
 
 You can deploy this on the current machine with::
 
-    sudo yaybu `mybox.yay`
+    sudo yaybu mybox.yay
 
 The goal of all your recipes is to add resource objects to the `resources` list.
 Resources always start with a capital letter and describe things on a server
