@@ -13,13 +13,58 @@
 # limitations under the License.
 
 try:
-    from fxitures import Fixture
+    from fixtures import Fixture as BaseFixture
 except ImportError:
-    class Fixture(object):
+    class BaseFixture(object):
         """
         I am a Fixture compatible with the fixtures API by Robert Collins
         If the fixtures package is installed I won't be used.
         """
         def getDetails(self):
             return {}
+
+
+class Fixture(BaseFixture):
+
+    """ A base class for Fixtures that providing virtual environments to deploy configuration in.
+
+    This base class is abstract and provides no concrete implementations. For a simple implementation
+    of this interface see :py:class:`~yaybu.harness.fakechroot.FakeChrootFixture`.
+    """
+
+    def exists(self, path):
+        """ Checks whether or not a path exists in the target """
+        raise NotImplementedError(self.exists)
+
+    def isdir(self, path):
+        """ Checks whether or not a path is a directory in the target """
+        raise NotImplementedError(self.isdir)
+
+    def mkdir(self, path):
+        """ Creates a directory in the target """
+        raise NotImplementedError(self.mkdir)
+
+    def open(self, path, mode='r'):
+        """ Opens a file in the target """
+        raise NotImplementedError(self.open)
+
+    def touch(self, path):
+        """ Ensures that a file exists in the target """
+        raise NotImplementedError(self.touch)
+
+    def chmod(self, path, mode):
+        """ Change the permissions of a path in the target """
+        raise NotImplementedError(self.chmod)
+
+    def readlink(self, path):
+        """ Return a string containing the path that a symbolic link points to """
+        raise NotImplementedError(self.readlink)
+
+    def symlink(self, source, dest):
+        """ Create a symbolic link pointing to source at dest """
+        raise NotImplementedError(self.symlink)
+
+    def stat(self, path):
+        """ Perform the equivalent of the a stat() system call on the given path """
+        raise NotImplementedError(self.stat)
 

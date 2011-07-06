@@ -51,6 +51,12 @@ in this case a user space chroot created using fakeroot, fakechroot and
 cowdancer. Using sidekick, you can control multiple test VM's with the
 same interface and exercise interfaces between those VM's.
 
+.. autoclass:: yaybu.harness.Fixture
+    :members:
+
+.. autoclass:: yaybu.harness.TestCase
+    :members:
+    :inherited-members:
 
 Integration Testing: Testing entire configurations
 ==================================================
