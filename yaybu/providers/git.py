@@ -42,7 +42,7 @@ class Git(Provider):
 
         command.extend(list(args))
 
-        return context.shell.execute(command, user=self.resource.user)
+        return context.shell.execute(command, user=self.resource.user, exceptions=False, **kwargs)
 
     def action_clone(self, context):
         """Adds resource.repository as a remote, but unlike a
@@ -80,7 +80,7 @@ class Git(Provider):
             raise CheckoutError("You must specify either a revision or a branch")
 
         # check to see if anything has changed
-        rv, stdout, stderr = self.git(context, "diff", "--shortstat", newref)
+        rv, stdout, stderr = self.git(context, "diff", "--shortstat", newref, passthru=True)
         if not rv == 0:
             raise CheckoutError("Could not diff the work-copy against your ref")
 
