@@ -154,9 +154,11 @@ class FakeChrootFixture(Fixture):
         env = os.environ.copy()
         env['FAKEROOTKEY'] = self.get_session()
         env['LD_PRELOAD'] = "/usr/lib/libfakeroot/libfakeroot-sysv.so"
+        env['HOME'] = '/root/'
 
         chroot = ["fakechroot", "-s", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
         retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
+
         self.wait_for_cowdancer()
         return retval
 

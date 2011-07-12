@@ -5,6 +5,13 @@ import shutil
 import time
 import os
 
+dummygitconfig = """
+[user]
+	name = Your Name
+	email = your.name@localhost
+
+""".lstrip()
+
 class GitTest(FakeChrootTestCase):
     """
     Test the git checkout provider.
@@ -45,6 +52,10 @@ class GitTest(FakeChrootTestCase):
 
     def setUp(self):
         super(GitTest, self).setUp()
+
+        with self.fixture.open("/root/.gitconfig", "w") as fp:
+            fp.write(dummygitconfig)
+            fp.close()
 
         # Create and populate the first test upstream repo
         self.git(
