@@ -23,6 +23,8 @@ setup(name='Yaybu',
           'setuptools',
           'jinja2',
           'yay >= 0.0.20',
+          'python-dateutil',
+
       ],
       extras_require = {
           'test': ['testtools', 'discover', 'mock'],
