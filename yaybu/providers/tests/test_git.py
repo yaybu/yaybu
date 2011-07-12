@@ -188,7 +188,7 @@ class GitTest(FakeChrootTestCase):
         """Apply a configuration, change the upstream, then
         re-apply the configuration."""
 
-        CLONED_REPO = "tmp/test_upstream_change"
+        CLONED_REPO = "/tmp/test_upstream_change"
 
         config = """
             resources:
