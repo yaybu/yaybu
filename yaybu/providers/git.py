@@ -96,18 +96,20 @@ class Git(Provider):
             raise CheckoutError("You must specify either a revision or a branch")
 
         # check to see if anything has changed
-        rv, stdout, stderr = self.git(context, "diff", "--shortstat", newref, passthru=True)
-        if not rv == 0:
-            raise CheckoutError("Could not diff the work-copy against your ref")
-
-        if stdout.strip() == "":
-            return False
+        if os.path.exists(self.resource.name):
+            rv, stdout, stderr = self.git(context, "diff", "--shortstat", newref, passthru=True)
+            if not rv == 0:
+                raise CheckoutError("Could not diff the work-copy against your ref")
+            changed = stdout.strip() == ""
         else:
+            changed = True
+
+        if changed:
             rv, stdout, stderr = self.git(context, "checkout", newref)
             if not rv == 0:
                 raise CheckoutError("Could not check out '%s'" % newref)
 
-            return True
+        return changed
 
     def apply(self, context):
         log.info("Syncing %s" % self.resource)
