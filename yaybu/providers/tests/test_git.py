@@ -1,11 +1,11 @@
-from yaybutest.utils import TestCase
+from yaybu.harness import FakeChrootTestCase
 import subprocess
 import tempfile
 import shutil
 import time
 import os
 
-class GitTest(TestCase):
+class GitTest(FakeChrootTestCase):
     """
     Test the git checkout provider.
 
@@ -20,7 +20,6 @@ class GitTest(TestCase):
     UPSTREAM_TAG = "v1"
 
     def git(self, repo_url, *args):
-        repo_url = self.enpathinate(repo_url)
         command = [
             "git",
             "--git-dir=%s" % os.path.join(repo_url, ".git"),
@@ -30,15 +29,14 @@ class GitTest(TestCase):
 
         command.extend(list(args))
 
-        p = subprocess.Popen(command)
-        p.wait()
+        self.fixture.call(command)
 
     def write_random_file(self, where):
-        where = self.enpathinate(where)
-        f = tempfile.NamedTemporaryFile(prefix="", dir=where, delete=False)
-        f.write("foo " * 10 + '\n')
-        f.close()
-        return f.name
+        where = os.path.join(where, self.getUniqueString())
+        with self.fixture.open(where, "w") as f:
+            f.write("foo " * 10 + '\n')
+            f.close()
+        return where
 
     def add_commit(self, repo_location):
         file_url = self.write_random_file(repo_location)
@@ -47,12 +45,12 @@ class GitTest(TestCase):
 
     def setUp(self):
         super(GitTest, self).setUp()
+
         # Create and populate the first test upstream repo
         self.git(
             self.UPSTREAM_REPO,
             "init",
-            self.enpathinate(self.UPSTREAM_REPO)
-        )
+            self.UPSTREAM_REPO)
 
         self.add_commit(self.UPSTREAM_REPO)
         # Add a second branch
@@ -70,13 +68,13 @@ class GitTest(TestCase):
         self.git(
             self.UPSTREAM_REPO_2,
             "init",
-            self.enpathinate(self.UPSTREAM_REPO_2)
-        )
+            self.UPSTREAM_REPO_2)
+
         self.add_commit(self.UPSTREAM_REPO_2)
 
     def test_clone(self):
         CLONED_REPO = "/tmp/test_clone"
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -95,7 +93,7 @@ class GitTest(TestCase):
         CLONED_REPO = "/tmp/test_change_branch"
 
         # Do the initial checkout
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -108,10 +106,9 @@ class GitTest(TestCase):
             }
         )
 
-        time.sleep(2)
 
         # Change to another ref
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -132,7 +129,7 @@ class GitTest(TestCase):
 
         CLONED_REPO = "/tmp/test_change_repo"
 
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -145,9 +142,7 @@ class GitTest(TestCase):
             }
         )
 
-        time.sleep(2)
-
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -165,7 +160,7 @@ class GitTest(TestCase):
 
         CLONED_REPO = "/tmp/test_checkout_revision"
 
-        self.check_apply("""
+        self.fixture.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -196,12 +191,11 @@ class GitTest(TestCase):
                 "repo_url": self.UPSTREAM_REPO,
             }
 
-        self.check_apply(config)
-
-        time.sleep(2)
+        self.fixture.check_apply(config)
 
         # Make changes to the upstream
         self.git(self.UPSTREAM_REPO, "checkout", "master")
         self.add_commit(self.UPSTREAM_REPO)
 
-        self.check_apply(config)
+        self.fixture.check_apply(config)
+
