@@ -70,6 +70,22 @@ class Git(Provider):
         if not rv == 0:
             raise CheckoutError("Could not set the remote repository.")
 
+    def action_update_remote(self, context):
+        # Determine if the remote repository has changed
+        remote_re = re.compile(self.REMOTE_NAME + r"\t(.*) \(.*\)\n")
+        rv, stdout, stderr = self.git(context, "remote", "-v", passthru=True)
+        remote = remote_re.search(stdout)
+        if remote:
+            if not self.resource.repository == remote.group(1):
+                log.info("The remote repository has changed.")
+                self.git(context, "remote", "rm", self.REMOTE_NAME)
+                self.action_set_remote(context)
+                return True
+        else:
+            raise CheckoutError("Cannot determine repository remote.")
+
+        return False
+
     def action_checkout(self, context):
         # Revision takes precedent over branch
         if self.resource.revision:
@@ -99,18 +115,8 @@ class Git(Provider):
         # If necessary, clone the repository
         if not os.path.exists(os.path.join(self.resource.name, ".git")):
             self.action_clone(context)
-
-        # Determine if the remote repository has changed
-        remote_re = re.compile(self.REMOTE_NAME + r"\t(.*) \(.*\)\n")
-        rv, stdout, stderr = self.git(context, "remote", "-v")
-        remote = remote_re.search(stdout)
-        if remote:
-            if not self.resource.repository == remote.group(1):
-                log.info("The remote repository has changed.")
-                self.git(context, "remote", "rm", self.REMOTE_NAME)
-                self.action_set_remote(context)
         else:
-            raise CheckoutError("Cannot determine repository remote.")
+            self.action_update_remote(context)
 
         # Always update the REMOTE_NAME remote
         self.git(context, "fetch", self.REMOTE_NAME)
