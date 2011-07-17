@@ -5,12 +5,40 @@ import shutil
 import time
 import os
 
-dummygitconfig = """
+testfixture = """
+#! /bin/sh
+
+cat > /root/.gitconfig << EOF
 [user]
 	name = Your Name
 	email = your.name@localhost
+EOF
 
-""".lstrip()
+git init /tmp/upstream
+cd /tmp/upstream
+
+echo dummy > dummyfile
+git add dummyfile
+git commit -a -m "foo"
+
+git checkout -b version3
+
+echo dummy > dummyfile3
+git add dummyfile3
+git commit -a -m "foo"
+
+git checkout master
+
+git tag v1
+
+git init /tmp/upstream2
+cd /tmp/upstream2
+
+echo foobarbaz > dummyfile
+git add dummyfile
+git commit -a -m "foo"
+""".strip()
+
 
 class GitTest(FakeChrootTestCase):
     """
@@ -53,35 +81,10 @@ class GitTest(FakeChrootTestCase):
     def setUp(self):
         super(GitTest, self).setUp()
 
-        with self.fixture.open("/root/.gitconfig", "w") as fp:
-            fp.write(dummygitconfig)
+        with self.fixture.open("/fixture.sh", "w") as fp:
+            fp.write(testfixture)
             fp.close()
-
-        # Create and populate the first test upstream repo
-        self.git(
-            self.UPSTREAM_REPO,
-            "init",
-            self.UPSTREAM_REPO)
-
-        self.add_commit(self.UPSTREAM_REPO)
-        # Add a second branch
-        self.git(self.UPSTREAM_REPO, "checkout", "-b", self.OTHER_UPSTREAM_REF)
-
-        # Populate the second branch
-        self.add_commit(self.UPSTREAM_REPO)
-
-        self.git(self.UPSTREAM_REPO, "checkout", "master")
-
-        # Add a tag
-        self.git(self.UPSTREAM_REPO, "tag", "v1")
-
-        # Create and populate the second repo
-        self.git(
-            self.UPSTREAM_REPO_2,
-            "init",
-            self.UPSTREAM_REPO_2)
-
-        self.add_commit(self.UPSTREAM_REPO_2)
+        self.fixture.call(["sh", "/fixture.sh"])
 
     def test_clone(self):
         CLONED_REPO = "/tmp/test_clone"
