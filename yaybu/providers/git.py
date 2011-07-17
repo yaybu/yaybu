@@ -100,7 +100,7 @@ class Git(Provider):
             rv, stdout, stderr = self.git(context, "diff", "--shortstat", newref, passthru=True)
             if not rv == 0:
                 raise CheckoutError("Could not diff the work-copy against your ref")
-            changed = stdout.strip() == ""
+            changed = stdout.strip() != ""
         else:
             changed = True
 
