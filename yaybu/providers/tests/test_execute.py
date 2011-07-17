@@ -2,6 +2,7 @@ import os, shutil
 
 from yaybu.harness import FakeChrootTestCase
 from yaybu.util import sibpath
+from yaybu.core import error
 
 test_execute_on_path = """
 #!/bin/sh
@@ -158,15 +159,51 @@ class TestExecute(FakeChrootTestCase):
     def test_creates(self):
         """ test that the execute will not happen if the creates parameter
         specifies an existing file. """
+        self.fixture.touch("/existing-file")
+        self.fixture.check_apply("""
+            resources:
+              - Execute:
+                  name: test_creates
+                  command: touch /existing-file
+                  creates: /existing-file
+            """, expect=error.NothingChanged.returncode)
 
     def test_touch(self):
         """ test that touch does touch a file. """
+        self.fixture.check_apply("""
+            resources:
+             - Execute:
+                 name: test_touch
+                 command: whoami
+                 touch: /touched-file
+            """)
+        self.failUnlessExists("/touched-file")
 
     def test_touch_present(self):
         """ test that we do not execute if the touched file exists. """
+        self.fixture.touch("/touched-file")
+        self.fixture.check_apply("""
+            resources:
+             - Execute:
+                 name: test_touch_present
+                 command: touch /checkpoint
+                 touch: /touched-file
+            """, expect=255)
+
+        self.failIfExists("/checkpoint")
 
     def test_touch_not_present(self):
         """ test that we do execute if the touched file does not exist. """
+        self.fixture.check_apply("""
+            resources:
+             - Execute:
+                 name: test_touch_not_present
+                 command: touch /checkpoint
+                 touch: /touched-file
+            """)
+
+        self.failUnlessExists("/checkpoint")
+        self.failUnlessExists("/touched-file")
 
     def test_unless_true(self):
         """ test that an Execute wont execute if the unless expression

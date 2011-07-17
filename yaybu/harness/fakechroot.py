@@ -182,17 +182,23 @@ class FakeChrootFixture(Fixture):
         path = self.write_temporary_file(contents)
         return self.simulate(path)
 
-    def check_apply(self, contents, *args):
+    def check_apply(self, contents, *args, **kwargs):
+        expect = kwargs.get('expect', 0)
+
         # Apply the change in simulate mode
         sim_args = list(args) + ["-s"]
         rv = self.apply(contents, *sim_args)
-        if rv != 0:
+        if rv != expect:
             raise subprocess.CalledProcessError(rv, "Simulation failed: got rv %s" % rv)
 
         # Apply the change for real
         rv = self.apply(contents, *args)
-        if rv != 0:
+        if rv != expect:
             raise subprocess.CalledProcessError(rv, "Apply failed: got rv %s" % rv)
+
+        # If 'expect' isnt 0 then theres no point doing a no-changes check
+        if expect != 0:
+            return
 
         # If we apply the change again nothing should be changed
         rv = self.apply(contents, *args)
