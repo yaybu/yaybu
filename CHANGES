@@ -4,6 +4,8 @@ Changelog for yaybu
 0.1.6 (unreleased)
 ------------------
 
+- More test coverage
+- Documentation updates
 - Support '.import: - ${foo}'
 
 
