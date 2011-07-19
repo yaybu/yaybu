@@ -101,7 +101,6 @@ class RunContext(object):
     def get_config(self):
         try:
             c = yay.config.Config()
-            c.load_uri(self.configfile)
 
             if self.host:
                 extra = {
@@ -112,6 +111,8 @@ class RunContext(object):
 
                 # This is fugly. Oh dear.
                 c.load(StringIO.StringIO(yay.dump(extra)))
+
+            c.load_uri(self.configfile)
 
             return c.get()
         except yay.errors.Error, e:
