@@ -97,7 +97,9 @@ class RunContext(object):
 
     def get_config(self):
         try:
-            return yay.load_uri(self.configfile)
+            c = yay.config.Config()
+            c.load_uri(self.configfile)
+            return c.get()
         except yay.errors.Error, e:
             raise ParseError(e.get_string())
 
