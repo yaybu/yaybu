@@ -34,15 +34,20 @@ class Git(Provider):
     def git(self, context, action, *args, **kwargs):
         command = [
             "git",
-            "--git-dir=%s" % os.path.join(self.resource.name, ".git"),
-            "--work-tree=%s" % self.resource.name,
+            #"--git-dir=%s" % os.path.join(self.resource.name, ".git"),
+            #"--work-tree=%s" % self.resource.name,
             "--no-pager",
             action,
         ]
 
         command.extend(list(args))
 
-        return context.shell.execute(command, user=self.resource.user, exceptions=False, **kwargs)
+        if os.path.exists(self.resource.name):
+            cwd = self.resource.name
+        else:
+            cwd = os.path.dirname(self.resource.name)
+
+        return context.shell.execute(command, user=self.resource.user, exceptions=False, cwd=cwd, **kwargs)
 
     def action_clone(self, context):
         """Adds resource.repository as a remote, but unlike a
