@@ -22,7 +22,7 @@ setup(name='Yaybu',
       install_requires=[
           'setuptools',
           'jinja2',
-          'yay >= 0.0.21',
+          'yay >= 0.0.22',
       ],
       extras_require = {
           'test': ['testtools', 'discover', 'mock'],
