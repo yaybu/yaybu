@@ -4,7 +4,7 @@ Changelog for yaybu
 0.1.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Support '.import: - ${foo}'
 
 
 0.1.5 (2011-07-06)
