@@ -16,6 +16,7 @@ import os
 import logging
 import pickle
 import subprocess
+import StringIO
 
 import yay
 
@@ -36,6 +37,8 @@ class RunContext(object):
         self.path = []
         self.ypath = []
         self.options = {}
+
+        self.host = opts.host if opts else None
 
         if os.path.exists("/etc/yaybu"):
             self.options = yay.load_uri("/etc/yaybu")
@@ -99,6 +102,17 @@ class RunContext(object):
         try:
             c = yay.config.Config()
             c.load_uri(self.configfile)
+
+            if self.host:
+                extra = {
+                    "yaybu": {
+                        "host": self.host,
+                        }
+                    }
+
+                # This is fugly. Oh dear.
+                c.load(StringIO.StringIO(yay.dump(extra)))
+
             return c.get()
         except yay.errors.Error, e:
             raise ParseError(e.get_string())
