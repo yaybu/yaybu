@@ -66,7 +66,7 @@ class Execute(Resource):
     commands = List()
     """ If you wish to run multiple commands, provide a list """
 
-    cwd = FullPath()
+    cwd = FullPath(default='/')
     """ The current working directory in which to execute the command. """
 
     environment = Dict()
