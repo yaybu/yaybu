@@ -155,6 +155,13 @@ class FakeChrootFixture(Fixture):
         env['FAKEROOTKEY'] = self.get_session()
         env['LD_PRELOAD'] = "/usr/lib/libfakeroot/libfakeroot-sysv.so"
 
+        # Meh, we inherit the invoking users environment - LAME.
+        env['HOME'] = '/root'
+        env['PWD'] = '/'
+        env['LOGNAME'] = 'root'
+        env['USERNAME'] = 'root'
+        env['USER'] = 'root'
+
         chroot = ["fakechroot", "-s", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
         retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
         self.wait_for_cowdancer()
