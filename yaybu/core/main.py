@@ -43,7 +43,12 @@ def main():
 
     if opts.expand_only:
         ctx = runcontext.RunContext(args[0], opts)
-        print yay.dump(dict(resources=ctx.get_config().get("resources", [])))
+        cfg = ctx.get_config()
+
+        if opts.verbose <= 2:
+            cfg = dict(resources=cfg.get("resources", []))
+
+        print yay.dump(cfg)
         return 0
 
     if opts.ssh_auth_sock:
