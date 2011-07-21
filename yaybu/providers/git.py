@@ -55,9 +55,19 @@ class Git(Provider):
 
         """
         if not os.path.exists(os.path.join(self.resource.name, ".git")):
+            rv, out, err = context.shell.execute(
+                ["/bin/mkdir", self.resource.name],
+                user=self.resource.user,
+                exceptions=False,
+            )
+
+            if not rv == 0:
+                raise CheckoutError("Cannot create the repository directory")
+
             rv, out, err = self.git(context, "init", self.resource.name)
             if not rv == 0:
-                raise CheckoutError("Cannot initialise local repository '%s'")
+                raise CheckoutError("Cannot initialise local repository.")
+
             self.action_set_remote(context)
             return True
         else:
