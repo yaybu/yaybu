@@ -1,90 +1,22 @@
 from yaybu.harness import FakeChrootTestCase
 import subprocess
-import tempfile
-import shutil
 import time
 import os
-
-testfixture = """
-#! /bin/sh
-
-cat > /root/.gitconfig << EOF
-[user]
-	name = Your Name
-	email = your.name@localhost
-EOF
-
-git init /tmp/upstream
-cd /tmp/upstream
-
-echo dummy > dummyfile
-git add dummyfile
-git commit -a -m "foo"
-
-git checkout -b version3
-
-echo dummy > dummyfile3
-git add dummyfile3
-git commit -a -m "foo"
-
-git checkout master
-
-git tag v1
-
-git init /tmp/upstream2
-cd /tmp/upstream2
-
-echo foobarbaz > dummyfile
-git add dummyfile
-git commit -a -m "foo"
-""".strip()
-
 
 class GitTest(FakeChrootTestCase):
     """
     Test the git checkout provider.
 
-    To run these tests, git must be installed in the test environment and in
-    the environment from which the tests are run.
+    To run these tests, git must be installed in the test environment.
+
+    For the moment these tests depend upon the test environment having network
+    access; this should ideally change in future.
     """
     # Assume presence of a master branch in the repos below
-    UPSTREAM_REPO = "/tmp/upstream"
-    UPSTREAM_REPO_2 = "/tmp/upstream2"
+    UPSTREAM_REPO = "git://github.com/isotoma/isotoma.recipe.django.git"
+    UPSTREAM_REPO_2 = "git://github.com/isotoma/yaybu.git"
 
     OTHER_UPSTREAM_REF = "version3"
-    UPSTREAM_TAG = "v1"
-
-    def git(self, repo_url, *args):
-        command = [
-            "git",
-            "--git-dir=%s" % os.path.join(repo_url, ".git"),
-            "--work-tree=%s" % repo_url,
-            "--no-pager",
-        ]
-
-        command.extend(list(args))
-
-        self.fixture.call(command)
-
-    def write_random_file(self, where):
-        where = os.path.join(where, self.getUniqueString())
-        with self.fixture.open(where, "w") as f:
-            f.write("foo " * 10 + '\n')
-            f.close()
-        return where
-
-    def add_commit(self, repo_location):
-        file_url = self.write_random_file(repo_location)
-        self.git(repo_location, "add", file_url)
-        self.git(repo_location, "commit", "-m", "foo bar")
-
-    def setUp(self):
-        super(GitTest, self).setUp()
-
-        with self.fixture.open("/fixture.sh", "w") as fp:
-            fp.write(testfixture)
-            fp.close()
-        self.fixture.call(["sh", "/fixture.sh"])
 
     def test_clone(self):
         CLONED_REPO = "/tmp/test_clone"
@@ -119,7 +51,6 @@ class GitTest(FakeChrootTestCase):
                 "repo_url": self.UPSTREAM_REPO,
             }
         )
-
 
         # Change to another ref
         self.fixture.check_apply("""
@@ -186,30 +117,3 @@ class GitTest(FakeChrootTestCase):
                 "repo_url": self.UPSTREAM_REPO,
             }
         )
-
-    def test_upstream_change(self):
-        """Apply a configuration, change the upstream, then
-        re-apply the configuration."""
-
-        CLONED_REPO = "/tmp/test_upstream_change"
-
-        config = """
-            resources:
-                - Checkout:
-                    scm: git
-                    name: %(clone_dir)s
-                    repository: %(repo_url)s
-                    branch: master
-            """ % {
-                "clone_dir": CLONED_REPO,
-                "repo_url": self.UPSTREAM_REPO,
-            }
-
-        self.fixture.check_apply(config)
-
-        # Make changes to the upstream
-        self.git(self.UPSTREAM_REPO, "checkout", "master")
-        self.add_commit(self.UPSTREAM_REPO)
-
-        self.fixture.check_apply(config)
-
