@@ -93,23 +93,23 @@ class Runner(object):
             if not changed:
                 # nothing changed
                 ctx.changelog.info("No changes were required")
-                sys.exit(255)
+                return 255
 
             ctx.changelog.info("All changes were applied successfully")
-            sys.exit(0)
+            return 0
 
         except error.ExecutionError, e:
             # this will have been reported by the context manager, so we wish to terminate
             # but not to raise it further. Other exceptions should be fully reported with
             # tracebacks etc automatically
             ctx.changelog.error("Terminated due to execution error in processing")
-            sys.exit(e.returncode)
+            return e.returncode
         except error.Error, e:
             # If its not an Execution error then it won't have been logged by the
             # Resource.apply() machinery - make sure we log it here.
             ctx.changelog.write(str(e))
             ctx.changelog.error("Terminated due to error in processing")
-            sys.exit(e.returncode)
+            return e.returncode
         except SystemExit:
             # A normal sys.exit() is fine..
             raise

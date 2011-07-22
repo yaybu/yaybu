@@ -40,7 +40,7 @@ class RemoteRunner(Runner):
         self.user_known_hosts_file = os.path.expanduser("~/.ssh/known_hosts")
 
     def set_missing_host_key_policy(self, policy):
-        self.stricy_host_key_checking = policy
+        self.strict_host_key_checking = policy
 
     def run(self, opts, args):
         rc = RunContext(args[0], opts)
@@ -85,13 +85,13 @@ class RemoteRunner(Runner):
 
             Server(rc, root, p.stdout, p.stdin).serve_forever()
             p.wait()
-            sys.exit(p.returncode)
+            return p.returncode
 
         except error.Error, e:
             print >>sys.stderr, "Error: %s" % str(e)
 
             p.kill()
-            sys.exit(e.returncode)
+            return e.returncode
 
         return p.returncode
 

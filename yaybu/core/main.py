@@ -68,5 +68,6 @@ def main():
     else:
         r = runner.Runner()
 
-    r.run(opts, args)
+    rv = r.run(opts, args)
+    return rv
 
