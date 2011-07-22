@@ -54,7 +54,7 @@ class Git(Provider):
         typical clone, does not check it out
 
         """
-        if not os.path.exists(os.path.join(self.resource.name, ".git")):
+        if not os.path.exists(self.resource.name):
             rv, out, err = context.shell.execute(
                 ["/bin/mkdir", self.resource.name],
                 user=self.resource.user,
@@ -102,31 +102,48 @@ class Git(Provider):
         return False
 
     def action_checkout(self, context):
+        # Determine which SHA is currently checked out.
+        if os.path.exists(os.path.join(self.resource.name, ".git")):
+            rv, stdout, stderr = self.git(context, "rev-parse", "--verify", "HEAD", passthru=True)
+            if not rv == 0:
+                head_sha = '0' * 40
+            else:
+                head_sha = stdout[:40]
+                log.info("Current HEAD sha: %s" % head_sha)
+        else:
+            head_sha = '0' * 40
+
+        changed = True
         # Revision takes precedent over branch
         if self.resource.revision:
             newref = self.resource.revision
+            if newref == head_sha:
+                changed = False
         elif self.resource.branch:
-            # After which a tag takes precedent over a branch
-            # Check for the existence of a tag
-            rv, stdout, stderr = self.git(context, "tag", passthru=True)
-            if self.resource.branch in stdout.splitlines():
+            rv, stdout, stderr = self.git(context, "ls-remote",
+                                        self.resource.repository, passthru=True)
+            if not rv == 0:
+                raise CheckoutError("Could not query the remote repository")
+            r = re.compile('([0-9a-f]{40})\t(.*)\n')
+            refs_to_shas = dict([(b,a) for (a,b) in r.findall(stdout)])
+
+            as_tag = "refs/tags/%s" % self.resource.branch
+            as_branch = "refs/heads/%s" % self.resource.branch
+
+            if as_tag in refs_to_shas.keys():
+                annotated_tag = as_tag + "^{}"
+                if annotated_tag in refs_to_shas.keys():
+                    as_tag = annotated_tag
                 newref = self.resource.branch
-            else:
+                changed = head_sha != refs_to_shas.get(as_tag)
+            elif as_branch in refs_to_shas.keys():
                 newref = "remotes/%s/%s" % (
                     self.REMOTE_NAME,
                     self.resource.branch
                 )
+                changed = head_sha != refs_to_shas.get(as_branch)
         else:
             raise CheckoutError("You must specify either a revision or a branch")
-
-        # check to see if anything has changed
-        if context.simulate:
-            changed = True # If in simulate mode, we assume something will have changed.
-        else:
-            rv, stdout, stderr = self.git(context, "diff", "--shortstat", newref, passthru=True)
-            if not rv == 0:
-                raise CheckoutError("Could not diff the work-copy against your ref")
-            changed = stdout.strip() != ""
 
         if changed:
             rv, stdout, stderr = self.git(context, "checkout", newref)
