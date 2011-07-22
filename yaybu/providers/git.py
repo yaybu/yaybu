@@ -106,7 +106,16 @@ class Git(Provider):
         if self.resource.revision:
             newref = self.resource.revision
         elif self.resource.branch:
-            newref = "remotes/%s/%s" % (self.REMOTE_NAME, self.resource.branch)
+            # After which a tag takes precedent over a branch
+            # Check for the existence of a tag
+            rv, stdout, stderr = self.git(context, "tag", passthru=True)
+            if self.resource.branch in stdout.splitlines():
+                newref = self.resource.branch
+            else:
+                newref = "remotes/%s/%s" % (
+                    self.REMOTE_NAME,
+                    self.resource.branch
+                )
         else:
             raise CheckoutError("You must specify either a revision or a branch")
 
