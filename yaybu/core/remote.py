@@ -15,6 +15,7 @@
 import subprocess
 import pickle
 import sys
+import os
 
 import yay
 
@@ -29,16 +30,32 @@ from yaybu.core import error
 
 class RemoteRunner(Runner):
 
+    user_known_hosts_file = "/dev/null"
+    strict_host_key_checking = "ask"
+
+    def load_host_keys(self, filename):
+        self.user_known_hosts_file = filename
+
+    def load_system_host_keys(self):
+        self.user_known_hosts_file = os.path.expanduser("~/.ssh/known_hosts")
+
+    def set_missing_host_key_policy(self, policy):
+        self.stricy_host_key_checking = policy
+
     def run(self, opts, args):
         rc = RunContext(args[0], opts)
 
+        command = ["ssh", "-A"]
+        command.extend(["-o", "UserKnownHostsFile %s" % self.user_known_hosts_file])
+        command.extend(["-o", "StrictHostKeyChecking %s" % self.strict_host_key_checking])
+
         if ":" in opts.host:
             host, port = opts.host.rsplit(":", 1)
-            connect_args = [host, "-p", port]
+            command.extend([host, "-p", port])
         else:
-            connect_args = [opts.host]
+            command.append(opts.host)
 
-        command = ["ssh", "-A"] + connect_args + ["yaybu", "--remote"]
+        command.extend(["yaybu", "--remote"])
 
         if opts.user:
             command.extend(["--user", opts.user])

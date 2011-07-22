@@ -63,6 +63,8 @@ def main():
 
     if opts.host:
         r = remote.RemoteRunner()
+        r.load_system_host_keys()
+        r.set_missing_host_key_policy("ask")
     else:
         r = runner.Runner()
 
