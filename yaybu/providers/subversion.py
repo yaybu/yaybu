@@ -24,8 +24,17 @@ class Svn(Provider):
     policies = (resources.checkout.CheckoutSyncPolicy,)
 
     @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(Svn, self).isvalid(*args, **kwargs)
+    def isvalid(self, policy, resource, yay):
+        identities = [
+            'svn',
+            'subversion',
+        ]
+
+        if resource.scm:
+            return resource.scm.lower() in identities
+
+        # TODO: ensure that this should be made default provider
+        return True
 
     @property
     def url(self):

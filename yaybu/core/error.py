@@ -152,6 +152,11 @@ class MissingAsset(ExecutionError):
     returncode = 149
     """ returns error code 149 to the invoking environment. """
 
+class CheckoutError(Error):
+    """ An insurmountable problem was encountered during checkout """
+    returncode = 150
+    """ returns error code 148 to the invoking environment. """
+
 class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our
     tests. This exception is never really raised, but it's useful to keep the

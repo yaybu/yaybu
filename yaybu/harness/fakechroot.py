@@ -115,7 +115,7 @@ class FakeChrootFixture(Fixture):
     def build_environment(self):
         distro = self.default_distro()
         commands = [
-            "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv %(distro)s %(base_image)s",
+            "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv %(distro)s %(base_image)s",
             "fakeroot fakechroot -s /usr/sbin/chroot %(base_image)s apt-get update",
             ]
         if not os.path.exists(self.testbase):
@@ -154,6 +154,7 @@ class FakeChrootFixture(Fixture):
         env = os.environ.copy()
         env['FAKEROOTKEY'] = self.get_session()
         env['LD_PRELOAD'] = "/usr/lib/libfakeroot/libfakeroot-sysv.so"
+        env['HOME'] = '/root/'
 
         # Meh, we inherit the invoking users environment - LAME.
         env['HOME'] = '/root'
@@ -164,6 +165,7 @@ class FakeChrootFixture(Fixture):
 
         chroot = ["fakechroot", "-s", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
         retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
+
         self.wait_for_cowdancer()
         return retval
 

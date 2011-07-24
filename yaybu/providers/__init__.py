@@ -18,6 +18,7 @@ from yaybu.providers import (
     filesystem,
     group,
     subversion,
+    git,
     user,
     prompt,
     service
