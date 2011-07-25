@@ -37,6 +37,7 @@ class RunContext(object):
         self.path = []
         self.ypath = []
         self.options = {}
+        self._config = None
 
         self.resume = opts.resume
         self.no_resume = opts.no_resume
@@ -101,7 +102,14 @@ class RunContext(object):
         filesystem and will be returned unmolested. """
         return self.locate(self.ypath + self.path, filename)
 
+    def set_config(self, config):
+        """ Rather than have yaybu load a config you can provide one """
+        self._config = config
+
     def get_config(self):
+        if self._config:
+            return self._config.get()
+
         try:
             c = yay.config.Config()
 
@@ -116,6 +124,8 @@ class RunContext(object):
                 c.load(StringIO.StringIO(yay.dump(extra)))
 
             c.load_uri(self.configfile)
+
+            self._config = c
 
             return c.get()
         except yay.errors.Error, e:

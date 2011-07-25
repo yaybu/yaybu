@@ -76,12 +76,12 @@ class RemoteRunner(Runner):
             p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
             root = HttpResource()
-            root.put_child("config", StaticResource(pickle.dumps(rc.get_config())))
+            root.put_child("config", StaticResource(pickle.dumps(ctx.get_config())))
             root.put_child("files", FileResource())
             root.put_child("encrypted", EncryptedResource())
             root.put_child("changelog", ChangeLogResource())
 
-            Server(rc, root, p.stdout, p.stdin).serve_forever()
+            Server(ctx, root, p.stdout, p.stdin).serve_forever()
             p.wait()
             return p.returncode
 

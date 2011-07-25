@@ -62,7 +62,7 @@ class Runner(object):
                 os.mkdir(save_parent)
 
         try:
-           if os.path.exists(event.EventState.save_file):
+            if os.path.exists(event.EventState.save_file):
                 if ctx.resume:
                     event.state.loaded = False
                 elif ctx.no_resume:
