@@ -42,34 +42,32 @@ class RemoteRunner(Runner):
     def set_missing_host_key_policy(self, policy):
         self.strict_host_key_checking = policy
 
-    def run(self, opts, args):
-        rc = RunContext(args[0], opts)
-
+    def run(self, ctx):
         command = ["ssh", "-A"]
         command.extend(["-o", "UserKnownHostsFile %s" % self.user_known_hosts_file])
         command.extend(["-o", "StrictHostKeyChecking %s" % self.strict_host_key_checking])
 
-        if ":" in opts.host:
-            host, port = opts.host.rsplit(":", 1)
+        if ":" in ctx.host:
+            host, port = ctx.host.rsplit(":", 1)
             command.extend([host, "-p", port])
         else:
-            command.append(opts.host)
+            command.append(ctx.host)
 
         command.extend(["yaybu", "--remote"])
 
-        if opts.user:
-            command.extend(["--user", opts.user])
+        if ctx.user:
+            command.extend(["--user", ctx.user])
 
-        if opts.simulate:
+        if ctx.simulate:
             command.append("-s")
 
-        if opts.verbose:
-            command.extend(list("-v" for x in range(opts.verbose)))
+        if ctx.verbose:
+            command.extend(list("-v" for x in range(ctx.verbose)))
 
-        if opts.resume:
+        if ctx.resume:
             command.append("--resume")
 
-        if opts.no_resume:
+        if ctx.no_resume:
             command.append("--no-resume")
 
         command.append("-")

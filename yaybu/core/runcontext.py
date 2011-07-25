@@ -38,6 +38,9 @@ class RunContext(object):
         self.ypath = []
         self.options = {}
 
+        self.resume = opts.resume
+        self.no_resume = opts.no_resume
+        self.user = opts.user
         self.host = opts.host if opts else None
 
         if os.path.exists("/etc/yaybu"):

@@ -41,6 +41,10 @@ def main():
         parser.print_help()
         return 1
 
+    if opts.debug:
+        opts.logfile = "-"
+        opts.verbose = 2
+
     if opts.expand_only:
         ctx = runcontext.RunContext(args[0], opts)
         cfg = ctx.get_config()
@@ -68,6 +72,11 @@ def main():
     else:
         r = runner.Runner()
 
-    rv = r.run(opts, args)
+    if not opts.remote:
+        ctx = runcontext.RunContext(args[0], opts)
+    else:
+         ctx = runcontext.RemoteRunContext(args[0], opts)
+
+    rv = r.run(ctx)
     return rv
 

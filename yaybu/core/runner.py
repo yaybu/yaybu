@@ -44,38 +44,29 @@ class Runner(object):
 
         os.execvp(command[0], command)
 
-    def run(self, opts, args):
+    def run(self, ctx):
         """ Run locally. """
-        if opts.user and getpass.getuser() != opts.user:
-            self.trampoline(opts.user)
+        if ctx.user and getpass.getuser() != ctx.user:
+            self.trampoline(ctx.user)
             return 0
-
-        if opts.debug:
-            opts.logfile = "-"
-            opts.verbose = 2
 
         event.EventState.save_file = "/var/run/yaybu/events.saved"
 
         # This makes me a little sad inside, but the whole
         # context thing needs a little thought before jumping in
-        event.state.simulate = opts.simulate
+        event.state.simulate = ctx.simulate
 
-        if not opts.simulate:
+        if not ctx.simulate:
             save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
             if not os.path.exists(save_parent):
                 os.mkdir(save_parent)
 
         try:
-            if not opts.remote:
-                ctx = runcontext.RunContext(args[0], opts)
-            else:
-                ctx = runcontext.RemoteRunContext(args[0], opts)
-
-            if os.path.exists(event.EventState.save_file):
-                if opts.resume:
+           if os.path.exists(event.EventState.save_file):
+                if ctx.resume:
                     event.state.loaded = False
-                elif opts.no_resume:
-                    if not opts.simulate:
+                elif ctx.no_resume:
+                    if not ctx.simulate:
                         os.unlink(event.EventState.save_file)
                     event.state.loaded = True
                 else:
@@ -87,7 +78,7 @@ class Runner(object):
             self.resources.bind()
             changed = self.resources.apply(ctx, config)
 
-            if not opts.simulate and os.path.exists(event.EventState.save_file):
+            if not ctx.simulate and os.path.exists(event.EventState.save_file):
                 os.unlink(event.EventState.save_file)
 
             if not changed:
