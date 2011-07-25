@@ -162,7 +162,7 @@ class ChangeLog:
         self.configure_audit_logging()
 
     def configure_session_logging(self):
-        root = logging.getLogger()
+        root = logging.getLogger("yaybu.changelog")
         root.setLevel(logging.INFO)
 
         if len(root.handlers):
