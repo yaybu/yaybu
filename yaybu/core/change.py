@@ -165,6 +165,10 @@ class ChangeLog:
         root = logging.getLogger()
         root.setLevel(logging.INFO)
 
+        if len(root.handlers):
+            # Session logging has already been configured elsewhere?
+            return
+
         handler = logging.StreamHandler(sys.stdout)
         #handler.setFormatter(logging.Formatter("%(message)s"))
         handler.setFormatter(ResourceFormatter("%(message)s"))
