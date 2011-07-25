@@ -42,7 +42,7 @@ class ResourceFormatter(logging.Formatter):
         formatted = logging.Formatter.format(self, record)
 
         if self.resource:
-            rv += "\n".join("| %s" % line for line in formatted.splitlines())
+            rv += "\r\n".join("| %s" % line for line in formatted.splitlines()) + "\r"
         else:
             rv += formatted
 
