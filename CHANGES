@@ -4,6 +4,8 @@ Changelog for yaybu
 0.1.6 (unreleased)
 ------------------
 
+- A variable called yaybu.host is available from your configs
+- Add Git support
 - Added minimal RemoteRunner API
 - --expand-only only shows resources key (more useful)
 - More test coverage
