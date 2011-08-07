@@ -50,11 +50,29 @@ You should see the following::
 
     All changes were applied successfully
 
+Hello, Resources!
+=================
+
 A Yaybu configuration describes a `state` that you wish your system to be in, where the
-`state` is described by a list of `resources`. In `myconfig.yay` then, we added a 
-`Package` resource, passing it the mapping 'name: hello'. You can add as many resources
-as you require to describe the configuration you want, passing each resource configuration
-options as described in the `list of resources </reference/index.html#resources>`_.
+`state` is described by a list of `resources`. Resources are the building blocks of any
+yaybu configuration, In `myconfig.yay`, we used a `Package` resource, passing it the
+argument "name: hello".
+
+A simple, hypothetical, website server configuration might require that:
+
+    * A restricted user account is present on the system for executing the site's code
+    * Four directories are present, for:
+        * the source code
+        * the website executables
+        * the media
+        * the site logs
+    * The latest version of some source code is present on the system
+    * A database migration script is executed if the source code is updated
+
+So we'd require a User resource, four Directory resources, a Checkout resource (used to
+check out source code), and an Execute resource, respectively. Simple! There are more
+resources that you can use, and their configuration options are described in the `resource
+reference <../reference/resources>`_.
 
 Hello, Idempotance!
 ===================
