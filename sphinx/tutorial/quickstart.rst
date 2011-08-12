@@ -157,9 +157,9 @@ Let's take a new configuration `myconfig2.yay` in which we:
             mode: 655
 
         - Checkout:
-            name: /tmp/checkouts/yaybu-examples
+            name: /tmp/checkouts/chosen-js
             scm: git
-            repository: git://github.com/isotoma/yaybu-examples.git
+            repository: git://github.com/harvesthq/chosen.git
             branch: master
 
 To apply this configuration to a remote system, we need only run the following command::
