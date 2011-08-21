@@ -44,7 +44,7 @@ class Runner(object):
 
         os.execvp(command[0], command)
 
-    def run(self, ctx):
+    def run(self, ctx, bundle=None):
         """ Run locally. """
         if ctx.user and getpass.getuser() != ctx.user:
             self.trampoline(ctx.user)
@@ -72,9 +72,12 @@ class Runner(object):
                 else:
                     raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
 
-            config = ctx.get_config()
+            if bundle:
+                self.resources = bundle
+            else:
+                config = ctx.get_config()
+                self.resources = resource.ResourceBundle(config.get("resources", []))
 
-            self.resources = resource.ResourceBundle(config.get("resources", []))
             self.resources.bind()
             changed = self.resources.apply(ctx, config)
 
