@@ -241,7 +241,7 @@ class ResourceBundle(ordereddict.OrderedDict):
             if not isinstance(instances, list):
                 instances = [instances]
             for instance in instances:
-                self._create(typename, instance)
+                self.create(typename, instance)
 
 
     def key_remap(self, kw):
@@ -250,7 +250,7 @@ class ResourceBundle(ordereddict.OrderedDict):
             k = k.replace("-", "_")
             yield str(k),v
 
-    def _create(self, typename, instance):
+    def create(self, typename, instance):
         if not isinstance(instance, dict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
 
@@ -259,7 +259,7 @@ class ResourceBundle(ordereddict.OrderedDict):
 
         # Create implicit File[] nodes for any watched files
         for watched in instance.get("watch", []):
-            w = self._create("File", {
+            w = self.create("File", {
                 "name": watched,
                 "policy": "watched",
                 })
