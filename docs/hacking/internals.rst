@@ -12,6 +12,20 @@ All resources inherit from :class:`yaybu.core.resource.Resource`.
 
 .. autoclass:: yaybu.core.resource.Resource
 
+If your custom package implements new resources you can include them using
+entry points. Add an ``entry_points`` to your setup.py::
+
+    setup(
+        name='MyCustomResources',
+        entry_points="""
+           [yaybu.resources]
+           resources = my.package.resources
+           """,
+        )
+
+The ``my.package.resources`` module should import any resources you want
+to register.
+
 
 Policies
 ========
@@ -28,6 +42,20 @@ Providers
 Providers are the classes that actually do things. There might be multiple
 providers that provide the same policy for the same resource. For example,
 an apt and yum provider will both provide "install" for the Package resource.
+
+If your custom package implements new providers you can include them using
+entry points. Add an ``entry_points`` to your setup.py::
+
+    setup(
+        name='MyCustomProviders',
+        entry_points="""
+           [yaybu.providers]
+           providers = my.package.providers
+           """,
+        )
+
+The ``my.package.providers`` module should import any providers you want
+to register.
 
 
 Unicode
