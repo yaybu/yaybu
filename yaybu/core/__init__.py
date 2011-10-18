@@ -11,3 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from pkg_resources import iter_entry_points
+
+for ep in iter_entry_points(group='yaybu.resource', name=None):
+    ep.load()
+
+for ep in iter_entry_points(group='yaybu.providers', name=None):
+    ep.load()
+

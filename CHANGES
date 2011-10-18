@@ -5,6 +5,11 @@ Changelog for yaybu
 ------------------
 
 - Add some toys for people driving Yaybu from code without Yay
+- Improve quick start documentation to stress idempotence
+- Don't import yaybu.resources or yaybu.providers from yaybu package any more
+- yaybu is now a namespace package
+- You can declare your own resources and providers using the yaybu.resources
+  yaybu.providers entry points
 
 
 0.1.6 (2011-07-26)

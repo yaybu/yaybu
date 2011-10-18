@@ -12,12 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import providers
-import resources
-
-try:
-    import wingdbstub
-except ImportError:
-    pass
-
+__import__('pkg_resources').declare_namespace('yaybu')
 
