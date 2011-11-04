@@ -5,6 +5,7 @@ Changelog for yaybu
 ------------------
 
 - Allow ``set_interactive`` call on RemoteRunner for batch processing use cases
+- Allow API users to set a particular identity file with set_identity_file
 
 
 0.1.7 (2011-10-18)

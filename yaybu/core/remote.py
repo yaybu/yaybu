@@ -31,6 +31,7 @@ from yaybu.core import error
 class RemoteRunner(Runner):
 
     user_known_hosts_file = "/dev/null"
+    identity_file = None
     strict_host_key_checking = "ask"
     interactive = True
 
@@ -39,6 +40,9 @@ class RemoteRunner(Runner):
 
     def load_system_host_keys(self):
         self.user_known_hosts_file = os.path.expanduser("~/.ssh/known_hosts")
+
+    def set_identity_file(self, identity_file):
+        self.identity_file = identity_file
 
     def set_missing_host_key_policy(self, policy):
         self.strict_host_key_checking = policy
@@ -50,6 +54,9 @@ class RemoteRunner(Runner):
         command = ["ssh", "-A"]
         command.extend(["-o", "UserKnownHostsFile %s" % self.user_known_hosts_file])
         command.extend(["-o", "StrictHostKeyChecking %s" % self.strict_host_key_checking])
+
+        if self.identity_file:
+            command.extend(["-o", "IdentityFile %s" % self.identity_file])
 
         if not self.interactive:
             command.extend(["-o", "BatchMode yes"])
