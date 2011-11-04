@@ -42,7 +42,15 @@ class RunContext(object):
         self.resume = opts.resume
         self.no_resume = opts.no_resume
         self.user = opts.user
-        self.host = opts.host if opts else None
+
+        self.host = opts.host
+        self.connect_user = None
+        self.port = None
+
+        if "@" in self.host:
+            self.connect_user, self.host = self.host.split("@", 1)
+        if ":" in self.host:
+            self.host, self.port = self.host.split(":", 1)
 
         if os.path.exists("/etc/yaybu"):
             self.options = yay.load_uri("/etc/yaybu")

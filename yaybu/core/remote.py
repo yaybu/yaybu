@@ -61,11 +61,13 @@ class RemoteRunner(Runner):
         if not self.interactive:
             command.extend(["-o", "BatchMode yes"])
 
-        if ":" in ctx.host:
-            host, port = ctx.host.rsplit(":", 1)
-            command.extend([host, "-p", port])
-        else:
-            command.append(ctx.host)
+        if ctx.connect_user:
+            command.extend(["-l", ctx.connect_user])
+
+        if ctx.port:
+            command.extend(["-p", ctx.port])
+
+        command.append(ctx.host)
 
         command.extend(["yaybu", "--remote"])
 
