@@ -47,10 +47,11 @@ class RunContext(object):
         self.connect_user = None
         self.port = None
 
-        if "@" in self.host:
-            self.connect_user, self.host = self.host.split("@", 1)
-        if ":" in self.host:
-            self.host, self.port = self.host.split(":", 1)
+        if self.host:
+            if "@" in self.host:
+                self.connect_user, self.host = self.host.split("@", 1)
+            if ":" in self.host:
+                self.host, self.port = self.host.split(":", 1)
 
         if os.path.exists("/etc/yaybu"):
             self.options = yay.load_uri("/etc/yaybu")
