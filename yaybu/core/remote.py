@@ -32,6 +32,7 @@ class RemoteRunner(Runner):
 
     user_known_hosts_file = "/dev/null"
     strict_host_key_checking = "ask"
+    interactive = True
 
     def load_host_keys(self, filename):
         self.user_known_hosts_file = filename
@@ -42,10 +43,16 @@ class RemoteRunner(Runner):
     def set_missing_host_key_policy(self, policy):
         self.strict_host_key_checking = policy
 
+    def set_interactive(self, interactive):
+        self.interactive = interactive
+
     def run(self, ctx):
         command = ["ssh", "-A"]
         command.extend(["-o", "UserKnownHostsFile %s" % self.user_known_hosts_file])
         command.extend(["-o", "StrictHostKeyChecking %s" % self.strict_host_key_checking])
+
+        if not self.interactive:
+            command.extend(["-o", "BatchMode yes"])
 
         if ":" in ctx.host:
             host, port = ctx.host.rsplit(":", 1)
