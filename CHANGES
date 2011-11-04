@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.1.8 (unreleased)
+0.1.8 (2011-11-04)
 ------------------
 
 - Allow ``set_interactive`` call on RemoteRunner for batch processing use cases
