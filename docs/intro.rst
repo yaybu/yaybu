@@ -43,21 +43,3 @@ There are a number of reasons we've written Yaybu:
  **Testability**
   The biggest advantage of infrastructure as code is that you can test it.
 
-Yaybu vs Puppet
----------------
-
-These are things we didn't like about Puppet and inspired us to write Yaybu.
-
- **Explicit dependency graph**
-  Deep in our hearts we love this. Its great. But it does make for more
-  typing.
-
-Yaybu vs Chef
--------------
-
-Chef is a great piece of software, but there are some things we could
-do without.
-
- **The Ruby DSL**
-  You have to write your configuration in Ruby.
-
