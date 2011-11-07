@@ -41,7 +41,7 @@ def binary_buffers(*buffers):
     """ Check all of the passed buffers to see if any of them are binary. If
     any of them are binary this will return True. """
     if not magic:
-        check = lambda buff: any((c in string.printable) for c in buff)
+        check = lambda buff: len(buff) != sum(1 for c in buff if c in string.printable)
     else:
         ms = magic.open(magic.MAGIC_MIME)
         ms.load()

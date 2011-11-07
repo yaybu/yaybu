@@ -5,6 +5,7 @@ Changelog for yaybu
 ------------------
 
 - Add a basic (but functional) Vagrant provisioner.
+- Add a better fallback for when 'python-magic' isn't installed
 
 
 0.1.8 (2011-11-04)
