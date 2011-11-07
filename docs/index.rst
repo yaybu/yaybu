@@ -27,6 +27,7 @@ Contents:
    tutorial/index
    reference/index
    techniques/index
+   tools
    logging
    security
    hacking/index

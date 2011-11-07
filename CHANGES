@@ -4,7 +4,7 @@ Changelog for yaybu
 0.1.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add a basic (but functional) Vagrant provisioner.
 
 
 0.1.8 (2011-11-04)
