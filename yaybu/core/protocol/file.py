@@ -26,7 +26,7 @@ class FileResource(HttpResource):
             # Always read in binary mode. Opening files in text mode may cause
             # newline translations, making the actual size of the content
             # transmitted *less* than the content-length!
-            f = open(yaybu.locate_file(restpath), 'rb')
+            f = yaybu.get_file(restpath)
         except error.MissingAsset:
             request.send_error(404, "File not found")
             return None

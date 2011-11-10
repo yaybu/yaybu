@@ -177,30 +177,15 @@ class List(Argument):
     def _generate_valid(self):
         return []
 
+
 class File(Argument):
 
     """ Provided with a URL, this can get files by various means. Often used
     with the package:// scheme """
 
-    def _file(self, instance, path):
-        # should really be some kind of proxy object
-        setattr(instance, self.arg_id, path)
-
-    def _package(self, instance, netloc, subpath):
-        module = __import__(netloc, {}, {}, [""])
-        module_path = module.__path__[0]
-        path = os.path.join(module_path, subpath[1:])
-        # should really be some kind of proxy object
-        setattr(instance, self.arg_id, path)
-
     def __set__(self, instance, value):
-        (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(value)
-        if scheme == "file" or not scheme:
-            self._file(instance, path)
-        elif scheme == "package":
-            self._package(instance, netloc, path)
-        else:
-            raise NotImplementedError('Scheme %s on %s' % (scheme, instance))
+        setattr(instance, self.arg_id, path)
+
 
 class StandardPolicy:
 

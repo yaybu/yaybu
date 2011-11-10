@@ -19,6 +19,8 @@ import subprocess
 import StringIO
 
 import yay
+from yay.openers import Openers
+from yay.errors import NotFound
 
 from yaybu.core.error import ParseError, MissingAsset
 from yaybu.core.protocol.client import HTTPConnection
@@ -145,7 +147,10 @@ class RunContext(object):
         return p.stdout
 
     def get_file(self, filename):
-        return open(self.locate_file(filename), 'rb')
+        try:
+            return Openers(searchpath=self.ypath).open(filename)
+        except NotFound, e:
+            raise MissingAsset(str(e))
 
 
 class RemoteRunContext(RunContext):
