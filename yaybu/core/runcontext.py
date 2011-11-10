@@ -177,7 +177,7 @@ class RemoteRunContext(RunContext):
         if filename.startswith("/"):
             return super(RemoteRunContext, self).get_file(filename)
 
-        self.connection.request("GET", "/files/" + filename)
+        self.connection.request("GET", "/files/?path=" + filename)
         rsp = self.connection.getresponse()
 
         if rsp.status == 404:

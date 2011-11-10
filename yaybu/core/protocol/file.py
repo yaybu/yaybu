@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+from urlparse import urlparse, parse_qs
 
 from yaybu.core.protocol.server import HttpResource
 from yaybu.core import error
@@ -22,11 +23,13 @@ class FileResource(HttpResource):
     leaf = True
 
     def render_GET(self, yaybu, request, restpath):
+        params = parse_qs(request.getargs)
+
         try:
             # Always read in binary mode. Opening files in text mode may cause
             # newline translations, making the actual size of the content
             # transmitted *less* than the content-length!
-            f = yaybu.get_file(restpath)
+            f = yaybu.get_file(params["path"][0])
         except error.MissingAsset:
             request.send_error(404, "File not found")
             return None
