@@ -88,11 +88,6 @@ class TestArgument(unittest.TestCase):
         h.bar = "20100105"
         self.assertEqual(h.bar, datetime.datetime(2010, 1, 5))
 
-    def test_package_file(self):
-        h = H(name="test")
-        h.baz = "package://yaybu.core/tests/example.txt"
-        self.assertEqual(h.baz, os.path.join(os.path.dirname(__file__), "example.txt"))
-
 
 class TestArgumentAssertion(unittest.TestCase):
 
