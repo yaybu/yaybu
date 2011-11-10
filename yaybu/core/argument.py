@@ -184,7 +184,7 @@ class File(Argument):
     with the package:// scheme """
 
     def __set__(self, instance, value):
-        setattr(instance, self.arg_id, path)
+        setattr(instance, self.arg_id, value)
 
 
 class StandardPolicy:
