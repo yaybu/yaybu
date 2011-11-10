@@ -122,7 +122,7 @@ class RunContext(object):
             return self._config.get()
 
         try:
-            c = yay.config.Config()
+            c = yay.config.Config(searchpath=self.ypath)
 
             if self.host:
                 extra = {

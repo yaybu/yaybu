@@ -4,9 +4,12 @@ Changelog for yaybu
 0.1.10 (unreleased)
 -------------------
 
-- Yabyu now depends on Yay 0.0.32 and the improved ``Openers()`` API. This means
+- Yabyu now depends on Yay 0.0.33 and the improved ``Openers()`` API. This means
   that cookbook assets can be fetched from any location that Yay can be fetched
   from, including http and https.
+
+- This change also means that Yay loading also respects the YAYBUPATH, and that
+  http content can be on the YAYBUPATH.
 
 - Fix python-magic fallback - in previous version the fallback was inverted and
   claiming all text was binary
