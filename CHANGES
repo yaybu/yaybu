@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.1.10 (unreleased)
+0.1.10 (2011-11-10)
 -------------------
 
 - Yabyu now depends on Yay 0.0.33 and the improved ``Openers()`` API. This means
