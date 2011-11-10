@@ -33,8 +33,7 @@ class FileResource(HttpResource):
 
         request.send_response(200, "OK")
         request.send_header("Content-Type", "application/octect-stream")
-        fs = os.fstat(f.fileno())
-        request.send_header("Content-Length", str(fs[6]))
+        request.send_header("Content-Length", str(f.len))
         #request.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
         request.send_header("Content", "keep-alive")
         request.end_headers()
