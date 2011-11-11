@@ -17,6 +17,10 @@ import os, logging
 from yaybu.core.provider import Provider
 from yaybu import resources
 
+import shlex
+
+from yay.protectedstring import ProtectedString
+
 log = logging.getLogger("subversion")
 
 class Svn(Provider):
@@ -93,31 +97,39 @@ class Svn(Provider):
         self.svn(context, "export", self.url, self.resource.name)
 
     def get_svn_args(self, action, *args, **kwargs):
-        command = ["svn"]
+        command = ProtectedString()
+        command.add("svn")
 
         if kwargs.get("quiet", False):
-            command.append("--quiet")
+            command.add("--quiet")
 
-        command.extend([action, "--non-interactive"])
+        command.add(action)
+        command.add("--non-interactive")
 
         if self.resource.scm_username:
-            command.extend(["--username", self.resource.scm_username])
+            command.add("--username")
+            command.add(self.resource.scm_username)
         if self.resource.scm_password:
-            command.extend(["--password", self.resource.scm_password])
+            command.add("--password")
+            command.add(self.resource.scm_password)
         if self.resource.scm_username or self.resource.scm_password:
-            command.append("--no-auth-cache")
+            command.add("--no-auth-cache")
 
-        command.extend(list(args))
+        for arg in args:
+            command.add(arg)
 
         return command
 
+    def grabber(self, string, which="protected"):
+        return [getattr(x, which) for x in string.parts]
+
     def info(self, context, uri):
         command = self.get_svn_args("info", uri)
-        returncode, stdout, stderr = context.shell.execute(command, passthru=True)
+        returncode, stdout, stderr = context.shell.execute(self.grabber(command, "unprotected"), passthru=True, logas=self.grabber(command, "protected"))
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
     def svn(self, context, action, *args, **kwargs):
         command = self.get_svn_args(action, *args, **kwargs)
-        return context.shell.execute(command, user=self.resource.user)
+        return context.shell.execute(self.grabber(command, "unprotected"), user=self.resource.user, logas=self.grabber(command, "protected"))
 
 

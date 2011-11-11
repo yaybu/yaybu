@@ -4,7 +4,9 @@ Changelog for yaybu
 0.1.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- A Subversion checkout will now understand and happily use data passed to int
+  as ProtectedString objects. This means if you use the ``scm_password``
+  attribute it won't leak your password into the logs.
 
 
 0.1.10 (2011-11-10)
