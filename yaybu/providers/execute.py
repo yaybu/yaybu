@@ -19,7 +19,7 @@ from yaybu.core import provider
 from yaybu.core import error
 from yaybu import resources
 
-from yay.protectedstring import ProtectedString
+from yay import String
 
 
 class Execute(provider.Provider):
@@ -35,7 +35,7 @@ class Execute(provider.Provider):
         cwd = self.resource.cwd or None
         env = self.resource.environment or None
 
-        if isinstance(command, ProtectedString):
+        if isinstance(command, String):
             protected = command.protected
             unprotected = command.unprotected
         else:
