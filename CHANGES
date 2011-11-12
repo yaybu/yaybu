@@ -4,9 +4,15 @@ Changelog for yaybu
 0.1.11 (unreleased)
 -------------------
 
-- A Subversion checkout will now understand and happily use data passed to int
-  as ProtectedString objects. This means if you use the ``scm_password``
-  attribute it won't leak your password into the logs.
+- A Subversion checkout will now understand and happily use data passed to it
+  as String objects. This means if you use the ``scm_password``  attribute it
+  won't leak your password into the logs.
+
+- We now depend on Yay 0.0.35 for the improved ``String`` API.
+
+- The subprocess abstraction natively supports ``String`` instances and will
+  mask any secrets in log output. It now also supports native strings and
+  will shlex.split them automatically.
 
 
 0.1.10 (2011-11-10)

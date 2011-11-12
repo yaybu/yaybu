@@ -33,7 +33,7 @@ from yaybu.core import provider
 from yaybu.core import change
 from yaybu.core import error
 
-from yay.protectedstring import ProtectedString
+from yay import String
 
 
 def binary_buffers(*buffers):
@@ -246,7 +246,7 @@ class File(provider.Provider):
                 return False
 
             else:
-                return isinstance(val, ProtectedString)
+                return isinstance(val, String)
 
         return iter(self.resource.template_args)
 
@@ -257,7 +257,7 @@ class File(provider.Provider):
                 return dict((k,_(v)) for (k,v) in val.items())
             elif isinstance(val, list):
                 return list(_(v) for v in val)
-            elif isinstance(val, ProtectedString):
+            elif isinstance(val, String):
                 return val.unprotected
             else:
                 return val

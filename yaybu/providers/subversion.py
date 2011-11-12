@@ -19,7 +19,7 @@ from yaybu import resources
 
 import shlex
 
-from yay.protectedstring import ProtectedString
+from yay import String
 
 log = logging.getLogger("subversion")
 
@@ -97,21 +97,17 @@ class Svn(Provider):
         self.svn(context, "export", self.url, self.resource.name)
 
     def get_svn_args(self, action, *args, **kwargs):
-        command = ProtectedString()
-        command.add("svn")
+        command = String(["svn"])
 
         if kwargs.get("quiet", False):
             command.add("--quiet")
 
-        command.add(action)
-        command.add("--non-interactive")
+        command.extend([action, "--non-interactive"])
 
         if self.resource.scm_username:
-            command.add("--username")
-            command.add(self.resource.scm_username)
+            command.add(["--username", self.resource.scm_username])
         if self.resource.scm_password:
-            command.add("--password")
-            command.add(self.resource.scm_password)
+            command.add(["--password", self.resource.scm_password])
         if self.resource.scm_username or self.resource.scm_password:
             command.add("--no-auth-cache")
 
@@ -120,16 +116,13 @@ class Svn(Provider):
 
         return command
 
-    def grabber(self, string, which="protected"):
-        return [getattr(x, which) for x in string.parts]
-
     def info(self, context, uri):
         command = self.get_svn_args("info", uri)
-        returncode, stdout, stderr = context.shell.execute(self.grabber(command, "unprotected"), passthru=True, logas=self.grabber(command, "protected"))
+        returncode, stdout, stderr = context.shell.execute(command, passthru=True)
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
     def svn(self, context, action, *args, **kwargs):
         command = self.get_svn_args(action, *args, **kwargs)
-        return context.shell.execute(self.grabber(command, "unprotected"), user=self.resource.user, logas=self.grabber(command, "protected"))
+        return context.shell.execute(command, user=self.resource.user)
 
 

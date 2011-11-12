@@ -14,13 +14,13 @@
 
 
 import unittest
-from yay.protectedstring import ProtectedString
+from yay import String
 from yaybu.providers.filesystem import files
 
 class TestSecretTemplateArgs(unittest.TestCase):
 
     def setUp(self):
-        self.ps = ProtectedString()
+        self.ps = String()
         self.ps.add_secret('hello')
 
         class DummyResource:

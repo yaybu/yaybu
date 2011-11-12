@@ -18,6 +18,9 @@ import StringIO
 import change
 import error
 import os, getpass, pwd, grp, select
+import shlex
+
+from yay import String
 
 
 class Handle(object):
@@ -140,11 +143,28 @@ class ShellCommand(change.Change):
 
         return returncode, stdout.output, stderr.output
 
+    def _tounicode(self, l):
+        """ Ensure all elements of the list are unicode """
+        def uni(x):
+            if type(x) is type(u""):
+                return x
+            return unicode(x, "utf-8")
+        return map(uni, l)
+
     def apply(self, renderer):
-        command = self.command[:]
+        if isinstance(self.command, String):
+            logas = self.command.as_list(secret=True)
+            command = self.command.as_list(secret=False)
+        elif isinstance(self.command, list):
+            logas = command = self.command[:]
+        elif isinstance(self.command, basestring):
+            logas = command = shlex.split(self.command.encode("UTF-8"))
+
+        command = self._tounicode(command)
+        logas = self._tounicode(logas)
 
         renderer.passthru = self.passthru
-        renderer.command(self.logas or command)
+        renderer.command(self.logas or logas)
 
         env = {
             "HOME": self.homedir,
@@ -181,7 +201,6 @@ class ShellCommand(change.Change):
             self.returncode, self.stdout, self.stderr = self.communicate(p, renderer.stdout, renderer.stderr)
             renderer.output(p.returncode)
         except Exception, e:
-            logging.error("Exception when running %r" % command)
             renderer.exception(e)
             raise
 
@@ -227,17 +246,8 @@ class Shell(object):
 
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
-    
-    def _tounicode(self, l):
-        """ Ensure all elements of the list are unicode """
-        def uni(x):
-            if type(x) is type(u""):
-                return x
-            return unicode(x, "utf-8")
-        return map(uni, l)
 
     def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None, logas=None):
-        command = self._tounicode(command)
         cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group, self.simulate, logas)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
