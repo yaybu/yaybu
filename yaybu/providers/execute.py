@@ -19,8 +19,6 @@ from yaybu.core import provider
 from yaybu.core import error
 from yaybu import resources
 
-from yay import String
-
 
 class Execute(provider.Provider):
 
@@ -35,17 +33,8 @@ class Execute(provider.Provider):
         cwd = self.resource.cwd or None
         env = self.resource.environment or None
 
-        if isinstance(command, String):
-            protected = command.protected
-            unprotected = command.unprotected
-        else:
-            protected = unprotected = command
-
-        unprotected = shlex.split(unprotected.encode("UTF-8"))
-        protected = shlex.split(protected.encode("UTF-8"))
-
-        returncode, stdout, stderr = shell.execute(unprotected, cwd=cwd, env=env, user=self.resource.user,
-            group=self.resource.group, passthru=passthru, exceptions=False, logas=protected)
+        returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env, user=self.resource.user,
+            group=self.resource.group, passthru=passthru, exceptions=False)
 
         if not shell.simulate and expected_returncode != None and expected_returncode != returncode:
             raise error.CommandError("%s failed with return code %d" % (self.resource, returncode))

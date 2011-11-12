@@ -118,11 +118,11 @@ class Svn(Provider):
 
     def info(self, context, uri):
         command = self.get_svn_args("info", uri)
-        returncode, stdout, stderr = context.shell.execute(command.as_list(secret=False), passthru=True, logas=command.as_list())
+        returncode, stdout, stderr = context.shell.execute(command, passthru=True)
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
     def svn(self, context, action, *args, **kwargs):
         command = self.get_svn_args(action, *args, **kwargs)
-        return context.shell.execute(command.as_list(secret=False), user=self.resource.user, logas=command.as_list())
+        return context.shell.execute(command, user=self.resource.user)
 
 
