@@ -8,6 +8,7 @@ Changelog for yaybu
   as ProtectedString objects. This means if you use the ``scm_password``
   attribute it won't leak your password into the logs.
 
+- We now depend on Yay 0.0.35 for the improved ``String`` API.
 
 0.1.10 (2011-11-10)
 -------------------
