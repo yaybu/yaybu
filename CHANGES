@@ -4,7 +4,33 @@ Changelog for yaybu
 0.1.12 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add a dummy Checkout provider that uses rsync. The primary use case for this
+  feature is vagrant where you can do something like this::
+
+      resources.append:
+        - Checkout:
+            name: /var/checkouts/my-site
+            repository: /vagrant
+            scm: rsync
+            user: vagrant
+
+        - Execute:
+            name: buildout
+            command: ./buildout
+            cwd: /var/checkouts/my-site
+            policy:
+              execute:
+                - when: sync
+                  on: Checkout[/var/checkouts/my-site]
+
+  There are 2 advantages here: firstly, your production config will likely
+  deploy from Git, but Vagrant always gives you a /vagrant directory without
+  having to have a seperate Git checkout. With this change you can still use a
+  Checkout resource for your /vagrant sourced code, keeping your recipes as
+  similar as possible. Secondly, your ``vagrant provision`` will be able to
+  detect code changes just like a real Checkout. For example, you can add
+  watches to restart services when you change a particular script or asset in
+  your 'checkout'.
 
 
 0.1.11 (2011-11-19)
