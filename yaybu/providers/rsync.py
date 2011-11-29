@@ -92,6 +92,10 @@ class Rsync(Provider):
             rv, out, err = context.shell.execute(command, exceptions=False)
             changed = True
 
+        if context.simulate and changed:
+            context.changelog.info("Checkout['%s'] root directory not found; assuming rsync will occur" % self.resource.name)
+            return True
+
         ac = AttributeChanger(context, self.resource.name, self.resource.user, mode=0755)
         ac.apply(context)
         changed = changed or ac.changed
