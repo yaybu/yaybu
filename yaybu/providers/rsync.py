@@ -19,6 +19,9 @@ from yaybu.core.provider import Provider
 from yaybu.core.error import CheckoutError
 from yaybu import resources
 
+from yaybu.providers.filesystem.files import AttributeChanger
+
+
 class Rsync(Provider):
 
     policies = (resources.checkout.CheckoutSyncPolicy,)
@@ -86,8 +89,12 @@ class Rsync(Provider):
 
         if not os.path.exists(self.resource.name):
             command = ["/bin/mkdir", self.resource.name]
-            rv, out, err = context.shell.execute(command, user=self.resource.user, exceptions=False)
+            rv, out, err = context.shell.execute(command, exceptions=False)
             changed = True
+
+        ac = AttributeChanger(context, self.resource.name, self.resource.user, mode=0755)
+        ac.apply(context)
+        changed = changed or ac.changed
 
         if self._sync(context, True):
             self._sync(context)
