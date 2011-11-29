@@ -47,6 +47,19 @@ class Rsync(Provider):
 
         return ignore
 
+    def _get_git_ignore(self, context, path):
+        command = ["git", "clean", "-nXd"]
+        returncode, stdout, stderr = context.shell.execute(command, cwd=path, passthru=True)
+
+        if not returncode == 0:
+            raise CheckoutError("Could not generate updated .rsync-exclude for Git checkout")
+
+        ignore = []
+        for line in stdout.split("\n"):
+            ignore.append(line.replace("Would remove ", "").strip())
+
+        return ignore
+
     def _build_exclude_list(self, context):
         path = os.path.join(self.resource.name, ".rsync-exclude")
 
@@ -58,9 +71,10 @@ class Rsync(Provider):
                 ignore.append(".svn")
                 ignore.extend(self._get_svn_ignore(context, self.resource.repository))
 
-            #gitdir = os.path.join(self.resource.repository, ".git")
-            #if os.path.isdir(gitdir):
-            #    ignore.extend(self._get_git_ignore(context, self.resource.repository))
+            gitdir = os.path.join(self.resource.repository, ".git")
+            if os.path.isdir(gitdir):
+                ignore.append(".git")
+                ignore.extend(self._get_git_ignore(context, self.resource.repository))
 
             ignorefile = os.path.join(self.resource.repository, ".rsync-exclude")
             if os.path.exists(ignorefile):
