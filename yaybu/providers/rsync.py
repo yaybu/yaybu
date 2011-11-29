@@ -93,7 +93,12 @@ class Rsync(Provider):
 
         rv, out, err = context.shell.execute(command, cwd=self.resource.repository, user=self.resource.user, exceptions=False, passthru=dryrun)
 
-        if not "Number of files transferred: 0" in out:
+        if context.simulate and not dryrun:
+            # We won't get any output from _sync if we aren't doing a dry-run whilst in simulate mode
+            # But this is only called with dryrun = False when there is stuff to sync
+            return True
+
+        if out.split("\n")[1].strip():
             return True
 
         return False
