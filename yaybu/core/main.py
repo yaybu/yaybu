@@ -18,8 +18,16 @@ import yay
 from yaybu.core import runner, remote, runcontext
 import logging, atexit
 
+def version():
+    import pkg_resources
+
+    yaybu_version = pkg_resources.get_distribution('Yaybu').version
+    yay_version = pkg_resources.get_distribution('Yay').version
+    return 'Yaybu %s\n' \
+           'yay %s' % (yaybu_version, yay_version)
+
 def main():
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(version=version())
     parser.add_option("-s", "--simulate", default=False, action="store_true")
     parser.add_option("-p", "--ypath", default=[], action="append")
     parser.add_option("", "--log-facility", default="2", help="the syslog local facility number to which to write the audit trail")
