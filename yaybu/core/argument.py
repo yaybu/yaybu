@@ -26,7 +26,7 @@ from yay import String
 
 unicode_glyphs = ''.join(
     unichr(char)
-    for char in xrange(1114112) # 0x10ffff + 1
+    for char in xrange(sys.maxunicode+1)
     if unicodedata.category(unichr(char))[0] in ('LMNPSZ')
     )
 

@@ -34,6 +34,9 @@ Changelog for yaybu
 
 - The default mode for directories is now 0755.
 
+- Improve cross-platform support by not making assumptions about the value of
+  sys.maxunicode.
+
 
 0.1.11 (2011-11-19)
 -------------------
