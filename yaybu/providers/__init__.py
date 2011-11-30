@@ -21,5 +21,6 @@ from yaybu.providers import (
     git,
     user,
     prompt,
+    rsync,
     service
     )
