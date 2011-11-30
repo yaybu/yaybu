@@ -86,7 +86,7 @@ class Rsync(Provider):
 
     def _sync(self, context, dryrun=False):
         # FIXME: This will touch disk even in simulate mode... But *only* the exclude file.
-        command = ["rsync", "-rltv", "--stats", "--delete", "--exclude-from", self._build_exclude_list(context)]
+        command = ["/usr/bin/rsync", "-rltv", "--stats", "--delete", "--exclude-from", self._build_exclude_list(context)]
         if dryrun:
             command.extend(["-n"])
         command.extend([".", self.resource.name+"/"])
@@ -106,13 +106,18 @@ class Rsync(Provider):
     def apply(self, context):
         changed = False
 
+        if not os.path.exists("/usr/bin/rsync"):
+            context.changelog.info("'rsync' command is not available.")
+            if not context.simulate:
+                raise CheckoutError("Cannot continue with unmet dependency")
+
         if not os.path.exists(self.resource.name):
             command = ["/bin/mkdir", self.resource.name]
             rv, out, err = context.shell.execute(command, exceptions=False)
             changed = True
 
         if context.simulate and changed:
-            context.changelog.info("Checkout['%s'] root directory not found; assuming rsync will occur" % self.resource.name)
+            context.changelog.info("Root directory not found; assuming rsync will occur")
             return True
 
         ac = AttributeChanger(context, self.resource.name, self.resource.user, mode=0755)
