@@ -313,7 +313,7 @@ class RemoveFile(provider.Provider):
             context.shell.execute(["/bin/rm", self.resource.name])
             changed = True
         else:
-            context.changelog.info("File %s missing already so not removed" % self.resource.name)
+            context.changelog.debug("File %s missing already so not removed" % self.resource.name)
             changed = False
         return changed
 

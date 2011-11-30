@@ -242,6 +242,9 @@ class ChangeLog:
         else:
             self.logger.info(message, *args)
 
+    def debug(self, message, *args, **kwargs):
+        pass
+
     def error(self, message, *args):
         self.logger.error(message, *args)
 

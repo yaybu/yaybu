@@ -4,7 +4,8 @@ Changelog for yaybu
 0.1.13 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Reclassifies some log output as debug information for quieter deployments
+  when nothing has changed.
 
 
 0.1.12 (2011-11-30)
