@@ -37,6 +37,8 @@ Changelog for yaybu
 - Improve cross-platform support by not making assumptions about the value of
   sys.maxunicode.
 
+- Use yay 0.0.39 to avoid some pickle issues.
+
 
 0.1.11 (2011-11-19)
 -------------------
