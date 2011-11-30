@@ -42,7 +42,7 @@ class Directory(Resource):
           name: /var/local/data
           owner: root
           group: root
-          mode: 644
+          mode: 0755
 
     """
 
@@ -55,8 +55,8 @@ class Directory(Resource):
     group = String(default="root")
     """ The unix group who should own this directory, by default this is 'root' """
 
-    mode = Octal(default=0644)
-    """ The octal mode that represents this directory's permissions, by default this is '644'. """
+    mode = Octal(default=0755)
+    """ The octal mode that represents this directory's permissions, by default this is '755'. """
 
     parents = Boolean(default=False)
     """ Create parent directories as needed, using the same ownership and

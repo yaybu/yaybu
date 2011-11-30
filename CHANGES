@@ -32,6 +32,8 @@ Changelog for yaybu
   watches to restart services when you change a particular script or asset in
   your 'checkout'.
 
+- The default mode for directories is now 0755.
+
 
 0.1.11 (2011-11-19)
 -------------------
