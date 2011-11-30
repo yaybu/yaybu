@@ -14,12 +14,12 @@
 
 import os, logging
 
+from yaybu.core.shell import Command
 from yaybu.core.provider import Provider
 from yaybu import resources
 
 import shlex
 
-from yay import String
 
 log = logging.getLogger("subversion")
 
@@ -48,7 +48,7 @@ class Svn(Provider):
         if os.path.exists(self.resource.name):
             return
 
-        log.info("Checking out %s" % self.resource)
+        log.debug("Checking out %s" % self.resource)
         self.svn(context, "co", self.url, self.resource.name, quiet=True)
         return True
 
@@ -56,7 +56,7 @@ class Svn(Provider):
         if not os.path.exists(self.resource.name):
             return self.action_checkout(context)
 
-        log.info("Syncing %s" % self.resource)
+        log.debug("Syncing %s" % self.resource)
 
         changed = False
 
@@ -93,11 +93,11 @@ class Svn(Provider):
     def action_export(self, context):
         if os.path.exists(self.resource.name):
             return
-        log.info("Exporting %s" % self.resource)
+        log.debug("Exporting %s" % self.resource)
         self.svn(context, "export", self.url, self.resource.name)
 
     def get_svn_args(self, action, *args, **kwargs):
-        command = String(["svn"])
+        command = Command(["svn"])
 
         if kwargs.get("quiet", False):
             command.add("--quiet")
@@ -105,9 +105,9 @@ class Svn(Provider):
         command.extend([action, "--non-interactive"])
 
         if self.resource.scm_username:
-            command.add(["--username", self.resource.scm_username])
+            command.add(Command(["--username", self.resource.scm_username]))
         if self.resource.scm_password:
-            command.add(["--password", self.resource.scm_password])
+            command.add(Command(["--password", self.resource.scm_password]))
         if self.resource.scm_username or self.resource.scm_password:
             command.add("--no-auth-cache")
 

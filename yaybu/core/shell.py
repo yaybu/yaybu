@@ -22,6 +22,10 @@ import shlex
 
 from yay import String
 
+class Command(String):
+    """ Horrible horrible cludge """
+    pass
+
 
 class Handle(object):
 
@@ -152,9 +156,12 @@ class ShellCommand(change.Change):
         return map(uni, l)
 
     def apply(self, renderer):
-        if isinstance(self.command, String):
+        if isinstance(self.command, Command):
             logas = self.command.as_list(secret=True)
             command = self.command.as_list(secret=False)
+        elif isinstance(self.command, String):
+            logas = shlex.split(self.command.protected.encode("UTF-8"))
+            command = shlex.split(self.command.unprotected.encode("UTF-8"))
         elif isinstance(self.command, list):
             logas = command = self.command[:]
         elif isinstance(self.command, basestring):
