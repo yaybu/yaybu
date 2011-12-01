@@ -4,6 +4,15 @@ Changelog for yaybu
 0.1.13 (unreleased)
 -------------------
 
+- Service[] now parses the output of ``/sbin/status`` to determine if an
+  upstart job is running or not. It considers the goal of the job to determine
+  if it needs to adjust the job. For example, we might want to start a job and
+  that job isn't running, but it is starting. That is good enough, so Yaybu
+  wouldn't take any action.
+
+  A side effect of implementing proper state detection is that when trying to
+  restart an upstart job that was stopped now just starts the job directly.
+
 - Adds version information to the command line interface
 
 - Reclassifies some log output as debug information for quieter deployments

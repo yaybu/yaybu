@@ -17,6 +17,8 @@ import os
 from yaybu.core import error
 from yaybu import resources
 
+# http://upstart.ubuntu.com/getting-started.html
+# http://upstart.ubuntu.com/cookbook/#initctl-status
 
 class _ServiceMixin(object):
 
