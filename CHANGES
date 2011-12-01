@@ -4,6 +4,8 @@ Changelog for yaybu
 0.1.13 (unreleased)
 -------------------
 
+- Adds version information to the command line interface
+
 - Reclassifies some log output as debug information for quieter deployments
   when nothing has changed.
 
