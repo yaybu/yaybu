@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.1.13 (unreleased)
+0.1.13 (2011-12-02)
 -------------------
 
 - Initial subversion checkouts are no longer quiet - to match 'svn up'
