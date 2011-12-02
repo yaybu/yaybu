@@ -4,6 +4,10 @@ Changelog for yaybu
 0.1.13 (unreleased)
 -------------------
 
+- Initial subversion checkouts are no longer quiet - to match 'svn up'
+  behaviour - this is useful for large checkouts when you arent sure if the
+  checkout has hung.
+
 - Use of 'svn' without having subversion installed will trigger a propper error
   instead of a traceback. Both this and the rsync checks now have a proper
   exception for reporting missing dependencies.

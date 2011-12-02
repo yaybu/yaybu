@@ -50,7 +50,7 @@ class Svn(Provider):
             return
 
         log.debug("Checking out %s" % self.resource)
-        self.svn(context, "co", self.url, self.resource.name, quiet=True)
+        self.svn(context, "co", self.url, self.resource.name)
         return True
 
     def apply(self, context):
