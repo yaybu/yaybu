@@ -155,7 +155,11 @@ class MissingAsset(ExecutionError):
 class CheckoutError(Error):
     """ An insurmountable problem was encountered during checkout """
     returncode = 150
-    """ returns error code 148 to the invoking environment. """
+    """ returns error code 150 to the invoking environment. """
+
+class Incompatible(Error):
+    """ An incompatibility was detected and execution can't continue """
+    returncode = 151
 
 class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our

@@ -89,17 +89,17 @@ class Server(object):
 
         node = self.root
 
-        if r.path:
-            segment, rest = r.path[0], r.path[1:]
-            while segment:
-                node = node.get_child(segment)
-                if node.leaf:
-                    break
-                if not rest:
-                    break
-                segment, rest = rest[0], rest[1:]
-
         try:
+            if r.path:
+                segment, rest = r.path[0], r.path[1:]
+                while segment:
+                    node = node.get_child(segment)
+                    if node.leaf:
+                        break
+                    if not rest:
+                        break
+                    segment, rest = rest[0], rest[1:]
+ 
             node.render(self.context, r, "/".join(rest))
         except Error, e:
             e.render(r, None)
@@ -164,4 +164,27 @@ class StaticResource(HttpResource):
         request.send_header("Content", "keep-alive")
         request.end_headers()
         request.write_fileobj(StringIO.StringIO(self.content))
+
+
+class AboutResource(HttpResource):
+
+    leaf = True
+
+    def get_version(self, thing):
+        """ Returns the version of a python egg. Returns 0 if it can't be determined """
+        import pkg_resources
+        try:
+            return pkg_resources.get_distribution(thing).version
+        except pkg_resources.DistributionNotFound:
+            return "0"
+
+    def render_GET(self, yaybu, request, postpath):    
+        request.send_response(200, "OK")
+        request.send_header("Content-Type", "text/plain")
+        request.send_header("Content-Length", "0")
+        request.send_header("Content", "keep-alive")
+        request.send_header("Yaybu", self.get_version("Yaybu"))
+        request.send_header("yay", self.get_version("yay"))
+        request.end_headers()
+        request.write_fileobj(StringIO.StringIO(""))
 

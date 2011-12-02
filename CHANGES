@@ -15,6 +15,13 @@ Changelog for yaybu
 
 - Adds version information to the command line interface
 
+- The protocol Yaybu uses for communicating over SSH has grown some version
+  metadata. This will be used to ensure better interoperability between Yaybu
+  clients and targets.
+
+  **WARNING** You will need to ensure your clients and servers are running at
+  least this version as this is (hopefully the last) protcol breaking change.
+
 - Reclassifies some log output as debug information for quieter deployments
   when nothing has changed.
 

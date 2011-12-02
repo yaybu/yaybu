@@ -19,7 +19,7 @@ import os
 
 import yay
 
-from yaybu.core.protocol.server import Server, HttpResource, StaticResource
+from yaybu.core.protocol.server import Server, HttpResource, StaticResource, AboutResource
 from yaybu.core.protocol.file import FileResource, EncryptedResource
 from yaybu.core.protocol.changelog import ChangeLogResource
 
@@ -96,6 +96,7 @@ class RemoteRunner(Runner):
             root.put_child("files", FileResource())
             root.put_child("encrypted", EncryptedResource())
             root.put_child("changelog", ChangeLogResource())
+            root.put_child("about", AboutResource())
 
             Server(ctx, root, p.stdout, p.stdin).serve_forever()
             p.wait()

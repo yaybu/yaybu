@@ -22,7 +22,7 @@ import yay
 from yay.openers import Openers
 from yay.errors import NotFound
 
-from yaybu.core.error import ParseError, MissingAsset
+from yaybu.core.error import ParseError, MissingAsset, Incompatible
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.core.shell import Shell
 from yaybu.core import change
@@ -157,7 +157,29 @@ class RemoteRunContext(RunContext):
 
     def __init__(self, configfile, opts=None):
         self.connection = HTTPConnection()
+        self.check_versions()
         super(RemoteRunContext, self).__init__(configfile, opts)
+
+    def check_versions(self):
+        self.connection.request("GET", "/about")
+        rsp = self.connection.getresponse()
+
+        if rsp.status != 200:
+            self.features = []
+            self.versions = {"Yaybu": "0", "yay": "0"}
+        else:
+            self.features = rsp.getheader("features", "").split(",")
+            self.versions = {
+                "Yaybu": rsp.getheader("Yaybu", "0"),
+                "yay": rsp.getheader("yay", "0"),
+                }
+
+        import pkg_resources
+        if pkg_resources.parse_version(self.versions["Yaybu"]) <= pkg_resources.parse_version("0"):
+            raise Incompatible("You require a newer version of 'Yaybu' to deploy to this server")
+
+        if pkg_resources.parse_version(self.versions["yay"]) <= pkg_resources.parse_version("0"):
+            raise Incompatible("You require a newer version of 'yay' to deploy to this server")
 
     def setup_changelog(self):
         self.changelog = change.RemoteChangeLog(self)
