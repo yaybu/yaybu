@@ -4,6 +4,10 @@ Changelog for yaybu
 0.1.13 (unreleased)
 -------------------
 
+- Use of 'svn' without having subversion installed will trigger a propper error
+  instead of a traceback. Both this and the rsync checks now have a proper
+  exception for reporting missing dependencies.
+
 - Service[] now parses the output of ``/sbin/status`` to determine if an
   upstart job is running or not. It considers the goal of the job to determine
   if it needs to adjust the job. For example, we might want to start a job and

@@ -1,8 +1,5 @@
 from yaybu.harness import FakeChrootTestCase
-import subprocess
-import time
-import os
-
+from yaybu.core.error import MissingDependency
 
 class RsyncTest(FakeChrootTestCase):
     """
@@ -42,4 +39,17 @@ class RsyncTest(FakeChrootTestCase):
 
     def test_nochange(self):
         self.sync(expect=255)
+
+
+class RsyncMissingTest(FakeChrootTestCase):
+
+    def test_missing_rsync(self):
+        rv = self.fixture.apply("""
+           resources:
+               - Checkout:
+                   scm: rsync
+                   name: /dest
+                   repository: /source
+           """)
+        self.assertEqual(MissingDependency.returncode, rv)
 

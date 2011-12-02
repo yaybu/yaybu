@@ -16,6 +16,7 @@ import os, logging
 
 from yaybu.core.shell import Command
 from yaybu.core.provider import Provider
+from yaybu.core.error import MissingDependency
 from yaybu import resources
 
 import shlex
@@ -53,6 +54,13 @@ class Svn(Provider):
         return True
 
     def apply(self, context):
+        if not os.path.exists("/usr/bin/svn"):
+            error_string = "'/usr/bin/svn' is not available; update your configuration to install subversion?"
+            if not context.simulate:
+                raise MissingDependency(error_string)
+            log.info(error_string)
+            log.info("This error was ignored in simulate mode")
+
         if not os.path.exists(self.resource.name):
             return self.action_checkout(context)
 

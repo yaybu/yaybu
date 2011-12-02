@@ -161,6 +161,10 @@ class Incompatible(Error):
     """ An incompatibility was detected and execution can't continue """
     returncode = 151
 
+class MissingDependency(ExecutionError):
+    """ A dependency required for a feature or provider is missing """
+    returncode = 152
+
 class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our
     tests. This exception is never really raised, but it's useful to keep the

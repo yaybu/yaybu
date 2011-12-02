@@ -16,7 +16,7 @@ import os, logging
 import re
 
 from yaybu.core.provider import Provider
-from yaybu.core.error import CheckoutError
+from yaybu.core.error import CheckoutError, MissingDependency
 from yaybu import resources
 
 from yaybu.providers.filesystem.files import AttributeChanger
@@ -107,9 +107,9 @@ class Rsync(Provider):
         changed = False
 
         if not os.path.exists("/usr/bin/rsync"):
-            context.changelog.info("'rsync' command is not available.")
+            context.changelog.info("'/usr/bin/rsync' command is not available.")
             if not context.simulate:
-                raise CheckoutError("Cannot continue with unmet dependency")
+                raise MissingDependency("Cannot continue with unmet dependency")
 
         if not os.path.exists(self.resource.name):
             command = ["/bin/mkdir", self.resource.name]
