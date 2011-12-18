@@ -4,7 +4,8 @@ Changelog for yaybu
 0.1.14 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Yaybu hackers now have additional ways of invoking the debugger, including
+  an equivalent to the pdb ``pm()`` and ``set_trace()`` methods..
 
 
 0.1.13 (2011-12-02)

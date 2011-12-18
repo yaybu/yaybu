@@ -44,6 +44,8 @@ class Rdb(pdb.Pdb):
             self.socket.close()
         return False
 
+def set_trace():
+    Rdb().set_trace(sys._getframe().f_back)
 
 def post_mortem(exc_traceback=None):
     if exc_traceback is None:
@@ -52,4 +54,7 @@ def post_mortem(exc_traceback=None):
     with Rdb() as p:
         p.reset()
         p.interaction(None, exc_traceback)
+
+def pm():
+    post_mortem(sys.last_traceback)
 
