@@ -4,6 +4,10 @@ Changelog for yaybu
 0.1.14 (unreleased)
 -------------------
 
+- Refactor template handling to allow ``{% extends "index.html" %}``. You can
+  refer to templates on the ``YAYBUPATH``, and you can override templates by
+  putting new templates higher up the ``YAYBUPATH`` search.
+
 - Yaybu hackers now have additional ways of invoking the debugger, including
   an equivalent to the pdb ``pm()`` and ``set_trace()`` methods..
 

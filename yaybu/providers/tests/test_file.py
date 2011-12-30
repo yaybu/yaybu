@@ -72,6 +72,22 @@ class TestFileApply(FakeChrootTestCase):
                     """)
         self.failUnlessExists("/etc/templated")
 
+    def test_create_file_template_with_extends(self):
+        self.fixture.check_apply("""
+            resources:
+                - File:
+                    name: /etc/templated
+                    template: package://yaybu.providers.tests/template_with_extends.j2
+                    template_args:
+                        foo: this is foo
+                        bar: 42
+                    owner: root
+                    group: root
+                    """)
+        self.failUnlessExists("/etc/templated")
+        with self.fixture.open("/etc/templated") as fp:
+            self.failUnless("this is foo" in fp.read())
+
     def test_modify_file(self):
         with self.fixture.open("/etc/test_modify_file", "w") as fp:
           fp.write("foo\nbar\nbaz")

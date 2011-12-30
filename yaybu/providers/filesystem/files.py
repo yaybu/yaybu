@@ -26,7 +26,7 @@ try:
 except ImportError:
     magic = None
 
-from jinja2 import Environment
+from jinja2 import Environment, BaseLoader, TemplateNotFound
 
 from yaybu import resources
 from yaybu.core import provider
@@ -210,6 +210,17 @@ class FileChangeTextRenderer(change.TextRenderer):
             self.logger.notice("Binary contents; not showing delta")
 
 
+class YaybuTemplateLoader(BaseLoader):
+
+    def __init__(self, ctx):
+        self.ctx = ctx
+
+    def get_source(self, environment, template):
+        f = self.ctx.get_file(template)
+        source = f.read()
+        return source, template, lambda: False
+
+
 class File(provider.Provider):
 
     """ Provides file creation using templates or static files. """
@@ -272,8 +283,8 @@ class File(provider.Provider):
             # set a special line ending
             # this strips the \n from the template line meaning no blank line,
             # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
-            env = Environment(line_statement_prefix='%')
-            template = env.from_string(context.get_file(self.resource.template).read())
+            env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
+            template = env.get_template(self.resource.template)
             contents = template.render(self.get_template_args()) + "\n" # yuk
             sensitive = self.has_protected_strings()
         elif self.resource.static:
