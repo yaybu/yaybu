@@ -246,15 +246,16 @@ class ResourceBundle(ordereddict.OrderedDict):
         parameters, build a resource bundle.  """
         bundle = cls()
         for node in expression:
-            spec = node.expand()
+            spec = node.resolve()
             try:
                 bundle.add_from_spec(spec)
-            except error.ParseError as e:
-                e.args[0] += "\nFile %s, line %d, column %d" % (node.name, node.line, node.column)
-                e.file = node.name
-                e.line = node.line
-                e.column = node.column
-                raise e
+            except error.ParseError as exc:
+                exc.msg += "\nFile %s, line %d, column %d" % (node.name, node.line, node.column)
+                exc.file = node.name
+                exc.line = node.line
+                exc.column = node.column
+                raise
+
         return bundle
 
     def key_remap(self, kw):

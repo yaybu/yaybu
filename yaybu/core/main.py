@@ -55,7 +55,7 @@ def main():
 
     if opts.expand_only:
         ctx = runcontext.RunContext(args[0], opts)
-        cfg = ctx.get_config()
+        cfg = ctx.get_config().get()
 
         if opts.verbose <= 2:
             cfg = dict(resources=cfg.get("resources", []))

@@ -119,26 +119,24 @@ class RunContext(object):
 
     def get_config(self):
         if self._config:
-            return self._config.get()
+            return self._config
 
         try:
             c = yay.config.Config(searchpath=self.ypath)
-
+            
             if self.host:
                 extra = {
                     "yaybu": {
                         "host": self.host,
                         }
                     }
-
-                # This is fugly. Oh dear.
-                c.load(StringIO.StringIO(yay.dump(extra)))
+                c.add(extra)
 
             c.load_uri(self.configfile)
 
             self._config = c
+            return c
 
-            return c.get()
         except yay.errors.Error, e:
             raise ParseError(e.get_string())
 
@@ -187,12 +185,13 @@ class RemoteRunContext(RunContext):
     def get_config(self):
         self.connection.request("GET", "/config")
         rsp = self.connection.getresponse()
-        return pickle.loads(rsp.read())
+        c = yay.config.Config()
+        c.add(pickle.loads(rsp.read()))
+        return c
 
     def get_decrypted_file(self, filename):
         self.connection.request("GET", "/encrypted/" + filename)
         rsp = self.connection.getresponse()
-
         return rsp
 
     def get_file(self, filename):
