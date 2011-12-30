@@ -170,7 +170,7 @@ class TestResourceBundle(unittest.TestCase):
         event.reset()
 
     def test_creation(self):
-        resources = resource.ResourceBundle([
+        resources = resource.ResourceBundle.create_from_list([
             {"File": [{
                 "name": "/etc/foo",
                 "mode": "666",
@@ -180,7 +180,7 @@ class TestResourceBundle(unittest.TestCase):
 
     def test_firing(self):
         Ev1Provider.applied = 0
-        resources = resource.ResourceBundle([
+        resources = resource.ResourceBundle.create_from_list([
             {"Ev1": [
                 { "name": "e1",
                   "policy": "foo",
@@ -215,7 +215,7 @@ class TestResourceBundle(unittest.TestCase):
 
     def test_not_firing(self):
         Ev1Provider.applied = 0
-        resources = resource.ResourceBundle([
+        resources = resource.ResourceBundle.create_from_list([
             {"Ev1": [
                 { "name": "e1",
                   "policy": "foo",
@@ -249,7 +249,7 @@ class TestResourceBundle(unittest.TestCase):
 
     def test_forwardreference(self):
         Ev1Provider.applied = 0
-        resources = resource.ResourceBundle([
+        resources = resource.ResourceBundle.create_from_list([
             {"Ev1": [
                 { "name": "e1",
                   "policy":

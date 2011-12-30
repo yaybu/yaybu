@@ -232,17 +232,30 @@ class ResourceBundle(ordereddict.OrderedDict):
     that consists of scalars, lists and dictionaries and this class will
     instantiate the appropriate resources into the structure. """
 
-    def __init__(self, specification=()):
-        super(ResourceBundle, self).__init__()
-        for resource in specification:
-            if len(resource.keys()) > 1:
-                raise error.ParseError("Too many keys in list item")
-            typename, instances = resource.items()[0]
-            if not isinstance(instances, list):
-                instances = [instances]
-            for instance in instances:
-                self.create(typename, instance)
+    @classmethod
+    def create_from_list(cls, specification):
+        """ Given a list of types and parameters, build a resource bundle """
+        bundle = cls()
+        for spec in specification:
+            bundle.add_from_spec(spec)
+        return bundle
 
+    @classmethod
+    def create_from_yay_expression(cls, expression):
+	""" Given a Yay expression that resolves to a list of types and
+        parameters, build a resource bundle.  """
+        bundle = cls()
+        for node in expression:
+            spec = node.expand()
+            try:
+                bundle.add_from_spec(spec)
+            except error.ParseError as e:
+                e.args[0] += "\nFile %s, line %d, column %d" % (node.name, node.line, node.column)
+                e.file = node.name
+                e.line = node.line
+                e.column = node.column
+                raise e
+        return bundle
 
     def key_remap(self, kw):
         """ Maps - to _ to make resource attribute name more pleasant. """
@@ -250,7 +263,21 @@ class ResourceBundle(ordereddict.OrderedDict):
             k = k.replace("-", "_")
             yield str(k),v
 
-    def create(self, typename, instance):
+    def add_from_spec(self, spec):
+        if not hasattr(spec, "keys"):
+            raise error.ParseError("Not a valid Resource definition")
+
+        if len(spec.keys()) > 1:
+            raise error.ParseError("Too many keys in list item")
+
+        typename, instances = spec.items()[0]
+        if not isinstance(instances, list):
+            instances = [instances]
+
+        for instance in instances:
+            self.add(typename, instance)
+
+    def add(self, typename, instance):
         if not isinstance(instance, dict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
 
@@ -273,6 +300,9 @@ class ResourceBundle(ordereddict.OrderedDict):
             w._original_hash = w.hash()
 
         return kls
+
+    # DEPRECATED
+    create = add
 
     def bind(self):
         """ Bind all the resources so they can observe each others for policy

@@ -76,7 +76,7 @@ class Runner(object):
                 self.resources = bundle
             else:
                 config = ctx.get_config()
-                self.resources = resource.ResourceBundle(config.get("resources", []))
+                self.resources = resource.ResourceBundle.create_from_list(config.get("resources", []))
 
             self.resources.bind()
             changed = self.resources.apply(ctx, config)
