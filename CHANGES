@@ -18,6 +18,9 @@ Changelog for yaybu
 - Yaybu hackers now have additional ways of invoking the debugger, including
   an equivalent to the pdb ``pm()`` and ``set_trace()`` methods..
 
+- File creation is now more secure: permissions are set before content
+  is written.
+
 
 0.1.13 (2011-12-02)
 -------------------

@@ -297,8 +297,16 @@ class File(provider.Provider):
             contents = None
             sensitive = False
 
-        fc = FileContentChanger(context, self.resource.name, contents, sensitive)
-        context.changelog.apply(fc)
+        # If a file doesn't exist we create an empty one. This means we can
+        # ensure the user, group and permissions are in their final state
+        # *BEFORE* we write to them.
+        created = False
+        if not os.path.exists(self.resource.name):
+            if not context.simulate:
+                with open(self.resource.name, "w") as fp:
+                    fp.write("")
+                    fp.close()
+            created = True
 
         ac = AttributeChanger(context,
                               self.resource.name,
@@ -307,7 +315,10 @@ class File(provider.Provider):
                               self.resource.mode)
         context.changelog.apply(ac)
 
-        if fc.changed or ac.changed:
+        fc = FileContentChanger(context, self.resource.name, contents, sensitive)
+        context.changelog.apply(fc)
+
+        if created or fc.changed or ac.changed:
             return True
 
 class RemoveFile(provider.Provider):
