@@ -136,7 +136,7 @@ class TestFileApply(FakeChrootTestCase):
                 - File:
                     name: /etc/foo
             """)
-        self.assertEqual(rv, 255)
+        self.assertEqual(rv, 254)
 
 
     def test_carriage_returns(self):
@@ -150,7 +150,7 @@ class TestFileApply(FakeChrootTestCase):
                     name: /etc/test_carriage_returns
                     template: package://yaybu.providers.tests/test_carriage_returns.j2
             """)
-        self.assertEqual(rv, 255) # nothing changed
+        self.assertEqual(rv, 254) # nothing changed
 
     def test_carriage_returns2(self):
         """ a template that does end in \n will not gain an extra \n in the resulting file"""
@@ -163,7 +163,7 @@ class TestFileApply(FakeChrootTestCase):
                     name: /etc/test_carriage_returns2
                     template: package://yaybu.providers.tests/test_carriage_returns2.j2
             """)
-        self.assertEqual(rv, 255) # nothing changed
+        self.assertEqual(rv, 254) # nothing changed
 
     def test_unicode(self):
         self.fixture.check_apply(open(sibpath("unicode1.yay")).read())
@@ -211,7 +211,7 @@ class TestFileRemove(FakeChrootTestCase):
                     name: /etc/baz
                     policy: remove
             """)
-        self.failUnlessEqual(rv, 255)
+        self.failUnlessEqual(rv, 254)
 
     def test_remove_notafile(self):
         """ Test removing something that is not a file. """

@@ -87,7 +87,7 @@ class Runner(object):
             if not changed:
                 # nothing changed
                 ctx.changelog.info("No changes were required")
-                return 255
+                return 254
 
             ctx.changelog.info("All changes were applied successfully")
             return 0

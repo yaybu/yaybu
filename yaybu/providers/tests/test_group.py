@@ -36,7 +36,7 @@ class TestGroup(FakeChrootTestCase):
                     name: users
             """)
 
-        self.failUnlessEqual(rv, 255)
+        self.failUnlessEqual(rv, 254)
 
         self.failUnless(self.fixture.get_group("users"))
 
@@ -93,7 +93,7 @@ class TestGroupRemove(FakeChrootTestCase):
                     policy: remove
             """)
 
-        self.failUnlessEqual(rv, 255)
+        self.failUnlessEqual(rv, 254)
 
         self.failUnlessRaises(KeyError, self.fixture.get_group, "zzidontexistzz")
 

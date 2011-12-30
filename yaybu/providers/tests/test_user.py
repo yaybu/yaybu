@@ -27,7 +27,7 @@ class TestUser(FakeChrootTestCase):
                     - name: test
                       disabled-login: True
             """)
-        self.assertEqual(rv, 255)
+        self.assertEqual(rv, 254)
 
     def test_user_with_home(self):
         self.fixture.check_apply("""
@@ -133,7 +133,7 @@ class TestUserRemove(FakeChrootTestCase):
                     policy: remove
             """)
 
-        self.failUnlessEqual(rv, 255)
+        self.failUnlessEqual(rv, 254)
 
         self.failUnlessRaises(KeyError, self.fixture.get_user, "zzidontexistzz")
 

@@ -9,7 +9,7 @@ class TestPackageInstallation(FakeChrootTestCase):
               - Package:
                   name: python
             """)
-        self.assertEqual(rv, 255)
+        self.assertEqual(rv, 254)
 
     def test_installation(self):
         self.fixture.check_apply("""

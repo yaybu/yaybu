@@ -100,6 +100,10 @@ class RemoteRunner(Runner):
 
             Server(ctx, root, p.stdout, p.stdin).serve_forever()
             p.wait()
+
+            if p.returncode == 255:
+                raise error.ConnectionError("Could not connect to '%s'" % ctx.host)
+
             return p.returncode
 
         except error.Error, e:
@@ -108,5 +112,6 @@ class RemoteRunner(Runner):
             p.kill()
             return e.returncode
 
-        return p.returncode
+        # An unknown error occured
+        return 253
 

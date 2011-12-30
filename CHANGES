@@ -4,6 +4,9 @@ Changelog for yaybu
 0.1.14 (unreleased)
 -------------------
 
+- Exit code ``254`` is now used when no changes have been made. ``253`` is
+  used for unknown errors. ``255`` is now a connection errror.
+
 - Refactor template handling to allow ``{% extends "index.html" %}``. You can
   refer to templates on the ``YAYBUPATH``, and you can override templates by
   putting new templates higher up the ``YAYBUPATH`` search.

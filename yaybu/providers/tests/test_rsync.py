@@ -38,7 +38,7 @@ class RsyncTest(FakeChrootTestCase):
         self.failUnless(not self.fixture.exists("/dest/b"))
 
     def test_nochange(self):
-        self.sync(expect=255)
+        self.sync(expect=254)
 
 
 class RsyncMissingTest(FakeChrootTestCase):

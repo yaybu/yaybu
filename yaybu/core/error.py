@@ -22,7 +22,7 @@ import errno
 
 class Error(Exception):
     """ Base class for all yaybu specific exceptions. """
-    returncode = 255
+    returncode = 253
 
     def __init__(self, msg=""):
         self.msg = msg
@@ -169,8 +169,12 @@ class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our
     tests. This exception is never really raised, but it's useful to keep the
     error code here!"""
+    returncode = 254
+    """ returns error code 254 to the invoking environment. """
+
+class ConnectionError(ExecutionError):
+    """ An error occured while establishing a remote connection """
     returncode = 255
-    """ returns error code 255 to the invoking environment. """
 
 class SystemError(ExecutionError):
     """ An error represented by something in the errno list. """
@@ -179,3 +183,4 @@ class SystemError(ExecutionError):
         # if the returncode is not in errno, this will blow up.
         self.msg = errno.errorcode[returncode]
         self.returncode = returncode
+

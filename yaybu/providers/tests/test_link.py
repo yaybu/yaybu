@@ -39,7 +39,7 @@ class TestLink(FakeChrootTestCase):
                   name: /etc/existing
                   to: /
         """)
-        self.assertEqual(rv, 255)
+        self.assertEqual(rv, 254)
         self.failUnlessEqual(self.fixture.readlink("/etc/existing"), "/")
 
     def test_already_exists_notalink(self):

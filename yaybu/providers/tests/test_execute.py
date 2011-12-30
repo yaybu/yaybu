@@ -188,7 +188,7 @@ class TestExecute(FakeChrootTestCase):
                  name: test_touch_present
                  command: touch /checkpoint
                  touch: /touched-file
-            """, expect=255)
+            """, expect=254)
 
         self.failIfExists("/checkpoint")
 
@@ -217,7 +217,7 @@ class TestExecute(FakeChrootTestCase):
                   unless: /bin/true
             """)
 
-        self.failUnlessEqual(rv, 255)
+        self.failUnlessEqual(rv, 254)
 
     def test_unless_false(self):
         """ test that an Execute will execute when the unless expression
