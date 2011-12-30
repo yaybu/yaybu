@@ -4,6 +4,9 @@ Changelog for yaybu
 0.1.14 (unreleased)
 -------------------
 
+- Better error handling. Proper detection of resource redefinition and of
+  undefined resource type use.
+
 - Exit code ``254`` is now used when no changes have been made. ``253`` is
   used for unknown errors. ``255`` is now a connection errror.
 

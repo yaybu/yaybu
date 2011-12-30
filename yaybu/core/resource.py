@@ -254,7 +254,14 @@ class ResourceBundle(ordereddict.OrderedDict):
         if not isinstance(instance, dict):
             raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
 
-        kls = ResourceType.resources[typename](**dict(self.key_remap(instance)))
+        try:
+            kls = ResourceType.resources[typename](**dict(self.key_remap(instance)))
+        except KeyError:
+            raise error.ParseError("There is no resource type of '%s'" % typename)
+
+        if kls.id in self:
+            raise error.ParseError("'%s' cannot be defined multiple times" % kls.id)
+
         self[kls.id] = kls
 
         # Create implicit File[] nodes for any watched files
