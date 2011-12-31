@@ -22,6 +22,7 @@ import yay
 from yay.openers import Openers
 from yay.errors import NotFound
 
+from yaybu.core import resource
 from yaybu.core.error import ParseError, MissingAsset, Incompatible
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.core.shell import Shell
@@ -40,6 +41,7 @@ class RunContext(object):
         self.ypath = []
         self.options = {}
         self._config = None
+        self._bundle = None
 
         self.resume = opts.resume
         self.no_resume = opts.no_resume
@@ -139,6 +141,20 @@ class RunContext(object):
 
         except yay.errors.Error, e:
             raise ParseError(e.get_string())
+
+    def set_bundle(self, bundle):
+        self._bundle = bundle
+
+    def get_bundle(self):
+        if self._bundle:
+            return self._bundle
+
+        cfg = self.get_config().mapping
+        bundle = resource.ResourceBundle.create_from_yay_expression(cfg.get("resources").expand())
+        bundle.bind()
+        self._bundle = bundle
+
+        return bundle
 
     def get_decrypted_file(self, filename):
         p = subprocess.Popen(["gpg", "-d", self.locate_file(filename)], stdout=subprocess.PIPE)

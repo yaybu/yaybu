@@ -19,7 +19,6 @@ import logging.handlers
 import subprocess
 import getpass
 
-from yaybu.core import resource
 from yaybu.core import error
 from yaybu.core import runcontext
 from yaybu.core import event
@@ -31,8 +30,6 @@ class LoaderError(Exception):
 
 
 class Runner(object):
-
-    resources = None
 
     def trampoline(self, username):
         command = ["sudo", "-u", username] + sys.argv[0:1]
@@ -72,14 +69,12 @@ class Runner(object):
                 else:
                     raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
 
+            # FIXME: We can pull this out to somewhere nicer now
             if bundle:
-                self.resources = bundle
-            else:
-                config = ctx.get_config().mapping
-                self.resources = resource.ResourceBundle.create_from_yay_expression(config.get("resources").expand())
+                ctx.set_bundle(bundle)
 
-            self.resources.bind()
-            changed = self.resources.apply(ctx, config)
+            # Actually apply the configuration
+            changed = ctx.get_bundle().apply(ctx, ctx.get_config())
 
             if not ctx.simulate and os.path.exists(event.EventState.save_file):
                 os.unlink(event.EventState.save_file)
