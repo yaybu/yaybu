@@ -83,7 +83,7 @@ def main():
     if not opts.remote:
         ctx = runcontext.RunContext(args[0], opts)
     else:
-         ctx = runcontext.RemoteRunContext(args[0], opts)
+        ctx = runcontext.RemoteRunContext(args[0], opts)
 
     rv = r.run(ctx)
     return rv

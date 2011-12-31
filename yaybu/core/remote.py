@@ -51,6 +51,14 @@ class RemoteRunner(Runner):
         self.interactive = interactive
 
     def run(self, ctx):
+        # Get a bundle straight away - allows us to validate the bundle before
+        # sending it remotely.
+        try:
+            bundle = ctx.get_bundle()
+        except error.Error as e:
+            ctx.changelog.error(str(e))
+            return e.returncode
+
         command = ["ssh", "-A"]
         command.extend(["-o", "UserKnownHostsFile %s" % self.user_known_hosts_file])
         command.extend(["-o", "StrictHostKeyChecking %s" % self.strict_host_key_checking])

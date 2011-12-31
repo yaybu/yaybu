@@ -6,7 +6,8 @@ Changelog for yaybu
 
 - Better error handling. Proper detection of resource redefinition and of
   undefined resource type use. Yay node graph is walked lazily so Yaybu
-  errors can access line numbers and other metadata.
+  errors can access line numbers and other metadata. The resource bundle
+  is parsed and error checked before we even try and connect to server.
 
 - Exit code ``254`` is now used when no changes have been made. ``253`` is
   used for unknown errors. ``255`` is now a connection errror.
