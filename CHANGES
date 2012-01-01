@@ -22,6 +22,8 @@ Changelog for yaybu
 - File creation is now more secure: permissions are set before content
   is written.
 
+- We now use Yay 0.0.41 as it has a cleaner API for injecting Python objects.
+
 
 0.1.13 (2011-12-02)
 -------------------
