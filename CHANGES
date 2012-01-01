@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.1.14 (unreleased)
+0.1.14 (2012-01-01)
 -------------------
 
 - Better error handling. Proper detection of resource redefinition and of
