@@ -117,7 +117,13 @@ class RemoteRunner(Runner):
         except error.Error, e:
             print >>sys.stderr, "Error: %s" % str(e)
 
-            p.kill()
+            if p.poll() is None:
+                try:
+                    p.kill()
+                except OSError:
+                    if p.poll() is None:
+                        raise
+
             return e.returncode
 
         # An unknown error occured

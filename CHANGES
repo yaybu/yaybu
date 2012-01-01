@@ -4,7 +4,7 @@ Changelog for yaybu
 0.1.15 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- If remote process dies before we SIGKILL it, swallow any errors.
 
 
 0.1.14 (2012-01-01)
