@@ -35,6 +35,9 @@ class RemoteRunner(Runner):
     strict_host_key_checking = "ask"
     interactive = True
 
+    def __init__(self):
+        self.ssh_options = {}
+
     def load_host_keys(self, filename):
         self.user_known_hosts_file = filename
 
@@ -62,6 +65,9 @@ class RemoteRunner(Runner):
         command = ["ssh", "-A"]
         command.extend(["-o", "UserKnownHostsFile %s" % self.user_known_hosts_file])
         command.extend(["-o", "StrictHostKeyChecking %s" % self.strict_host_key_checking])
+
+        for k, v in self.ssh_options.items():
+            command.extend(["-o", "%s %s" % (k, v)])
 
         if self.identity_file:
             command.extend(["-o", "IdentityFile %s" % self.identity_file])

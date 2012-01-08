@@ -6,6 +6,11 @@ Changelog for yaybu
 
 - If remote process dies before we SIGKILL it, swallow any errors.
 
+- The RemoteRunner object can now set SSH settings in its ssh_options
+  dictionary. For example::
+
+    runner.ssh_options["IdentitiesOnly"] = "yes"
+
 
 0.1.14 (2012-01-01)
 -------------------
