@@ -84,7 +84,7 @@ class Link(provider.Provider):
             isalink = False
 
         if not isalink or linkto != to:
-            if os.path.exists(name):
+            if os.path.lexists(name):
                 context.shell.execute(["/bin/rm", "-rf", name])
 
             context.shell.execute(["/bin/ln", "-s", self.resource.to, name])

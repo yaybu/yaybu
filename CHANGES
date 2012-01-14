@@ -4,6 +4,7 @@ Changelog for yaybu
 0.1.16 (unreleased)
 -------------------
 
+- Fix handling of broken links when replacing them.
 - Fix handling of broken links for Link remove policy.
 
 
