@@ -121,13 +121,10 @@ class RemoveLink(provider.Provider):
         return super(RemoveLink, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if os.path.exists(self.resource.name):
+        if os.path.lexists(self.resource.name):
             if not os.path.islink(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
             context.shell.execute(["/bin/rm", self.resource.name])
-            changed = True
-        else:
-            context.changelog.info("File %s missing already so not removed" % self.resource.name)
-            changed = False
-        return changed
+            return True
+        return False
 
