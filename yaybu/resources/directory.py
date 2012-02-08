@@ -85,7 +85,8 @@ class DirectoryRemovedPolicy(Policy):
     This isn't recursive, if you want to remove a directory and all its contents
     use `removed-recursive`.
 
-    You should only provided the path to the directory when using this policy.
+    You should only provide the path to the directory when using this policy.
+    Other fields are not needed.
     """
 
     resource = Directory
@@ -102,7 +103,8 @@ class DirectoryRemovedRecursivePolicy(Policy):
     """ If a directory described by this resource exists then remove it and
     its children.
 
-    You should only provided the path to the directory when using this policy.
+    You should only provide the path to the directory when using this policy.
+    Other fields are not needed.
     """
 
     resource = Directory
