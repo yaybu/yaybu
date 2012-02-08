@@ -74,7 +74,7 @@ check out source code), and an Execute resource, respectively. Simple! There are
 resources that you can use, and their configuration options are described in the `resource
 reference <../reference/resources>`_.
 
-Hello, Idempotance!
+Hello, Idempotence!
 ===================
 
 Our config file `myconfig.yay` describes a `state` we want our system to be in. So, what
@@ -88,7 +88,7 @@ configuration, Yaybu produces the following output::
     No changes were required
 
 Any configurations we produce should always be
-`idempotant <http://wikipedia.org/wiki/Idempotence>`_, meaning that if Yaybu applies a
+`idempotent <http://wikipedia.org/wiki/Idempotence>`_, meaning that if Yaybu applies a
 configuration multiple times to a system, Yaybu will only apply the parts of the
 configuration that aren't consistent with the state of the system. If the system and
 configuration remain the same, after the initial application of the configuration, Yaybu
