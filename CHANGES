@@ -11,6 +11,9 @@ Changelog for yaybu
 
 - #64, proper error handling when assigning to an invalid property.
 
+- After parsing a shell command, verify that the command exists (searching on
+  PATH if needed).
+
 
 0.1.17 (2012-03-12)
 -------------------

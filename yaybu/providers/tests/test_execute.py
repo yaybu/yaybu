@@ -262,3 +262,23 @@ class TestExecute(FakeChrootTestCase):
         mode = stat.S_IMODE(self.fixture.stat("/test_umask_002").st_mode)
         self.failUnlessEqual(mode, 0664)
 
+    def test_missing_binary(self):
+        rv = self.fixture.apply("""
+            resources:
+              - Execute:
+                  name: test_missing_binary
+                  command: this_binary_definitely_doesnt_exist
+            """)
+
+        self.failUnlessEqual(rv, error.BinaryMissing.returncode)
+
+    def test_missing_binary_absolute(self):
+        rv = self.fixture.apply("""
+            resources:
+              - Execute:
+                  name: test_missing_binary_absolute
+                  command: /this_binary_definitely_doesnt_exist
+            """)
+
+        self.failUnlessEqual(rv, error.BinaryMissing.returncode)
+

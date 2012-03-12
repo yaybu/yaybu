@@ -201,6 +201,22 @@ class ShellCommand(change.Change):
             self.stderr = ""
             return
 
+        command_exists = True
+        if command[0].startswith("/"):
+            if not os.path.exists(command[0]):
+                command_exists = False
+        else:
+            for path in env["PATH"].split(":"):
+                if os.path.exists(os.path.join(path, command[0])):
+                    break
+            else:
+                command_exists = False
+
+        if not command_exists:
+            if not self.simulate:
+                raise error.BinaryMissing("Command '%s' not found" % command[0])
+            self.context.changelog.info("Command '%s' not found; assuming this recipe will create it" % command[0])
+ 
         try:
             p = subprocess.Popen(command,
                                  shell=self.shell,
