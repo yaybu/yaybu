@@ -53,7 +53,8 @@ cfg.yay
 
 cfg.python
     In order to be as flexible as possible, vagrant-yaybu has to call python
-    code rather than just executing that Yaybu binary. This variable lets you
-    set which variable. We use this to let us use virtualenv or buildout
-    generated python environments.
+    code rather than just executing that Yaybu binary. It normally uses the
+    system python, and hence the system installed Yaybu. You can use this
+    variable to use a virtualenv or buildout maintained python environment
+    instead.
 
