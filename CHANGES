@@ -4,7 +4,15 @@ Changelog for yaybu
 0.1.17 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Support a ``running`` option for ``Service``. This is a command that should
+  return an exit code of 0 if all services are running. If used with a buildout
+  generated ``isotoma.recipe.cluster`` symlinked into ``/etc/init.d`` this
+  might look like this::
+
+      resources.append:
+        - Service:
+            name: cluster
+            running: /etc/init.d/cluster running
 
 
 0.1.16 (2012-01-16)

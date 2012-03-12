@@ -84,3 +84,26 @@ class TestSimpleService(FakeChrootTestCase):
         self.failUnlessEqual(rv, 0)
         self.failUnlessExists("/foo")
 
+    def test_running_true(self):
+        rv = self.fixture.apply("""
+            resources:
+                - Service:
+                    name: test
+                    start: touch /test_running_true
+                    running: /bin/sh -c "true"
+            """)
+
+        self.failUnlessEqual(rv, 254)
+
+    def test_running_false(self):
+        rv = self.fixture.apply("""
+            resources:
+                - Service:
+                    name: test
+                    start: touch /test_running_false
+                    running: /bin/sh -c "false"
+            """)
+
+        self.failUnlessEqual(rv, 0)
+        self.failUnlessExists("/test_running_false")
+

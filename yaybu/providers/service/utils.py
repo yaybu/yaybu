@@ -25,6 +25,13 @@ class _ServiceMixin(object):
     features = []
 
     def status(self, context):
+        if self.resource.running:
+            returncode, stdout, stderr = context.shell.execute(self.resource.running, passthru=True, exceptions=False)
+            if returncode != 0:
+                return "not-running"
+            else:
+                return "running"
+
         if not self.resource.pidfile:
             return "unknown"
 

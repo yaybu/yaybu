@@ -70,6 +70,9 @@ class Service(Resource):
     """ A command that when executed will make the service reload its
     configuration file. """
 
+    running = String()
+    """ A comamnd to execute to determine if a service is running. Should have an exit code of 0 for success. """
+
     pidfile = FullPath()
     """ Where the service creates its pid file.
 
@@ -87,7 +90,7 @@ class ServiceStartPolicy(Policy):
     default = True
     signature = (
         Present("name"),
-        NAND(Present("status"), Present("pidfile")),
+        NAND(Present("running"), Present("pidfile")),
         )
 
 
@@ -99,7 +102,7 @@ class ServiceStopPolicy(Policy):
     name = "stop"
     signature = (
         Present("name"),
-        NAND(Present("status"), Present("pidfile")),
+        NAND(Present("running"), Present("pidfile")),
         )
 
 
@@ -114,7 +117,7 @@ class ServiceRestartPolicy(Policy):
     name = "restart"
     signature = (
         Present("name"),
-        NAND(Present("status"), Present("pidfile")),
+        NAND(Present("running"), Present("pidfile")),
         )
 
 
@@ -129,6 +132,6 @@ class ServiceReloadPolicy(Policy):
     name = "reconfig"
     signature = (
         Present("name"),
-        NAND(Present("status"), Present("pidfile")),
+        NAND(Present("running"), Present("pidfile")),
         )
 
