@@ -102,17 +102,17 @@ class ShellCommand(change.Change):
             self.gid = grp.getgrnam(self.group).gr_gid
 
     def preexec(self):
-        if self.uid is not None:
-            if self.uid != os.getuid():
-                os.setuid(self.uid)
-            if self.uid != os.geteuid():
-                os.seteuid(self.uid)
-
         if self.gid is not None:
             if self.gid != os.getgid():
                 os.setgid(self.gid)
             if self.gid != os.getegid():
                 os.setegid(self.gid)
+
+        if self.uid is not None:
+            if self.uid != os.getuid():
+                os.setuid(self.uid)
+            if self.uid != os.geteuid():
+                os.seteuid(self.uid)
 
         os.environ.clear()
         os.environ.update(self._generated_env)
