@@ -14,6 +14,9 @@ Changelog for yaybu
 - After parsing a shell command, verify that the command exists (searching on
   PATH if needed).
 
+- Make sure errors from Yay are wrapped in ParseError so they are presented
+  properly.
+
 
 0.1.17 (2012-03-12)
 -------------------

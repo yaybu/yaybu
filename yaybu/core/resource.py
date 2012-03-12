@@ -20,6 +20,8 @@ import collections
 import ordereddict
 import event
 
+from yay.errors import LanguageError
+
 class ResourceType(type):
 
     """ Keeps a registry of resources as they are created, and provides some
@@ -246,7 +248,16 @@ class ResourceBundle(ordereddict.OrderedDict):
         parameters, build a resource bundle.  """
         bundle = cls()
         for node in expression:
-            spec = node.resolve()
+            try:
+                spec = node.resolve()
+            except LanguageError as exc:
+                p = error.ParseError()
+                p.msg = exc.get_string()
+                p.file = exc.file
+                p.line = exc.line
+                p.column = exc.column
+                raise p
+
             try:
                 bundle.add_from_spec(spec)
             except error.ParseError as exc:
