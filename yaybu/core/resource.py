@@ -131,7 +131,7 @@ class Resource(object):
         setattr(self, "name", kwargs["name"])
         for key, value in kwargs.items():
             if not key in self.__args__:
-                raise AttributeError("Cannot assign argument '%s' to resource %s" % (key, self))
+                raise error.ParseError("'%s' is not a valid option for resource %s" % (key, self))
             setattr(self, key, value)
         self.observers = collections.defaultdict(list)
 

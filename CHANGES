@@ -5,9 +5,11 @@ Changelog for yaybu
 -------------------
 
 - #66, fix ordering of permission dropping so that we can actually drop group
-  permissions
+  permissions.
 
-- #65, add a umask option to Execute
+- #65, add a umask option to Execute.
+
+- #64, proper error handling when assigning to an invalid property.
 
 
 0.1.17 (2012-03-12)
