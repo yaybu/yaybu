@@ -31,6 +31,12 @@ from yaybu.core.argument import (
     )
 
 
+# Let's take a minute to thank the greybeards for this little gem...
+import os
+default_umask = os.umask(0)
+os.umask(default_umask)
+
+
 class Execute(Resource):
 
     """ Execute a command. This command is not executed in a shell - if you
@@ -93,6 +99,9 @@ class Execute(Resource):
     group = String(default="root")
     """ The group to execute the command as.
     """
+
+    umask = Octal(default=default_umask)
+    """ The umask to use when executing this command """
 
     unless = String(default="")
     """ A command to run to determine is this execute should be actioned

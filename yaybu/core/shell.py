@@ -64,7 +64,7 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, passthru=False, user=None, group=None, simulate=False, logas=None):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, passthru=False, user=None, group=None, simulate=False, logas=None, umask=None):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -82,6 +82,8 @@ class ShellCommand(change.Change):
         self.group = None
         self.gid = None
         self.homedir = None
+
+        self.umask = umask
 
         if self.simulate and not self.passthru:
             # For now, we skip this setup in simulate mode - not sure it will ever be possible
@@ -113,6 +115,9 @@ class ShellCommand(change.Change):
                 os.setuid(self.uid)
             if self.uid != os.geteuid():
                 os.seteuid(self.uid)
+
+        if self.umask:
+            os.umask(self.umask)
 
         os.environ.clear()
         os.environ.update(self._generated_env)
@@ -254,8 +259,8 @@ class Shell(object):
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
 
-    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None, logas=None):
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group, self.simulate, logas)
+    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None, logas=None, umask=None):
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group, self.simulate, logas, umask)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             self.context.changelog.info(cmd.stdout)

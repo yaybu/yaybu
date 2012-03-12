@@ -1,4 +1,4 @@
-import os, shutil
+import os, shutil, stat
 
 from yaybu.harness import FakeChrootTestCase
 from yaybu.util import sibpath
@@ -233,4 +233,32 @@ class TestExecute(FakeChrootTestCase):
             """)
 
         self.failUnlessExists("/test_unless_false")
+
+    def test_umask_022(self):
+        self.fixture.check_apply("""
+            resources:
+              - Execute:
+                  name: touch
+                  command: touch /test_umask_022
+                  umask: 022
+                  creates: /test_umask_022
+            """)
+        self.failUnlessExists("/test_umask_022")
+
+        mode = stat.S_IMODE(self.fixture.stat("/test_umask_022").st_mode)
+        self.failUnlessEqual(mode, 0644)
+
+    def test_umask_002(self):
+        self.fixture.check_apply("""
+            resources:
+              - Execute:
+                  name: touch
+                  command: touch /test_umask_002
+                  umask: 002
+                  creates: /test_umask_002
+            """)
+        self.failUnlessExists("/test_umask_002")
+
+        mode = stat.S_IMODE(self.fixture.stat("/test_umask_002").st_mode)
+        self.failUnlessEqual(mode, 0664)
 
