@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.1.18dev'
+version = '0.1.18'
 
 setup(name='Yaybu',
       version=version,
