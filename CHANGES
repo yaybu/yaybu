@@ -4,7 +4,7 @@ Changelog for yaybu
 0.1.19 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Improved validation for scripts in cwd.
 
 
 0.1.18 (2012-03-13)

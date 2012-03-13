@@ -202,7 +202,12 @@ class ShellCommand(change.Change):
             return
 
         command_exists = True
-        if command[0].startswith("/"):
+        if command[0].startswith("./"):
+            if len(command[0]) <= 2:
+                command_exists = False
+            if not os.path.exists(os.path.join(self.cwd, command[0][2:])):
+                command_exists = False
+        elif command[0].startswith("/"):
             if not os.path.exists(command[0]):
                 command_exists = False
         else:
