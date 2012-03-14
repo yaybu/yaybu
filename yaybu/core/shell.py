@@ -283,10 +283,10 @@ class Shell(object):
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
 
-    def execute(self, command, stdin=None, shell=False, inert=False, cwd=None, env=None, exceptions=True, user=None, group=None, logas=None, umask=None):
+    def execute(self, command, stdin=None, shell=False, inert=False, cwd=None, env=None, user=None, group=None, logas=None, umask=None):
         cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, logas, umask)
         self.context.changelog.apply(cmd)
-        if exceptions and cmd.returncode != 0:
+        if cmd.returncode != 0:
             self.context.changelog.info(cmd.stdout)
             self.context.changelog.notice(cmd.stderr)
             raise error.SystemError(cmd.returncode)

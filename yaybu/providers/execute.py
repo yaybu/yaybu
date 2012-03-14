@@ -33,13 +33,23 @@ class Execute(provider.Provider):
         cwd = self.resource.cwd or None
         env = self.resource.environment or None
 
-        returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env, user=self.resource.user,
-            group=self.resource.group, inert=inert, exceptions=False, umask=self.resource.umask)
+        try:
+            rc, stdout, stderr = shell.execute(command, 
+                cwd=cwd,
+                env=env,
+                user=self.resource.user,
+                group=self.resource.group,
+                inert=inert,
+                umask=self.resource.umask
+                )
+        except error.SystemError as exc:
+            rc = exc.returncode
 
-        if not shell.simulate and expected_returncode != None and expected_returncode != returncode:
-            raise error.CommandError("%s failed with return code %d" % (self.resource, returncode))
+        if not shell.simulate:
+            if expected_returncode != None and expected_returncode != rc:
+                raise error.CommandError("%s failed with return code %d" % (self.resource, rc))
 
-        return returncode
+        return rc
 
     def apply(self, context):
         if self.resource.creates is not None \

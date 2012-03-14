@@ -22,16 +22,18 @@ from yaybu import resources
 def is_installed(context, resource):
     # work out if the package is already installed
     command = ["dpkg-query", "-W", "-f='${Status}'", resource.name]
-    returncode, stdout, stderr = context.shell.execute(command,
-                                                           exceptions=False, inert=True)
+
+    try:
+        rc, stdout, stderr = context.shell.execute(command, inert=True)
+    except error.SystemError as exc:
+        if exc.returncode == 1:
+            return False
+        # if the return code is anything but zero or one, we have a problem
+        raise error.DpkgError("%s search failed with return code %s" % (resource, exc.returncode))
 
     # if the return code is 0, dpkg is aware of the package
-    if returncode == 0 and "install ok installed" in stdout:
+    if "install ok installed" in stdout:
         return True
-
-    # if the return code is anything but zero or one, we have a problem
-    if returncode > 1:
-        raise error.DpkgError("%s search failed with return code %s" % (resource, returncode))
 
     return False
 
@@ -56,10 +58,11 @@ class AptInstall(provider.Provider):
 
         # the search returned 1, package is not installed, continue and install it
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
-        returncode, stdout, stderr = context.shell.execute(command, exceptions=False, env=env)
 
-        if returncode != 0:
-            raise error.AptError("%s failed with return code %d" % (self.resource, returncode))
+        try:
+            context.shell.execute(command, env=env)
+        except error.SystemError as exc:
+            raise error.AptError("%s failed with return code %d" % (self.resource, exc.returncode))
 
         return True
 
@@ -85,10 +88,10 @@ class AptUninstall(provider.Provider):
             command.append("--purge")
         command.append(self.resource.name)
 
-        returncode, stdout, stderr = context.shell.execute(command, exceptions=False, env=env)
-
-        if returncode != 0:
-            raise error.AptError("%s failed to uninstall with return code %d" % (self.resource, returncode))
+        try:
+            context.shell.execute(command, env=env)
+        except error.SystemError as exc:
+            raise error.AptError("%s failed to uninstall with return code %d" % (self.resource, exc.returncode))
 
         return True
 

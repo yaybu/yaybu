@@ -91,7 +91,7 @@ class Rsync(Provider):
             command.extend(["-n"])
         command.extend([".", self.resource.name+"/"])
 
-        rv, out, err = context.shell.execute(command, cwd=self.resource.repository, user=self.resource.user, exceptions=False, inert=dryrun)
+        rv, out, err = context.shell.execute(command, cwd=self.resource.repository, user=self.resource.user, inert=dryrun)
 
         if context.simulate and not dryrun:
             # We won't get any output from _sync if we aren't doing a dry-run whilst in simulate mode
@@ -113,7 +113,7 @@ class Rsync(Provider):
 
         if not os.path.exists(self.resource.name):
             command = ["/bin/mkdir", self.resource.name]
-            rv, out, err = context.shell.execute(command, exceptions=False)
+            rv, out, err = context.shell.execute(command)
             changed = True
 
         if context.simulate and changed:

@@ -139,9 +139,10 @@ class User(provider.Provider):
         command.extend(["-m", self.resource.name])
 
         if changed:
-            returncode, stdout, stderr = context.shell.execute(command, exceptions=False)
-            if returncode != 0:
-                raise error.UserAddError("useradd returned error code %d" % returncode)
+            try:
+                context.shell.execute(command)
+            except error.SystemError as exc:
+                raise error.UserAddError("useradd returned error code %d" % exc.returncode)
         return changed
 
 
@@ -162,9 +163,10 @@ class UserRemove(provider.Provider):
 
         command = ["userdel", self.resource.name]
 
-        returncode, stdout, stderr = context.shell.execute(command)
-        if returncode != 0:
-            raise error.UserAddError("Removing user %s failed with return code %d" % (self.resource, returncode))
+        try:
+            context.shell.execute(command)
+        except error.SystemError as exc:
+            raise error.UserAddError("Removing user %s failed with return code %d" % (self.resource, exc.returncode))
 
         return True
 
