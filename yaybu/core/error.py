@@ -181,6 +181,9 @@ class SystemError(ExecutionError):
 
     def __init__(self, returncode):
         # if the returncode is not in errno, this will blow up.
-        self.msg = errno.errorcode[returncode]
+        try:
+            self.msg = errno.errorcode[returncode]
+        except KeyError:
+            self.msg = "Exit code %s" % returncode
         self.returncode = returncode
 
