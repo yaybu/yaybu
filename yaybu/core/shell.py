@@ -66,7 +66,7 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, inert=False, user=None, group=None, simulate=False, logas=None, umask=None):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, inert=False, user=None, group=None, simulate=False, umask=None):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -76,7 +76,6 @@ class ShellCommand(change.Change):
         self.verbose = verbose
         self.inert = inert
         self.simulate = simulate
-        self.logas = logas
         self._generated_env = {}
 
         self.user = None
@@ -184,7 +183,7 @@ class ShellCommand(change.Change):
         logas = self._tounicode(logas)
 
         renderer.inert = self.inert
-        renderer.command(self.logas or logas)
+        renderer.command(logas)
 
         env = {
             "HOME": self.homedir,
@@ -283,8 +282,8 @@ class Shell(object):
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
 
-    def execute(self, command, stdin=None, shell=False, inert=False, cwd=None, env=None, user=None, group=None, logas=None, umask=None):
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, logas, umask)
+    def execute(self, command, stdin=None, shell=False, inert=False, cwd=None, env=None, user=None, group=None, umask=None):
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, umask)
         self.context.changelog.apply(cmd)
         if cmd.returncode != 0:
             self.context.changelog.info(cmd.stdout)
