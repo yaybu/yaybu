@@ -22,6 +22,8 @@ import shlex
 
 from yay import String
 
+from . import error
+
 class Command(String):
     """ Horrible horrible cludge """
     pass
@@ -64,7 +66,7 @@ class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, passthru=False, user=None, group=None, simulate=False, logas=None, umask=None):
+    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, inert=False, user=None, group=None, simulate=False, logas=None, umask=None):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -72,7 +74,7 @@ class ShellCommand(change.Change):
         self.env = env
         self.env_passthru = env_passthru
         self.verbose = verbose
-        self.passthru = passthru
+        self.inert = inert
         self.simulate = simulate
         self.logas = logas
         self._generated_env = {}
@@ -85,13 +87,16 @@ class ShellCommand(change.Change):
 
         self.umask = umask
 
-        if self.simulate and not self.passthru:
+        if self.simulate and not self.inert:
             # For now, we skip this setup in simulate mode - not sure it will ever be possible
             return
 
         self.user = user
         if user:
-            u = pwd.getpwnam(user)
+            try:
+                u = pwd.getpwnam(user)
+            except KeyError as exc:
+                raise error.InvalidUser("There is no such user '%s'" % user)
             self.uid = u.pw_uid
             self.homedir = u.pw_dir
         else:
@@ -101,7 +106,10 @@ class ShellCommand(change.Change):
 
         self.group = group
         if group:
-            self.gid = grp.getgrnam(self.group).gr_gid
+            try:
+                self.gid = grp.getgrnam(self.group).gr_gid
+            except KeyError as exc:
+                raise error.InvalidGroup("There is no such group '%s'" % group)
 
     def preexec(self):
         if self.gid is not None:
@@ -175,7 +183,7 @@ class ShellCommand(change.Change):
         command = self._tounicode(command)
         logas = self._tounicode(logas)
 
-        renderer.passthru = self.passthru
+        renderer.inert = self.inert
         renderer.command(self.logas or logas)
 
         env = {
@@ -195,7 +203,7 @@ class ShellCommand(change.Change):
 
         self._generated_env = env
 
-        if self.simulate and not self.passthru:
+        if self.simulate and not self.inert:
             self.returncode = 0
             self.stdout = ""
             self.stderr = ""
@@ -237,18 +245,18 @@ class ShellTextRenderer(change.TextRenderer):
     """ Render a ShellCommand on a textual changelog. """
 
     renderer_for = ShellCommand
-    passthru = False
+    inert = False
 
     def command(self, command):
-        if not self.passthru:
+        if not self.inert:
             self.logger.notice(u"# " + u" ".join(command))
 
     def output(self, returncode):
-        if self.verbose >= 1 and returncode != 0 and not self.passthru:
+        if self.verbose >= 1 and returncode != 0 and not self.inert:
             self.logger.notice("returned %s", returncode)
 
     def stdout(self, data):
-       if self.verbose >= 2 and not self.passthru:
+       if self.verbose >= 2 and not self.inert:
             self.logger.info(data)
 
     def stderr(self, data):
@@ -275,8 +283,8 @@ class Shell(object):
     def locate_bin(self, filename):
         return self.context.locate_bin(filename)
 
-    def execute(self, command, stdin=None, shell=False, passthru=False, cwd=None, env=None, exceptions=True, user=None, group=None, logas=None, umask=None):
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, passthru, user, group, self.simulate, logas, umask)
+    def execute(self, command, stdin=None, shell=False, inert=False, cwd=None, env=None, exceptions=True, user=None, group=None, logas=None, umask=None):
+        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, logas, umask)
         self.context.changelog.apply(cmd)
         if exceptions and cmd.returncode != 0:
             self.context.changelog.info(cmd.stdout)

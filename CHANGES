@@ -4,7 +4,11 @@ Changelog for yaybu
 0.1.19 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Generate proper exceptions when trying to lookup users and groups that don't
+  exist.
+
+- Refactor 'passthru' commands as 'inert' commands as it better reflects the
+  intention.
 
 
 0.1.18 (2012-03-13)

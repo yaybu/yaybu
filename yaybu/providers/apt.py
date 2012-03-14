@@ -23,7 +23,7 @@ def is_installed(context, resource):
     # work out if the package is already installed
     command = ["dpkg-query", "-W", "-f='${Status}'", resource.name]
     returncode, stdout, stderr = context.shell.execute(command,
-                                                           exceptions=False, passthru=True)
+                                                           exceptions=False, inert=True)
 
     # if the return code is 0, dpkg is aware of the package
     if returncode == 0 and "install ok installed" in stdout:

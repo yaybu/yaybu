@@ -88,7 +88,7 @@ class Git(Provider):
     def action_update_remote(self, context):
         # Determine if the remote repository has changed
         remote_re = re.compile(self.REMOTE_NAME + r"\t(.*) \(.*\)\n")
-        rv, stdout, stderr = self.git(context, "remote", "-v", passthru=True)
+        rv, stdout, stderr = self.git(context, "remote", "-v", inert=True)
         remote = remote_re.search(stdout)
         if remote:
             if not self.resource.repository == remote.group(1):
@@ -104,7 +104,7 @@ class Git(Provider):
     def action_checkout(self, context):
         # Determine which SHA is currently checked out.
         if os.path.exists(os.path.join(self.resource.name, ".git")):
-            rv, stdout, stderr = self.git(context, "rev-parse", "--verify", "HEAD", passthru=True)
+            rv, stdout, stderr = self.git(context, "rev-parse", "--verify", "HEAD", inert=True)
             if not rv == 0:
                 head_sha = '0' * 40
             else:
@@ -121,7 +121,7 @@ class Git(Provider):
                 changed = False
         elif self.resource.branch:
             rv, stdout, stderr = self.git(context, "ls-remote",
-                                        self.resource.repository, passthru=True)
+                                        self.resource.repository, inert=True)
             if not rv == 0:
                 raise CheckoutError("Could not query the remote repository")
             r = re.compile('([0-9a-f]{40})\t(.*)\n')

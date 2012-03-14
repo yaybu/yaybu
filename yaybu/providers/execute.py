@@ -28,13 +28,13 @@ class Execute(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Execute, self).isvalid(*args, **kwargs)
 
-    def execute(self, shell, command, expected_returncode=None, passthru=False):
+    def execute(self, shell, command, expected_returncode=None, inert=False):
         # Filter out empty strings...
         cwd = self.resource.cwd or None
         env = self.resource.environment or None
 
         returncode, stdout, stderr = shell.execute(command, cwd=cwd, env=env, user=self.resource.user,
-            group=self.resource.group, passthru=passthru, exceptions=False, umask=self.resource.umask)
+            group=self.resource.group, inert=inert, exceptions=False, umask=self.resource.umask)
 
         if not shell.simulate and expected_returncode != None and expected_returncode != returncode:
             raise error.CommandError("%s failed with return code %d" % (self.resource, returncode))
@@ -52,7 +52,7 @@ class Execute(provider.Provider):
             return False
 
         if self.resource.unless:
-            if self.execute(context.shell, self.resource.unless, passthru=True) == 0:
+            if self.execute(context.shell, self.resource.unless, inert=True) == 0:
                 return False
 
         commands = [self.resource.command] if self.resource.command else self.resource.commands

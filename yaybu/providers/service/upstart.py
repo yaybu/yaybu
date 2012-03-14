@@ -64,7 +64,7 @@ class _UpstartServiceMixin(utils._ServiceMixin):
             yield self._parse_line(line)
 
     def status(self, context):
-        rv, stdout, stderr = context.shell.execute(["/sbin/status", self.resource.name], exceptions=False, passthru=True)
+        rv, stdout, stderr = context.shell.execute(["/sbin/status", self.resource.name], exceptions=False, inert=True)
         if rv != 0:
             raise error.CommandError("Got exit code of %d whilst trying to determine status" % rv)
 

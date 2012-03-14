@@ -26,7 +26,7 @@ class _ServiceMixin(object):
 
     def status(self, context):
         if self.resource.running:
-            returncode, stdout, stderr = context.shell.execute(self.resource.running, passthru=True, exceptions=False)
+            returncode, stdout, stderr = context.shell.execute(self.resource.running, inert=True, exceptions=False)
             if returncode != 0:
                 return "not-running"
             else:
