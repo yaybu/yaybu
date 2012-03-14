@@ -28,7 +28,7 @@ from yaybu.core.runcontext import RunContext
 from yaybu.core import error
 
 
-class RemoteRunner(Runner):
+class BaseRemoteRunner(Runner):
 
     user_known_hosts_file = "/dev/null"
     identity_file = None
@@ -53,6 +53,37 @@ class RemoteRunner(Runner):
     def set_interactive(self, interactive):
         self.interactive = interactive
 
+    def get_yaybu_command(self, ctx):
+        command = ["yaybu", "--remote"]
+
+        if ctx.user:
+            command.extend(["--user", ctx.user])
+
+        if ctx.simulate:
+            command.append("-s")
+
+        if ctx.verbose:
+            command.extend(list("-v" for x in range(ctx.verbose)))
+
+        if ctx.resume:
+            command.append("--resume")
+
+        if ctx.no_resume:
+            command.append("--no-resume")
+
+        command.append("-")
+        return command
+
+    def get_server(self, ctx, stdin, stdout):
+        root = HttpResource()
+        root.put_child("config", StaticResource(pickle.dumps(ctx.get_config().get())))
+        root.put_child("files", FileResource())
+        root.put_child("encrypted", EncryptedResource())
+        root.put_child("changelog", ChangeLogResource())
+        root.put_child("about", AboutResource())
+
+        return Server(ctx, root, stdout, stdin)
+
     def run(self, ctx):
         # Get a bundle straight away - allows us to validate the bundle before
         # sending it remotely.
@@ -62,6 +93,16 @@ class RemoteRunner(Runner):
             ctx.changelog.error(str(e))
             return e.returncode
 
+        try:
+            return self.serve(ctx)
+        except error.Error as e:
+            print >>sys.stderr, "Error: %s" % str(e)
+            return e.returncode
+
+
+class RemoteRunner(BaseRemoteRunner):
+
+    def get_ssh_command(self, ctx):
         command = ["ssh", "-A"]
         command.extend(["-o", "UserKnownHostsFile %s" % self.user_known_hosts_file])
         command.extend(["-o", "StrictHostKeyChecking %s" % self.strict_host_key_checking])
@@ -83,36 +124,17 @@ class RemoteRunner(Runner):
 
         command.append(ctx.host)
 
-        command.extend(["yaybu", "--remote"])
+        command.extend(self.get_yaybu_command(ctx))
 
-        if ctx.user:
-            command.extend(["--user", ctx.user])
+        return command
 
-        if ctx.simulate:
-            command.append("-s")
-
-        if ctx.verbose:
-            command.extend(list("-v" for x in range(ctx.verbose)))
-
-        if ctx.resume:
-            command.append("--resume")
-
-        if ctx.no_resume:
-            command.append("--no-resume")
-
-        command.append("-")
-
+    def serve(self, ctx):
         try:
+            command = self.get_ssh_command(ctx) 
             p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
-            root = HttpResource()
-            root.put_child("config", StaticResource(pickle.dumps(ctx.get_config().get())))
-            root.put_child("files", FileResource())
-            root.put_child("encrypted", EncryptedResource())
-            root.put_child("changelog", ChangeLogResource())
-            root.put_child("about", AboutResource())
+            self.get_server(ctx, p.stdin, p.stdout).serve_forever()
 
-            Server(ctx, root, p.stdout, p.stdin).serve_forever()
             p.wait()
 
             if p.returncode == 255:
@@ -120,9 +142,7 @@ class RemoteRunner(Runner):
 
             return p.returncode
 
-        except error.Error, e:
-            print >>sys.stderr, "Error: %s" % str(e)
-
+        finally:
             if p.poll() is None:
                 try:
                     p.kill()
@@ -130,8 +150,26 @@ class RemoteRunner(Runner):
                     if p.poll() is None:
                         raise
 
-            return e.returncode
 
-        # An unknown error occured
-        return 253
+import pipes
+
+class ParamikoRunner(BaseRemoteRunner):
+
+    def __init__(self, ssh):
+        self.ssh = ssh
+
+    def serve(self, ctx):
+        command = " ".join(pipes.quote(s) for s in self.get_yaybu_command(ctx))
+
+        chan = self.ssh.get_transport().open_session()
+        chan.exec_command(command)
+
+        bufsize = -1
+        stdin = chan.makefile('wb', bufsize) 
+        stdout = chan.makefile('rb', bufsize) 
+        stderr = chan.makefile_stderr('rb', bufsize) 
+
+        self.get_server(ctx, stdin, stdout).serve_forever()
+
+        return chan.recv_exit_status()
 

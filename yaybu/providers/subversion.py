@@ -126,7 +126,7 @@ class Svn(Provider):
 
     def info(self, context, uri):
         command = self.get_svn_args("info", uri)
-        returncode, stdout, stderr = context.shell.execute(command, passthru=True)
+        returncode, stdout, stderr = context.shell.execute(command, inert=True)
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
     def svn(self, context, action, *args, **kwargs):

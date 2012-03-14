@@ -34,7 +34,7 @@ class Rsync(Provider):
 
     def _get_svn_ignore(self, context, path):
         command = ["svn", "status", "--non-interactive", "--no-ignore", path]
-        returncode, stdout, stderr = context.shell.execute(command, passthru=True)
+        returncode, stdout, stderr = context.shell.execute(command, inert=True)
 
         if not returncode == 0:
             raise CheckoutError("Could not generate updated .rsync-exclude for Subversion checkout")
@@ -49,7 +49,7 @@ class Rsync(Provider):
 
     def _get_git_ignore(self, context, path):
         command = ["git", "clean", "-nXd"]
-        returncode, stdout, stderr = context.shell.execute(command, cwd=path, passthru=True)
+        returncode, stdout, stderr = context.shell.execute(command, cwd=path, inert=True)
 
         if not returncode == 0:
             raise CheckoutError("Could not generate updated .rsync-exclude for Git checkout")
@@ -91,7 +91,7 @@ class Rsync(Provider):
             command.extend(["-n"])
         command.extend([".", self.resource.name+"/"])
 
-        rv, out, err = context.shell.execute(command, cwd=self.resource.repository, user=self.resource.user, exceptions=False, passthru=dryrun)
+        rv, out, err = context.shell.execute(command, cwd=self.resource.repository, user=self.resource.user, inert=dryrun)
 
         if context.simulate and not dryrun:
             # We won't get any output from _sync if we aren't doing a dry-run whilst in simulate mode
@@ -113,7 +113,7 @@ class Rsync(Provider):
 
         if not os.path.exists(self.resource.name):
             command = ["/bin/mkdir", self.resource.name]
-            rv, out, err = context.shell.execute(command, exceptions=False)
+            rv, out, err = context.shell.execute(command)
             changed = True
 
         if context.simulate and changed:

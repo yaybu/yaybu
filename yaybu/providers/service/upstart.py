@@ -15,7 +15,7 @@
 import os
 from collections import namedtuple
 
-from yaybu.core import provider
+from yaybu.core import provider, error
 from yaybu.providers.service import utils
 from yaybu import resources
 
@@ -64,9 +64,11 @@ class _UpstartServiceMixin(utils._ServiceMixin):
             yield self._parse_line(line)
 
     def status(self, context):
-        rv, stdout, stderr = context.shell.execute(["/sbin/status", self.resource.name], exceptions=False, passthru=True)
-        if rv != 0:
-            raise error.CommandError("Got exit code of %d whilst trying to determine status" % rv)
+        command = ["/sbin/status", self.resource.name]
+        try:
+            rv, stdout, stderr = context.shell.execute(command, inert=True)
+        except error.SystemError as exc:
+            raise error.CommandError("Got exit code of %d whilst trying to determine status" % exc.returncode)
 
         if "Unknown job" in stderr:
             raise error.CommandError("Upstart does not know about this job")

@@ -179,8 +179,13 @@ class ConnectionError(ExecutionError):
 class SystemError(ExecutionError):
     """ An error represented by something in the errno list. """
 
-    def __init__(self, returncode):
+    def __init__(self, returncode, stdout=None, stderr=None):
         # if the returncode is not in errno, this will blow up.
-        self.msg = errno.errorcode[returncode]
+        try:
+            self.msg = errno.errorcode[returncode]
+        except KeyError:
+            self.msg = "Exit code %s" % returncode
         self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
 

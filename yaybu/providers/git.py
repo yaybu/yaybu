@@ -16,7 +16,7 @@ import os, logging
 import re
 
 from yaybu.core.provider import Provider
-from yaybu.core.error import CheckoutError
+from yaybu.core.error import CheckoutError, SystemError
 from yaybu import resources
 
 log = logging.getLogger("git")
@@ -47,7 +47,7 @@ class Git(Provider):
         else:
             cwd = os.path.dirname(self.resource.name)
 
-        return context.shell.execute(command, user=self.resource.user, exceptions=False, cwd=cwd, **kwargs)
+        return context.shell.execute(command, user=self.resource.user, cwd=cwd, **kwargs)
 
     def action_clone(self, context):
         """Adds resource.repository as a remote, but unlike a
@@ -55,17 +55,15 @@ class Git(Provider):
 
         """
         if not os.path.exists(self.resource.name):
-            rv, out, err = context.shell.execute(
-                ["/bin/mkdir", self.resource.name],
-                user=self.resource.user,
-                exceptions=False,
-            )
-
-            if not rv == 0:
+            try:
+                cmd = ["/bin/mkdir", self.resource.name]
+                context.shell.execute(cmd, user=self.resource.user)
+            except SystemError:
                 raise CheckoutError("Cannot create the repository directory")
 
-            rv, out, err = self.git(context, "init", self.resource.name)
-            if not rv == 0:
+            try:
+                self.git(context, "init", self.resource.name)
+            except SystemError:
                 raise CheckoutError("Cannot initialise local repository.")
 
             self.action_set_remote(context)
@@ -80,20 +78,23 @@ class Git(Provider):
             self.resource.repository,
         ]
 
-        rv, out, err = self.git(context, *git_parameters)
-
-        if not rv == 0:
+        try:
+            rv, out, err = self.git(context, *git_parameters)
+        except SystemError:
             raise CheckoutError("Could not set the remote repository.")
 
     def action_update_remote(self, context):
         # Determine if the remote repository has changed
         remote_re = re.compile(self.REMOTE_NAME + r"\t(.*) \(.*\)\n")
-        rv, stdout, stderr = self.git(context, "remote", "-v", passthru=True)
+        rv, stdout, stderr = self.git(context, "remote", "-v", inert=True)
         remote = remote_re.search(stdout)
         if remote:
             if not self.resource.repository == remote.group(1):
                 log.info("The remote repository has changed.")
-                self.git(context, "remote", "rm", self.REMOTE_NAME)
+                try:
+                    self.git(context, "remote", "rm", self.REMOTE_NAME)
+                except SystemError:
+                    raise CheckoutError("Could not delete remote '%s'" % self.REMOTE_NAME)
                 self.action_set_remote(context)
                 return True
         else:
@@ -104,8 +105,9 @@ class Git(Provider):
     def action_checkout(self, context):
         # Determine which SHA is currently checked out.
         if os.path.exists(os.path.join(self.resource.name, ".git")):
-            rv, stdout, stderr = self.git(context, "rev-parse", "--verify", "HEAD", passthru=True)
-            if not rv == 0:
+            try:
+                rv, stdout, stderr = self.git(context, "rev-parse", "--verify", "HEAD", inert=True)
+            except SystemError:
                 head_sha = '0' * 40
             else:
                 head_sha = stdout[:40]
@@ -120,9 +122,10 @@ class Git(Provider):
             if newref == head_sha:
                 changed = False
         elif self.resource.branch:
-            rv, stdout, stderr = self.git(context, "ls-remote",
-                                        self.resource.repository, passthru=True)
-            if not rv == 0:
+            try:
+                rv, stdout, stderr = self.git(context, "ls-remote",
+                                        self.resource.repository, inert=True)
+            except SystemError:
                 raise CheckoutError("Could not query the remote repository")
             r = re.compile('([0-9a-f]{40})\t(.*)\n')
             refs_to_shas = dict([(b,a) for (a,b) in r.findall(stdout)])

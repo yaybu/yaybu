@@ -8,6 +8,7 @@ Information for those wishing to write their own providers, or add new classes o
    :maxdepth: 2
 
    ascode
+   integration
    internals
    errors
    todo
