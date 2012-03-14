@@ -282,3 +282,22 @@ class TestExecute(FakeChrootTestCase):
 
         self.failUnlessEqual(rv, error.BinaryMissing.returncode)
 
+    def test_missing_user_and_group(self):
+        self.fixture.check_apply("""
+            resources:
+              - Group:
+                  name: test
+              - User:
+                  name: test
+              - Execute:
+                  name: test-execute
+                  command: touch /test_missing_user
+                  creates: /test_missing_user
+                  unless: /bin/false
+                  user: test
+                  group: test
+            """)
+
+        self.failUnlessExists("/test_missing_user")
+
+

@@ -12,6 +12,9 @@ Changelog for yaybu
 
 - Remove 'exceptions' option from shell.execute
 
+- #63 Simulate fails on Execute when user missing from /etc/passwd. Code
+  refactored to work around this.
+
 
 0.1.18 (2012-03-13)
 -------------------

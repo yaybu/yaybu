@@ -62,8 +62,25 @@ class Execute(provider.Provider):
             return False
 
         if self.resource.unless:
-            if self.execute(context.shell, self.resource.unless, inert=True) == 0:
-                return False
+            try:
+                if self.execute(context.shell, self.resource.unless, inert=True) == 0:
+                    return False
+            except error.InvalidUser as exc:
+                # If a simulation and user missing then we can run our 'unless'
+                # guard. We bail out with True so that Yaybu treates the
+                # resource as applied.
+                if context.simulate:
+                    context.changelog.info("User '%s' not found; assuming this recipe will create it" % self.resource.user)
+                    return True
+                raise
+            except error.InvalidGroup as exc:
+                # If a simulation and group missing then we can run our 'unless'
+                # guard. We bail out with True so that Yaybu treates the
+                # resource as applied.
+                if context.simulate:
+                    context.changelog.info("Group '%s' not found; assuming this recipe will create it" % self.resource.group)
+                    return True
+                raise
 
         commands = [self.resource.command] if self.resource.command else self.resource.commands
         for command in commands:
