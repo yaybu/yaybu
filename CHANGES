@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.1.20 (unreleased)
+0.1.20 (2012-03-16)
 -------------------
 
 - Generate proper exceptions when trying to lookup users and groups that don't
