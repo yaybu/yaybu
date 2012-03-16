@@ -227,7 +227,7 @@ class ShellCommand(change.Change):
         if not command_exists:
             if not self.simulate:
                 raise error.BinaryMissing("Command '%s' not found" % command[0])
-            self.context.changelog.info("Command '%s' not found; assuming this recipe will create it" % command[0])
+            renderer.stderr("Command '%s' not found; assuming this recipe will create it" % command[0])
  
         try:
             p = subprocess.Popen(command,
