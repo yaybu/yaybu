@@ -192,7 +192,7 @@ class FileChangeTextRenderer(change.TextRenderer):
         self.logger.notice("Emptied file %s", filename)
 
     def new_file(self, filename, contents, sensitive):
-        self.logger.notice("Writting new file '%s'" % filename)
+        self.logger.notice("Writing new file '%s'" % filename)
         if not sensitive:
             self.diff("", contents)
 
