@@ -23,7 +23,7 @@ from yay.openers import Openers
 from yay.errors import NotFound
 
 from yaybu.core import resource
-from yaybu.core.error import ParseError, MissingAsset, Incompatible
+from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.core.shell import Shell
 from yaybu.core import change
@@ -166,6 +166,10 @@ class RunContext(object):
         except NotFound, e:
             raise MissingAsset(str(e))
 
+    def get_data_path(self, path=None):
+        if not path:
+            return "/var/run/yaybu"
+        return os.path.join("/var/run/yaybu", path)
 
 class RemoteRunContext(RunContext):
 
@@ -221,6 +225,9 @@ class RemoteRunContext(RunContext):
             self.connection.endheaders()
 
         rsp = self.connection.getresponse()
+
+        if rsp.status == 304:
+            raise UnmodifiedAsset("Cannot fetch %r as it should be cached locally" % filename)
 
         if rsp.status == 404:
             raise MissingAsset("Cannot fetch %r" % filename)

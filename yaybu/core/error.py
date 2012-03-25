@@ -165,6 +165,11 @@ class MissingDependency(ExecutionError):
     """ A dependency required for a feature or provider is missing """
     returncode = 152
 
+class UnmodifiedAsset(ExecutionError):
+    """ An asset was requested unnecesarily. This indicates an error in cache
+    handling and should be filed as a bug against Yaybu. """
+    returncode = 153
+
 class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our
     tests. This exception is never really raised, but it's useful to keep the
