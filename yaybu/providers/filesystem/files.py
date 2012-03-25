@@ -279,24 +279,6 @@ class File(provider.Provider):
 
         self.check_path(os.path.dirname(name), context.simulate)
 
-        if self.resource.template:
-            # set a special line ending
-            # this strips the \n from the template line meaning no blank line,
-            # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
-            env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
-            template = env.get_template(self.resource.template)
-            contents = template.render(self.get_template_args()) + "\n" # yuk
-            sensitive = self.has_protected_strings()
-        elif self.resource.static:
-            contents = context.get_file(self.resource.static).read()
-            sensitive = False
-        elif self.resource.encrypted:
-            contents = context.get_decrypted_file(self.resource.encrypted).read()
-            sensitive = True
-        else:
-            contents = None
-            sensitive = False
-
         # If a file doesn't exist we create an empty one. This means we can
         # ensure the user, group and permissions are in their final state
         # *BEFORE* we write to them.
@@ -314,6 +296,24 @@ class File(provider.Provider):
                               self.resource.group,
                               self.resource.mode)
         context.changelog.apply(ac)
+
+        if self.resource.template:
+            # set a special line ending
+            # this strips the \n from the template line meaning no blank line,
+            # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
+            env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
+            template = env.get_template(self.resource.template)
+            contents = template.render(self.get_template_args()) + "\n" # yuk
+            sensitive = self.has_protected_strings()
+        elif self.resource.static:
+            contents = context.get_file(self.resource.static).read()
+            sensitive = False
+        elif self.resource.encrypted:
+            contents = context.get_decrypted_file(self.resource.encrypted).read()
+            sensitive = True
+        else:
+            contents = None
+            sensitive = False
 
         fc = FileContentChanger(context, self.resource.name, contents, sensitive)
         context.changelog.apply(fc)
