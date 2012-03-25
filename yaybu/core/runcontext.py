@@ -232,5 +232,7 @@ class RemoteRunContext(RunContext):
         if rsp.status == 404:
             raise MissingAsset("Cannot fetch %r" % filename)
 
+        rsp.etag = rsp.msg.get("etag", None)
+
         return rsp
 
