@@ -4,13 +4,15 @@ Changelog for yaybu
 0.1.22 (unreleased)
 -------------------
 
-- Nothing changed yet.
+ - Now depends on yay >= 0.0.45 to support etags.
+
+ - Fix logging typos
 
 
 0.1.21 (2012-03-16)
 -------------------
 
-- Nothing changed yet.
+- Fix simulate error
 
 
 0.1.20 (2012-03-16)

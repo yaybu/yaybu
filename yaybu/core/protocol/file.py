@@ -25,11 +25,13 @@ class FileResource(HttpResource):
     def render_GET(self, yaybu, request, restpath):
         params = parse_qs(request.getargs)
 
+        etag = request.headers.get("If-None-Match", None)
+
         try:
             # Always read in binary mode. Opening files in text mode may cause
             # newline translations, making the actual size of the content
             # transmitted *less* than the content-length!
-            f = yaybu.get_file(params["path"][0])
+            f = yaybu.get_file(params["path"][0], etag)
         except error.MissingAsset:
             request.send_error(404, "File not found")
             return None

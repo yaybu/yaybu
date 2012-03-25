@@ -125,7 +125,7 @@ class RunContext(object):
 
         try:
             c = yay.config.Config(searchpath=self.ypath)
-            
+
             if self.host:
                 extra = {
                     "yaybu": {
@@ -156,13 +156,13 @@ class RunContext(object):
 
         return bundle
 
-    def get_decrypted_file(self, filename):
+    def get_decrypted_file(self, filename, etag=None):
         p = subprocess.Popen(["gpg", "-d", self.locate_file(filename)], stdout=subprocess.PIPE)
         return p.stdout
 
-    def get_file(self, filename):
+    def get_file(self, filename, etag=None):
         try:
-            return Openers(searchpath=self.ypath).open(filename)
+            return Openers(searchpath=self.ypath).open(filename, etag)
         except NotFound, e:
             raise MissingAsset(str(e))
 
@@ -205,16 +205,21 @@ class RemoteRunContext(RunContext):
         c.add(pickle.loads(rsp.read()))
         return c
 
-    def get_decrypted_file(self, filename):
+    def get_decrypted_file(self, filename, etag=None):
         self.connection.request("GET", "/encrypted/" + filename)
         rsp = self.connection.getresponse()
         return rsp
 
-    def get_file(self, filename):
+    def get_file(self, filename, etag=None):
         if filename.startswith("/"):
-            return super(RemoteRunContext, self).get_file(filename)
+            return super(RemoteRunContext, self).get_file(filename, etag)
 
         self.connection.request("GET", "/files/?path=" + filename)
+
+        if etag:
+            self.connection.putheader("If-None-Match", etag)
+            self.connection.endheaders()
+
         rsp = self.connection.getresponse()
 
         if rsp.status == 404:
