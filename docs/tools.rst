@@ -1,6 +1,25 @@
 Tool integration
 ================
 
+Buildout
+--------
+
+The buildout recipe isotoma.recipe.postdeploy embeds a Yaybu driven tool in
+your site. This allows your site to provide site-specific configuration
+management steps such as linking in additional apache configurations or setting
+up cron jobs. For example::
+
+    [buildout]
+    parts =
+        postdeploy
+
+    [postdeploy]
+    recipe = isotoma.recipe.postdeploy
+    config = assets/config.yay
+
+The recipe will generate a ``bin/postdeploy`` wrapper in your buildout.
+
+
 Vagrant
 -------
 
@@ -9,7 +28,7 @@ Vagrant. You can install it through Ruby Gems::
 
     gem install vagrant-yaybu
 
-We only support Vagrant 0.8 and VirtualBox 4.1 at this time.
+The latest version is only tested with Vagrant 1.x.
 
 You can now write Yay directly within your Vagrantfile and have Vagrant deploy
 it for you::
