@@ -23,7 +23,7 @@ from yay.openers import Openers
 from yay.errors import NotFound
 
 from yaybu.core import change, resource, vfs
-from yaybu.core.error import ParseError, MissingAsset, Incompatible
+from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.core.shell import Shell
 
@@ -126,7 +126,7 @@ class RunContext(object):
 
         try:
             c = yay.config.Config(searchpath=self.ypath)
-            
+
             if self.host:
                 extra = {
                     "yaybu": {
@@ -157,16 +157,20 @@ class RunContext(object):
 
         return bundle
 
-    def get_decrypted_file(self, filename):
+    def get_decrypted_file(self, filename, etag=None):
         p = subprocess.Popen(["gpg", "-d", self.locate_file(filename)], stdout=subprocess.PIPE)
         return p.stdout
 
-    def get_file(self, filename):
+    def get_file(self, filename, etag=None):
         try:
-            return Openers(searchpath=self.ypath).open(filename)
+            return Openers(searchpath=self.ypath).open(filename, etag)
         except NotFound, e:
             raise MissingAsset(str(e))
 
+    def get_data_path(self, path=None):
+        if not path:
+            return "/var/run/yaybu"
+        return os.path.join("/var/run/yaybu", path)
 
 class RemoteRunContext(RunContext):
 
@@ -206,20 +210,30 @@ class RemoteRunContext(RunContext):
         c.add(pickle.loads(rsp.read()))
         return c
 
-    def get_decrypted_file(self, filename):
+    def get_decrypted_file(self, filename, etag=None):
         self.connection.request("GET", "/encrypted/" + filename)
         rsp = self.connection.getresponse()
         return rsp
 
-    def get_file(self, filename):
+    def get_file(self, filename, etag=None):
         if filename.startswith("/"):
-            return super(RemoteRunContext, self).get_file(filename)
+            return super(RemoteRunContext, self).get_file(filename, etag)
 
         self.connection.request("GET", "/files/?path=" + filename)
+
+        if etag:
+            self.connection.putheader("If-None-Match", etag)
+            self.connection.endheaders()
+
         rsp = self.connection.getresponse()
+
+        if rsp.status == 304:
+            raise UnmodifiedAsset("Cannot fetch %r as it should be cached locally" % filename)
 
         if rsp.status == 404:
             raise MissingAsset("Cannot fetch %r" % filename)
+
+        rsp.etag = rsp.msg.get("etag", None)
 
         return rsp
 

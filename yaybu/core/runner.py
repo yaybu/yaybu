@@ -47,7 +47,10 @@ class Runner(object):
             self.trampoline(ctx.user)
             return 0
 
-        event.EventState.save_file = "/var/run/yaybu/events.saved"
+        if not ctx.simulate and not os.path.exists(ctx.get_data_path()):
+            os.makedirs(ctx.get_data_path())
+
+        event.EventState.save_file = ctx.get_data_path("events.saved")
 
         # This makes me a little sad inside, but the whole
         # context thing needs a little thought before jumping in

@@ -25,11 +25,18 @@ class FileResource(HttpResource):
     def render_GET(self, yaybu, request, restpath):
         params = parse_qs(request.getargs)
 
+        etag = request.headers.get("If-None-Match", None)
+
         try:
             # Always read in binary mode. Opening files in text mode may cause
             # newline translations, making the actual size of the content
             # transmitted *less* than the content-length!
-            f = yaybu.get_file(params["path"][0])
+            f = yaybu.get_file(params["path"][0], etag)
+
+        except error.UnmodifiedAsset:
+            request.send_error(304, "Not Modified")
+            return None
+
         except error.MissingAsset:
             request.send_error(404, "File not found")
             return None
@@ -39,6 +46,7 @@ class FileResource(HttpResource):
         request.send_header("Content-Length", str(f.len))
         #request.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
         request.send_header("Content", "keep-alive")
+        request.send_header("ETag", f.etag)
         request.end_headers()
 
         request.write_fileobj(f)

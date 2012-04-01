@@ -20,6 +20,7 @@ import grp
 import difflib
 import logging
 import string
+import shelve
 
 try:
     import magic
@@ -281,24 +282,6 @@ class File(provider.Provider):
 
         self.check_path(context, os.path.dirname(name), context.simulate)
 
-        if self.resource.template:
-            # set a special line ending
-            # this strips the \n from the template line meaning no blank line,
-            # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
-            env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
-            template = env.get_template(self.resource.template)
-            contents = template.render(self.get_template_args()) + "\n" # yuk
-            sensitive = self.has_protected_strings()
-        elif self.resource.static:
-            contents = context.get_file(self.resource.static).read()
-            sensitive = False
-        elif self.resource.encrypted:
-            contents = context.get_decrypted_file(self.resource.encrypted).read()
-            sensitive = True
-        else:
-            contents = None
-            sensitive = False
-
         # If a file doesn't exist we create an empty one. This means we can
         # ensure the user, group and permissions are in their final state
         # *BEFORE* we write to them.
@@ -317,8 +300,65 @@ class File(provider.Provider):
                               self.resource.mode)
         context.changelog.apply(ac)
 
+        # If this file already existed then check to see if it is dirty
+        # If we don't have a local state cache it is dirty
+        dirty = False
+        if created:
+            dirty = True
+        elif not os.path.exists(context.get_data_path("local.state")):
+            dirty = True
+        else:
+            s = shelve.open(context.get_data_path("local.state"))
+            k = self.resource.name.encode("utf-8")
+            if k in s:
+                etag = context.get_file(self.resource.name).etag
+                old_etag = s[k]
+                if etag == old_etag:
+                    dirty = True
+
+        if self.resource.template:
+            # set a special line ending
+            # this strips the \n from the template line meaning no blank line,
+            # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
+            env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
+            template = env.get_template(self.resource.template)
+            contents = template.render(self.get_template_args()) + "\n" # yuk
+            sensitive = self.has_protected_strings()
+
+        elif self.resource.static:
+            # We can only do this optimization if the local data is not dirty
+            old_etag = None
+            s = None
+            if not dirty and os.path.exists(context.get_data_path()):
+                s = shelve.open(context.get_data_path("remote.state"))
+                old_etag = s.get(self.resource.static.encode("utf-8"), None)
+
+            try:
+                fp = context.get_file(self.resource.static, old_etag)
+            except error.UnmodifiedAsset:
+                return created or ac.changed
+
+            contents = fp.read()
+            if not context.simulate:
+                s = shelve.open(context.get_data_path("remote.state"))
+                s[self.resource.static.encode("utf-8")] = fp.etag
+
+            sensitive = False
+
+        elif self.resource.encrypted:
+            contents = context.get_decrypted_file(self.resource.encrypted).read()
+            sensitive = True
+
+        else:
+            contents = None
+            sensitive = False
+
         fc = FileContentChanger(context, self.resource.name, contents, sensitive)
         context.changelog.apply(fc)
+
+        if not context.simulate:
+            s = shelve.open(context.get_data_path("local.state"))
+            s[self.resource.name.encode("utf-8")] = context.get_file(self.resource.name).etag
 
         if created or fc.changed or ac.changed:
             return True

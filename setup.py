@@ -23,7 +23,7 @@ setup(name='Yaybu',
       install_requires=[
           'setuptools',
           'jinja2',
-          'yay >= 0.0.41',
+          'yay >= 0.0.45',
           'python-dateutil < 2.0',
       ],
       extras_require = {
