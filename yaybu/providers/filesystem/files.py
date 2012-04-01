@@ -305,7 +305,7 @@ class File(provider.Provider):
         dirty = False
         if created:
             dirty = True
-        elif not os.path.exists(context.get_data_path("local.state")):
+        elif not context.vfs.exists(context.get_data_path("local.state")):
             dirty = True
         else:
             s = shelve.open(context.get_data_path("local.state"))
@@ -329,7 +329,7 @@ class File(provider.Provider):
             # We can only do this optimization if the local data is not dirty
             old_etag = None
             s = None
-            if not dirty and os.path.exists(context.get_data_path()):
+            if not dirty and context.vfs.exists(context.get_data_path()):
                 s = shelve.open(context.get_data_path("remote.state"))
                 old_etag = s.get(self.resource.static.encode("utf-8"), None)
 
@@ -373,7 +373,7 @@ class RemoveFile(provider.Provider):
     def apply(self, context):
         if context.vfs.exists(self.resource.name):
             if not context.vfs.isfile(self.resource.name):
-                raise error.InvalidProvider("%r: %s exists and is not a file" % (self, self.resource.name))
+                raise error.InvalidProvider("%s exists and is not a file" % self.resource.name)
             context.vfs.delete(self.resource.name)
             changed = True
         else:
