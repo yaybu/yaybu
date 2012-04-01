@@ -13,9 +13,20 @@
 # limitations under the License.
 
 
-import unittest
+import unittest, mock
 from yay import String
 from yaybu.providers.filesystem import files
+
+class TestFileProvider(unittest.TestCase):
+
+    def test_simple(self):
+        f = mock.Mock()
+        f.name = "/tmp/hello"
+        f.template = None
+
+        p = files.File(f)
+        p.apply(mock.Mock())
+
 
 class TestSecretTemplateArgs(unittest.TestCase):
 

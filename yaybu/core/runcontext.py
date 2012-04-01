@@ -22,11 +22,10 @@ import yay
 from yay.openers import Openers
 from yay.errors import NotFound
 
-from yaybu.core import resource
+from yaybu.core import change, resource, vfs
 from yaybu.core.error import ParseError, MissingAsset, Incompatible
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.core.shell import Shell
-from yaybu.core import change
 
 logger = logging.getLogger("runcontext")
 
@@ -82,6 +81,8 @@ class RunContext(object):
 
         self.setup_shell(opts.env_passthrough)
         self.setup_changelog()
+
+        self.vfs = vfs.Local()
 
     def setup_shell(self, environment):
         self.shell = Shell(context=self,

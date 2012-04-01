@@ -58,6 +58,7 @@ class AttributeChanger(change.Change):
 
     def __init__(self, context, filename, user=None, group=None, mode=None):
         self.context = context
+        self.vfs = context.vfs
         self.filename = filename
         self.user = user
         self.group = group
@@ -71,9 +72,9 @@ class AttributeChanger(change.Change):
         gid = None
         mode = None
 
-        if os.path.exists(self.filename):
+        if self.vfs.exists(self.filename):
             exists = True
-            st = os.stat(self.filename)
+            st = self.vfs.stat(self.filename)
             uid = st.st_uid
             gid = st.st_gid
             mode = stat.S_IMODE(st.st_mode)
@@ -131,6 +132,7 @@ class FileContentChanger(change.Change):
 
     def __init__(self, context, filename, contents, sensitive):
         self.context = context
+        self.vfs = context.vfs
         self.filename = filename
         self.current = ""
         self.contents = contents
@@ -140,12 +142,12 @@ class FileContentChanger(change.Change):
 
     def empty_file(self):
         """ Write an empty file """
-        exists = os.path.exists(self.filename)
+        exists = self.vfs.exists(self.filename)
         if not exists:
             self.context.shell.execute(["touch", self.filename])
             self.changed = True
         else:
-            st = os.stat(self.filename)
+            st = self.vfs.stat(self.filename)
             if st.st_size != 0:
                 self.renderer.empty_file(self.filename)
                 if not self.context.simulate:
@@ -170,7 +172,7 @@ class FileContentChanger(change.Change):
 
     def write_file(self):
         """ Write to either an existing or new file """
-        exists = os.path.exists(self.filename)
+        exists = self.vfs.exists(self.filename)
         if exists:
             self.overwrite_existing_file()
         else:
@@ -231,15 +233,15 @@ class File(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(File, self).isvalid(*args, **kwargs)
 
-    def check_path(self, directory, simulate):
+    def check_path(self, ctx, directory, simulate):
         frags = directory.split("/")
         path = "/"
         for i in frags:
             path = os.path.join(path, i)
-            if not os.path.exists(path): #FIXME
+            if not ctx.vfs.exists(path): #FIXME
                 if not simulate:
                     raise error.PathComponentMissing(path)
-            elif not os.path.isdir(path):
+            elif not ctx.vfs.isdir(path):
                 raise error.PathComponentNotDirectory(path)
 
     def has_protected_strings(self):
@@ -277,7 +279,7 @@ class File(provider.Provider):
     def apply(self, context):
         name = self.resource.name
 
-        self.check_path(os.path.dirname(name), context.simulate)
+        self.check_path(context, os.path.dirname(name), context.simulate)
 
         if self.resource.template:
             # set a special line ending
@@ -301,7 +303,7 @@ class File(provider.Provider):
         # ensure the user, group and permissions are in their final state
         # *BEFORE* we write to them.
         created = False
-        if not os.path.exists(self.resource.name):
+        if not context.vfs.exists(self.resource.name):
             if not context.simulate:
                 with open(self.resource.name, "w") as fp:
                     fp.write("")
@@ -329,10 +331,10 @@ class RemoveFile(provider.Provider):
         return super(RemoveFile, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if os.path.exists(self.resource.name):
-            if not os.path.isfile(self.resource.name):
+        if context.vfs.exists(self.resource.name):
+            if not context.vfs.isfile(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a file" % (self, self.resource.name))
-            context.shell.execute(["/bin/rm", self.resource.name])
+            context.vfs.delete(self.resource.name)
             changed = True
         else:
             context.changelog.debug("File %s missing already so not removed" % self.resource.name)
