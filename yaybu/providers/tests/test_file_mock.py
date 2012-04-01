@@ -17,20 +17,53 @@ import unittest, mock
 from yaybu.core import error
 from yaybu.providers.filesystem import files
 
-class TestFileProvider(unittest.TestCase):
+class ProviderTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.local_state = mock.Mock()
+        self.remote_state = mock.Mock()
+
+        files.EtagRegistry.registries = {
+            "local.state": self.local_state,
+            "remote.state": self.remote_state,
+            }
+
+        self.ctx = mock.Mock()
+        self.ctx.simulate = False
+
+        self.exists = ["/"]
+        def vfs_exists(path):
+            return path in self.exists
+        self.ctx.vfs.exists.side_effect = vfs_exists
+
+        fp = self.ctx.vfs.open.return_value = mock.MagicMock()
+        fp.__exit__.return_value = None
+
+
+class TestFileProvider(ProviderTestCase):
 
     def test_simple(self):
         f = mock.Mock()
-        f.name = "/tmp/hello"
+        f.name = "/hello"
         f.template = None
 
-        ctx = mock.Mock()
-        ctx.vfs.exists.return_value = False
-
         p = files.File(f)
-        changed = p.apply(ctx)
+        changed = p.apply(self.ctx)
 
         self.failUnlessEqual(changed, True)
+
+    def test_localstate_missing(self):
+        f = mock.Mock()
+        f.name = "/hello"
+        f.template = None
+
+        self.exists.append("/hello")
+
+        p = files.File(f)
+        changed = p.apply(self.ctx)
+
+        #self.failUnlessEqual(changed, True)
+
 
 
 class TestFileDelete(unittest.TestCase):

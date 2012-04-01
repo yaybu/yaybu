@@ -37,6 +37,35 @@ from yaybu.core import error
 from yay import String
 
 
+class EtagRegistry(object):
+    registries = {}
+
+    def __init__(self, ctx, path):
+        self.ctx = ctx
+        self.vfs = ctx.vfs
+        self.path = ctx.get_data_path(path)
+        self.data = shelve.open(self.path)
+
+    def lookup(self, path):
+        return self.data.get(path, None)
+
+    def isdirty(self, path, etag):
+        if not path in self.data:
+            return True
+        return self.lookup(path) != etag
+
+    def freshen(self, path, etag):
+        if self.ctx.simulate:
+            return
+        self.data[path] = etag
+
+    @classmethod
+    def get(cls, ctx, path):
+        if not path in cls.registries:
+            cls.registries[path] = cls(ctx, path)
+        return cls.registries[path]
+        
+
 def binary_buffers(*buffers):
 
     """ Check all of the passed buffers to see if any of them are binary. If
@@ -152,7 +181,7 @@ class FileContentChanger(change.Change):
             if st.st_size != 0:
                 self.renderer.empty_file(self.filename)
                 if not self.context.simulate:
-                    open(self.filename, "w").close()
+                    self.vfs.open(self.filename, "w").close()
                 self.changed = True
 
     def overwrite_existing_file(self):
@@ -161,14 +190,14 @@ class FileContentChanger(change.Change):
         if self.current != self.contents:
             self.renderer.changed_file(self.filename, self.current, self.contents, self.sensitive)
             if not self.context.simulate:
-                open(self.filename, "w").write(self.contents)
+                self.vfs.open(self.filename, "w").write(self.contents)
             self.changed = True
 
     def write_new_file(self):
         """ Write contents to a new file. """
         self.renderer.new_file(self.filename, self.contents, self.sensitive)
         if not self.context.simulate:
-            open(self.filename, "w").write(self.contents)
+            self.vfs.open(self.filename, "w").write(self.contents)
         self.changed = True
 
     def write_file(self):
@@ -288,7 +317,7 @@ class File(provider.Provider):
         created = False
         if not context.vfs.exists(self.resource.name):
             if not context.simulate:
-                with open(self.resource.name, "w") as fp:
+                with context.vfs.open(self.resource.name, "w") as fp:
                     fp.write("")
                     fp.close()
             created = True
@@ -300,21 +329,16 @@ class File(provider.Provider):
                               self.resource.mode)
         context.changelog.apply(ac)
 
-        # If this file already existed then check to see if it is dirty
-        # If we don't have a local state cache it is dirty
-        dirty = False
+        local = EtagRegistry.get(context, "local.state")
+
         if created:
             dirty = True
-        elif not context.vfs.exists(context.get_data_path("local.state")):
-            dirty = True
         else:
-            s = shelve.open(context.get_data_path("local.state"))
-            k = self.resource.name.encode("utf-8")
-            if k in s:
-                etag = context.get_file(self.resource.name).etag
-                old_etag = s[k]
-                if etag == old_etag:
-                    dirty = True
+            temp_etag = local.lookup(self.resource.name)
+            if temp_etag:
+                dirty = temp_etag != context.get_file(self.resource.name).etag
+            else:
+                dirty = True
 
         if self.resource.template:
             # set a special line ending
@@ -329,9 +353,9 @@ class File(provider.Provider):
             # We can only do this optimization if the local data is not dirty
             old_etag = None
             s = None
-            if not dirty and context.vfs.exists(context.get_data_path()):
-                s = shelve.open(context.get_data_path("remote.state"))
-                old_etag = s.get(self.resource.static.encode("utf-8"), None)
+            if not dirty:
+                remote = EtagRegistry.get(context, "remote.state")
+                old_etag = remote.lookup(self.resource.static)
 
             try:
                 fp = context.get_file(self.resource.static, old_etag)
@@ -339,9 +363,9 @@ class File(provider.Provider):
                 return created or ac.changed
 
             contents = fp.read()
-            if not context.simulate:
-                s = shelve.open(context.get_data_path("remote.state"))
-                s[self.resource.static.encode("utf-8")] = fp.etag
+
+            remote = EtagRegistry.get(context, "remote.state")
+            remote.freshen(self.resource.static, fp.etag)
 
             sensitive = False
 
@@ -356,9 +380,7 @@ class File(provider.Provider):
         fc = FileContentChanger(context, self.resource.name, contents, sensitive)
         context.changelog.apply(fc)
 
-        if not context.simulate:
-            s = shelve.open(context.get_data_path("local.state"))
-            s[self.resource.name.encode("utf-8")] = context.get_file(self.resource.name).etag
+        local.freshen(self.resource.name, context.get_file(self.resource.name).etag)
 
         if created or fc.changed or ac.changed:
             return True
