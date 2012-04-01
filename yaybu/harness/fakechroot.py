@@ -14,6 +14,7 @@
 
 import os, signal, shlex, subprocess, tempfile, time, shutil, StringIO
 import testtools
+from testtools.testcase import TestSkipped
 from yaybu.core import error
 from yaybu.util import sibpath
 
@@ -64,6 +65,22 @@ class FakeChrootFixture(Fixture):
     test_network = os.environ.get("TEST_NETWORK", "0") == "1"
 
     def setUp(self):
+        try:
+            self.default_distro()
+        except:
+            raise TestSkipped("Can only run Integration tests on Ubuntu")
+
+        dependencies = (
+            "/usr/bin/fakeroot",
+            "/usr/bin/fakechroot",
+            "/usr/sbin/debootstrap",
+            "/usr/bin/cow-shell",
+            )
+
+        for dep in dependencies:
+            if not os.path.exists(dep):
+                raise TestSkipped("Need '%s' to run integration tests" % dep)
+
         if self.firstrun:
             if not os.path.exists(self.testbase):
                 self.build_environment()
