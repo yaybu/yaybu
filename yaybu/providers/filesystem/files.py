@@ -44,20 +44,28 @@ class EtagRegistry(object):
         self.ctx = ctx
         self.vfs = ctx.vfs
         self.path = ctx.get_data_path(path)
-        self.data = shelve.open(self.path)
+        self._data = None
+
+    @property
+    def data(self):
+        if not self._data:
+            self._data = {}
+            if not self.ctx.simulate or os.path.exists(self.path):
+                self._data = shelve.open(self.path)
+        return self._data
 
     def lookup(self, path):
-        return self.data.get(path, None)
+        return self.data.get(path.encode("utf-8"), None)
 
     def isdirty(self, path, etag):
-        if not path in self.data:
+        if not path.encode("utf-8") in self.data:
             return True
         return self.lookup(path) != etag
 
     def freshen(self, path, etag):
         if self.ctx.simulate:
             return
-        self.data[path] = etag
+        self.data[path.encode("utf-8")] = etag
 
     @classmethod
     def get(cls, ctx, path):
@@ -380,7 +388,8 @@ class File(provider.Provider):
         fc = FileContentChanger(context, self.resource.name, contents, sensitive)
         context.changelog.apply(fc)
 
-        local.freshen(self.resource.name, context.get_file(self.resource.name).etag)
+        if not context.simulate:
+            local.freshen(self.resource.name, context.get_file(self.resource.name).etag)
 
         if created or fc.changed or ac.changed:
             return True

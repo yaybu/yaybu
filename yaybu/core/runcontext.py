@@ -82,7 +82,7 @@ class RunContext(object):
         self.setup_shell(opts.env_passthrough)
         self.setup_changelog()
 
-        self.vfs = vfs.Local()
+        self.vfs = vfs.Local(self)
 
     def setup_shell(self, environment):
         self.shell = Shell(context=self,
