@@ -94,6 +94,20 @@ class TestExecute(FakeChrootTestCase):
             """)
         self.failUnlessExists("/etc/foo")
 
+    def test_environment_protected(self):
+        self.fixture.check_apply("""
+            secreted_string.secret: /etc/foo_secret
+
+            resources:
+                - Execute:
+                    name: test
+                    command: sh -c "touch $FOO"
+                    environment:
+                        FOO: ${secreted_string}
+                    creates: /etc/foo_secret
+            """)
+        self.failUnlessExists("/etc/foo_secret")
+
     def test_returncode(self):
         """ test that the returncode is interpreted as expected. """
         self.fixture.check_apply("""

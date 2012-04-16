@@ -198,7 +198,11 @@ class ShellCommand(change.Change):
                     env[var] = os.environ[var]
 
         if self.env:
-            env.update(self.env)
+            for key, item in self.env.iteritems():
+                if isinstance(item, String):
+                    env[key] = item.unprotected.encode("UTF-8")
+                else:
+                    env[key] = item
 
         self._generated_env = env
 
