@@ -30,23 +30,27 @@ from yaybu.core.shell import Shell
 logger = logging.getLogger("runcontext")
 
 class RunContext(object):
+    
+    """ A context object that holds the environment required to run yaybu. """
 
     simulate = False
     ypath = ()
     verbose = 0
 
-    def __init__(self, configfile, opts=None):
+    def __init__(self, configfile, resume=False, no_resume=False, user="root", 
+                 host=None, ypath=(), simulate=False, verbose=2,
+                 env_passthrough=()):
         self.path = []
         self.ypath = []
         self.options = {}
         self._config = None
         self._bundle = None
 
-        self.resume = opts.resume
-        self.no_resume = opts.no_resume
-        self.user = opts.user
+        self.resume = resume
+        self.no_resume = no_resume
+        self.user = user
 
-        self.host = opts.host
+        self.host = host
         self.connect_user = None
         self.port = None
 
@@ -59,12 +63,11 @@ class RunContext(object):
         if os.path.exists("/etc/yaybu"):
             self.options = yay.load_uri("/etc/yaybu")
 
-        if opts is not None:
-            logger.debug("Invoked with ypath: %r" % opts.ypath)
-            logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
-            self.simulate = opts.simulate
-            self.ypath = opts.ypath
-            self.verbose = opts.verbose
+        logger.debug("Invoked with ypath: %r" % ypath)
+        logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
+        self.simulate = simulate
+        self.ypath = ypath
+        self.verbose = verbose
 
         if "PATH" in os.environ:
             for term in os.environ["PATH"].split(":"):
@@ -79,7 +82,7 @@ class RunContext(object):
 
         self.configfile = configfile
 
-        self.setup_shell(opts.env_passthrough)
+        self.setup_shell(env_passthrough)
         self.setup_changelog()
 
         self.vfs = vfs.Local(self)
