@@ -268,7 +268,7 @@ class ShellTextRenderer(change.TextRenderer):
             self.logger.notice("returned %s", returncode)
 
     def stdout(self, data):
-       if self.verbose >= 2 and not self.inert:
+        if self.verbose >= 2 and not self.inert:
             self.logger.info(data)
 
     def stderr(self, data):
