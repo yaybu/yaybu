@@ -1,0 +1,24 @@
+.include:
+    - clouds.yay
+
+roles:
+    database:
+        key: cloudtest
+        instance:
+            image: lucid-amd64
+            size: medium
+        include:
+            - postgres.yay
+            - exim.yay
+        max: 1
+        min: 1
+    mailserver:
+        key: cloudtest
+        instance:
+            image: lucid-amd64
+            size: medium
+        include:
+            - exim.yay 
+        min: 1
+    
+

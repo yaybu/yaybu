@@ -8,6 +8,7 @@ import optparse
 import yay
 from yaybu.core import runner, remote, runcontext
 from yaybu.core.util import version
+from yaybu.core.cloud.api import ScalableCloud, Role
 
 class OptionParsingCmd(cmd.Cmd):
     
@@ -122,10 +123,10 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
     
-    def do_provision(self, opts, args):
+    def do_apply(self, opts, args):
         """
-        usage: provision [options] <filename>
-        Provisions the current host with the configuration in the specified file
+        usage: apply [options] <filename>
+        Applies the specified file to the current host
         """
         if os.path.exists("/etc/yaybu"):
             config = yay.load_uri("/etc/yaybu")
@@ -185,11 +186,67 @@ class YaybuCmd(OptionParsingCmd):
         print yay.dump(cfg)
         
     def do_status(self, opts, args):
-        pass
+        """
+        usage: status <provider> [cluster]
+        Describe the status of the cluster in the specified cloud.
+        If no cluster is specified, all clusters are shown
+        """
+        
+    def extract_roles(self, cfg):
+        for k, v in cfg['roles'].items():
+            yield Role(
+                k,
+                v['key'],
+                v['instance']['image'],
+                v['instance']['size'],
+                v.get('min', 0),
+                v.get('max', None))
+            
+    def create_cloud(self, cfg, provider, cluster, filename):
+        """ Create a ScalableCloud object from the configuration provided.
+        """
+        p = cfg['clouds'].get(provider, None)
+        if p is None:
+            raise KeyError("provider %r not found" % provider)
+        roles = self.extract_roles(cfg)
+        cloud = ScalableCloud(p['providers']['compute'], p['providers']['storage'], 
+                              cluster, p['args'], p['images'], p['sizes'], roles)
+        return cloud
+        
+        
+    def do_provision(self, opts, args):
+        """
+        usage: provision <provider> <cluster> <filename>
+        Create a new cluster, or update the existing cluster, <cluster>
+        in the cloud <provider>, using the configuration in <filename>
+        """
+        if len(args) != 3:
+            self.help_provision()
+            return
+        provider, cluster, filename = args
+        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+        cfg = ctx.get_config().get()
+        cloud = self.create_cloud(cfg, provider, cluster, filename)
+        cloud.provision_roles()
+        
+        
+    def do_addnode(self, opts, args):
+        """
+        usage: addnode <provider> <cluster> <role>
+        Add a new node of the specified role to the cluster
+        """
+        
+    def do_rmnode(self, opts, args):
+        """
+        usage: rmnode <provider> <cluster> <nodeid>
+        Delete the specified node
+        """
     
     def do_quit(self, opts=None, args=None):
+        """ Exit yaybu """
         raise SystemExit
     
     def do_EOF(self, opts, args):
+        """ Exit yaybu """
         print
         self.do_quit()

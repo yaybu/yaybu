@@ -41,8 +41,12 @@ def main():
     parser.add_option("-v", "--verbose", default=2, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
     parser.add_option("--ssh-auth-sock", default=None, action="store", help="Path to SSH Agent socket")
     opts, args = parser.parse_args()
-    
+
+    # we need to revisit how logging is handled
+    logging.basicConfig()
     if opts.debug:
+        root = logging.getLogger()
+        root.setLevel(logging.DEBUG)
         opts.logfile = "-"
         opts.verbose = 2
 

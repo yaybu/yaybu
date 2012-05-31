@@ -25,6 +25,7 @@ setup(name='Yaybu',
           'jinja2',
           'yay >= 0.0.45',
           'python-dateutil < 2.0',
+          'apache-libcloud',
       ],
       extras_require = {
           'test': ['testtools', 'discover', 'mock'],
