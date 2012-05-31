@@ -3,13 +3,18 @@
 
 import os
 import cmd
-import readline
 import optparse
 
 import yay
 from yaybu.core import runner, remote, runcontext
+from yaybu.core.util import version
 
 class OptionParsingCmd(cmd.Cmd):
+    
+    def parser(self):
+        p = optparse.OptionParser(usage="")
+        p.remove_option("-h")
+        return p
 
     def onecmd(self, line):
         """Interpret the argument as though it had been typed in response
@@ -36,11 +41,65 @@ class OptionParsingCmd(cmd.Cmd):
                 func = getattr(self, 'do_' + cmd)
             except AttributeError:
                 return self.default(line)
-            parser = optparse.OptionParser()
+            parser = self.parser()
             optparse_func = getattr(self, 'opts_' + cmd, lambda x: x)
             optparse_func(parser)
             opts, args = parser.parse_args(arg.split())
             return func(opts, args)
+        
+    def aligned_docstring(self, arg):
+        """ Return a docstring for a function, aligned properly to the left """
+        try:
+            doc=getattr(self, 'do_' + arg).__doc__
+            if doc:
+                return "\n".join([x.strip() for x in str(doc).splitlines()])
+            else:
+                return self.nohelp % (arg,)
+        except AttributeError:
+            return self.nohelp % (arg,)
+                    
+    def do_help(self, opts, args):
+        arg = " ".join(args)
+        if arg:
+            # XXX check arg syntax
+            func = getattr(self, 'help_' + arg, None)
+            if func is not None:
+                func()
+            else:
+                print self.aligned_docstring(arg)
+            parser = self.parser()
+            optparse_func = getattr(self, 'opts_' + arg, lambda x: x)
+            optparse_func(parser)
+            parser.print_help()
+        else:
+            names = self.get_names()
+            cmds_doc = []
+            cmds_undoc = []
+            help = {}
+            for name in names:
+                if name[:5] == 'help_':
+                    help[name[5:]]=1
+            names.sort()
+            # There can be duplicates if routines overridden
+            prevname = ''
+            for name in names:
+                if name[:3] == 'do_':
+                    if name == prevname:
+                        continue
+                    prevname = name
+                    cmd=name[3:]
+                    if cmd in help:
+                        cmds_doc.append(cmd)
+                        del help[cmd]
+                    elif getattr(self, name).__doc__:
+                        cmds_doc.append(cmd)
+                    else:
+                        cmds_undoc.append(cmd)
+            self.stdout.write("%s\n"%str(self.doc_leader))
+            self.print_topics(self.doc_header,   cmds_doc,   15,80)
+            self.print_topics(self.misc_header,  help.keys(),15,80)
+            self.print_topics(self.undoc_header, cmds_undoc, 15,80)
+        
 
 class YaybuCmd(OptionParsingCmd):
     
@@ -53,18 +112,21 @@ class YaybuCmd(OptionParsingCmd):
         self.ypath = ypath
         self.verbose = verbose
         
+    def preloop(self):
+        print version()
+        
     def opts_provision(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
-        parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
-        #parser.add_option("--remote", default=False, action="store_true", help="Run yaybu.protocol client on stdio")
-        #parser.add_option("--expand-only", default=False, action="store_true", help="Set to parse config, expand it and exit")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
     
     def do_provision(self, opts, args):
-        # Probably not the best place to put this stuff...
+        """
+        usage: provision [options] <filename>
+        Provisions the current host with the configuration in the specified file
+        """
         if os.path.exists("/etc/yaybu"):
             config = yay.load_uri("/etc/yaybu")
             opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
@@ -83,31 +145,32 @@ class YaybuCmd(OptionParsingCmd):
             raise SystemExit(rv)
         return rv
     
-    def help_provision(self):
-        pass
-    
     def opts_remote(self, opts, args):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
-        #parser.add_option("--remote", default=False, action="store_true", help="Run yaybu.protocol client on stdio")
-        #parser.add_option("--expand-only", default=False, action="store_true", help="Set to parse config, expand it and exit")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
-        
-    
+            
     def do_remote(self, opts, args):
+        """
+        usage: remote [options] <hostname> <filename>
+        Provision the specified hostname with the specified configuration, by
+        executing Yaybu on the remote system, via ssh
+        """
         r = remote.RemoteRunner()
         r.load_system_host_keys()
         r.set_missing_host_key_policy("ask")
         ctx = runcontext.RemoteRunContext(args[0], opts)
         rv = r.run(ctx)
         return rv
-        
     
     def do_expand(self, opts, args):
-        """ Expand the yay file provided in the args """
+        """
+        usage: expand [filename]
+        Prints the expanded YAML for the specified file.
+        """
         if len(args) != 1:
             self.help_expand()
             return
@@ -121,27 +184,12 @@ class YaybuCmd(OptionParsingCmd):
             cfg = dict(resources=cfg.get("resources", []))
         print yay.dump(cfg)
         
-    def help_expand(self):
-        print """usage: expand [filename]
-        
-        Prints the expanded YAML for the specified file.
-        """
-    
     def do_status(self, opts, args):
         pass
     
-    def do_help(self, opts, args):
-        print ("Commands available:\n"
-               "    provision\n"
-               "    remote\n"
-               "    expand\n")
-        
     def do_quit(self, opts=None, args=None):
         raise SystemExit
     
     def do_EOF(self, opts, args):
         print
         self.do_quit()
-        
-        
-

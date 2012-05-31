@@ -17,6 +17,7 @@ import optparse
 import yay
 import logging, atexit
 import command
+from util import version
 
 try:
     import wingdbstub
@@ -29,14 +30,6 @@ when run without any commands yaybu drops to a command prompt.
 for more information on a command:
     %prog [command] -h
 """
-
-def version():
-    import pkg_resources
-
-    yaybu_version = pkg_resources.get_distribution('Yaybu').version
-    yay_version = pkg_resources.get_distribution('Yay').version
-    return 'Yaybu %s\n' \
-           'yay %s' % (yaybu_version, yay_version)
 
 def main():
     parser = optparse.OptionParser(version=version(), usage=usage)
