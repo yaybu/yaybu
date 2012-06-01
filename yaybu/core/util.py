@@ -1,4 +1,7 @@
 
+from yay import stringbuilder
+import types
+
 def version():
     import pkg_resources
 
@@ -35,3 +38,28 @@ class memoized(object):
         return functools.partial(self.__call__, obj)
 
 
+
+class EncryptedConfigAdapter:
+    
+    """ Magic adapter that converts encrypted yay strings into unprotected\
+    strings when accessed. 
+    
+    Wrap a yay dictionary in this and the magic will happen. 
+    """
+    
+    def __init__(self, original):
+        self.original = original
+        
+    def __getitem__(self, name):
+        val = self.original[name]
+        if isinstance(val, stringbuilder.String):
+            return val.unprotected
+        elif type(val) in (types.ListType, types.DictionaryType):
+            return EncryptedConfigAdapter(val)
+        else:
+            return val
+    
+        
+        
+        
+        
