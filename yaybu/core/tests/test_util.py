@@ -1,5 +1,3 @@
-import wingdbstub
-
 import unittest
 from yay import stringbuilder
 from yaybu.core.util import EncryptedConfigAdapter

@@ -37,8 +37,6 @@ class memoized(object):
         '''Support instance methods.'''
         return functools.partial(self.__call__, obj)
 
-
-
 class EncryptedConfigAdapter:
     
     """ Magic adapter that converts encrypted yay strings into unprotected\
@@ -58,8 +56,24 @@ class EncryptedConfigAdapter:
             return EncryptedConfigAdapter(val)
         else:
             return val
+        
+    def get(self, name, default=None):
+        try:
+            return self[name]
+        except KeyError:
+            return default
+        
+    def items(self):
+        v = []
+        for k in self.original.keys():
+            v.append((k, self[k]))
+        return v
     
-        
-        
-        
-        
+    def __contains__(self, x):
+        return x in self.original
+    
+    def __iter__(self):
+        return iter(self.original)
+    
+    def keys(self):
+        return self.original.keys()

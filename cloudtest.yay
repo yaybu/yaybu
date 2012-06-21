@@ -1,5 +1,5 @@
 .include:
-    - clouds.yay
+    - clouds.yay.gpg
 
 roles:
     database:

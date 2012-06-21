@@ -9,11 +9,16 @@ from libcloud.compute.deployment import MultiStepDeployment, ScriptDeployment, S
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 import libcloud.security
 
+import paramiko
+
 import os
 import uuid
 import logging
 import yaml
 import StringIO
+import datetime
+import collections
+import time
 
 from yaybu.core.util import memoized
 
@@ -21,25 +26,34 @@ libcloud.security.VERIFY_SSL_CERT = True
 
 logger = logging.getLogger(__name__)
 
-class StateBucket:
+max_version = 1
+
+class StateMarshaller:
     
     """ Abstracts the stored state data. Versioned serialization interface. """
+
+    """ Storage format is YAML with some header information and then a list of nodes.
     
+    Each node is of the form:
+    
+    {'role': 'xx', 'index': X, 'name': 'XX', 'their_name': 'XX'}
+    
+    """
+   
     version = 1
     
-    def __init__(self, data=None):
-        self.nodes = self.load(data)
-        
-    def register_node(self, role, index, uuid):
-        logger.debug("Registering node %r for index %r and role %r" % (uuid, index, role))
-        self.nodes[uuid] = (index, role)
-        
-    def nodes_for_role(self, role):
-        for k, v in self.nodes.items():
-            if v[1] == role:
-                yield v[0], k
-        
+    @classmethod
     def load(self, data):
+        """ Returns a dictionary of lists of nodes, indexed by role.
+        
+        For example, 
+        
+        {'mailserver': [Node(0, 'cloud/mailserver/0', 'foo'), ...],
+         'appserver': [...],
+        }
+        
+        """
+        
         if data is None:
             return {}
         d = yaml.load(data)
@@ -49,14 +63,28 @@ class StateBucket:
             raise KeyError("No loader available for state file version %r" % v)
         return loader(d)
     
+    @classmethod
     def load_1(self, data):
-        return data['nodes']
+        nodes = collections.defaultdict(lambda: [])
+        for n in data['nodes']:
+            nodes[n['role']].append(Node(n['index'], n['name'], n['their_name']))
+        return nodes
         
-    def as_stream(self):
+    @classmethod
+    def as_stream(self, roles):
         d = {
             'version': self.version,
-            'nodes': self.nodes,
+            'timestamp': str(datetime.datetime.now()),
+            'nodes': [],
             }
+        for r in roles.values():
+            for n in r.nodes.values():
+                d['nodes'].append({
+                    'role': r.name, 
+                    'index': n.index, 
+                    'name': n.name, 
+                    'their_name': n.their_name,
+                })
         return StringIO.StringIO(yaml.dump(d))
 
 class Cloud(object):
@@ -124,19 +152,40 @@ class Cloud(object):
 
         logger.debug("Waiting for node %r to start" % (name, ))
         self.compute._wait_until_running(node)
+        time.sleep(5)
         logger.debug("Node %r running" % (name, ))
         return self.nodes[name]
 
+class Node:
+    
+    """ A runtime record we keep of nodes associated with a role. """
+    
+    def __init__(self, index, name, their_name):
+        
+        # the index is a number that identifies which node within this role this is
+        # for ease of reference (e.g. appserver/0, appserver/1 etc.) these are re-used
+        # as required
+        self.index = index
+        
+        # our full name of the node in the form cluster/role/index
+        self.name = name
+        
+        # the unique name assigned by the cloud
+        self.their_name = their_name
+    
 class Role:
     
-    def __init__(self, name, key, image, size, min_=1, max_=1):
+    """ A runtime record of roles we know about. Each role has a list of nodes """
+    
+    def __init__(self, name, key_name, key, image, size, min_=1, max_=1):
         self.name = name
+        self.key_name = key_name
         self.key = key
         self.image = image
         self.size = size
         self.min = min_
         self.max = max_
-        self.nodes = {}
+        self.nodes = {} # indexed by the role index
 
 class ScalableCloud:
     
@@ -171,22 +220,21 @@ class ScalableCloud:
         try:
             bucket = container.get_object(self.cluster)
             data = "".join(list(bucket.as_stream()))
-            self.cloud_state = StateBucket(data)
-            logger.debug("State loaded: %r" % self.cloud_state)
+            nmap = StateMarshaller.load(data)
+            for role, nodes in nmap.items():
+                logger.debug("Populating nodes for role %r" % (role,))
+                self.roles[role].nodes = nodes
+            logger.debug("State loaded")
         except ObjectDoesNotExistError:
             logger.debug("State object does not exist in container")
-            self.cloud_state = StateBucket()
-        for r in self.roles.values():
-            logger.debug("Populating nodes for role %r" % (r.name,))
-            r.nodes = list(self.cloud_state.nodes_for_role(r.name))
     
     def store_state(self):
-        logger.debug("Storing state %r" % self.cloud_state)
+        logger.debug("Storing state")
         container = self.cloud.get_container(self.state_bucket)
         ### TODO: fetch it first and check it hasn't changed since we last fetched it
         ### TODO: consider supporting merging in of changes
-        container.upload_object_via_stream(self.cloud_state.as_stream(), self.cluster, {
-        'content_type': 'text/yaml'})
+        container.upload_object_via_stream(StateMarshaller.as_stream(self.roles), 
+                                           self.cluster, {'content_type': 'text/yaml'})
 
     def provision_roles(self):
         for r in self.roles.values():
@@ -195,24 +243,45 @@ class ScalableCloud:
                 node = self.provision_node(r.name)
                 logger.info("Node provisioned: %r" % node)
                 
-    def register_node(self, role, index, name):
-        # should remove the duplication of function between cloud_state and self.roles
-        r = self.roles[role]
-        r.nodes.append((index, name))
-        self.cloud_state.register_node(role, index, name)
+    def execute(self, client, command):
+        stdin, stdout, stderr = client.exec_command(command)
+        stdin.close()
+        for l in stdout:
+            logger.debug(l.strip())
+        
+    def install_yaybu(self, name, key):
+        node = self.cloud.nodes[name]
+        hostname = node.extra['dns_name']
+        
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=hostname,
+                       username="ubuntu",
+                       pkey=key,
+                       look_for_keys=False)
+        self.execute(client, "sudo apt-get -y update")
+        self.execute(client, "sudo apt-get -y safe-upgrade")
+        self.execute(client, "sudo apt-get -y install python-setuptools")
+        self.execute(client, "sudo easy_install Yaybu")
     
     def provision_node(self, role):
+        """ Actually create the node in the cloud. Update our local runtime
+        and update the state held in the cloud. """
         # find the lowest unused index
         index = 0
-        for n in sorted(self.roles[role].nodes):
+        for n in sorted(self.roles[role].nodes.keys()):
             if n[0] == index:
                 index += 1
         logger.debug("Index %r chosen for %r" % (index, self.roles[role].nodes))
         name = "%s/%s/%s" % (self.cluster, role, index)
         logger.debug("Node will be %r" % name)
-        self.register_node(role, index, name)
-        r = self.roles[role]
+        # store a record indicating the node is being created
+        self.roles[role].nodes[index] = Node(index, name, None)
         self.store_state()
-        node = self.cloud.create_node(name, self.images[r.image], self.sizes[r.size], r.key)
-        ### TODO: MOLEST NODE
+        r = self.roles[role]
+        node = self.cloud.create_node(name, self.images[r.image], self.sizes[r.size], r.key_name)
+        # now the node actually exists, update the record
+        self.roles[role].nodes[index].their_name = node.name
+        self.store_state()
+        self.install_yaybu(node.name, r.key)
         return node

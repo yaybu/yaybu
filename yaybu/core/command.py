@@ -5,10 +5,15 @@ import os
 import cmd
 import optparse
 
+from functools import partial
+
 import yay
 from yaybu.core import runner, remote, runcontext
-from yaybu.core.util import version
+from yaybu.core.util import version, EncryptedConfigAdapter
 from yaybu.core.cloud.api import ScalableCloud, Role
+
+from paramiko.rsakey import RSAKey
+from paramiko.dsskey import DSSKey
 
 class OptionParsingCmd(cmd.Cmd):
     
@@ -192,25 +197,45 @@ class YaybuCmd(OptionParsingCmd):
         If no cluster is specified, all clusters are shown
         """
         
-    def extract_roles(self, cfg):
+    def get_key(self, ctx, cfg, provider, key_name):
+        """ Load the key specified by name. """
+        filename = cfg['clouds'][provider]['keys'][key_name]
+        saved_exception = None
+        for pkey_class in (RSAKey, DSSKey):
+            try:
+                file = ctx.get_file(filename)
+                key = pkey_class.from_private_key(file)
+                return key
+            except SSHException, e:
+                saved_exception = e
+        raise saved_exception
+        
+    def extract_roles(self, cfg, ctx, provider):
         for k, v in cfg['roles'].items():
             yield Role(
                 k,
                 v['key'],
+                self.get_key(ctx, cfg, provider, v['key']),
                 v['instance']['image'],
                 v['instance']['size'],
                 v.get('min', 0),
                 v.get('max', None))
             
-    def create_cloud(self, cfg, provider, cluster, filename):
+    def create_cloud(self, cfg, ctx, provider, cluster, filename):
         """ Create a ScalableCloud object from the configuration provided.
         """
+        
         p = cfg['clouds'].get(provider, None)
         if p is None:
             raise KeyError("provider %r not found" % provider)
-        roles = self.extract_roles(cfg)
-        cloud = ScalableCloud(p['providers']['compute'], p['providers']['storage'], 
-                              cluster, p['args'], p['images'], p['sizes'], roles)
+        roles = self.extract_roles(cfg, ctx, provider)
+        cloud = ScalableCloud(p['providers']['compute'], 
+                              p['providers']['storage'], 
+                              cluster, 
+                              p['args'], 
+                              p['images'], 
+                              p['sizes'], 
+                              roles)
         return cloud
         
         
@@ -225,8 +250,8 @@ class YaybuCmd(OptionParsingCmd):
             return
         provider, cluster, filename = args
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
-        cfg = ctx.get_config().get()
-        cloud = self.create_cloud(cfg, provider, cluster, filename)
+        cfg = EncryptedConfigAdapter(ctx.get_config().get())
+        cloud = self.create_cloud(cfg, ctx, provider, cluster, filename)
         cloud.provision_roles()
         
         
