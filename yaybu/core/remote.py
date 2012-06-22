@@ -23,7 +23,7 @@ from yaybu.core import error
 
 import yay
 
-import paramiko
+import ssh
 import socket
 import logging
 import time
@@ -38,7 +38,7 @@ logger = logging.getLogger("yaybu.core.remote")
 class RemoteRunner(Runner):
     
     connection_attempts = 10
-    missing_host_key_policy = paramiko.AutoAddPolicy()
+    missing_host_key_policy = ssh.AutoAddPolicy()
     
     def __init__(self, hostname, key=None, username="ubuntu"):
         self.hostname = hostname
@@ -46,7 +46,7 @@ class RemoteRunner(Runner):
         self.username = username
         
     def connect(self):
-        client = paramiko.SSHClient()
+        client = ssh.SSHClient()
         client.set_missing_host_key_policy(self.missing_host_key_policy)
         for tries in range(self.connection_attempts):
             try:

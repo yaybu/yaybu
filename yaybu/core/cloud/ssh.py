@@ -1,6 +1,6 @@
 
 import socket
-import paramiko
+import ssh
 from StringIO import StringIO
 
 import time
@@ -22,10 +22,10 @@ class NodeSSH(object):
     # TODO: these time.sleeps should instead be going back on the queue
     def get_transport(self, username=None, keypair=None):
         try:
-            t = paramiko.Transport((self.original.hostname, self.original.ssh_port))
+            t = ssh.Transport((self.original.hostname, self.original.ssh_port))
             t.start_client()
             connected = True
-        except paramiko.SSHException, e:
+        except ssh.SSHException, e:
             logger.warning("Error while establishing transport: %s. retrying" % e)
             raise TransientError(e)
         except EOFError, e:
@@ -39,17 +39,17 @@ class NodeSSH(object):
             keypair = self.original.keypair
         if username is None:
             username = self.original.username
-        key = paramiko.RSAKey.from_private_key(StringIO(keypair.private))
+        key = ssh.RSAKey.from_private_key(StringIO(keypair.private))
         t.auth_publickey(username, key)
         return t
     
     def get_sftp(self, **kwargs):
-        return paramiko.SFTPClient.from_transport(self.get_transport(**kwargs))
+        return ssh.SFTPClient.from_transport(self.get_transport(**kwargs))
     
     def get_ssh(self):
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        key = paramiko.RSAKey.from_private_key(StringIO(self.original.keypair.private))
+        client = ssh.SSHClient()
+        client.set_missing_host_key_policy(ssh.AutoAddPolicy())
+        key = ssh.RSAKey.from_private_key(StringIO(self.original.keypair.private))
         client.connect(hostname=self.original.hostname,
                        username=self.original.username,
                        pkey=key,

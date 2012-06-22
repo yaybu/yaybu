@@ -6,6 +6,8 @@ import yaml
 from yaybu.core import remote
 from . import api
 
+from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
+
 class Node:
     
     """ A runtime record we keep of nodes associated with a role. """
@@ -165,7 +167,7 @@ class Cluster:
         ### TODO: fetch it first and check it hasn't changed since we last fetched it
         ### TODO: consider supporting merging in of changes
         container.upload_object_via_stream(StateMarshaller.as_stream(self.roles), 
-                                           self.cluster, {'content_type': 'text/yaml'})
+                                           self.name, {'content_type': 'text/yaml'})
 
     def provision_roles(self):
         for r in self.roles.values():
@@ -183,7 +185,7 @@ class Cluster:
             if n[0] == index:
                 index += 1
         api.logger.debug("Index %r chosen for %r" % (index, self.roles[role].nodes))
-        name = "%s/%s/%s" % (self.cluster, role, index)
+        name = "%s/%s/%s" % (self.name, role, index)
         api.logger.debug("Node will be %r" % name)
         # store a record indicating the node is being created
         self.roles[role].nodes[index] = Node(index, name, None)

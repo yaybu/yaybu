@@ -12,11 +12,11 @@ import yay
 from yaybu.core import runner, remote, runcontext
 from yaybu.core.util import version, get_encrypted
 from yaybu.core.cloud.cluster import Cluster, Role
-from paramiko.ssh_exception import SSHException
+from ssh.ssh_exception import SSHException
 from yaybu.core.cloud.cluster import Cluster
 
-from paramiko.rsakey import RSAKey
-from paramiko.dsskey import DSSKey
+from ssh.rsakey import RSAKey
+from ssh.dsskey import DSSKey
 
 logger = logging.getLogger("yaybu.core.command")
 

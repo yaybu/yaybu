@@ -26,7 +26,7 @@ setup(name='Yaybu',
           'yay >= 0.0.45',
           'python-dateutil < 2.0',
           'apache-libcloud',
-          'paramiko',
+          'ssh',
       ],
       extras_require = {
           'test': ['testtools', 'discover', 'mock'],

@@ -6,7 +6,6 @@ from libcloud.compute.providers import get_driver as get_compute_driver
 from libcloud.storage.providers import get_driver as get_storage_driver
 
 from libcloud.compute.deployment import MultiStepDeployment, ScriptDeployment, SSHKeyDeployment
-from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 import libcloud.security
 from libcloud.common.types import LibcloudError
 
