@@ -1,5 +1,8 @@
 resources.append:
+    - Package:
+        name: exim4-daemon-light
     - File: 
         name: /var/tmp/exim.foo
+
 
 

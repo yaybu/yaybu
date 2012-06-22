@@ -5,19 +5,18 @@ import os
 import cmd
 import optparse
 import copy
-
+import logging
 from functools import partial
 
 import yay
 from yaybu.core import runner, remote, runcontext
 from yaybu.core.util import version, get_encrypted
-from yaybu.core.cloud.api import ScalableCloud, Role
+from yaybu.core.cloud.cluster import Cluster, Role
 from paramiko.ssh_exception import SSHException
+from yaybu.core.cloud.cluster import Cluster
 
 from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
-
-import logging
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -127,13 +126,6 @@ class YaybuCmd(OptionParsingCmd):
     def preloop(self):
         print version()
         
-    def opts_provision(self, parser):
-        parser.add_option("-s", "--simulate", default=False, action="store_true")
-        parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
-        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
-        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
-        parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
-    
     def do_apply(self, opts, args):
         """
         usage: apply [options] <filename>
@@ -227,7 +219,7 @@ class YaybuCmd(OptionParsingCmd):
                 get_encrypted(v.get('min', 0)),
                 get_encrypted(v.get('max', None)))
             
-    def create_cloud(self, ctx, provider, cluster, filename):
+    def create_cloud(self, ctx, provider, cluster_name, filename):
         """ Create a ScalableCloud object from the configuration provided.
         """
         
@@ -236,13 +228,13 @@ class YaybuCmd(OptionParsingCmd):
         if p is None:
             raise KeyError("provider %r not found" % provider)
         roles = self.extract_roles(ctx, provider)
-        cloud = ScalableCloud(get_encrypted(p['providers']['compute']), 
-                              get_encrypted(p['providers']['storage']), 
-                              cluster, 
-                              get_encrypted(p['args']), 
-                              get_encrypted(p['images']), 
-                              get_encrypted(p['sizes']), 
-                              roles)
+        cloud = Cluster(cluster_name, 
+                        get_encrypted(p['providers']['compute']), 
+                        get_encrypted(p['providers']['storage']), 
+                        get_encrypted(p['args']), 
+                        get_encrypted(p['images']), 
+                        get_encrypted(p['sizes']), 
+                        roles)
         return cloud
         
     def decorate_config(self, ctx, cloud):
@@ -260,6 +252,13 @@ class YaybuCmd(OptionParsingCmd):
                     new_cfg['hosts'][hostname]['role'][k] = copy.copy(v)
         ctx.get_config().add(new_cfg) 
         
+    def opts_provision(self, parser):
+        parser.add_option("-s", "--simulate", default=False, action="store_true")
+        parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
+        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
+        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
+        parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
+    
     def do_provision(self, opts, args):
         """
         usage: provision <provider> <cluster> <filename>
@@ -269,9 +268,9 @@ class YaybuCmd(OptionParsingCmd):
         if len(args) != 3:
             self.help_provision()
             return
-        provider, cluster, filename = args
+        provider, cluster_name, filename = args
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
-        cloud = self.create_cloud(ctx, provider, cluster, filename)
+        cloud = self.create_cloud(ctx, provider, cluster_name, filename)
         cloud.provision_roles()
         for hostname in cloud.get_all_hostnames():
             # create a new context to decorate to isolate changes between nodes
