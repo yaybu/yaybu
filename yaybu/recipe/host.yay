@@ -1,0 +1,6 @@
+host: ${hosts[yaybu.host]}
+
+.include:
+    .foreach inc in host.role.include:
+        - ${inc}
+

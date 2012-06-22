@@ -8,9 +8,11 @@ from libcloud.storage.providers import get_driver as get_storage_driver
 from libcloud.compute.deployment import MultiStepDeployment, ScriptDeployment, SSHKeyDeployment
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 import libcloud.security
+from libcloud.common.types import LibcloudError
 
 import paramiko
 
+import socket
 import os
 import uuid
 import logging
@@ -142,19 +144,31 @@ class Cloud(object):
             
     def create_node(self, name, image, size, keypair):
         """ This creates a physical node based on our node record. """
-        logger.debug("Creating node %r with image %r, size %r and keypair %r" % (
-            name, image, size, keypair))
-        node = self.compute.create_node(
-            name=name,
-            image=self.images[image],
-            size=self.sizes[size],
-            ex_keyname=keypair)
-
-        logger.debug("Waiting for node %r to start" % (name, ))
-        self.compute._wait_until_running(node)
-        time.sleep(5)
-        logger.debug("Node %r running" % (name, ))
-        return self.nodes[name]
+        for tries in range(10):
+            logger.debug("Creating node %r with image %r, size %r and keypair %r" % (
+                name, image, size, keypair))
+            node = self.compute.create_node(
+                name=name,
+                image=self.images[image],
+                size=self.sizes[size],
+                ex_keyname=keypair)
+            logger.debug("Waiting for node %r to start" % (name, ))
+            ## TODO: wrap this in a try/except block and terminate
+            ## and recreate the node if this fails
+            try:
+                self.compute._wait_until_running(node, timeout=60)
+            except LibcloudError:
+                logger.warning("Node did not start before timeout. retrying.")
+                node.destroy()
+                continue
+            if not name in self.nodes:
+                logger.debug("Naming fail for new node. retrying.")
+                node.destroy()
+                continue
+            logger.debug("Node %r running" % (name, ))
+            return self.nodes[name]
+        logger.error("Unable to create node successfully. giving up.")
+        raise IOError()
 
 class Node:
     
@@ -203,6 +217,21 @@ class ScalableCloud:
         self.state_bucket = state_bucket
         self.load_state()
         
+    def get_node_info(self, node):
+        n = self.cloud.nodes[node.their_name]
+        return {
+            'public': n.public_ips[0],
+            'private': n.private_ips[0],
+            'hostname': n.extra['dns_name'].split(".")[0],
+            'fqdn': n.extra['dns_name'],
+            'domain': n.extra['dns_name'].split(".",1)[1],
+            'distro': 'DUMMY',
+            'raid': 'DUMMY',
+            'disks': 'DUMMY',
+            'interfaces': 'DUMMY',
+        }
+            
+        
     def validate_roles(self):
         for role in self.roles.values():
             if role.image not in self.images:
@@ -223,7 +252,8 @@ class ScalableCloud:
             nmap = StateMarshaller.load(data)
             for role, nodes in nmap.items():
                 logger.debug("Populating nodes for role %r" % (role,))
-                self.roles[role].nodes = nodes
+                for n in nodes:
+                    self.roles[role].nodes[n.name] = n
             logger.debug("State loaded")
         except ObjectDoesNotExistError:
             logger.debug("State object does not exist in container")
@@ -255,10 +285,19 @@ class ScalableCloud:
         
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(hostname=hostname,
-                       username="ubuntu",
-                       pkey=key,
-                       look_for_keys=False)
+        for tries in range(10):
+            try:
+                client.connect(hostname=hostname,
+                               username="ubuntu",
+                               pkey=key,
+                               look_for_keys=False)
+                break
+            except (socket.error, EOFError):
+                logger.warning("connection refused. retrying.")
+                time.sleep(1)
+        else:
+            logger.error("connection refused too many times, giving up.")
+            raise IOError()
         self.execute(client, "sudo apt-get -y update")
         self.execute(client, "sudo apt-get -y safe-upgrade")
         self.execute(client, "sudo apt-get -y install python-setuptools")

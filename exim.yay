@@ -1,0 +1,5 @@
+resources.append:
+    - File: 
+        name: /var/tmp/exim.foo
+
+

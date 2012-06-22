@@ -37,19 +37,39 @@ class memoized(object):
         '''Support instance methods.'''
         return functools.partial(self.__call__, obj)
 
+def get_encrypted(val):
+    scalar_types = (
+        types.StringType,
+        types.UnicodeType,
+        types.IntType,
+        types.BooleanType,
+        types.LongType,
+        types.NoneType)
+    if isinstance(val, stringbuilder.String):
+        return val.unprotected
+    elif isinstance(val, scalar_types):
+        return val
+    elif isinstance(val, types.DictionaryType):
+        d = {}
+        for key, value in val.items():
+            d[key] = get_encrypted(value)
+        return d
+    else:
+        raise ValueError("Unable to convert %r" % val)
+    
 class EncryptedConfigAdapter:
     
     """ Magic adapter that converts encrypted yay strings into unprotected\
     strings when accessed. 
     
-    Wrap a yay dictionary in this and the magic will happen. 
+    Wrap a yaybu Config in this. 
     """
     
     def __init__(self, original):
         self.original = original
         
     def __getitem__(self, name):
-        val = self.original[name]
+        val = self.original.mapping(name).resolve()
         if isinstance(val, stringbuilder.String):
             return val.unprotected
         elif type(val) in (types.ListType, types.DictionaryType):

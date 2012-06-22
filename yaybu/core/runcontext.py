@@ -50,15 +50,9 @@ class RunContext(object):
         self.no_resume = no_resume
         self.user = user
 
-        self.host = host
+        self.set_host(host)
         self.connect_user = None
         self.port = None
-
-        if self.host:
-            if "@" in self.host:
-                self.connect_user, self.host = self.host.split("@", 1)
-            if ":" in self.host:
-                self.host, self.port = self.host.split(":", 1)
 
         if os.path.exists("/etc/yaybu"):
             self.options = yay.load_uri("/etc/yaybu")
@@ -86,6 +80,21 @@ class RunContext(object):
         self.setup_changelog()
 
         self.vfs = vfs.Local(self)
+        
+    def set_host(self, host):
+        self.host = host
+        if self.host:
+            if "@" in self.host:
+                self.connect_user, self.host = self.host.split("@", 1)
+            if ":" in self.host:
+                self.host, self.port = self.host.split(":", 1)
+        extra = {
+            "yaybu": {
+                "host": self.host,
+                }
+            }
+        if self._config:
+            self._config.add(extra)
 
     def setup_shell(self, environment):
         self.shell = Shell(context=self,
@@ -177,11 +186,11 @@ class RunContext(object):
 
 class RemoteRunContext(RunContext):
 
-    def __init__(self, configfile, opts=None):
+    def __init__(self, configfile, **kwargs):
         self.connection = HTTPConnection()
         self.check_versions()
-        super(RemoteRunContext, self).__init__(configfile, opts)
-
+        super(RemoteRunContext, self).__init__(configfile, **kwargs)
+        
     def check_versions(self):
         self.connection.request("GET", "/about")
         rsp = self.connection.getresponse()

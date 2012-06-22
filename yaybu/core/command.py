@@ -4,16 +4,22 @@
 import os
 import cmd
 import optparse
+import copy
 
 from functools import partial
 
 import yay
 from yaybu.core import runner, remote, runcontext
-from yaybu.core.util import version, EncryptedConfigAdapter
+from yaybu.core.util import version, get_encrypted
 from yaybu.core.cloud.api import ScalableCloud, Role
+from paramiko.ssh_exception import SSHException
 
 from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
+
+import logging
+
+logger = logging.getLogger("yaybu.core.command")
 
 class OptionParsingCmd(cmd.Cmd):
     
@@ -168,7 +174,7 @@ class YaybuCmd(OptionParsingCmd):
         r = remote.RemoteRunner()
         r.load_system_host_keys()
         r.set_missing_host_key_policy("ask")
-        ctx = runcontext.RemoteRunContext(args[0], opts)
+        ctx = runcontext.RunContext(args[0], opts)
         rv = r.run(ctx)
         return rv
     
@@ -197,9 +203,10 @@ class YaybuCmd(OptionParsingCmd):
         If no cluster is specified, all clusters are shown
         """
         
-    def get_key(self, ctx, cfg, provider, key_name):
+    def get_key(self, ctx, provider, key_name):
         """ Load the key specified by name. """
-        filename = cfg['clouds'][provider]['keys'][key_name]
+        clouds = ctx.get_config().mapping.get('clouds').resolve()
+        filename = get_encrypted(clouds[provider]['keys'][key_name])
         saved_exception = None
         for pkey_class in (RSAKey, DSSKey):
             try:
@@ -209,35 +216,51 @@ class YaybuCmd(OptionParsingCmd):
             except SSHException, e:
                 saved_exception = e
         raise saved_exception
-        
-    def extract_roles(self, cfg, ctx, provider):
-        for k, v in cfg['roles'].items():
+    
+    def extract_roles(self, ctx, provider):
+        roles = ctx.get_config().mapping.get('roles').resolve()
+        for k, v in roles.items():
             yield Role(
                 k,
-                v['key'],
-                self.get_key(ctx, cfg, provider, v['key']),
-                v['instance']['image'],
-                v['instance']['size'],
-                v.get('min', 0),
-                v.get('max', None))
+                get_encrypted(v['key']),
+                self.get_key(ctx, provider, get_encrypted(v['key'])),
+                get_encrypted(v['instance']['image']),
+                get_encrypted(v['instance']['size']),
+                get_encrypted(v.get('min', 0)),
+                get_encrypted(v.get('max', None)))
             
-    def create_cloud(self, cfg, ctx, provider, cluster, filename):
+    def create_cloud(self, ctx, provider, cluster, filename):
         """ Create a ScalableCloud object from the configuration provided.
         """
         
-        p = cfg['clouds'].get(provider, None)
+        clouds = ctx.get_config().mapping.get('clouds').resolve()
+        p = clouds.get(provider, None)
         if p is None:
             raise KeyError("provider %r not found" % provider)
-        roles = self.extract_roles(cfg, ctx, provider)
-        cloud = ScalableCloud(p['providers']['compute'], 
-                              p['providers']['storage'], 
+        roles = self.extract_roles(ctx, provider)
+        cloud = ScalableCloud(get_encrypted(p['providers']['compute']), 
+                              get_encrypted(p['providers']['storage']), 
                               cluster, 
-                              p['args'], 
-                              p['images'], 
-                              p['sizes'], 
+                              get_encrypted(p['args']), 
+                              get_encrypted(p['images']), 
+                              get_encrypted(p['sizes']), 
                               roles)
         return cloud
         
+    def decorate_config(self, ctx, cloud):
+        """ Update the configuration with the details for all running nodes """
+        roles = ctx.get_config().mapping.get('roles').resolve()
+        new_cfg = {'hosts': {}}
+        for role_name, role in cloud.roles.items():
+            for node in role.nodes.values():
+                info = cloud.get_node_info(node)
+                hostname = info['fqdn']
+                new_cfg['hosts'][hostname] = copy.copy(info)
+                new_cfg['hosts'][hostname]['role'] = {}
+                new_cfg['hosts'][hostname]['role']['name'] = role_name
+                for k, v in roles[role_name].items():
+                    new_cfg['hosts'][hostname]['role'][k] = copy.copy(v)
+        ctx.get_config().add(new_cfg) 
         
     def do_provision(self, opts, args):
         """
@@ -250,10 +273,20 @@ class YaybuCmd(OptionParsingCmd):
             return
         provider, cluster, filename = args
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
-        cfg = EncryptedConfigAdapter(ctx.get_config().get())
-        cloud = self.create_cloud(cfg, ctx, provider, cluster, filename)
+        cloud = self.create_cloud(ctx, provider, cluster, filename)
         cloud.provision_roles()
-        
+        self.decorate_config(ctx, cloud)
+        hosts = ctx.get_config().mapping.get('hosts').resolve()
+        for hostname, host in hosts.items():
+            logger.info("Applying configuration to %r" % hostname)
+            r = remote.RemoteRunner()
+            r.load_system_host_keys()
+            r.set_missing_host_key_policy("ask")
+            ctx.set_host(hostname)
+            ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
+            rv = r.run(ctx)
+            if rv != 0:
+                return rv
         
     def do_addnode(self, opts, args):
         """
