@@ -171,10 +171,8 @@ class YaybuCmd(OptionParsingCmd):
         Provision the specified hostname with the specified configuration, by
         executing Yaybu on the remote system, via ssh
         """
-        r = remote.RemoteRunner()
-        r.load_system_host_keys()
-        r.set_missing_host_key_policy("ask")
         ctx = runcontext.RunContext(args[0], opts)
+        r = remote.RemoteRunner(ctx.host)
         rv = r.run(ctx)
         return rv
     
@@ -275,13 +273,15 @@ class YaybuCmd(OptionParsingCmd):
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
         cloud = self.create_cloud(ctx, provider, cluster, filename)
         cloud.provision_roles()
-        self.decorate_config(ctx, cloud)
-        hosts = ctx.get_config().mapping.get('hosts').resolve()
-        for hostname, host in hosts.items():
+        for hostname in cloud.get_all_hostnames():
+            # create a new context to decorate to isolate changes between nodes
+            ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+            self.decorate_config(ctx, cloud)
+            host = ctx.get_config().mapping.get("hosts").resolve()[hostname]
+            key_name = host['role']['key']
+            key = self.get_key(ctx, provider, key_name)
             logger.info("Applying configuration to %r" % hostname)
-            r = remote.RemoteRunner()
-            r.load_system_host_keys()
-            r.set_missing_host_key_policy("ask")
+            r = remote.RemoteRunner(hostname, key)
             ctx.set_host(hostname)
             ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
             rv = r.run(ctx)

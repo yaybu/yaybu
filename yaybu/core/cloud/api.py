@@ -10,9 +10,6 @@ from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExis
 import libcloud.security
 from libcloud.common.types import LibcloudError
 
-import paramiko
-
-import socket
 import os
 import uuid
 import logging
@@ -23,6 +20,7 @@ import collections
 import time
 
 from yaybu.core.util import memoized
+from yaybu.core import remote
 
 libcloud.security.VERIFY_SSL_CERT = True
 
@@ -217,6 +215,13 @@ class ScalableCloud:
         self.state_bucket = state_bucket
         self.load_state()
         
+    def get_all_hostnames(self):
+        """ Return an iterator of all hostnames in this cluster. """
+        for role in self.roles.values():
+            for node in role.nodes.values():
+                n = self.cloud.nodes[node.their_name]
+                yield n.extra['dns_name']
+        
     def get_node_info(self, node):
         n = self.cloud.nodes[node.their_name]
         return {
@@ -231,7 +236,6 @@ class ScalableCloud:
             'interfaces': 'DUMMY',
         }
             
-        
     def validate_roles(self):
         for role in self.roles.values():
             if role.image not in self.images:
@@ -273,36 +277,6 @@ class ScalableCloud:
                 node = self.provision_node(r.name)
                 logger.info("Node provisioned: %r" % node)
                 
-    def execute(self, client, command):
-        stdin, stdout, stderr = client.exec_command(command)
-        stdin.close()
-        for l in stdout:
-            logger.debug(l.strip())
-        
-    def install_yaybu(self, name, key):
-        node = self.cloud.nodes[name]
-        hostname = node.extra['dns_name']
-        
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        for tries in range(10):
-            try:
-                client.connect(hostname=hostname,
-                               username="ubuntu",
-                               pkey=key,
-                               look_for_keys=False)
-                break
-            except (socket.error, EOFError):
-                logger.warning("connection refused. retrying.")
-                time.sleep(1)
-        else:
-            logger.error("connection refused too many times, giving up.")
-            raise IOError()
-        self.execute(client, "sudo apt-get -y update")
-        self.execute(client, "sudo apt-get -y safe-upgrade")
-        self.execute(client, "sudo apt-get -y install python-setuptools")
-        self.execute(client, "sudo easy_install Yaybu")
-    
     def provision_node(self, role):
         """ Actually create the node in the cloud. Update our local runtime
         and update the state held in the cloud. """
@@ -322,5 +296,8 @@ class ScalableCloud:
         # now the node actually exists, update the record
         self.roles[role].nodes[index].their_name = node.name
         self.store_state()
-        self.install_yaybu(node.name, r.key)
+        rnode = self.cloud.nodes[node.name]
+        hostname = rnode.extra['dns_name']
+        runner = remote.RemoteRunner(hostname, r.key)
+        runner.install_yaybu()
         return node
