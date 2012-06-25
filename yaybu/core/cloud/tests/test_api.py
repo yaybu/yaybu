@@ -2,6 +2,7 @@
 import wingdbstub
 import unittest
 from mock import MagicMock as Mock
+from libcloud.common.types import LibcloudError
 
 from yaybu.core.cloud import api
 
@@ -30,13 +31,32 @@ class TestCloud(unittest.TestCase):
     
     def test_create_node_happy(self):
         """ Test the happy path """
-        c = self._make_cloud()
-        c.compute._wait_until_running = Mock()
+        ComputeDriver._wait_until_running = Mock()
         mock_node = Mock()
         mock_node.name = "name"
         ComputeDriver.list_nodes = Mock(return_value=[mock_node])
+        c = self._make_cloud()
         node = c.create_node("name", "image", "size", "keypair")
         self.assertEqual(node, mock_node)
+        
+    def test_create_node_never_starts(self):
+        ComputeDriver._wait_until_running = Mock()
+        ComputeDriver._wait_until_running.side_effect = LibcloudError("Boom")
+        c = self._make_cloud()
+        self.assertRaises(IOError, c.create_node, "name", "image", "size", "keypair")
+        
+    def test_create_node_naming_fail(self):
+        ComputeDriver._wait_until_running = Mock()
+        mock_node = Mock()
+        mock_node.name = "fred"
+        ComputeDriver.list_nodes = Mock(return_value=[mock_node])
+        c = self._make_cloud()
+        self.assertRaises(IOError, c.create_node, "name", "image", "size", "keypair")
+        
+        
+        
+        
+        
         
         
         
