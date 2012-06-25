@@ -13,7 +13,7 @@ from yaybu.core import runner, remote, runcontext
 from yaybu.core.util import version, get_encrypted
 from yaybu.core.cloud.cluster import Cluster, Role
 from ssh.ssh_exception import SSHException
-from yaybu.core.cloud.cluster import Cluster
+from yaybu.core.cloud.cluster import Cluster, AbstractCloud
 
 from ssh.rsakey import RSAKey
 from ssh.dsskey import DSSKey
@@ -228,14 +228,15 @@ class YaybuCmd(OptionParsingCmd):
         if p is None:
             raise KeyError("provider %r not found" % provider)
         roles = self.extract_roles(ctx, provider)
-        cloud = Cluster(cluster_name, 
-                        get_encrypted(p['providers']['compute']), 
-                        get_encrypted(p['providers']['storage']), 
-                        get_encrypted(p['args']), 
-                        get_encrypted(p['images']), 
-                        get_encrypted(p['sizes']), 
-                        roles)
-        return cloud
+        cloud = AbstractCloud(
+            get_encrypted(p['providers']['compute']), 
+            get_encrypted(p['providers']['storage']), 
+            get_encrypted(p['args']), 
+            get_encrypted(p['images']), 
+            get_encrypted(p['sizes']), 
+            )
+        cluster = Cluster(cloud, cluster_name, roles)
+        return cluster
         
     def decorate_config(self, ctx, cloud):
         """ Update the configuration with the details for all running nodes """

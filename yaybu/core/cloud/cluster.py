@@ -5,8 +5,11 @@ import collections
 import yaml
 from yaybu.core import remote
 from . import api
+import logging
 
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
+
+logger = logging.getLogger(__name__)
 
 class Node:
     
@@ -37,6 +40,17 @@ class Role:
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
     def __init__(self, name, key_name, key, image, size, min_=1, max_=1):
+        """
+        Args:
+            name: Role name
+            key_name: The name of the key at the cloud provider
+            key: The key itself as an SSH object
+            image: The name of the image in your local dialect
+            size: The size of the image in your local dialect
+            min: The minimum number of nodes of this role the cluster should tolerate
+            max: The maximum number of nodes of this role the cluster should tolerate
+            nodes: A dictionary of Node objects, indexed by their index
+        """
         self.name = name
         self.key_name = key_name
         self.key = key
@@ -45,33 +59,24 @@ class Role:
         self.min = min_
         self.max = max_
         self.nodes = {} # indexed by the role index
+        
+    def add_node(self, index, name, their_name):
+        self.nodes[index] = Node(index, name, their_name)
+        
 
 class StateMarshaller:
     
-    """ Abstracts the stored state data. Versioned serialization interface. """
-
-    """ Storage format is YAML with some header information and then a list of nodes.
-    
-    Each node is of the form:
-    
-    {'role': 'xx', 'index': X, 'name': 'XX', 'their_name': 'XX'}
-    
+    """ Abstracts the stored state data. Versioned serialization interface.
+    Storage format is YAML with some header information and then a list of
+    nodes.
     """
    
     version = 1
+    """ The version that will be written when saved. """
     
     @classmethod
     def load(self, data):
-        """ Returns a dictionary of lists of nodes, indexed by role.
-        
-        For example, 
-        
-        {'mailserver': [Node(0, 'cloud/mailserver/0', 'foo'), ...],
-         'appserver': [...],
-        }
-        
-        """
-        
+        """ Select the appropriate loader based on the version """
         if data is None:
             return {}
         d = yaml.load(data)
@@ -83,6 +88,11 @@ class StateMarshaller:
     
     @classmethod
     def load_1(self, data):
+        """ Returns a dictionary of lists of nodes, indexed by role. For example, 
+        {'mailserver': [Node(0, 'cloud/mailserver/0', 'foo'), ...],
+         'appserver': [...],
+        }  """
+        
         nodes = collections.defaultdict(lambda: [])
         for n in data['nodes']:
             nodes[n['role']].append(Node(n['index'], n['name'], n['their_name']))
@@ -104,20 +114,73 @@ class StateMarshaller:
                     'their_name': n.their_name,
                 })
         return StringIO.StringIO(yaml.dump(d))
-
-class Cluster:
     
-    """ Represents an abstraction of a cloud with it's own names for images
-    and sizes and an understanding of roles and scaling. """
+class AbstractCloud:
     
-    def __init__(self, name, compute_provider, storage_provider, args, 
-                 images, sizes, roles, state_bucket="yaybu-state"):
-        self.name = name
+    """ An abstraction built on top of the libcloud api. Allows you to have
+    your own internal names for images and sizes, to increase portability.
+    """
+    
+    def __init__(self, compute_provider, storage_provider, args, images, sizes):
+        """
+        Args:
+            compute_provider: The name of the compute provider in libcloud
+            storage_provider: the name of the storage provider in libcloud
+            args: A dictionary of arguments to provide to the providers
+            images: A dictionary of images that maps your names to the providers names
+            sizes: A dictionary of sizes that maps your names to the providers names
+        """
         self.cloud = api.Cloud(compute_provider, storage_provider, args)
         self.images = images
         self.sizes = sizes
+        
+    @property
+    def nodes(self):
+        return self.cloud.nodes
+    
+    def get_container(self, name):
+        return self.cloud.get_container(name)
+            
+    def validate(self, image, size):
+        """ Validate that the image and size requested is valid """
+        if image not in self.images:
+            raise KeyError("Image %r not known" % (image,))
+        
+        if size not in self.sizes:
+            raise KeyError("Size %r not known" % (size,))
+        
+        if self.images[image] not in self.cloud.images:
+            raise KeyError("Mapped image %r not known" % (self.images[image], ))
+        
+        if self.sizes[size] not in self.cloud.sizes:
+            raise KeyError("Mapped size %r not known" % (self.sizes[role.size], ))
+            
+    def create_node(self, name, image, size, keypair):
+        return self.cloud.create_node(
+            name,
+            self.images[image],
+            self.sizes[size],
+            keypair)
+
+class Cluster:
+    
+    """ Built on top of AbstractCloud, a Cluster knows about server roles and
+    can create and remove nodes for those roles. """
+    
+    def __init__(self, cloud, name, roles, state_bucket="yaybu-state"):
+        """
+        Args:
+            name: The name of the cloud
+            cloud: An AbstractCloud instance
+            roles: A list of roles within this cluster
+            state_bucket: The name of the bucket used to store the state for clusters
+        """
+        
+        self.name = name
+        self.cloud = cloud
         self.roles = dict((r.name, r) for r in roles)
-        self.validate_roles()
+        for r in self.roles.values():
+            self.cloud.validate(r.image, r.size)
         self.state_bucket = state_bucket
         self.load_state()
         
@@ -129,6 +192,7 @@ class Cluster:
                 yield n.extra['dns_name']
         
     def get_node_info(self, node):
+        """ Return a dictionary of information about the specified node """
         n = self.cloud.nodes[node.their_name]
         return {
             'public': n.public_ips[0],
@@ -142,19 +206,9 @@ class Cluster:
             'interfaces': 'DUMMY',
         }
             
-    def validate_roles(self):
-        for role in self.roles.values():
-            if role.image not in self.images:
-                raise KeyError("Image %r not known for role %r" % (image, role))
-            if role.size not in self.sizes:
-                raise KeyError("Size %r not known for role %r" % (size, role))
-            if self.images[role.image] not in self.cloud.images:
-                raise KeyError("Mapped image %r for %r not known" % (self.images[role.image], role))
-            if self.sizes[role.size] not in self.cloud.sizes:
-                raise KeyError("Mapped size %r for %r not known" % (self.sizes[role.size], role))
-            
     def load_state(self):
-        api.logger.debug("Loading state from bucket")
+        """ Load the state file from the cloud """
+        logger.debug("Loading state from bucket")
         container = self.cloud.get_container(self.state_bucket)
         try:
             bucket = container.get_object(self.name)
@@ -169,7 +223,8 @@ class Cluster:
             api.logger.debug("State object does not exist in container")
     
     def store_state(self):
-        api.logger.debug("Storing state")
+        """ Store the state in the cloud """
+        logger.debug("Storing state")
         container = self.cloud.get_container(self.state_bucket)
         ### TODO: fetch it first and check it hasn't changed since we last fetched it
         ### TODO: consider supporting merging in of changes
@@ -177,33 +232,52 @@ class Cluster:
                                            self.name, {'content_type': 'text/yaml'})
 
     def provision_roles(self):
+        """ Provision nodes for each role up to the minimum required """
         for r in self.roles.values():
             while len(r.nodes) < r.min:
                 api.logger.info("Autoprovisioning node for role %r" % r.name)
                 node = self.provision_node(r.name)
                 api.logger.info("Node provisioned: %r" % node)
                 
-    def provision_node(self, role):
-        """ Actually create the node in the cloud. Update our local runtime
-        and update the state held in the cloud. """
-        # find the lowest unused index
+    def find_lowest_unused(self, role):
+        """ Find the lowest unused index for a role. We re-use indexes. """
         index = 0
         for n in sorted(self.roles[role].nodes.keys()):
-            if n[0] == index:
+            if n == index:
                 index += 1
-        api.logger.debug("Index %r chosen for %r" % (index, self.roles[role].nodes))
-        name = "%s/%s/%s" % (self.name, role, index)
-        api.logger.debug("Node will be %r" % name)
-        # store a record indicating the node is being created
-        self.roles[role].nodes[index] = Node(index, name, None)
-        self.store_state()
+        return index
+    
+    def node_name(self, role, index):
+        """ Name a node """
+        return "%s/%s/%s" % (self.name, role, index)
+    
+    def instantiate_node(self, role):
+        """ Instantiate a new node for the requested role
+        Args:
+            role: A Role instance
+        """
+        index = self.find_lowest_unused(role)
+        name = self.node_name(role, index)
+        logger.debug("Node will be %r" % name)
         r = self.roles[role]
-        node = self.cloud.create_node(name, self.images[r.image], self.sizes[r.size], r.key_name)
-        # now the node actually exists, update the record
-        self.roles[role].nodes[index].their_name = node.name
+        node = self.cloud.create_node(name, r.image, r.size, r.key_name)
+        r.add_node(index, name, node.name)
         self.store_state()
+        return node
+    
+    def install_yaybu(self, node):
+        """ Install yaybu on the provided node.
+        Args:
+            node: a Node instance
+        """
         rnode = self.cloud.nodes[node.name]
         hostname = rnode.extra['dns_name']
         runner = remote.RemoteRunner(hostname, r.key)
         runner.install_yaybu()
+    
+    def provision_node(self, role):
+        """ Actually create the node in the cloud. Update our local runtime
+        and update the state held in the cloud. """
+        node = self.instantiate_node(role)
+        self.install_yaybu(node)
         return node
