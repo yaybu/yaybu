@@ -24,6 +24,13 @@ class Node:
         
         # the unique name assigned by the cloud
         self.their_name = their_name
+        
+    def __eq__(self, other):
+        """ Provided for testability """
+        return self.index == other.index and \
+               self.name == other.name and \
+               self.their_name == other.their_name
+            
 
 class Role:
     

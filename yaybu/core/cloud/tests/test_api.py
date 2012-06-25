@@ -1,5 +1,4 @@
 
-import wingdbstub
 import unittest
 from mock import MagicMock as Mock
 from libcloud.common.types import LibcloudError
