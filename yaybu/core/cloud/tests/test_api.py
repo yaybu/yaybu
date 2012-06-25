@@ -1,23 +1,24 @@
 
+import wingdbstub
 import unittest
 from mock import MagicMock as Mock
 
 from yaybu.core.cloud import api
 
-api.get_compute_driver = Mock()
-api.get_storage_driver = Mock()
+api.ComputeProvider = Mock()
+api.StorageProvider = Mock()
 
-compute_driver = api.get_compute_driver()
-storage_driver = api.get_storage_driver()
+StorageDriver = Mock()
+ComputeDriver = Mock()
 
-mock_image = Mock()
-mock_image.id = "image"
+api.get_compute_driver = lambda x: Mock(return_value=ComputeDriver)
+api.get_storage_driver = lambda x: Mock(return_value=StorageDriver)
 
-mock_size = Mock()
-mock_size.id = "size"
+mock_image = Mock(id="image")
+mock_size = Mock(id="size")
 
-compute_driver.list_images = Mock(return_value=[mock_image])
-compute_driver.list_sizes = Mock(return_value=[mock_size])
+ComputeDriver.list_images = Mock(return_value=[mock_image])
+ComputeDriver.list_sizes = Mock(return_value=[mock_size])
 
 class TestCloud(unittest.TestCase):
     
@@ -30,7 +31,12 @@ class TestCloud(unittest.TestCase):
     def test_create_node_happy(self):
         """ Test the happy path """
         c = self._make_cloud()
-        c.create_node("name", "image", "size", "keypair")
+        c.compute._wait_until_running = Mock()
+        mock_node = Mock()
+        mock_node.name = "name"
+        ComputeDriver.list_nodes = Mock(return_value=[mock_node])
+        node = c.create_node("name", "image", "size", "keypair")
+        self.assertEqual(node, mock_node)
         
         
         
