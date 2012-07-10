@@ -12,6 +12,9 @@ roles:
             - exim.yay
         max: 1
         min: 1
+        dns: 
+            zone: isotomacloud.com
+            name: testdb
     mailserver:
         key: cloudtest
         instance:
@@ -20,4 +23,7 @@ roles:
         include:
             - exim.yay 
         min: 1
+        dns:
+            zone: isotomacloud.com
+            name: testmx
 

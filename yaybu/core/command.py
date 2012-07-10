@@ -13,7 +13,7 @@ from yaybu.core import runner, remote, runcontext
 from yaybu.core.util import version, get_encrypted
 from yaybu.core.cloud.cluster import Cluster, Role
 from ssh.ssh_exception import SSHException
-from yaybu.core.cloud.cluster import Cluster, AbstractCloud
+from yaybu.core.cloud.cluster import Cluster, AbstractCloud, SimpleDNSNamingPolicy
 
 from ssh.rsakey import RSAKey
 from ssh.dsskey import DSSKey
@@ -210,12 +210,18 @@ class YaybuCmd(OptionParsingCmd):
     def extract_roles(self, ctx, provider):
         roles = ctx.get_config().mapping.get('roles').resolve()
         for k, v in roles.items():
+            dns = None
+            if 'dns' in v:
+                zone = get_encrypted(v['dns']['zone'])
+                name = get_encrypted(v['dns']['name'])
+                dns = SimpleDNSNamingPolicy(zone, name)
             yield Role(
                 k,
                 get_encrypted(v['key']),
                 self.get_key(ctx, provider, get_encrypted(v['key'])),
                 get_encrypted(v['instance']['image']),
                 get_encrypted(v['instance']['size']),
+                dns,
                 get_encrypted(v.get('min', 0)),
                 get_encrypted(v.get('max', None)))
             
@@ -231,6 +237,7 @@ class YaybuCmd(OptionParsingCmd):
         cloud = AbstractCloud(
             get_encrypted(p['providers']['compute']), 
             get_encrypted(p['providers']['storage']), 
+            get_encrypted(p['providers']['dns']),
             get_encrypted(p['args']), 
             get_encrypted(p['images']), 
             get_encrypted(p['sizes']), 

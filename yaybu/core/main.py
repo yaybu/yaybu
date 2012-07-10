@@ -43,7 +43,7 @@ def main():
     opts, args = parser.parse_args()
 
     # we need to revisit how logging is handled
-    logging.basicConfig()
+    logging.basicConfig(format="%(asctime)s %(name)s %(levelname)s %(message)s")
     if opts.debug:
         root = logging.getLogger()
         root.setLevel(logging.DEBUG)

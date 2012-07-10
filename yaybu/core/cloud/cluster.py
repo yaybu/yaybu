@@ -6,6 +6,7 @@ import yaml
 from yaybu.core import remote
 from . import api
 import logging
+import abc
 
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 
@@ -33,13 +34,29 @@ class Node:
         return self.index == other.index and \
                self.name == other.name and \
                self.their_name == other.their_name
-            
 
+class DNSNamingPolicy(object):
+    __metaclass__ = abc.ABCMeta
+
+class SimpleDNSNamingPolicy(DNSNamingPolicy):
+    
+    """ Provide a name for the first node in a role only """
+    
+    def __init__(self, zone, name):
+        self.zone = zone
+        self.name = name
+        
+    def zone_info(self, index):
+        if index == 0:
+            return (self.zone, self.name)
+        else:
+            return None
+        
 class Role:
     
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
-    def __init__(self, name, key_name, key, image, size, min_=1, max_=1):
+    def __init__(self, name, key_name, key, image, size, dns=None, min_=1, max_=1):
         """
         Args:
             name: Role name
@@ -47,9 +64,9 @@ class Role:
             key: The key itself as an SSH object
             image: The name of the image in your local dialect
             size: The size of the image in your local dialect
+            dns: An instance of DNSNamingPolicy
             min: The minimum number of nodes of this role the cluster should tolerate
             max: The maximum number of nodes of this role the cluster should tolerate
-            nodes: A dictionary of Node objects, indexed by their index
         """
         self.name = name
         self.key_name = key_name
@@ -58,7 +75,8 @@ class Role:
         self.size = size
         self.min = min_
         self.max = max_
-        self.nodes = {} # indexed by the role index
+        self.dns = dns
+        self.nodes = {}
         
     def add_node(self, index, name, their_name):
         self.nodes[index] = Node(index, name, their_name)
@@ -121,16 +139,17 @@ class AbstractCloud:
     your own internal names for images and sizes, to increase portability.
     """
     
-    def __init__(self, compute_provider, storage_provider, args, images, sizes):
+    def __init__(self, compute_provider, storage_provider, dns_provider, args, images, sizes):
         """
         Args:
             compute_provider: The name of the compute provider in libcloud
             storage_provider: the name of the storage provider in libcloud
+            dns_provider: The name of the dns provider in libcloud, or 'route53'
             args: A dictionary of arguments to provide to the providers
             images: A dictionary of images that maps your names to the providers names
             sizes: A dictionary of sizes that maps your names to the providers names
         """
-        self.cloud = api.Cloud(compute_provider, storage_provider, args)
+        self.cloud = api.Cloud(compute_provider, storage_provider, dns_provider, args)
         self.images = images
         self.sizes = sizes
         
@@ -161,6 +180,9 @@ class AbstractCloud:
             self.images[image],
             self.sizes[size],
             keypair)
+    
+    def update_record(self, ip, zone, name):
+        self.cloud.update_record(ip, zone, name)
 
 class Cluster:
     
@@ -188,6 +210,8 @@ class Cluster:
         """ Return an iterator of all hostnames in this cluster. """
         for role in self.roles.values():
             for node in role.nodes.values():
+                # if node.their_name is not found here, it means the 
+                # server has died but we still have state.
                 n = self.cloud.nodes[node.their_name]
                 yield n.extra['dns_name']
         
@@ -263,21 +287,31 @@ class Cluster:
         node = self.cloud.create_node(name, r.image, r.size, r.key_name)
         r.add_node(index, name, node.name)
         self.store_state()
+        if r.dns is not None:
+            zone_info = r.dns.zone_info(index)
+            if zone_info is not None:
+                self.update_zone(node, zone_info[0], zone_info[1])
         return node
     
-    def install_yaybu(self, node):
+    def update_zone(self, node, zone, name):
+        """ Update the cloud dns to point at the node """
+        ip = node.public_ip[0]
+        self.cloud.update_record(ip, zone, name)
+    
+    def install_yaybu(self, node, key):
         """ Install yaybu on the provided node.
         Args:
             node: a Node instance
         """
         rnode = self.cloud.nodes[node.name]
         hostname = rnode.extra['dns_name']
-        runner = remote.RemoteRunner(hostname, r.key)
+        runner = remote.RemoteRunner(hostname, key)
         runner.install_yaybu()
     
     def provision_node(self, role):
         """ Actually create the node in the cloud. Update our local runtime
         and update the state held in the cloud. """
         node = self.instantiate_node(role)
-        self.install_yaybu(node)
+        key = self.roles[role].key
+        self.install_yaybu(node, key)
         return node

@@ -27,6 +27,7 @@ setup(name='Yaybu',
           'python-dateutil < 2.0',
           'apache-libcloud',
           'ssh',
+          'boto',
       ],
       extras_require = {
           'test': ['testtools', 'discover', 'mock'],

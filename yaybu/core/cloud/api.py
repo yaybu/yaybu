@@ -1,13 +1,19 @@
 
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.storage.types import Provider as StorageProvider
+from libcloud.dns.types import Provider as DNSProvider
 
 from libcloud.compute.providers import get_driver as get_compute_driver
 from libcloud.storage.providers import get_driver as get_storage_driver
+from libcloud.dns.providers import get_driver as get_dns_driver
 
 from libcloud.compute.deployment import MultiStepDeployment, ScriptDeployment, SSHKeyDeployment
 import libcloud.security
 from libcloud.common.types import LibcloudError
+
+from boto.route53.connection import Route53Connection
+from boto.route53.record import ResourceRecordSets
+from boto.route53.record import Record
 
 import os
 import uuid
@@ -27,13 +33,43 @@ logger = logging.getLogger(__name__)
 
 max_version = 1
 
+class Route53Zone:
+    
+    def __init__(self, connection, zone):
+        self.connection = connection
+        self.id = zone['Id'].replace('/hostedzone/', '')
+        
+    def create_record(self, name, data):
+        logger.debug("Creating record")
+        changes = ResourceRecordSets(self.connection,
+                                     self.id,
+                                     "")
+        change = changes.add_change("CREATE", name, 'A', 60)
+        change.add_value(data)
+        status = changes.commit()['ChangeResourceRecordSetsResponse']['ChangeInfo']
+        logger.debug("Status response is %r" % status)
+        
+class Route53:
+    
+    """ Our driver that handles route53 using boto """
+    
+    def __init__(self, key, secret):
+        self.connection = Route53Connection(key, secret)
+        
+    def create_zone(self, domain):
+        zone = self.connection.create_hosted_zone(domain)
+        logger.debug("Zone is %r" % zone)
+        zone = zone['CreateHostedZoneResponse']['HostedZone']
+        return Route53Zone(self.connection, zone)  
+
 class Cloud(object):
 
     """ Adapter of a cloud that provides access to runtime functionality. """
 
-    def __init__(self, compute_provider, storage_provider, args):
+    def __init__(self, compute_provider, storage_provider, dns_provider, args):
         self.compute_provider = compute_provider
         self.storage_provider = storage_provider
+        self.dns_provider = dns_provider
         self.args = args
 
     @property
@@ -49,6 +85,16 @@ class Cloud(object):
         provider = getattr(StorageProvider, self.storage_provider)
         driver_class = get_storage_driver(provider)
         return driver_class(**self.args)
+    
+    @property
+    @memoized
+    def dns(self):
+        if self.dns_provider == "route53":
+            return Route53(**self.args)
+        else:
+            provider = getattr(DNSProvider, self.dns_provider)
+            driver_class = get_dns_driver(provider)
+            return driver_class(**self.args)
 
     @property
     @memoized
@@ -98,3 +144,10 @@ class Cloud(object):
             return self.nodes[name]
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
+
+    def update_record(self, ip, zone, name):
+        """ Create an A record for the ip/dns pairing """
+        z = self.dns.create_zone(domain=zone)
+        record = z.create_record(name=name, data=ip)
+        loggger.info("Created record for %r -> %r" % (name, ip))
+        
