@@ -4,7 +4,8 @@ Changelog for yaybu
 0.1.22 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Mark "static" file content retrieved over a gpg stream as secret to prevent
+  the content appearing in the logs.
 
 
 0.1.21 (2012-03-16)
