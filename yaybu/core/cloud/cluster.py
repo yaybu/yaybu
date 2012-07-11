@@ -287,10 +287,11 @@ class Cluster:
         node = self.cloud.create_node(name, r.image, r.size, r.key_name)
         r.add_node(index, name, node.name)
         self.store_state()
-        if r.dns is not None:
-            zone_info = r.dns.zone_info(index)
-            if zone_info is not None:
-                self.update_zone(node, zone_info[0], zone_info[1])
+        # commented out until working DNS code
+        #if r.dns is not None:
+        #    zone_info = r.dns.zone_info(index)
+        #    if zone_info is not None:
+        #        self.update_zone(node, zone_info[0], zone_info[1])
         return node
     
     def update_zone(self, node, zone, name):

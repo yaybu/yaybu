@@ -244,21 +244,29 @@ class YaybuCmd(OptionParsingCmd):
             )
         cluster = Cluster(cloud, cluster_name, roles)
         return cluster
+    
+    def host_info(self, info, role_name, role):
+        """ Information for a host to be inserted into the configuration.
+        Pass an info structure from cloud.get_node_info """
+        ## TODO refactor into cloud or an adapter
+        hostname = info['fqdn']
+        host = copy.copy(info)
+        host['role'] = {}
+        host['rolename'] = role_name
+        for k, v in role.items():
+            host['role'][k] = copy.copy(v)
+        return host
         
     def decorate_config(self, ctx, cloud):
         """ Update the configuration with the details for all running nodes """
         roles = ctx.get_config().mapping.get('roles').resolve()
-        new_cfg = {'hosts': {}}
+        new_cfg = {'hosts': []}
         for role_name, role in cloud.roles.items():
             for node in role.nodes.values():
-                info = cloud.get_node_info(node)
-                hostname = info['fqdn']
-                new_cfg['hosts'][hostname] = copy.copy(info)
-                new_cfg['hosts'][hostname]['role'] = {}
-                new_cfg['hosts'][hostname]['role']['name'] = role_name
-                for k, v in roles[role_name].items():
-                    new_cfg['hosts'][hostname]['role'][k] = copy.copy(v)
-        ctx.get_config().add(new_cfg) 
+                node_info = cloud.get_node_info(node)
+                struct = self.host_info(node_info, role_name, roles[role_name])
+                new_cfg['hosts'].append(struct)
+        ctx.get_config().add(new_cfg)
         
     def opts_provision(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
@@ -284,13 +292,16 @@ class YaybuCmd(OptionParsingCmd):
             # create a new context to decorate to isolate changes between nodes
             ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
             self.decorate_config(ctx, cloud)
-            host = ctx.get_config().mapping.get("hosts").resolve()[hostname]
+            hosts = ctx.get_config().mapping.get("hosts").resolve()
+            host = filter(lambda h: h['fqdn'] == hostname, hosts)[0]
             key_name = host['role']['key']
             key = self.get_key(ctx, provider, key_name)
             logger.info("Applying configuration to %r" % hostname)
             r = remote.RemoteRunner(hostname, key)
             ctx.set_host(hostname)
             ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
+            cfg = ctx.get_config().get()
+            print yay.dump(cfg)
             rv = r.run(ctx)
             if rv != 0:
                 return rv
