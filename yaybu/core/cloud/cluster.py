@@ -5,6 +5,8 @@ import collections
 import yaml
 from yaybu.core import remote
 from . import api
+from . import dependency
+
 import logging
 import abc
 
@@ -56,7 +58,7 @@ class Role:
     
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
-    def __init__(self, name, key_name, key, image, size, dns=None, min_=1, max_=1):
+    def __init__(self, name, key_name, key, image, size, depends=(), dns=None, min_=1, max_=1):
         """
         Args:
             name: Role name
@@ -64,6 +66,7 @@ class Role:
             key: The key itself as an SSH object
             image: The name of the image in your local dialect
             size: The size of the image in your local dialect
+            depends: A list of roles this role depends on
             dns: An instance of DNSNamingPolicy
             min: The minimum number of nodes of this role the cluster should tolerate
             max: The maximum number of nodes of this role the cluster should tolerate
@@ -75,6 +78,7 @@ class Role:
         self.size = size
         self.min = min_
         self.max = max_
+        self.depends = depends
         self.dns = dns
         self.nodes = {}
         
@@ -206,9 +210,18 @@ class Cluster:
         self.state_bucket = state_bucket
         self.load_state()
         
+    def roles_in_order(self):
+        """ Return role objects in dependency order """
+        graph = dependency.Graph()
+        for k, v in self.roles.items():
+            for e in v.depends:
+                graph.add_edge(k, e)
+        for role in graph.resolve():
+            yield self.roles[role]
+        
     def get_all_hostnames(self):
         """ Return an iterator of all hostnames in this cluster. """
-        for role in self.roles.values():
+        for role in self.roles_in_order():
             for node in role.nodes.values():
                 # if node.their_name is not found here, it means the 
                 # server has died but we still have state.

@@ -54,6 +54,11 @@ def get_encrypted(val):
         for key, value in val.items():
             d[key] = get_encrypted(value)
         return d
+    elif isinstance(val, (types.ListType, types.TupleType)):
+        l = []
+        for item in val:
+            l.append(get_encrypted(item))
+        return l
     else:
         raise ValueError("Unable to convert %r" % val)
     

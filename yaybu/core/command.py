@@ -221,6 +221,7 @@ class YaybuCmd(OptionParsingCmd):
                 self.get_key(ctx, provider, get_encrypted(v['key'])),
                 get_encrypted(v['instance']['image']),
                 get_encrypted(v['instance']['size']),
+                get_encrypted(v.get('depends', ())),
                 dns,
                 get_encrypted(v.get('min', 0)),
                 get_encrypted(v.get('max', None)))
