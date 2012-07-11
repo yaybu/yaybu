@@ -288,8 +288,9 @@ class File(provider.Provider):
             contents = template.render(self.get_template_args()) + "\n" # yuk
             sensitive = self.has_protected_strings()
         elif self.resource.static:
-            contents = context.get_file(self.resource.static).read()
-            sensitive = False
+            fp = context.get_file(self.resource.static)
+            contents = fp.read()
+            sensitive = getattr(fp, 'secret', False)
         elif self.resource.encrypted:
             contents = context.get_decrypted_file(self.resource.encrypted).read()
             sensitive = True
