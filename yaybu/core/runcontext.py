@@ -125,7 +125,14 @@ class RunContext(object):
             return self._config
 
         try:
-            c = yay.config.Config(searchpath=self.ypath)
+            yay_config = {
+                "openers": {
+                    "packages": {
+                        "cachedir": os.path.expanduser("~/.yaybu/packages"),
+                        },
+                    },
+                },
+            c = yay.config.Config(searchpath=self.ypath, config=yay_config)
 
             if self.host:
                 extra = {
