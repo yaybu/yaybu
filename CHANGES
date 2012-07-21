@@ -4,7 +4,7 @@ Changelog for yaybu
 0.1.22 (unreleased)
 -------------------
 
- - Now depends on yay >= 0.0.52 to support etags (which reduces the amount of
+ - Now depends on yay >= 0.0.53 to support etags (which reduces the amount of
    network traffic when files haven't changed) and to support fetching of
    cookbooks packaged as python eggs from code repositories.
 
