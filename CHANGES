@@ -10,6 +10,9 @@ Changelog for yaybu
 
  - Fix logging typos
 
+ - If there is a ```~/.yaybu/defaults.yay``` or ```~/.yaybu/defaults.yay.gpg```
+   it will be loaded.
+
 
 0.1.21 (2012-03-16)
 -------------------
