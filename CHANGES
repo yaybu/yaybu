@@ -7,6 +7,8 @@ Changelog for yaybu
 - Mark "static" file content retrieved over a gpg stream as secret to prevent
   the content appearing in the logs.
 
+- Depend on yay >= 0.0.55 for latest bug fixes.
+
 
 0.1.22 (2012-07-22)
 -------------------
