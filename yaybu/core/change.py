@@ -158,9 +158,6 @@ class ChangeLog:
 
         self.logger = logging.getLogger("yaybu.changelog")
 
-        self.configure_session_logging()
-        self.configure_audit_logging()
-
     def configure_session_logging(self):
         root = logging.getLogger("yaybu.changelog")
         root.setLevel(logging.INFO)
@@ -278,9 +275,4 @@ class RemoteChangeLog(ChangeLog):
         handler = RemoteHandler(self.ctx.connection)
         handler.setFormatter(logging.Formatter("%(message)s"))
         root.addHandler(handler)
-
-    def configure_audit_logging(self):
-        # We don't want to try and log changes in syslog on the box we are pressing go on,
-        # only the box we are deploying to. So no audit logging here.
-        pass
 
