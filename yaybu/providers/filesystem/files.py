@@ -340,12 +340,16 @@ class File(provider.Provider):
         local = EtagRegistry.get(context, "local.state")
 
         if created:
+            context.changelog.debug("File created so will be set based on cookbook")
             dirty = True
         else:
             temp_etag = local.lookup(self.resource.name)
             if temp_etag:
                 dirty = temp_etag != context.get_file(self.resource.name).etag
+                if dirty:
+                    context.changelog.debug("File has local changes - forcing comparison to cookbook")
             else:
+                context.changelog.debug("File is in unknown state - forcing comparison to cookbook")
                 dirty = True
 
         if self.resource.template:
@@ -368,6 +372,7 @@ class File(provider.Provider):
             try:
                 fp = context.get_file(self.resource.static, old_etag)
             except error.UnmodifiedAsset:
+                context.changelog.debug("Skipped update as cookbook hasn't changed since last deployment")
                 return created or ac.changed
 
             contents = fp.read()

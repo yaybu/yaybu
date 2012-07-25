@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.1.22dev'
+version = '0.1.23.dev0'
 
 setup(name='Yaybu',
       version=version,
@@ -23,7 +23,7 @@ setup(name='Yaybu',
       install_requires=[
           'setuptools',
           'jinja2',
-          'yay >= 0.0.45',
+          'yay >= 0.0.53',
           'python-dateutil < 2.0',
           'apache-libcloud',
           'ssh',

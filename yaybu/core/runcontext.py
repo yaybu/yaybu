@@ -137,7 +137,14 @@ class RunContext(object):
             return self._config
 
         try:
-            c = yay.config.Config(searchpath=self.ypath)
+            yay_config = {
+                "openers": {
+                    "packages": {
+                        "cachedir": os.path.expanduser("~/.yaybu/packages"),
+                        },
+                    },
+                }
+            c = yay.config.Config(searchpath=self.ypath, config=yay_config)
 
             if self.host:
                 extra = {
@@ -146,6 +153,14 @@ class RunContext(object):
                         }
                     }
                 c.add(extra)
+
+            defaults = os.path.expanduser("~/.yaybu/defaults.yay")
+            if os.path.exists(defaults):
+                c.load_uri(defaults)
+
+            defaults_gpg = os.path.expanduser("~/.yaybu/defaults.yay.gpg")
+            if os.path.exists(defaults_gpg):
+                c.load_uri(defaults_gpg)
 
             c.load_uri(self.configfile)
 

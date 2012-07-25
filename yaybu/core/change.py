@@ -243,7 +243,8 @@ class ChangeLog:
             self.logger.info(message, *args)
 
     def debug(self, message, *args, **kwargs):
-        pass
+        if self.verbose:
+            self.info(message, *args, **kwargs)
 
     def error(self, message, *args):
         self.logger.error(message, *args)

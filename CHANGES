@@ -1,12 +1,23 @@
 Changelog for yaybu
 ===================
 
-0.1.22 (unreleased)
+0.1.23 (unreleased)
 -------------------
 
- - Now depends on yay >= 0.0.45 to support etags.
+- Nothing changed yet.
+
+
+0.1.22 (2012-07-22)
+-------------------
+
+ - Now depends on yay >= 0.0.53 to support etags (which reduces the amount of
+   network traffic when files haven't changed) and to support fetching of
+   cookbooks packaged as python eggs from code repositories.
 
  - Fix logging typos
+
+ - If there is a ```~/.yaybu/defaults.yay``` or ```~/.yaybu/defaults.yay.gpg```
+   it will be loaded.
 
 
 0.1.21 (2012-03-16)
