@@ -380,7 +380,7 @@ class File(provider.Provider):
             remote = EtagRegistry.get(context, "remote.state")
             remote.freshen(self.resource.static, fp.etag)
 
-            sensitive = False
+            sensitive = getattr(fp, 'secret', False)
 
         elif self.resource.encrypted:
             contents = context.get_decrypted_file(self.resource.encrypted).read()
