@@ -75,6 +75,7 @@ def main():
 
     if not opts.remote:
         ctx = runcontext.RunContext(args[0], opts)
+        ctx.changelog.configure_session_logging()
     else:
         ctx = runcontext.RemoteRunContext(args[0], opts)
 
@@ -82,7 +83,6 @@ def main():
         r = remote.RemoteRunner()
         r.load_system_host_keys()
         r.set_missing_host_key_policy("ask")
-        ctx.changelog.configure_session_logging()
     else:
         r = runner.Runner()
         ctx.changelog.configure_audit_logging()
