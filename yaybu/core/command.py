@@ -291,7 +291,7 @@ class YaybuCmd(OptionParsingCmd):
         cloud.provision_roles()
         for hostname in cloud.get_all_hostnames():
             # create a new context to decorate to isolate changes between nodes
-            ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+            ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose, resume=True)
             self.decorate_config(ctx, cloud)
             hosts = ctx.get_config().mapping.get("hosts").resolve()
             host = filter(lambda h: h['fqdn'] == hostname, hosts)[0]

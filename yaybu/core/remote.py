@@ -70,10 +70,13 @@ class RemoteRunner(Runner):
         
     def install_yaybu(self):
         client = self.connect()
-        self.execute(client, "sudo apt-get -y update")
-        self.execute(client, "sudo apt-get -y safe-upgrade")
-        self.execute(client, "sudo apt-get -y install python-setuptools")
-        self.execute(client, "sudo easy_install Yaybu")        
+        try:
+            self.execute(client, "sudo apt-get -y update")
+            self.execute(client, "sudo apt-get -y safe-upgrade")
+            self.execute(client, "sudo apt-get -y install python-setuptools")
+            self.execute(client, "sudo easy_install Yaybu")
+        finally:
+            client.close()
         
     def serve(self, ctx):
         command = self.get_yaybu_command(ctx)
