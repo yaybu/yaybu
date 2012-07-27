@@ -1,4 +1,0 @@
-resources.append:
-
-    - File:
-        name: /var/tmp/postgres.foo
