@@ -132,7 +132,7 @@ class FakeChrootFixture(Fixture):
     def build_environment(self):
         distro = self.default_distro()
         commands = [
-            "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv,build-essential %(distro)s %(base_image)s",
+            "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv,python-dev,build-essential %(distro)s %(base_image)s",
             "fakeroot fakechroot -s /usr/sbin/chroot %(base_image)s apt-get update",
             ]
         if not os.path.exists(self.testbase):
@@ -193,7 +193,7 @@ class FakeChrootFixture(Fixture):
             args.insert(0, "localhost")
             args.insert(0, "--host")
 
-        return self.call(["yaybu", "-d", "--ypath", filespath] + list(args))
+        return self.call(["yaybu", "apply", "-d", "--ypath", filespath] + list(args))
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """

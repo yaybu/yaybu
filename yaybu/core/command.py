@@ -126,6 +126,14 @@ class YaybuCmd(OptionParsingCmd):
         
     def preloop(self):
         print version()
+ 
+    def opts_apply(self, parser):
+        parser.add_option("-s", "--simulate", default=False, action="store_true")
+        #parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
+        parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
+        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
+        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
+        parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
         
     def do_apply(self, opts, args):
         """
@@ -151,7 +159,7 @@ class YaybuCmd(OptionParsingCmd):
             raise SystemExit(rv)
         return rv
     
-    def opts_remote(self, opts, args):
+    def opts_remote(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
