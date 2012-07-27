@@ -33,11 +33,20 @@ class TestDependency(unittest.TestCase):
         graph.add_edge("c", "a")
         self.assertRaises(dependency.CircularReferenceError, graph.resolve)
         
-    def test_island(self):
+    def test_unlinked_graphs(self):
         graph = dependency.Graph()
         graph.add_edge("a", "b")
         graph.add_edge("c", "d")
-        self.assertRaises(dependency.IslandError, graph.resolve)
+        resolved = graph.resolve()
+        self.assertEqual(resolved, ['b', 'a', 'd', 'c'])
+        
+    def test_no_graph(self):
+        graph = dependency.Graph()
+        graph.add_node("a")
+        graph.add_node("b")
+        resolved = graph.resolve()
+        self.assertEqual(resolved, ['a', 'b'])
+        
         
 
 

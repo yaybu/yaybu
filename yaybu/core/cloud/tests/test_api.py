@@ -7,12 +7,15 @@ from yaybu.core.cloud import api
 
 api.ComputeProvider = Mock()
 api.StorageProvider = Mock()
+api.DNSDriver = Mock()
 
 StorageDriver = Mock()
 ComputeDriver = Mock()
+DNSDriver = Mock()
 
 api.get_compute_driver = lambda x: Mock(return_value=ComputeDriver)
 api.get_storage_driver = lambda x: Mock(return_value=StorageDriver)
+api.get_dns_driver = lambda x: Mock(return_value=DNSDriver)
 
 mock_image = Mock(id="image")
 mock_size = Mock(id="size")
@@ -23,9 +26,10 @@ ComputeDriver.list_sizes = Mock(return_value=[mock_size])
 class TestCloud(unittest.TestCase):
     
     def _make_cloud(self):
-        c = api.Cloud("compute", "storage", {})
+        c = api.Cloud("compute", "storage", "dns", {})
         c.compute_class = Mock()
         c.storage_class = Mock()
+        c.dns_class = Mock()
         return c
     
     def test_create_node_happy(self):

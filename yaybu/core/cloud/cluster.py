@@ -216,6 +216,8 @@ class Cluster:
         for k, v in self.roles.items():
             for e in v.depends:
                 graph.add_edge(k, e)
+            else:
+                graph.add_node(k)
         for role in graph.resolve():
             yield self.roles[role]
         

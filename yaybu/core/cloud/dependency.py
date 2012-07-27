@@ -1,4 +1,8 @@
 
+""" Dependency graph """
+
+import itertools
+
 class Node:
     def __init__(self, ref):
         self.ref = ref
@@ -13,10 +17,9 @@ class GraphError(Exception):
 class CircularReferenceError(GraphError):
     pass
 
-class IslandError(GraphError):
-    pass
-        
 class Graph:
+    
+    """ Represents a depency graph. Seems to cope ok with multiple unlinked graphs. """
     
     def __init__(self):
         self.nodes = []
@@ -44,11 +47,17 @@ class Graph:
         to_node = self.get_node(to)
         from_node.add_edge(to_node)
         
+    def add_node(self, node):
+        """ Add a node without creating an edge. """
+        # a side effect of getting a node is to add it if necessary
+        self.get_node(node)
+        
     def resolve(self):
         resolved = []
-        self.dep_resolve(self.nodes[0], resolved, [])
+        island = []
         for n in self.nodes:
             if n not in resolved:
-                raise IslandError("Some nodes not connected to resolved graph")
+                self.dep_resolve(n, resolved, [])
         return [n.ref for n in resolved]
-        
+    
+    

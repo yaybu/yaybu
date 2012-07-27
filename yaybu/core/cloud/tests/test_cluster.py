@@ -70,6 +70,7 @@ class TestAbstractCloud(unittest.TestCase):
         cloud = cluster.AbstractCloud(
             'EC2_EU_WEST',
             'S3_EU_WEST',
+            'DNS',
             {},
             {'ubuntu': 'frob'},
             {'medium': 'nicate'},
@@ -96,13 +97,13 @@ class TestCluster(unittest.TestCase):
                          None,
                          "ubuntu",
                          "medium",
-                         1,3),
+                         min_=1,max_=3),
             cluster.Role("appserver",
                          "fookey",
                          None,
                          "ubuntu",
                          "medium",
-                         1,1)
+                         min_=1,max_=1)
             ]
         cloud = Mock()
         cloud.validate = Mock(return_value=None)
