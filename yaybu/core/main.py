@@ -33,6 +33,7 @@ for more information on a command:
 
 def main():
     parser = optparse.OptionParser(version=version(), usage=usage)
+    parser.disable_interspersed_args()
     parser.add_option("-p", "--ypath", default=[], action="append")
     parser.add_option("", "--log-facility", default="2", help="the syslog local facility number to which to write the audit trail")
     parser.add_option("", "--log-level", default="info", help="the minimum log level to write to the audit trail")
