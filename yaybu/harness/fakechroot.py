@@ -193,7 +193,7 @@ class FakeChrootFixture(Fixture):
             args.insert(0, "localhost")
             args.insert(0, "--host")
 
-        return self.call(["yaybu", "-d", "--ypath", "apply", filespath] + list(args))
+        return self.call(["yaybu", "-d", "--ypath", filespath, "apply"] + list(args))
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """
