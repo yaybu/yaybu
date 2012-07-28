@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import sys
 import optparse
 import yay
 import logging, atexit
@@ -57,7 +58,7 @@ def main():
     atexit.register(logging.shutdown)
     com = command.YaybuCmd(verbose=opts.verbose, ypath=opts.ypath, logfile=opts.logfile)
     if args:
-        com.onecmd(" ".join(args))
+        sys.exit(com.onecmd(" ".join(args)) or 0)
     else:
         com.cmdloop()
-        
+
