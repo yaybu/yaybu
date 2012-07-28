@@ -9,7 +9,7 @@ import logging
 from functools import partial
 
 import yay
-from yaybu.core import runner, remote, runcontext
+from yaybu.core import runner, remote, runcontext, error
 from yaybu.core.util import version, get_encrypted
 from yaybu.core.cloud.cluster import Cluster, Role
 from ssh.ssh_exception import SSHException
@@ -193,8 +193,13 @@ class YaybuCmd(OptionParsingCmd):
         if ":" in host:
             host, port = host.rsplit(":", 1)
 
-        r = remote.RemoteRunner(host)
-        r.install_yaybu()
+        r = remote.RemoteRunner(host, username=username)
+        try:
+            r.install_yaybu()
+        except error.Error as e:
+            print str(e)
+            return e.returncode
+
         return 0
  
     def do_expand(self, opts, args):

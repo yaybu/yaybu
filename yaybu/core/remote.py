@@ -64,8 +64,7 @@ class RemoteRunner(Runner):
                 logger.warning("connection refused. retrying.")
                 time.sleep(1)
         else:
-            logger.error("connection refused too many times, giving up.")
-            raise IOError()
+            raise error.ConnectionError("Connection refused %d times, giving up." % self.connection_attempts)
         return client
         
     def install_yaybu(self):
