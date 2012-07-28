@@ -177,7 +177,26 @@ class YaybuCmd(OptionParsingCmd):
         r = remote.RemoteRunner(ctx.host)
         rv = r.run(ctx)
         return rv
-    
+
+    def do_bootstrap(self, opts, args):
+        """
+        usage: bootstrap [options] <username>@<hostname>:<port>
+        Prepare the specified target to run Yaybu
+        """
+        host = args[0]
+        username = "ubuntu"
+        port = 22
+
+        if "@" in host:
+            username, host = host.split("@", 1)
+
+        if ":" in host:
+            host, port = host.rsplit(":", 1)
+
+        r = remote.RemoteRunner(host)
+        r.install_yaybu()
+        return 0
+ 
     def do_expand(self, opts, args):
         """
         usage: expand [filename]
