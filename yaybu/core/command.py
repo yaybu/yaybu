@@ -193,7 +193,7 @@ class YaybuCmd(OptionParsingCmd):
         if ":" in host:
             host, port = host.rsplit(":", 1)
 
-        r = remote.RemoteRunner(host, username=username)
+        r = remote.RemoteRunner(host, username=username, port=port)
         try:
             r.install_yaybu()
         except error.Error as e:
