@@ -60,6 +60,10 @@ class RemoteRunner(Runner):
                                    username=self.username,
                                    look_for_keys=True)
                 break
+
+            except ssh.PasswordRequiredException:
+                raise error.ConnectionError("Unable to authenticate with remote server")
+
             except (socket.error, EOFError):
                 logger.warning("connection refused. retrying.")
                 time.sleep(1)
