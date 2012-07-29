@@ -40,11 +40,12 @@ class RemoteRunner(Runner):
     connection_attempts = 10
     missing_host_key_policy = ssh.AutoAddPolicy()
     
-    def __init__(self, hostname, key=None, username="ubuntu"):
+    def __init__(self, hostname, key=None, username="ubuntu", port=22):
         self.hostname = hostname
         self.key = key
         self.username = username
-        
+        self.port = port
+
     def connect(self):
         client = ssh.SSHClient()
         client.set_missing_host_key_policy(self.missing_host_key_policy)
@@ -53,19 +54,24 @@ class RemoteRunner(Runner):
                 if self.key is not None:
                     client.connect(hostname=self.hostname,
                                    username=self.username,
+                                   port=self.port,
                                    pkey=self.key,
                                    look_for_keys=False)
                 else:
                     client.connect(hostname=self.hostname,
                                    username=self.username,
+                                   port=self.port,
                                    look_for_keys=True)
                 break
+
+            except ssh.PasswordRequiredException:
+                raise error.ConnectionError("Unable to authenticate with remote server")
+
             except (socket.error, EOFError):
                 logger.warning("connection refused. retrying.")
                 time.sleep(1)
         else:
-            logger.error("connection refused too many times, giving up.")
-            raise IOError()
+            raise error.ConnectionError("Connection refused %d times, giving up." % self.connection_attempts)
         return client
         
     def install_yaybu(self):

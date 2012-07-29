@@ -9,6 +9,8 @@ Changelog for yaybu
 
 - Depend on yay >= 0.0.55 for latest bug fixes.
 
+- Add a new ``yaybu bootstrap`` to simplify setup on Ubuntu boxes.
+
 
 0.1.22 (2012-07-22)
 -------------------
