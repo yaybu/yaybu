@@ -20,7 +20,7 @@ import StringIO
 
 import yay
 from yay.openers import Openers
-from yay.errors import NotFound
+from yay.errors import NotFound, NotModified
 
 from yaybu.core import change, resource, vfs
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
@@ -192,6 +192,8 @@ class RunContext(object):
     def get_file(self, filename, etag=None):
         try:
             return Openers(searchpath=self.ypath).open(filename, etag)
+        except NotModified, e:
+            raise UnmodifiedAsset(str(e))
         except NotFound, e:
             raise MissingAsset(str(e))
 
@@ -247,11 +249,11 @@ class RemoteRunContext(RunContext):
         if filename.startswith("/"):
             return super(RemoteRunContext, self).get_file(filename, etag)
 
-        self.connection.request("GET", "/files/?path=" + filename)
-
+        headers = {}
         if etag:
-            self.connection.putheader("If-None-Match", etag)
-            self.connection.endheaders()
+            headers["If-None-Match"] = etag
+
+        self.connection.request("GET", "/files/?path=" + filename, '', headers)
 
         rsp = self.connection.getresponse()
 

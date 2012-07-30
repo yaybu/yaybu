@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.1.24 (unreleased)
+0.1.25 (unreleased)
 -------------------
 
 - Mark "static" file content retrieved over a gpg stream as secret to prevent
@@ -10,6 +10,13 @@ Changelog for yaybu
 - Depend on yay >= 0.0.55 for latest bug fixes.
 
 - Add a new ``yaybu bootstrap`` to simplify setup on Ubuntu boxes.
+
+
+0.1.24 (2012-07-30)
+-------------------
+
+- Fix etag request headers so that etags can be back from a yaybu running in
+  remote mode.
 
 
 0.1.23 (2012-07-30)
