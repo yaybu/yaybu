@@ -51,7 +51,7 @@ class EtagRegistry(object):
         if not self._data:
             self._data = {}
             if not self.ctx.simulate or os.path.exists(self.path):
-                self._data = shelve.open(self.path)
+                self._data = shelve.open(self.path, writeback=True)
         return self._data
 
     def lookup(self, path):
@@ -66,6 +66,8 @@ class EtagRegistry(object):
         if self.ctx.simulate:
             return
         self.data[path.encode("utf-8")] = etag
+        if self.data and hasattr(self.data, 'sync'):
+            self.data.sync()
 
     @classmethod
     def get(cls, ctx, path):
