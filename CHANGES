@@ -4,7 +4,8 @@ Changelog for yaybu
 0.1.24 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix etag request headers so that etags can be back from a yaybu running in
+  remote mode.
 
 
 0.1.23 (2012-07-30)
