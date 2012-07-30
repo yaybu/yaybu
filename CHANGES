@@ -4,7 +4,7 @@ Changelog for yaybu
 0.1.23 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix etag registry to actually store etags
 
 
 0.1.22 (2012-07-22)
