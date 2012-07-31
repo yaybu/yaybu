@@ -4,7 +4,11 @@ Changelog for yaybu
 0.1.25 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix default verbosity to not be debug mode
+
+- Use context log features of latest yay version to provide better error
+  messages when yay parsing fails. These are only shown when verbosity is at
+  debug level.
 
 
 0.1.24 (2012-07-30)
