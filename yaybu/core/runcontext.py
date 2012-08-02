@@ -20,7 +20,7 @@ import StringIO
 
 import yay
 from yay.openers import Openers
-from yay.errors import NotFound, NotModified
+from yay.errors import LanguageError, NotFound, NotModified, get_exception_context
 
 from yaybu.core import change, resource, vfs
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
@@ -169,6 +169,9 @@ class RunContext(object):
             return c
 
         except yay.errors.Error, e:
+            msg = e.get_string()
+            if self.verbose >= 2:
+                msg += "\n" + get_exception_context()
             raise ParseError(e.get_string())
 
     def set_bundle(self, bundle):
@@ -178,8 +181,8 @@ class RunContext(object):
         if self._bundle:
             return self._bundle
 
-        cfg = self.get_config().mapping
-        bundle = resource.ResourceBundle.create_from_yay_expression(cfg.get("resources").expand())
+        cfg = self.get_config().lookup("resources")
+        bundle = resource.ResourceBundle.create_from_yay_expression(cfg, verbose_errors=self.verbose>=2)
         bundle.bind()
         self._bundle = bundle
 

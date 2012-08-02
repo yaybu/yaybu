@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.1.25 (unreleased)
+0.1.26 (unreleased)
 -------------------
 
 - Mark "static" file content retrieved over a gpg stream as secret to prevent
@@ -10,6 +10,16 @@ Changelog for yaybu
 - Depend on yay >= 0.0.55 for latest bug fixes.
 
 - Add a new ``yaybu bootstrap`` to simplify setup on Ubuntu boxes.
+
+
+0.1.25 (2012-08-02)
+-------------------
+
+- Fix default verbosity to not be debug mode
+
+- Use context log features of latest yay version to provide better error
+  messages when yay parsing fails. These are only shown when verbosity is at
+  debug level.
 
 
 0.1.24 (2012-07-30)

@@ -20,7 +20,7 @@ import collections
 import ordereddict
 import event
 
-from yay.errors import LanguageError
+from yay.errors import LanguageError, get_exception_context
 
 class ResourceType(type):
 
@@ -243,29 +243,31 @@ class ResourceBundle(ordereddict.OrderedDict):
         return bundle
 
     @classmethod
-    def create_from_yay_expression(cls, expression):
+    def create_from_yay_expression(cls, expression, verbose_errors=False):
 	""" Given a Yay expression that resolves to a list of types and
         parameters, build a resource bundle.  """
         bundle = cls()
-        for node in expression:
-            try:
+        try:
+            for node in expression.expand():
                 spec = node.resolve()
-            except LanguageError as exc:
-                p = error.ParseError()
-                p.msg = exc.get_string()
-                p.file = exc.file
-                p.line = exc.line
-                p.column = exc.column
-                raise p
-
-            try:
                 bundle.add_from_spec(spec)
-            except error.ParseError as exc:
-                exc.msg += "\nFile %s, line %d, column %d" % (node.name, node.line, node.column)
-                exc.file = node.name
-                exc.line = node.line
-                exc.column = node.column
-                raise
+
+        except LanguageError as exc:
+            p = error.ParseError()
+            p.msg = exc.get_string()
+            if verbose_errors:
+                p.msg += "\n" + get_exception_context()
+            p.file = exc.file
+            p.line = exc.line
+            p.column = exc.column
+            raise p
+
+        except error.ParseError as exc:
+            exc.msg += "\nFile %s, line %d, column %d" % (node.name, node.line, node.column)
+            exc.file = node.name
+            exc.line = node.line
+            exc.column = node.column
+            raise
 
         return bundle
 

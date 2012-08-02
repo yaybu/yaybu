@@ -15,9 +15,7 @@
 import os
 import sys
 import optparse
-import yay
 import logging, atexit
-import command
 from util import version
 
 try:
@@ -25,6 +23,7 @@ try:
 except ImportError:
     pass
 
+from . import command
 
 usage = """usage: %prog [options] [command]
 when run without any commands yaybu drops to a command prompt.
@@ -40,7 +39,7 @@ def main():
     parser.add_option("", "--log-level", default="info", help="the minimum log level to write to the audit trail")
     parser.add_option("-d", "--debug", default=False, action="store_true", help="switch all logging to maximum, and write out to the console")
     parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
-    parser.add_option("-v", "--verbose", default=2, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
+    parser.add_option("-v", "--verbose", default=0, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
     parser.add_option("--ssh-auth-sock", default=None, action="store", help="Path to SSH Agent socket")
     opts, args = parser.parse_args()
 

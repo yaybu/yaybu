@@ -9,6 +9,7 @@ import logging
 from functools import partial
 
 import yay
+import yay.errors
 from yaybu.core import runner, remote, runcontext, error
 from yaybu.core.util import version, get_encrypted
 from yaybu.core.cloud.cluster import Cluster, Role
@@ -214,12 +215,21 @@ class YaybuCmd(OptionParsingCmd):
                                     ypath=self.ypath,
                                     verbose=self.verbose,
                                     )
-        cfg = ctx.get_config().get()
+
+        try:
+            cfg = ctx.get_config().get()
+        except yay.errors.LanguageError as e:
+            print str(e)
+            if self.verbose >= 2:
+                print yay.errors.get_exception_context()
+            return 1
 
         if self.verbose <= 2:
             cfg = dict(resources=cfg.get("resources", []))
         print yay.dump(cfg)
-        
+
+        return 0
+
     def do_status(self, opts, args):
         """
         usage: status <provider> [cluster]
