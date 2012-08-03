@@ -127,7 +127,36 @@ class YaybuCmd(OptionParsingCmd):
         
     def preloop(self):
         print version()
+
+    def opts_remote(self, parser):
+        parser.add_option("-s", "--simulate", default=False, action="store_true")
+        parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
+        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
+        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
+        parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
  
+    def do_remote(self, opts, args):
+        """
+        This command is invoked on remote systems by Yaybu and should not be used by humans
+        """
+        if os.path.exists("/etc/yaybu"):
+            config = yay.load_uri("/etc/yaybu")
+            opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
+        r = runner.Runner()
+        ctx = runcontext.RemoteRunContext("-", 
+                                    resume=opts.resume,
+                                    no_resume=opts.no_resume,
+                                    ypath=self.ypath,
+                                    simulate=opts.simulate,
+                                    verbose=self.verbose,
+                                    env_passthrough=opts.env_passthrough,
+                                    )
+        ctx.changelog.configure_audit_logging()
+        rv = r.run(ctx)
+        if rv != 0:
+            raise SystemExit(rv)
+        return rv
+
     def opts_apply(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         #parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
@@ -160,7 +189,7 @@ class YaybuCmd(OptionParsingCmd):
             raise SystemExit(rv)
         return rv
     
-    def opts_remote(self, parser):
+    def opts_push(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
@@ -168,7 +197,7 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
             
-    def do_remote(self, opts, args):
+    def do_push(self, opts, args):
         """
         usage: remote [options] <hostname> <filename>
         Provision the specified hostname with the specified configuration, by
