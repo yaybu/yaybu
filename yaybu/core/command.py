@@ -210,8 +210,14 @@ class YaybuCmd(OptionParsingCmd):
         Provision the specified hostname with the specified configuration, by
         executing Yaybu on the remote system, via ssh
         """
+        if opts.host == "test://":
+            opts.host = "localhost"
+            RUNNER = remote.TestRemoteRunner
+        else:
+            RUNNER = remote.RemoteRunner
+
         ctx = runcontext.RunContext(args[0], opts)
-        r = remote.RemoteRunner(ctx.host)
+        r = RUNNER(ctx.host)
         rv = r.run(ctx)
         return rv
 

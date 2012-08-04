@@ -144,3 +144,29 @@ class RemoteRunner(Runner):
             print >>sys.stderr, "Error: %s" % str(e)
             return e.returncode
 
+
+class TestRemoteRunner(RemoteRunner):
+
+    def serve(self, ctx):
+        try:
+            command = self.get_yaybu_command(ctx) 
+            p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+            self.get_server(ctx, p.stdin, p.stdout).serve_forever()
+
+            p.wait()
+
+            if p.returncode == 255:
+                raise error.ConnectionError("Could not connect to '%s'" % ctx.host)
+
+            return p.returncode
+
+        finally:
+            if p.poll() is None:
+                try:
+                    p.kill()
+                except OSError:
+                    if p.poll() is None:
+                        raise
+
+
