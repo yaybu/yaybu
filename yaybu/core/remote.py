@@ -99,7 +99,7 @@ class RemoteRunner(Runner):
             logger.debug(l.strip())
             
     def get_yaybu_command(self, ctx):
-        command = ["yaybu", "--remote"]
+        command = ["yaybu", "remote"]
 
         if ctx.user:
             command.extend(["--user", ctx.user])
