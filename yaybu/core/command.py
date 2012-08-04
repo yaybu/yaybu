@@ -143,7 +143,9 @@ class YaybuCmd(OptionParsingCmd):
             config = yay.load_uri("/etc/yaybu")
             opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
         r = runner.Runner()
-        ctx = runcontext.RemoteRunContext("-", 
+        try:
+            ctx = None
+            ctx = runcontext.RemoteRunContext("-", 
                                     resume=opts.resume,
                                     no_resume=opts.no_resume,
                                     ypath=self.ypath,
@@ -151,8 +153,13 @@ class YaybuCmd(OptionParsingCmd):
                                     verbose=self.verbose,
                                     env_passthrough=opts.env_passthrough,
                                     )
-        ctx.changelog.configure_audit_logging()
-        rv = r.run(ctx)
+            ctx.changelog.configure_audit_logging()
+            rv = r.run(ctx)
+        except error.Error as e:
+            if ctx:
+                ctx.changelog.write(str(e))
+            return e.returncode
+
         if rv != 0:
             raise SystemExit(rv)
         return rv
