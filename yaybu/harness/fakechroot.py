@@ -153,8 +153,18 @@ class FakeChrootFixture(Fixture):
     def call(self, command):
         env = os.environ.copy()
         env['FAKEROOTKEY'] = self.get_session()
-        env['LD_PRELOAD'] = "/usr/lib/libfakeroot/libfakeroot-sysv.so"
-        env['HOME'] = '/root/'
+
+        env['FAKECHROOT'] = 'true'
+        #env['FAKECHROOT_BASE'] = self.chroot_path
+        #env['FAKECHROOT_VERSION'] = '2.9' # FIXME: This might be different on other boxes
+
+        env['LD_LIBRARY_PATH'] = ":".join([
+            "/usr/lib/fakechroot", "/usr/lib64/fakechroot", "/usr/lib32/fakechroot",
+            # Whether or not to use system libs depends on te presence of the next line
+            "/usr/lib", "/lib",
+            os.path.join(self.chroot_path, "usr", "lib"), os.path.join(self.chroot_path, "lib"),
+            ])
+        env['LD_PRELOAD'] = "libfakechroot.so /usr/lib/libfakeroot/libfakeroot-sysv.so" # /usr/lib/cowdancer/libcowdancer.so"
 
         # Meh, we inherit the invoking users environment - LAME.
         env['HOME'] = '/root'
@@ -163,7 +173,7 @@ class FakeChrootFixture(Fixture):
         env['USERNAME'] = 'root'
         env['USER'] = 'root'
 
-        chroot = ["fakechroot", "-s", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
+        chroot = ["cow-shell", "/usr/sbin/chroot", self.chroot_path]
         retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
 
         self.wait_for_cowdancer()
