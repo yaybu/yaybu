@@ -36,19 +36,6 @@ auditlog:
    mode: file
 """
 
-# A little SSH wrapper for faking SSH into a fakechroot
-# (Obviously won't let us fake paramiko...)
-sshwrapper = """
-#! /usr/bin/env python
-import os, sys
-args = sys.argv[1:]
-while args and not args[0] == "yaybu":
-    del args[0]
-if args:
-    os.execvp(args[0], args)
-""".strip()
-
-
 class FakeChrootFixture(Fixture):
 
     """
@@ -95,10 +82,6 @@ class FakeChrootFixture(Fixture):
     def clone(self):
         self.chroot_path = os.path.realpath("tmp")
         subprocess.check_call(["cp", "-al", self.testbase, self.chroot_path])
-
-        with self.open("/usr/bin/ssh", "w") as fp:
-            fp.write(sshwrapper)
-        self.chmod("/usr/bin/ssh", 0755)
 
         with self.open("/etc/yaybu", "w") as fp:
             fp.write(yaybu_cfg)
@@ -196,7 +179,7 @@ class FakeChrootFixture(Fixture):
         else:
             args.insert(0, "apply")
 
-        return self.call(["yaybu", "-d", "--ypath", filespath] + args)
+        return self.call(["yaybu", "-v", "-v", "-d", "--ypath", filespath] + args)
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """

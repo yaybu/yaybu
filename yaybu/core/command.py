@@ -216,7 +216,16 @@ class YaybuCmd(OptionParsingCmd):
         else:
             RUNNER = remote.RemoteRunner
 
-        ctx = runcontext.RunContext(args[0], opts)
+        ctx = runcontext.RunContext(args[0],
+                                    resume=opts.resume,
+                                    no_resume=opts.no_resume,
+                                    user=opts.user,
+                                    ypath=self.ypath,
+                                    simulate=opts.simulate,
+                                    verbose=self.verbose,
+                                    env_passthrough=opts.env_passthrough,
+                                    )
+
         r = RUNNER(ctx.host)
         rv = r.run(ctx)
         return rv
