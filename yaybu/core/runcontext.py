@@ -235,6 +235,7 @@ class RemoteRunContext(RunContext):
 
     def setup_changelog(self):
         self.changelog = change.RemoteChangeLog(self)
+        self.changelog.configure_session_logging()
 
     def get_config(self):
         self.connection.request("GET", "/config")
