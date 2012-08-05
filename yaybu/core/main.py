@@ -51,23 +51,6 @@ def main():
         opts.logfile = "-"
         opts.verbose = 2
 
-    if opts.expand_only:
-        ctx = runcontext.RunContext(args[0], opts)
-
-        try:
-            cfg = ctx.get_config().get()
-        except yay.errors.LanguageError as e:
-            print str(e)
-            if opts.verbose > 2:
-                print yay.errors.get_exception_context()
-            return 1
-
-        if opts.verbose <= 2:
-            cfg = dict(resources=cfg.get("resources", []))
-
-        print yay.dump(cfg)
-        return 0
-
     if opts.ssh_auth_sock:
         os.environ["SSH_AUTH_SOCK"] = opts.ssh_auth_sock
 
