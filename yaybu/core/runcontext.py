@@ -170,7 +170,7 @@ class RunContext(object):
 
         except yay.errors.Error, e:
             msg = e.get_string()
-            if self.verbose >= 2:
+            if self.verbose > 2:
                 msg += "\n" + get_exception_context()
             raise ParseError(e.get_string())
 
@@ -182,7 +182,7 @@ class RunContext(object):
             return self._bundle
 
         cfg = self.get_config().lookup("resources")
-        bundle = resource.ResourceBundle.create_from_yay_expression(cfg, verbose_errors=self.verbose>=2)
+        bundle = resource.ResourceBundle.create_from_yay_expression(cfg, verbose_errors=self.verbose>2)
         bundle.bind()
         self._bundle = bundle
 

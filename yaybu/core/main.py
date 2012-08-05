@@ -39,7 +39,7 @@ def main():
     parser.add_option("", "--log-level", default="info", help="the minimum log level to write to the audit trail")
     parser.add_option("-d", "--debug", default=False, action="store_true", help="switch all logging to maximum, and write out to the console")
     parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
-    parser.add_option("-v", "--verbose", default=0, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
+    parser.add_option("-v", "--verbose", default=2, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
     parser.add_option("--ssh-auth-sock", default=None, action="store", help="Path to SSH Agent socket")
     opts, args = parser.parse_args()
 
@@ -50,6 +50,23 @@ def main():
         root.setLevel(logging.DEBUG)
         opts.logfile = "-"
         opts.verbose = 2
+
+    if opts.expand_only:
+        ctx = runcontext.RunContext(args[0], opts)
+
+        try:
+            cfg = ctx.get_config().get()
+        except yay.errors.LanguageError as e:
+            print str(e)
+            if opts.verbose > 2:
+                print yay.errors.get_exception_context()
+            return 1
+
+        if opts.verbose <= 2:
+            cfg = dict(resources=cfg.get("resources", []))
+
+        print yay.dump(cfg)
+        return 0
 
     if opts.ssh_auth_sock:
         os.environ["SSH_AUTH_SOCK"] = opts.ssh_auth_sock
