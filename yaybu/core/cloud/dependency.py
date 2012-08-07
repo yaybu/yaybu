@@ -36,7 +36,7 @@ class Graph:
         
     def get_node(self, ref):
         for n in self.nodes:
-            if n.ref is ref:
+            if n.ref == ref:
                 return n
         node = Node(ref)
         self.nodes.append(node)

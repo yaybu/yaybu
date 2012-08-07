@@ -222,7 +222,8 @@ class Cluster:
             yield self.roles[role]
         
     def get_all_hostnames(self):
-        """ Return an iterator of all hostnames in this cluster. """
+        """ Return an iterator of all hostnames in this cluster, in order of
+        role dependency. """
         for role in self.roles_in_order():
             for node in role.nodes.values():
                 # if node.their_name is not found here, it means the 

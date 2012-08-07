@@ -71,6 +71,7 @@ class RemoteRunner(Runner):
                 logger.warning("connection refused. retrying.")
                 time.sleep(1)
         else:
+            client.close()
             raise error.ConnectionError("Connection refused %d times, giving up." % self.connection_attempts)
         return client
         
@@ -87,8 +88,11 @@ class RemoteRunner(Runner):
     def serve(self, ctx):
         command = self.get_yaybu_command(ctx)
         client = self.connect()
-        stdin, stdout, stderr = client.exec_command(command)
-        self.get_server(ctx, stdin, stdout).serve_forever()
+        try:
+            stdin, stdout, stderr = client.exec_command(command)
+            self.get_server(ctx, stdin, stdout).serve_forever()
+        finally:
+            client.close()
         ## TODO: work out how to get exit status - probably SSHException raised
         return 0
 

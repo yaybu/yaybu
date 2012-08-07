@@ -331,6 +331,7 @@ class YaybuCmd(OptionParsingCmd):
             return
         provider, cluster_name, filename = args
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+        logger.info("Creating cluster")
         cloud = self.create_cloud(ctx, provider, cluster_name, filename)
         cloud.provision_roles()
         for hostname in cloud.get_all_hostnames():
@@ -341,12 +342,12 @@ class YaybuCmd(OptionParsingCmd):
             host = filter(lambda h: h['fqdn'] == hostname, hosts)[0]
             key_name = host['role']['key']
             key = self.get_key(ctx, provider, key_name)
-            logger.info("Applying configuration to %r" % hostname)
+            logger.info("Applying configuration to %r as %r" % (hostname, host['rolename']))
             r = remote.RemoteRunner(hostname, key)
             ctx.set_host(hostname)
             ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
             cfg = ctx.get_config().get()
-            print yay.dump(cfg)
+            #open("%s.yay" % hostname, "w").write(yay.dump(cfg))
             rv = r.run(ctx)
             if rv != 0:
                 return rv

@@ -110,7 +110,6 @@ class Server(object):
         while self.handle_request():
             pass
 
-
 class Error(Exception):
 
     def render(self, request, post):
