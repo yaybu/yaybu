@@ -270,7 +270,7 @@ class TestResourceBundle(unittest.TestCase):
     def test_structure(self):
         e1 = Ev1(name="e1",
                 policy = {
-                    'pol1': {
+                    'foo': {
                         'when': 'bar',
                         'on': 'e2'},
                     })
@@ -280,19 +280,19 @@ class TestResourceBundle(unittest.TestCase):
         e2.bind(resources)
         self.assertEqual(len(e1.observers), 0)
         self.assertEqual(dict(e2.observers), {
-            'bar': [(True, e1, 'pol1')]
+            'bar': [(True, e1, 'foo')]
             })
 
     def test_multiple(self):
         e1 = Ev1(name="e1",
                 policy = {
-                    'pol1': [{
+                    'foo': [{
                         'when': 'bar',
                         'on': 'e2'}],
-                    'pol2': [{
+                    'bar': [{
                         'when': 'foo',
                         'on': 'e3'}],
-                    'pol3': [{
+                    'baz': [{
                         'when': 'baz',
                         'on': 'e2',
                         }]
@@ -304,17 +304,17 @@ class TestResourceBundle(unittest.TestCase):
         e2.bind(resources)
         self.assertEqual(dict(e1.observers), {})
         self.assertEqual(dict(e2.observers), {
-            'bar': [(True, e1, 'pol1')],
-            'baz': [(True, e1, 'pol3')],
+            'bar': [(True, e1, 'foo')],
+            'baz': [(True, e1, 'baz')],
             })
         self.assertEqual(dict(e3.observers), {
-            'foo': [(True, e1, 'pol2')],
+            'foo': [(True, e1, 'bar')],
             })
 
     def test_missing(self):
         e1 = Ev1(name="e1",
                 policy = {
-                    'pol1': [{
+                    'foo': [{
                         'when': 'bar',
                         'on': 'missing'}],
                     })
