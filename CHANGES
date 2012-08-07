@@ -4,6 +4,10 @@ Changelog for yaybu
 0.1.27 (unreleased)
 -------------------
 
+- Add new commands for dealing with collections of nodes on cloud providers:
+  ``addnode``, ``rmnode``, ``status`` and ``provision``. These are currently
+  only available if the ``IS_DEVELOPMENT`` environment variable is set.
+
 - Mark "static" file content retrieved over a gpg stream as secret to prevent
   the content appearing in the logs.
 
