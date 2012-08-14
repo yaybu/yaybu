@@ -10,7 +10,8 @@ Changelog for yaybu
 0.1.27 (2012-08-14)
 -------------------
 
-- Nothing changed yet.
+- Fix yaybu.core.shell bug where the communicate implementation waited for file
+  handles to disappear even when the underlying process had terminated.
 
 
 0.1.26 (2012-08-05)
