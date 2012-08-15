@@ -327,7 +327,7 @@ class Cluster:
         node = self.cloud.create_node(name, r.image, r.size, r.key_name)
         r.add_node(index, name, node.name)
         self.store_state()
-        #self.node_zone_update(role, name)
+        self.node_zone_update(role, name)
         return node
         
     def node_zone_update(self, role_name, node_name):
