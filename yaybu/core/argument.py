@@ -201,10 +201,11 @@ class PolicyTrigger:
         self.immediately = immediately
 
     def bind(self, resources, target):
-        if self.on in resources:
-            resources[self.on].register_observer(self.when, target, self.policy, self.immediately)
-        else:
+        if not self.on in resources:
             raise error.BindingError("Cannot bind %r to missing resource named '%s'" % (target, self.on))
+        if not self.when in resources[self.on].policies:
+            raise error.BindingError("%r cannot bind to non-existant event %s on resource %r" % (target, self.when, resources[self.on]))
+        resources[self.on].register_observer(self.when, target, self.policy, self.immediately)
         return resources[self.on]
 
 class PolicyCollection:
@@ -235,10 +236,14 @@ class PolicyArgument(Argument):
     def __set__(self, instance, value):
         """ Set either a default policy or a set of triggers on the policy collection """
         if type(value) in types.StringTypes:
+            if not value in instance.policies:
+                raise error.ParseError("'%s' is not a valid policy for %r" % (value, instance))
             coll = PolicyCollection(StandardPolicy(value))
-        else:
+        elif isinstance(value, dict):
             triggers = []
             for policy, conditions in value.items():
+                if not policy in instance.policies:
+                    raise error.ParseError("'%s' is not a valid policy for %r" % (policy, instance))
                 if not isinstance(conditions, list):
                     conditions = [conditions]
                 for condition in conditions:
@@ -250,4 +255,7 @@ class PolicyArgument(Argument):
                             immediately=condition.get('immediately', 'true') == 'true')
                         )
             coll = PolicyCollection(triggers=triggers)
+        else:
+            raise error.ParseError("Expected either a string literal or mapping as 'policy' argument for %r" % instance)
+
         setattr(instance, self.arg_id, coll)

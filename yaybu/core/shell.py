@@ -142,11 +142,23 @@ class ShellCommand(change.Change):
 
         while readlist:
             try:
-                rlist, wlist, xlist = select.select(readlist, [], [])
+                # Wait for data on stdout or stderr handles, but timeout after
+                # one second so that we can poll (below) and check the process
+                # hasn't disappeared.
+                rlist, wlist, xlist = select.select(readlist, [], [], 1)
             except select.error, e:
                 if e.args[0] == errno.EINTR:
                     continue
                 raise
+
+            # Some processes hang if we don't specifically poll for them going
+            # away. We believe that under certain cases, child processes can
+            # reuse their parent's file descriptors, and in that case, the
+            # select loop will continue until the child process goes away, which
+            # is undesirable when starting a daemon process.
+            if not rlist and not wlist and not xlist:
+                if p.poll() != None:
+                    break
 
             # Read from all handles that select told us can be read from
             # If they return false then we are at the end of the stream
