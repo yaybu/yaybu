@@ -85,6 +85,20 @@ class Role:
     def add_node(self, index, name, their_name):
         self.nodes[index] = Node(index, name, their_name)
         
+    def get_node_by_name(self, name):
+        """ Return the index and the underlying Node structure """
+        for v in self.nodes.values():
+            if v.name == name:
+                return v
+        raise KeyError("Node %r not found" % name)
+            
+        
+    def rm_node(self, their_name):
+        for k, v in self.nodes.items():
+            if v.their_name == their_name:
+                del self.nodes[k]
+                return
+        raise KeyError("No node found with name %r" % (their_name,))
 
 class StateMarshaller:
     
@@ -185,6 +199,10 @@ class AbstractCloud:
             self.sizes[size],
             keypair)
     
+    def destroy_node(self, nodename):
+        node = self.cloud.nodes[nodename]
+        self.cloud.destroy_node(node)
+    
     def update_record(self, ip, zone, name):
         self.cloud.update_record(ip, zone, name)
 
@@ -230,6 +248,12 @@ class Cluster:
                 # server has died but we still have state.
                 n = self.cloud.nodes[node.their_name]
                 yield n.extra['dns_name']
+                
+    def get_all_roles_and_nodenames(self):
+        """ Returns an iterator of node names (foo/bar/0) """
+        for role in self.roles_in_order():
+            for node in role.nodes.values():
+                yield role, node.their_name
         
     def get_node_info(self, node):
         """ Return a dictionary of information about the specified node """
@@ -255,7 +279,7 @@ class Cluster:
             data = "".join(list(bucket.as_stream()))
             nmap = StateMarshaller.load(data)
             for role, nodes in nmap.items():
-                api.logger.debug("Populating nodes for role %r" % (role,))
+                api.logger.debug("Finding nodes for role %r" % (role,))
                 for n in nodes:
                     self.roles[role].nodes[n.name] = n
             api.logger.debug("State loaded")
@@ -303,12 +327,23 @@ class Cluster:
         node = self.cloud.create_node(name, r.image, r.size, r.key_name)
         r.add_node(index, name, node.name)
         self.store_state()
-        # commented out until working DNS code
-        #if r.dns is not None:
-        #    zone_info = r.dns.zone_info(index)
-        #    if zone_info is not None:
-        #        self.update_zone(node, zone_info[0], zone_info[1])
+        #self.node_zone_update(role, name)
         return node
+        
+    def node_zone_update(self, role_name, node_name):
+        role = self.roles[role_name]
+        if role.dns is None:
+            return
+        our_node = role.get_node_by_name(node_name)
+        zone_info = role.dns.zone_info(our_node.index)
+        their_node = self.cloud.nodes[node_name]
+        if zone_info is not None:
+            self.update_zone(their_node, zone_info[0], zone_info[1])
+    
+    def destroy_node(self, role, nodename):
+        self.cloud.destroy_node(nodename)
+        role.rm_node(nodename)
+        self.store_state()
     
     def update_zone(self, node, zone, name):
         """ Update the cloud dns to point at the node """

@@ -112,6 +112,9 @@ class OptionParsingCmd(cmd.Cmd):
             self.print_topics(self.misc_header,  help.keys(),15,80)
             self.print_topics(self.undoc_header, cmds_undoc, 15,80)
         
+    def simple_help(self, command):
+        self.do_help((),(command,))
+
 
 class YaybuCmd(OptionParsingCmd):
     
@@ -209,7 +212,7 @@ class YaybuCmd(OptionParsingCmd):
         Prints the expanded YAML for the specified file.
         """
         if len(args) != 1:
-            self.help_expand()
+            self.simple_help("expand")
             return
         ctx = runcontext.RunContext(args[0], 
                                     ypath=self.ypath,
@@ -270,7 +273,7 @@ class YaybuCmd(OptionParsingCmd):
                 get_encrypted(v.get('min', 0)),
                 get_encrypted(v.get('max', None)))
             
-    def create_cloud(self, ctx, provider, cluster_name, filename):
+    def get_cluster(self, ctx, provider, cluster_name, filename):
         """ Create a ScalableCloud object from the configuration provided.
         """
         
@@ -289,6 +292,13 @@ class YaybuCmd(OptionParsingCmd):
             )
         cluster = Cluster(cloud, cluster_name, roles)
         return cluster
+    
+    def delete_cloud(self, ctx, provider, cluster_name, filename):
+        clouds = ctx.get_config().mapping.get('clouds').resolve()
+        p = clouds.get(provider, None)
+        if p is None:
+            raise KeyError("provider %r not found" % provider)
+        
     
     def host_info(self, info, role_name, role):
         """ Information for a host to be inserted into the configuration.
@@ -327,12 +337,12 @@ class YaybuCmd(OptionParsingCmd):
         in the cloud <provider>, using the configuration in <filename>
         """
         if len(args) != 3:
-            self.help_provision()
+            self.simple_help("provision")
             return
         provider, cluster_name, filename = args
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
         logger.info("Creating cluster")
-        cloud = self.create_cloud(ctx, provider, cluster_name, filename)
+        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
         cloud.provision_roles()
         for hostname in cloud.get_all_hostnames():
             # create a new context to decorate to isolate changes between nodes
@@ -351,6 +361,20 @@ class YaybuCmd(OptionParsingCmd):
             rv = r.run(ctx)
             if rv != 0:
                 return rv
+            
+    def do_zoneupdate(self, opts, args):
+        """ 
+        usage: zoneupdate <provider> <cluster> <filename>
+        Forces a DNS update for the specified configuration
+        """
+        if len(args) != 3:
+            self.simple_help("zoneupdate")
+            return
+        provider, cluster_name, filename = args
+        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
+        for role, nodename in cloud.get_all_roles_and_nodenames():
+            cloud.node_zone_update(role.name, nodename)
         
     def do_addnode(self, opts, args):
         """
@@ -363,6 +387,53 @@ class YaybuCmd(OptionParsingCmd):
         usage: rmnode <provider> <cluster> <nodeid>
         Delete the specified node
         """
+        
+    def do_ssh(self, opts, args):
+        """ 
+        usage: ssh <provider> <cluster> <name> 
+        SSH to the node specified (with foo/bar/0 notation)
+        """
+        if len(args) != 3:
+            self.do_help((),("ssh",))
+            return
+        provider, cluster_name, filename = args
+        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
+        # do some stuff
+        
+    def do_info(self, opts, args):
+        """
+        usage: info <provider> <cluster> <filename>
+        Provide information on the specified cluster
+        """
+        if len(args) != 3:
+            self.do_help((),("rmcluster",))
+            return
+        provider, cluster_name, filename = args
+        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
+        for role in cloud.roles_in_order():
+            print "%s %s %s min %s max %s depends %s" % (
+                role.name, role.image, role.size, role.min, role.max, role.depends)
+            for node in role.nodes.values():
+                n = cloud.cloud.nodes[node.their_name]
+                print "    %s %s" % (node.their_name, n.extra['dns_name'])
+        
+    def do_rmcluster(self, opts, args):
+        """
+        usage: rmcluster <provider> <cluster> <filename>
+        Delete the specified cluster completely
+        """
+        if len(args) != 3:
+            self.do_help((),("rmcluster",))
+            return
+        provider, cluster_name, filename = args
+        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+        logger.info("Deleting cluster")
+        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
+        for role, name in cloud.get_all_roles_and_nodenames():
+            logger.warning("Destroying %r on request" % (name,))
+            cloud.destroy_node(role, name)
     
     def do_quit(self, opts=None, args=None):
         """ Exit yaybu """

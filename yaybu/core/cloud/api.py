@@ -11,6 +11,7 @@ from libcloud.compute.deployment import MultiStepDeployment, ScriptDeployment, S
 import libcloud.security
 from libcloud.common.types import LibcloudError
 
+from boto.route53.exception import DNSServerError
 from boto.route53.connection import Route53Connection
 from boto.route53.record import ResourceRecordSets
 from boto.route53.record import Record
@@ -39,15 +40,23 @@ class Route53Zone:
         self.connection = connection
         self.id = zone['Id'].replace('/hostedzone/', '')
         
+    def get_record(self, name):
+        records = self.connection.get_all_rrsets(self.id, type=None)
+        for record in records:
+            if record.name == name:
+                return record
+        
     def create_record(self, name, data):
-        logger.debug("Creating record")
-        changes = ResourceRecordSets(self.connection,
-                                     self.id,
-                                     "")
-        change = changes.add_change("CREATE", name, 'A', 60)
-        change.add_value(data)
+        """ Note that the name should be a dot terminated FQDN! """
+        assert isinstance(self.connection, Route53Connection)
+        record = self.get_record(name)
+        changes = ResourceRecordSets(self.connection, self.id, "")
+        if record:
+            changes.add_change("DELETE", name, 'A', 60).add_value(record.resource_records[0])
+        changes.add_change("CREATE", name, 'A', 60).add_value(data)
         status = changes.commit()['ChangeResourceRecordSetsResponse']['ChangeInfo']
         logger.debug("Status response is %r" % status)
+            
         
 class Route53:
     
@@ -57,10 +66,16 @@ class Route53:
         self.connection = Route53Connection(key, secret)
         
     def create_zone(self, domain):
-        zone = self.connection.create_hosted_zone(domain)
-        logger.debug("Zone is %r" % zone)
-        zone = zone['CreateHostedZoneResponse']['HostedZone']
-        return Route53Zone(self.connection, zone)  
+        """" Create the zone if it does not exist """
+        zone = self.connection.get_hosted_zone_by_name(domain)
+        if zone is None:
+            zone = self.connection.create_hosted_zone(domain)
+            logger.debug("Created zone %r" % domain)
+            zone = zone['CreateHostedZoneResponse']['HostedZone']
+            return Route53Zone(self.connection, zone)  
+        else:
+            zone = zone['GetHostedZoneResponse']['HostedZone']
+            return Route53Zone(self.connection, zone)
 
 class Cloud(object):
 
@@ -116,6 +131,9 @@ class Cloud(object):
         except ContainerDoesNotExistError:
             container = self.storage.create_container(container_name=name)
         return container
+    
+    def destroy_node(self, node):
+        self.compute.destroy_node(node)
             
     def create_node(self, name, image, size, keypair):
         """ This creates a physical node based on our node record. """
@@ -147,7 +165,8 @@ class Cloud(object):
 
     def update_record(self, ip, zone, name):
         """ Create an A record for the ip/dns pairing """
+        fqdn = "%s.%s." % (name, zone)
         z = self.dns.create_zone(domain=zone)
-        record = z.create_record(name=name, data=ip)
-        loggger.info("Created record for %r -> %r" % (name, ip))
+        record = z.create_record(name=fqdn, data=ip)
+        logger.info("Created record for %r -> %r" % (name, ip))
         
