@@ -312,15 +312,24 @@ class YaybuCmd(OptionParsingCmd):
             host['role'][k] = copy.copy(v)
         return host
         
-    def decorate_config(self, ctx, cloud):
+    def decorate_config(self, ctx, provider, cluster, cloud=None, host=None):
         """ Update the configuration with the details for all running nodes """
-        roles = ctx.get_config().mapping.get('roles').resolve()
-        new_cfg = {'hosts': []}
-        for role_name, role in cloud.roles.items():
-            for node in role.nodes.values():
-                node_info = cloud.get_node_info(node)
-                struct = self.host_info(node_info, role_name, roles[role_name])
-                new_cfg['hosts'].append(struct)
+        new_cfg = {'hosts': [],
+                   'yaybu': {
+                       'provider': provider,
+                       'cluster': cluster,
+                       }
+                   }
+        if host is not None:
+            new_cfg['yaybu']['host'] = host
+        ctx.get_config().add(new_cfg)
+        if cloud is not None:
+            roles = ctx.get_config().mapping.get('roles').resolve()
+            for role_name, role in cloud.roles.items():
+                for node in role.nodes.values():
+                    node_info = cloud.get_node_info(node)
+                    struct = self.host_info(node_info, role_name, roles[role_name])
+                    new_cfg['hosts'].append(struct)
         ctx.get_config().add(new_cfg)
         
     def opts_provision(self, parser):
@@ -329,6 +338,7 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
+        parser.add_option("-D", "--dump", default=False, action="store_true", help="Dump complete, *insecure* dumps of the configurations applied")
     
     def do_provision(self, opts, args):
         """
@@ -341,23 +351,25 @@ class YaybuCmd(OptionParsingCmd):
             return
         provider, cluster_name, filename = args
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+        self.decorate_config(ctx, provider, cluster_name)
         logger.info("Creating cluster")
         cloud = self.get_cluster(ctx, provider, cluster_name, filename)
         cloud.provision_roles()
         for hostname in cloud.get_all_hostnames():
             # create a new context to decorate to isolate changes between nodes
             ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose, resume=True)
-            self.decorate_config(ctx, cloud)
+            self.decorate_config(ctx, provider, cluster_name, cloud, hostname)
             hosts = ctx.get_config().mapping.get("hosts").resolve()
             host = filter(lambda h: h['fqdn'] == hostname, hosts)[0]
             key_name = host['role']['key']
             key = self.get_key(ctx, provider, key_name)
             logger.info("Applying configuration to %r as %r" % (hostname, host['rolename']))
             r = remote.RemoteRunner(hostname, key)
-            ctx.set_host(hostname)
+            #ctx.set_host(hostname)
             ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
             cfg = ctx.get_config().get()
-            #open("%s.yay" % hostname, "w").write(yay.dump(cfg))
+            if opts.dump:
+                open("%s.yay" % hostname, "w").write(yay.dump(cfg))
             rv = r.run(ctx)
             if rv != 0:
                 return rv
