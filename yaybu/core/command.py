@@ -21,6 +21,71 @@ from ssh.dsskey import DSSKey
 
 logger = logging.getLogger("yaybu.core.command")
 
+class YaybuArgParsingError(Exception):
+    pass
+
+class YaybuArg:
+    
+    def __init__(self, name, type_='string', default=None, help=None):
+        self.name = name.lower()
+        self.type = type_.lower()
+        self.default = default
+        self.help = help
+        self.value = None
+        
+    def set(self, value):
+        self.value = value
+        
+    def _get(self):
+        if self.value is None and self.default is not None:
+            return self.default
+        else:
+            return self.value
+        
+    def get(self):
+        return self.convert(self._get())
+    
+    def convert(self, value):
+        if self.type == 'string':
+            return value
+        elif self.type == 'integer':
+            try:
+                return int(value)
+            except ValueError:
+                raise YaybuArgParsingError("Cannot convert %r to an int for argument %r" % (value, self.name))
+        elif self.type == 'boolean':
+            if value.lower() in ('no', '0', 'off', 'false'):
+                return False
+            elif value.lower() in ('yes', '1', 'on', 'true'):
+                return True
+            raise YaybuArgParsingError("Cannot parse boolean from %r for argument %r" % (value, self.name))
+        else:
+            raise YaybuArgParsingError("Don't understand %r as a type for argument %r" % (self.type, self.name))
+        
+class YaybuArgParser:
+    
+    def __init__(self, *args):
+        self.args = {}
+        for a in args:
+            self.add(a)
+        
+    def add(self, arg):
+        if arg.name in self.args:
+            raise YaybuArgParsingError("Duplicate argument %r specified" % (arg.name,))
+        self.args[arg.name] = arg
+        
+    def parse(self, argv):
+        for arg in argv:
+            name, value = arg.split("=", 1)
+            if name not in self.args:
+                raise YaybuArgParsingError("Unexpected argument %r provided on command line" % (name,))
+            self.args[name].set(value)
+        return dict(self.values())
+    
+    def values(self):
+        for a in self.args.values():
+            yield (a.name, a.get())
+
 class OptionParsingCmd(cmd.Cmd):
     
     def parser(self):
@@ -312,16 +377,18 @@ class YaybuCmd(OptionParsingCmd):
             host['role'][k] = copy.copy(v)
         return host
         
-    def decorate_config(self, ctx, provider, cluster, cloud=None, host=None):
+    def decorate_config(self, ctx, provider, cluster, yargs=None, cloud=None):
         """ Update the configuration with the details for all running nodes """
         new_cfg = {'hosts': [],
                    'yaybu': {
                        'provider': provider,
                        'cluster': cluster,
+                       'argv': {},
                        }
                    }
-        if host is not None:
-            new_cfg['yaybu']['host'] = host
+        if yargs is not None:
+            for k, v in yargs.items():
+                new_cfg['yaybu']['argv'][k] = v
         ctx.get_config().add(new_cfg)
         if cloud is not None:
             roles = ctx.get_config().mapping.get('roles').resolve()
@@ -332,6 +399,24 @@ class YaybuCmd(OptionParsingCmd):
                     new_cfg['hosts'].append(struct)
         ctx.get_config().add(new_cfg)
         
+    def analyze_args(self, ctx):
+        """ Extract the arguments from the yaybu.argv key and return a parser """
+        parser = YaybuArgParser()
+        try:
+            args = ctx.get_config().mapping.get('yaybu').get('options').resolve()
+        except yay.errors.NoMatching:
+            args = []
+        for arg in args:
+            if 'name' not in arg:
+                raise KeyError("No name specified for an argument")
+            yarg = YaybuArg(arg['name'], 
+                            arg.get('type', 'string'),
+                            arg.get('default', None),
+                            arg.get('help', None)
+                            )
+            parser.add(yarg)
+        return parser
+        
     def opts_provision(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
@@ -340,39 +425,62 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
         parser.add_option("-D", "--dump", default=False, action="store_true", help="Dump complete, *insecure* dumps of the configurations applied")
     
+    def create_initial_context(self, provider, cluster_name, filename, args=None):
+        """ Creates a context suitable for instantiating a cloud """
+        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+        self.decorate_config(ctx, provider, cluster_name, args)
+        return ctx
+    
+    def create_host_context(self, hostname, provider, cluster_name, filename, args, cloud):
+        """ Creates the context used to provision an actual host """
+        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose, resume=True)
+        self.decorate_config(ctx, provider, cluster_name, args, cloud)
+        ctx.set_host(hostname)
+        ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
+        return ctx
+
+    def create_runner(self, ctx, provider, hostname):
+        """ Create a runner for the specified host, using the key found in
+        the configuration """
+        hosts = ctx.get_config().mapping.get("hosts").resolve()
+        host = filter(lambda h: h['fqdn'] == hostname, hosts)[0]
+        key_name = host['role']['key']
+        key = self.get_key(ctx, provider, key_name)
+        r = remote.RemoteRunner(hostname, key)
+        return r
+    
+    def dump(self, ctx, filename):
+        """ Dump the configuration in a raw form """
+        cfg = ctx.get_config().get()
+        open(filename, "w").write(yay.dump(cfg))
+        
     def do_provision(self, opts, args):
         """
-        usage: provision <provider> <cluster> <filename>
+        usage: provision <provider> <cluster> <filename> <name=value>...
         Create a new cluster, or update the existing cluster, <cluster>
         in the cloud <provider>, using the configuration in <filename>
+        if the configuration takes arguments these can be provided as 
+        name=value name=value...
         """
-        if len(args) != 3:
+        if len(args) < 3:
             self.simple_help("provision")
             return
-        provider, cluster_name, filename = args
-        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
-        self.decorate_config(ctx, provider, cluster_name)
-        logger.info("Creating cluster")
+        provider, cluster_name, filename = args[:3]
+        ctx = self.create_initial_context(provider, cluster_name, filename)
+        yarg_parser = self.analyze_args(ctx)
+        yargs = yarg_parser.parse(args[3:])
+        ctx = self.create_initial_context(provider, cluster_name, filename, yargs)
         cloud = self.get_cluster(ctx, provider, cluster_name, filename)
         cloud.provision_roles()
         for hostname in cloud.get_all_hostnames():
-            # create a new context to decorate to isolate changes between nodes
-            ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose, resume=True)
-            self.decorate_config(ctx, provider, cluster_name, cloud, hostname)
-            hosts = ctx.get_config().mapping.get("hosts").resolve()
-            host = filter(lambda h: h['fqdn'] == hostname, hosts)[0]
-            key_name = host['role']['key']
-            key = self.get_key(ctx, provider, key_name)
-            logger.info("Applying configuration to %r as %r" % (hostname, host['rolename']))
-            r = remote.RemoteRunner(hostname, key)
-            #ctx.set_host(hostname)
-            ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
-            cfg = ctx.get_config().get()
+            host_ctx = self.create_host_context(hostname, provider, cluster_name, 
+                                                filename, yargs, cloud)
             if opts.dump:
-                open("%s.yay" % hostname, "w").write(yay.dump(cfg))
-            rv = r.run(ctx)
-            if rv != 0:
-                return rv
+                self.dump(host_ctx, "%s.yay" % hostname)
+            result = self.create_runner(host_ctx, provider, hostname).run(host_ctx)
+            if result != 0:
+                # stop processing further hosts
+                return result
             
     def do_zoneupdate(self, opts, args):
         """ 
