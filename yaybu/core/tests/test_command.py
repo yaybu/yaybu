@@ -19,6 +19,10 @@ class TestYaybuArg(unittest.TestCase):
         arg.set("10")
         self.assertEqual(arg.get(), 10)
         
+    def test_boolean_default(self):
+        arg = command.YaybuArg('foo', 'boolean', default=False)
+        self.assertEqual(arg.get(), False)
+        
     def test_integer_default(self):
         arg = command.YaybuArg('foo', 'integer', default=20)
         self.assertEqual(arg.get(), 20)
