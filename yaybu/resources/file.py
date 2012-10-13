@@ -101,7 +101,8 @@ class File(Resource):
     def hash(self):
         if not os.path.exists(self.name):
             return ""
-        return hashlib.sha1(open(self.name).read()).hexdigest()
+        return hashlib.sha1(open(self.name).read()).hexdigest() + \
+            str(os.stat(self.name).st_mtime)
 
 
 class FileApplyPolicy(Policy):

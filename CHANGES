@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.1.28 (unreleased)
+0.1.29 (unreleased)
 -------------------
 
 - Add new commands for dealing with collections of nodes on cloud providers:
@@ -14,6 +14,24 @@ Changelog for yaybu
 - Depend on yay >= 0.0.55 for latest bug fixes.
 
 - Add a new ``yaybu bootstrap`` to simplify setup on Ubuntu boxes.
+
+
+0.1.28 (2012-10-13)
+-------------------
+
+- Add a new ``Checkout`` provider for use with Vagrant-like environments::
+
+      resources.append:
+        - Checkout:
+            name: /vagrant
+            scm: mount
+
+  This pattern allows recipes to treat shared folders in VM's (like
+  ``/vagrant``) as checkouts. They can then be upgraded/substituted for git or
+  subversion checkouts when deploying to a real server.
+
+  Any files that are watched in the checkout will be treated as though they
+  have changed.
 
 
 0.1.27 (2012-08-14)
