@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.1.28 (unreleased)
+0.1.28 (2012-10-13)
 -------------------
 
 - Add a new ``Checkout`` provider for use with Vagrant-like environments::
