@@ -1,4 +1,4 @@
-# Copyright 2011 Isotoma Limited
+# Copyright 2012 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.providers import (
-    apt,
-    execute,
-    filesystem,
-    group,
-    subversion,
-    git,
-    user,
-    prompt,
-    rsync,
-    service,
-    mounted
-    )
+import os
+
+from yaybu.core.provider import Provider
+from yaybu import resources
+
+
+class Mounted(Provider):
+
+    policies = (resources.checkout.CheckoutSyncPolicy,)
+
+    @classmethod
+    def isvalid(self, policy, resource, yay):
+        return resource.scm in ("dummy", "mounted", "mount")
+
+    def apply(self, context):
+        for w in self.resource.watch:
+            if os.path.exists(w):
+                os.utime(w, None)
+
+        return True
+

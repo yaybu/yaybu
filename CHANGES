@@ -4,7 +4,19 @@ Changelog for yaybu
 0.1.28 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add a new ``Checkout`` provider for use with Vagrant-like environments::
+
+      resources.append:
+        - Checkout:
+            name: /vagrant
+            scm: mount
+
+  This pattern allows recipes to treat shared folders in VM's (like
+  ``/vagrant``) as checkouts. They can then be upgraded/substituted for git or
+  subversion checkouts when deploying to a real server.
+
+  Any files that are watched in the checkout will be treated as though they
+  have changed.
 
 
 0.1.27 (2012-08-14)
