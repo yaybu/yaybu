@@ -51,23 +51,18 @@ if args:
 distro_flags = {
     "Ubuntu 9.10": dict(
         name="karmic",
-        fakeroot="environment",
         ),
     "Ubuntu 10.04": dict(
         name="lucid",
-        fakeroot="environment",
         ),
     "Ubuntu 10.10": dict(
         name="maverick",
-        fakeroot="environment",
         ),
     "Ubuntu 11.04": dict(
         name="natty",
-        fakeroot="environment",
         ),
     "Ubuntu 12.04": dict(
         name="precise",
-        fakeroot="statefile",
         ),
    }
 
@@ -132,8 +127,6 @@ class FakeChrootFixture(Fixture):
         self.chmod("/etc/yaybu", 0644)
 
     def cleanUp(self):
-        if self.fakeroot() == 'environment':
-            self.cleanup_session()
         subprocess.check_call(["rm", "-rf", self.chroot_path])
 
     def reset(self):
@@ -143,9 +136,6 @@ class FakeChrootFixture(Fixture):
     def distro(self):
         return distro_flags[self.sundayname]['name']
     
-    def fakeroot(self):
-        return distro_flags[self.sundayname]['fakeroot']
-
     def run_commands(self, commands, distro=None):
         for command in commands:
             command = command % dict(base_image=self.testbase, distro=distro)
@@ -203,15 +193,10 @@ class FakeChrootFixture(Fixture):
         env['USERNAME'] = 'root'
         env['USER'] = 'root'
 
-        if self.fakeroot() == 'statefile':
-            if new_save_file:
-                chroot = ["fakeroot", "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
-            else:
-                chroot = ["fakeroot", "-i", self.statefile, "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
+        if new_save_file:
+            chroot = ["fakeroot", "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
         else:
-            env['FAKEROOTKEY'] = self.get_session()
-            env['LD_PRELOAD'] = "/usr/lib/libfakeroot/libfakeroot-sysv.so"
-            chroot = ["fakeroot", "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
+            chroot = ["fakeroot", "-i", self.statefile, "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
         print ">>>", " ".join(chroot+command)
         retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
 
