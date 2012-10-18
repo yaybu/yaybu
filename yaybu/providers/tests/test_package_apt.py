@@ -54,7 +54,12 @@ class TestPackageRemoval(FakeChrootTestCase):
         self.fixture.check_apply("""
             resources:
               - Package:
-                  name: ubuntu-keyring
+                  name: zip
+            """)
+        self.fixture.check_apply("""
+            resources:
+              - Package:
+                  name: zip
                   policy: uninstall
             """)
 
