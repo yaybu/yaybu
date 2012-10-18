@@ -130,6 +130,7 @@ class TestFileApply(FakeChrootTestCase):
     def test_empty_nochange(self):
         with self.fixture.open("/etc/foo", "w") as fp:
             fp.write("")
+        os.chmod(self.fixture._enpathinate("/etc/foo"), 0644)
 
         rv = self.fixture.apply("""
             resources:
