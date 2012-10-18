@@ -24,7 +24,7 @@ import shelve
 
 try:
     import magic
-except ImportError:
+except (ImportError, AttributeError):
     magic = None
 
 from jinja2 import Environment, BaseLoader, TemplateNotFound

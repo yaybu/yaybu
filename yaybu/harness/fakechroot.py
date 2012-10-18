@@ -48,6 +48,30 @@ if args:
     os.execvp(args[0], args)
 """.strip()
 
+distro_flags = {
+    "Ubuntu 9.10": dict(
+        name="karmic",
+        fakeroot="environment",
+        ),
+    "Ubuntu 10.04": dict(
+        name="lucid",
+        fakeroot="environment",
+        ),
+    "Ubuntu 10.10": dict(
+        name="maverick",
+        fakeroot="environment",
+        ),
+    "Ubuntu 11.04": dict(
+        name="natty",
+        fakeroot="environment",
+        ),
+    "Ubuntu 12.04": dict(
+        name="precise",
+        fakeroot="statefile",
+        ),
+   }
+
+
 
 class FakeChrootFixture(Fixture):
 
@@ -63,12 +87,15 @@ class FakeChrootFixture(Fixture):
 
     testbase = os.getenv("YAYBU_TESTS_BASE", "base-image")
     test_network = os.environ.get("TEST_NETWORK", "0") == "1"
+    statefile = os.path.realpath("fakeroot.state")
 
     def setUp(self):
         try:
-            self.default_distro()
+            self.sundayname = open("/etc/issue.net","r").read().strip()[:12]
         except:
-            raise TestSkipped("Can only run Integration tests on Ubuntu")
+            raise NotImplementedError("Can only run Integration tests on Ubuntu")
+        if self.sundayname not in distro_flags:
+            raise NotImplementedError("This version of Ubuntu (%r) is not supported" % self.sundayname)
 
         dependencies = (
             "/usr/bin/fakeroot",
@@ -79,7 +106,7 @@ class FakeChrootFixture(Fixture):
 
         for dep in dependencies:
             if not os.path.exists(dep):
-                raise TestSkipped("Need '%s' to run integration tests" % dep)
+                raise NotImplementedError("Need '%s' to run integration tests" % dep)
 
         if self.firstrun:
             if not os.path.exists(self.testbase):
@@ -95,54 +122,52 @@ class FakeChrootFixture(Fixture):
     def clone(self):
         self.chroot_path = os.path.realpath("tmp")
         subprocess.check_call(["cp", "-al", self.testbase, self.chroot_path])
-
-        with self.open("/usr/bin/ssh", "w") as fp:
-            fp.write(sshwrapper)
-        self.chmod("/usr/bin/ssh", 0755)
+        self.call(["/bin/true"], new_save_file=True)
+        if os.path.islink(os.path.join(self.chroot_path, "var", "run")):
+            os.unlink(os.path.join(self.chroot_path, "var", "run"))
+            os.mkdir(os.path.join(self.chroot_path, "var", "run"))
 
         with self.open("/etc/yaybu", "w") as fp:
             fp.write(yaybu_cfg)
         self.chmod("/etc/yaybu", 0644)
 
     def cleanUp(self):
-        self.cleanup_session()
+        if self.fakeroot() == 'environment':
+            self.cleanup_session()
         subprocess.check_call(["rm", "-rf", self.chroot_path])
 
     def reset(self):
         self.cleanUp()
         self.clone()
 
-    def default_distro(self):
-        options = {
-            "Ubuntu 9.10": "karmic",
-            "Ubuntu 10.04": "lucid",
-            "Ubuntu 10.10": "maverick",
-            "Ubuntu 11.04": "natty",
-           }
-        sundayname = open("/etc/issue.net","r").read().strip()
-        return options[sundayname[:12]]
+    def distro(self):
+        return distro_flags[self.sundayname]['name']
+    
+    def fakeroot(self):
+        return distro_flags[self.sundayname]['fakeroot']
 
     def run_commands(self, commands, distro=None):
         for command in commands:
             command = command % dict(base_image=self.testbase, distro=distro)
+            print ">>>", command
             p = subprocess.Popen(shlex.split(command))
             if p.wait():
                 raise SystemExit("Command failed")
-
+            
     def build_environment(self):
-        distro = self.default_distro()
+        distro = self.distro()
         commands = [
-            "fakeroot fakechroot -s debootstrap --variant=fakechroot --include=git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv,python-dev,build-essential %(distro)s %(base_image)s",
-            "fakeroot fakechroot -s /usr/sbin/chroot %(base_image)s apt-get update",
+            "fakeroot fakechroot debootstrap --variant=fakechroot --include=git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv,python-dev,build-essential %(distro)s %(base_image)s",
+            "fakeroot fakechroot /usr/sbin/chroot %(base_image)s apt-get update",
             ]
         if not os.path.exists(self.testbase):
-             self.run_commands(commands, distro)
+            self.run_commands(commands, distro)
 
     def refresh_environment(self):
         commands = [
              "rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
              "python setup.py sdist --dist-dir %(base_image)s",
-             "fakeroot fakechroot -s /usr/sbin/chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
+             "fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
              ]
         self.run_commands(commands)
 
@@ -165,12 +190,10 @@ class FakeChrootFixture(Fixture):
         f = tempfile.NamedTemporaryFile(dir=os.path.join(self.chroot_path, 'tmp'), delete=False)
         f.write(contents)
         f.close()
-        return f.name
+        return "/tmp/" + os.path.realpath(f.name).split("/")[-1]
 
-    def call(self, command):
+    def call(self, command, new_save_file=False):
         env = os.environ.copy()
-        env['FAKEROOTKEY'] = self.get_session()
-        env['LD_PRELOAD'] = "/usr/lib/libfakeroot/libfakeroot-sysv.so"
         env['HOME'] = '/root/'
 
         # Meh, we inherit the invoking users environment - LAME.
@@ -180,14 +203,23 @@ class FakeChrootFixture(Fixture):
         env['USERNAME'] = 'root'
         env['USER'] = 'root'
 
-        chroot = ["fakechroot", "-s", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
+        if self.fakeroot() == 'statefile':
+            if new_save_file:
+                chroot = ["fakeroot", "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
+            else:
+                chroot = ["fakeroot", "-i", self.statefile, "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
+        else:
+            env['FAKEROOTKEY'] = self.get_session()
+            env['LD_PRELOAD'] = "/usr/lib/libfakeroot/libfakeroot-sysv.so"
+            chroot = ["fakeroot", "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
+        print ">>>", " ".join(chroot+command)
         retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
 
         self.wait_for_cowdancer()
         return retval
 
     def yaybu(self, *args):
-        filespath = os.path.join(self.chroot_path, "tmp", "files")
+        filespath = os.path.join("/tmp", "files")
         args = list(args)
         if self.test_network:
             args.insert(0, "localhost")
@@ -261,7 +293,7 @@ class FakeChrootFixture(Fixture):
                 fp.write("")
 
     def chmod(self, path, mode):
-        self.call(["chmod", "%04o" % mode, self._enpathinate(path)])
+        self.call(["chmod", "%04o" % mode, path])
 
     def readlink(self, path):
         relpath = os.path.relpath(os.readlink(self._enpathinate(path)), self.chroot_path)
