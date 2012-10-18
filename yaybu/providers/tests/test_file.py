@@ -90,7 +90,7 @@ class TestFileApply(FakeChrootTestCase):
 
     def test_modify_file(self):
         with self.fixture.open("/etc/test_modify_file", "w") as fp:
-          fp.write("foo\nbar\nbaz")
+            fp.write("foo\nbar\nbaz")
 
         self.fixture.check_apply("""
             resources:
