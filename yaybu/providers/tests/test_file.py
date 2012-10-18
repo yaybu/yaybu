@@ -143,19 +143,23 @@ class TestFileApply(FakeChrootTestCase):
         """ a template that does not end in \n will still result in a file ending in \n """
         with self.fixture.open("/etc/test_carriage_returns", "w") as fp:
             fp.write("foo\n")
-
+        os.chmod(self.fixture._enpathinate("/etc/test_carriage_returns"), 0644)
+        
         rv = self.fixture.apply("""
             resources:
                 - File:
                     name: /etc/test_carriage_returns
                     template: package://yaybu.providers.tests/test_carriage_returns.j2
             """)
+        with self.fixture.open("/etc/test_carriage_returns") as fp:
+            print ">>>"+fp.read()+"<<<"
         self.assertEqual(rv, 254) # nothing changed
 
     def test_carriage_returns2(self):
         """ a template that does end in \n will not gain an extra \n in the resulting file"""
         with self.fixture.open("/etc/test_carriage_returns2", "w") as fp:
             fp.write("foo\n")
+        os.chmod(self.fixture._enpathinate("/etc/test_carriage_returns2"), 0644)
 
         rv = self.fixture.apply("""
             resources:
