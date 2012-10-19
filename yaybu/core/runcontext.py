@@ -57,10 +57,10 @@ class RunContext(object):
         if os.path.exists("/etc/yaybu"):
             self.options = yay.load_uri("/etc/yaybu")
 
-        logger.debug("Invoked with ypath: %r" % ypath)
+        logger.debug("Invoked with ypath: %r" % (ypath, ))
         logger.debug("Environment YAYBUPATH: %r" % os.environ.get("YAYBUPATH", ""))
         self.simulate = simulate
-        self.ypath = ypath
+        self.ypath = list(ypath)
         self.verbose = verbose
 
         if "PATH" in os.environ:
@@ -235,6 +235,7 @@ class RemoteRunContext(RunContext):
 
     def setup_changelog(self):
         self.changelog = change.RemoteChangeLog(self)
+        self.changelog.configure_session_logging()
 
     def get_config(self):
         self.connection.request("GET", "/config")

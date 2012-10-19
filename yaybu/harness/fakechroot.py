@@ -66,8 +66,6 @@ distro_flags = {
         ),
    }
 
-
-
 class FakeChrootFixture(Fixture):
 
     """
@@ -207,10 +205,13 @@ class FakeChrootFixture(Fixture):
         filespath = os.path.join("/tmp", "files")
         args = list(args)
         if self.test_network:
-            args.insert(0, "localhost")
+            args.insert(0, "test://")
             args.insert(0, "--host")
+            args.insert(0, "push")
+        else:
+            args.insert(0, "apply")
 
-        return self.call(["yaybu", "-d", "--ypath", filespath, "apply"] + list(args))
+        return self.call(["yaybu", "-v", "-v", "-d", "--ypath", filespath] + args)
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """

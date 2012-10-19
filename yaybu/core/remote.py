@@ -103,7 +103,12 @@ class RemoteRunner(Runner):
             logger.debug(l.strip())
             
     def get_yaybu_command(self, ctx):
-        command = ["yaybu", "--remote"]
+        command = ["yaybu"]
+
+        if ctx.verbose:
+            command.extend(list("-v" for x in range(ctx.verbose)))
+
+        command.append("remote")
 
         if ctx.user:
             command.extend(["--user", ctx.user])
@@ -111,16 +116,12 @@ class RemoteRunner(Runner):
         if ctx.simulate:
             command.append("-s")
 
-        if ctx.verbose:
-            command.extend(list("-v" for x in range(ctx.verbose)))
-
         if ctx.resume:
             command.append("--resume")
 
         if ctx.no_resume:
             command.append("--no-resume")
 
-        command.append("-")
         return " ".join(command)
 
     def get_server(self, ctx, stdin, stdout):
@@ -147,4 +148,31 @@ class RemoteRunner(Runner):
         except error.Error as e:
             print >>sys.stderr, "Error: %s" % str(e)
             return e.returncode
+
+
+class TestRemoteRunner(RemoteRunner):
+
+    def serve(self, ctx):
+        import shlex
+        command = shlex.split(self.get_yaybu_command(ctx))
+        p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+        try:
+            self.get_server(ctx, p.stdin, p.stdout).serve_forever()
+
+            p.wait()
+
+            if p.returncode == 255:
+                raise error.ConnectionError("Could not connect to '%s'" % ctx.host)
+
+            return p.returncode
+
+        finally:
+            if p.poll() is None:
+                try:
+                    p.kill()
+                except OSError:
+                    if p.poll() is None:
+                        raise
+
 
