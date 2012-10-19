@@ -157,7 +157,7 @@ class AbstractCloud:
     your own internal names for images and sizes, to increase portability.
     """
     
-    def __init__(self, compute_provider, storage_provider, dns_provider, args, images, sizes):
+    def __init__(self, compute_provider, storage_provider, dns_provider, images, sizes, args=(), compute_args=(), storage_args=()):
         """
         Args:
             compute_provider: The name of the compute provider in libcloud
@@ -167,9 +167,10 @@ class AbstractCloud:
             images: A dictionary of images that maps your names to the providers names
             sizes: A dictionary of sizes that maps your names to the providers names
         """
-        self.cloud = api.Cloud(compute_provider, storage_provider, dns_provider, args)
-        self.images = images
-        self.sizes = sizes
+        self.cloud = api.Cloud(compute_provider, storage_provider, dns_provider, args, compute_args, storage_args)
+        # DUMMY provider has numeric images and sizes
+        self.images = dict([(x,str(y)) for (x,y) in images.items()])
+        self.sizes = dict([(x,str(y)) for (x,y) in sizes.items()])
         
     @property
     def nodes(self):
