@@ -124,6 +124,7 @@ class ResourceChange(object):
 
         # We wrap the logger so it always has context information
         logger = logging.getLogger("yaybu.changelog")
+        logger.propagate = False
         self.logger = logging.LoggerAdapter(logger, dict(resource=unicode(resource)))
 
     def info(self, message, *args):
