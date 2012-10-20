@@ -36,18 +36,6 @@ auditlog:
    mode: file
 """
 
-# A little SSH wrapper for faking SSH into a fakechroot
-# (Obviously won't let us fake paramiko...)
-sshwrapper = """
-#! /usr/bin/env python
-import os, sys
-args = sys.argv[1:]
-while args and not args[0] == "yaybu":
-    del args[0]
-if args:
-    os.execvp(args[0], args)
-""".strip()
-
 distro_flags = {
     "Ubuntu 9.10": dict(
         name="karmic",
