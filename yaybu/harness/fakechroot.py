@@ -210,7 +210,7 @@ class FakeChrootFixture(Fixture):
                 LD_LIBRARY_PATH.append(path)
         LD_LIBRARY_PATH.extend(glob.glob("/usr/lib/*/fakechroot"))
 
-        for path in ("/usr/lib/fakeroot", ):
+        for path in ("/usr/lib/libfakeroot", ):
             if os.path.exists(path):
                 LD_LIBRARY_PATH.append(path)
         LD_LIBRARY_PATH.extend(glob.glob("/usr/lib/*/libfakeroot"))
