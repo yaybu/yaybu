@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, signal, shlex, subprocess, tempfile, time, shutil, StringIO
+import os, glob, signal, shlex, subprocess, tempfile, time, shutil, StringIO
 import testtools
 from testtools.testcase import TestSkipped
 from yaybu.core import error
@@ -110,9 +110,10 @@ class FakeChrootFixture(Fixture):
 
         with self.open("/etc/yaybu", "w") as fp:
             fp.write(yaybu_cfg)
-        self.chmod("/etc/yaybu", 0644)
+        # self.chmod("/etc/yaybu", 0644)
 
     def cleanUp(self):
+        self.cleanup_session()
         subprocess.check_call(["rm", "-rf", self.chroot_path])
 
     def reset(self):
@@ -171,7 +172,16 @@ class FakeChrootFixture(Fixture):
 
     def call(self, command, new_save_file=False):
         env = os.environ.copy()
-        env['HOME'] = '/root/'
+
+        env['FAKECHROOT'] = 'true'
+        # env['FAKECHROOT_EXCLUDE_PATH'] = ":".join([
+        #    ])
+
+        # Set up fakeroot stuff
+        env['FAKEROOTKEY'] = self.get_session()
+
+        # Cowdancer stuff
+        # env['COWDANCER_ILISTFILE'] = ''
 
         # Meh, we inherit the invoking users environment - LAME.
         env['HOME'] = '/root'
@@ -180,11 +190,30 @@ class FakeChrootFixture(Fixture):
         env['USERNAME'] = 'root'
         env['USER'] = 'root'
 
-        if new_save_file:
-            chroot = ["fakeroot", "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
-        else:
-            chroot = ["fakeroot", "-i", self.statefile, "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
-        print ">>>", " ".join(chroot+command)
+        LD_LIBRARY_PATH = []
+        for path in ("/usr/lib/fakechroot", "/usr/lib64/fakechroot", "/usr/lib32/fakechroot", ):
+            if os.path.exists(path):
+                LD_LIBRARY_PATH.append(path)
+        LD_LIBRARY_PATH.extend(glob.glob("/usr/lib/*/fakechroot"))
+
+        for path in ("/usr/lib/fakeroot", ):
+            if os.path.exists(path):
+                LD_LIBRARY_PATH.append(path)
+        LD_LIBRARY_PATH.extend(glob.glob("/usr/lib/*/libfakeroot"))
+
+        # Whether or not to use system libs depends on te presence of the next line
+        if True:
+            LD_LIBRARY_PATH.append("/usr/lib")
+            LD_LIBRARY_PATH.append("/lib")
+
+        LD_LIBRARY_PATH.append(os.path.join(self.chroot_path, "usr", "lib"))
+        LD_LIBRARY_PATH.append(os.path.join(self.chroot_path, "lib"))
+
+        env['LD_LIBRARY_PATH'] = ":".join(LD_LIBRARY_PATH)
+        env['LD_PRELOAD'] = "libfakechroot.so libfakeroot-sysv.so"
+
+        chroot = ["cow-shell", "/usr/sbin/chroot", self.chroot_path]
+
         retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
 
         self.wait_for_cowdancer()
