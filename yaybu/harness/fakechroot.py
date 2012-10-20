@@ -153,7 +153,8 @@ class FakeChrootFixture(Fixture):
 
     def refresh_environment(self):
         commands = [
-             "rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
+             "fakeroot fakechroot rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
+             "fakeroot fakechroot rm -rf /usr/local/lib/python2.7/dist-packages/Yaybu*",
              "python setup.py sdist --dist-dir %(base_image)s",
              "fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
              ]
