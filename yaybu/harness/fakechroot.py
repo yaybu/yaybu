@@ -102,18 +102,31 @@ class FakeChrootFixture(Fixture):
 
     def clone(self):
         self.chroot_path = os.path.realpath("tmp")
+        self.ilist_path = self.chroot_path + ".ilist"
+
         subprocess.check_call(["cp", "-al", self.testbase, self.chroot_path])
-        self.call(["/bin/true"], new_save_file=True)
+
+	# This is the same delightful incantation used in cow-shell to setup an
+	# .ilist file for our fakechroot.
+        subprocess.check_call([
+            "cowdancer-ilistcreate",
+            self.ilist_path,
+            "find . -xdev \( -type l -o -type f \) -a -links +1 -print0 | xargs -0 stat --format '%d %i '",
+            ], cwd=self.chroot_path)
+
+        # On newer installations /var/run is now a symlink to /run
+        # This breaks our fakechrootage so don't do it
         if os.path.islink(os.path.join(self.chroot_path, "var", "run")):
             os.unlink(os.path.join(self.chroot_path, "var", "run"))
             os.mkdir(os.path.join(self.chroot_path, "var", "run"))
 
         with self.open("/etc/yaybu", "w") as fp:
             fp.write(yaybu_cfg)
-        # self.chmod("/etc/yaybu", 0644)
 
     def cleanUp(self):
         self.cleanup_session()
+        if os.path.exists(self.ilist_path):
+            os.unlink(self.ilist_path)
         subprocess.check_call(["rm", "-rf", self.chroot_path])
 
     def reset(self):
@@ -181,7 +194,8 @@ class FakeChrootFixture(Fixture):
         env['FAKEROOTKEY'] = self.get_session()
 
         # Cowdancer stuff
-        # env['COWDANCER_ILISTFILE'] = ''
+        env['COWDANCER_ILISTFILE'] = self.ilist_path
+        env['COWDANCER_REUSE'] = 'yes'
 
         # Meh, we inherit the invoking users environment - LAME.
         env['HOME'] = '/root'
@@ -210,13 +224,10 @@ class FakeChrootFixture(Fixture):
         LD_LIBRARY_PATH.append(os.path.join(self.chroot_path, "lib"))
 
         env['LD_LIBRARY_PATH'] = ":".join(LD_LIBRARY_PATH)
-        env['LD_PRELOAD'] = "libfakechroot.so libfakeroot-sysv.so"
+        env['LD_PRELOAD'] = "libfakechroot.so libfakeroot-sysv.so /usr/lib/cowdancer/libcowdancer.so"
 
-        chroot = ["cow-shell", "/usr/sbin/chroot", self.chroot_path]
+        retval = subprocess.call(["/usr/sbin/chroot", self.chroot_path] + command, cwd=self.chroot_path, env=env)
 
-        retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
-
-        self.wait_for_cowdancer()
         return retval
 
     def yaybu(self, *args):
@@ -271,13 +282,6 @@ class FakeChrootFixture(Fixture):
         rv = self.apply_simulate(contents)
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "Simulate failed rv %s" % rv)
-
-    def wait_for_cowdancer(self):
-        # give cowdancer a few seconds to exit (avoids a race where it delets another sessions .ilist)
-        for i in range(20):
-            if not os.path.exists(os.path.join(self.chroot_path, ".ilist")):
-                break
-            time.sleep(0.1)
 
     def exists(self, path):
         return os.path.exists(self._enpathinate(path))
