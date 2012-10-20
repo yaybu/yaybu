@@ -106,8 +106,8 @@ class FakeChrootFixture(Fixture):
 
         subprocess.check_call(["cp", "-al", self.testbase, self.chroot_path])
 
-	# This is the same delightful incantation used in cow-shell to setup an
-	# .ilist file for our fakechroot.
+        # This is the same delightful incantation used in cow-shell to setup an
+        # .ilist file for our fakechroot.
         subprocess.check_call([
             "cowdancer-ilistcreate",
             self.ilist_path,
