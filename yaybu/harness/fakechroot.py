@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, signal, shlex, subprocess, tempfile, time, shutil, StringIO
+import os, glob, signal, shlex, subprocess, tempfile, time, shutil, StringIO
 import testtools
 from testtools.testcase import TestSkipped
 from yaybu.core import error
@@ -35,18 +35,6 @@ env-passthrough:
 auditlog:
    mode: file
 """
-
-# A little SSH wrapper for faking SSH into a fakechroot
-# (Obviously won't let us fake paramiko...)
-sshwrapper = """
-#! /usr/bin/env python
-import os, sys
-args = sys.argv[1:]
-while args and not args[0] == "yaybu":
-    del args[0]
-if args:
-    os.execvp(args[0], args)
-""".strip()
 
 distro_flags = {
     "Ubuntu 9.10": dict(
@@ -114,17 +102,31 @@ class FakeChrootFixture(Fixture):
 
     def clone(self):
         self.chroot_path = os.path.realpath("tmp")
+        self.ilist_path = self.chroot_path + ".ilist"
+
         subprocess.check_call(["cp", "-al", self.testbase, self.chroot_path])
-        self.call(["/bin/true"], new_save_file=True)
+
+        # This is the same delightful incantation used in cow-shell to setup an
+        # .ilist file for our fakechroot.
+        subprocess.check_call([
+            "cowdancer-ilistcreate",
+            self.ilist_path,
+            "find . -xdev \( -type l -o -type f \) -a -links +1 -print0 | xargs -0 stat --format '%d %i '",
+            ], cwd=self.chroot_path)
+
+        # On newer installations /var/run is now a symlink to /run
+        # This breaks our fakechrootage so don't do it
         if os.path.islink(os.path.join(self.chroot_path, "var", "run")):
             os.unlink(os.path.join(self.chroot_path, "var", "run"))
             os.mkdir(os.path.join(self.chroot_path, "var", "run"))
 
         with self.open("/etc/yaybu", "w") as fp:
             fp.write(yaybu_cfg)
-        self.chmod("/etc/yaybu", 0644)
 
     def cleanUp(self):
+        self.cleanup_session()
+        if os.path.exists(self.ilist_path):
+            os.unlink(self.ilist_path)
         subprocess.check_call(["rm", "-rf", self.chroot_path])
 
     def reset(self):
@@ -153,7 +155,8 @@ class FakeChrootFixture(Fixture):
 
     def refresh_environment(self):
         commands = [
-             "rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
+             "fakeroot fakechroot rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
+             "fakeroot fakechroot rm -rf /usr/local/lib/python2.7/dist-packages/Yaybu*",
              "python setup.py sdist --dist-dir %(base_image)s",
              "fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
              ]
@@ -182,7 +185,17 @@ class FakeChrootFixture(Fixture):
 
     def call(self, command, new_save_file=False):
         env = os.environ.copy()
-        env['HOME'] = '/root/'
+
+        env['FAKECHROOT'] = 'true'
+        # env['FAKECHROOT_EXCLUDE_PATH'] = ":".join([
+        #    ])
+
+        # Set up fakeroot stuff
+        env['FAKEROOTKEY'] = self.get_session()
+
+        # Cowdancer stuff
+        env['COWDANCER_ILISTFILE'] = self.ilist_path
+        env['COWDANCER_REUSE'] = 'yes'
 
         # Meh, we inherit the invoking users environment - LAME.
         env['HOME'] = '/root'
@@ -191,14 +204,30 @@ class FakeChrootFixture(Fixture):
         env['USERNAME'] = 'root'
         env['USER'] = 'root'
 
-        if new_save_file:
-            chroot = ["fakeroot", "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
-        else:
-            chroot = ["fakeroot", "-i", self.statefile, "-s", self.statefile, "fakechroot", "cow-shell", "/usr/sbin/chroot", self.chroot_path]
-        print ">>>", " ".join(chroot+command)
-        retval = subprocess.call(chroot + command, cwd=self.chroot_path, env=env)
+        LD_LIBRARY_PATH = []
+        for path in ("/usr/lib/fakechroot", "/usr/lib64/fakechroot", "/usr/lib32/fakechroot", ):
+            if os.path.exists(path):
+                LD_LIBRARY_PATH.append(path)
+        LD_LIBRARY_PATH.extend(glob.glob("/usr/lib/*/fakechroot"))
 
-        self.wait_for_cowdancer()
+        for path in ("/usr/lib/libfakeroot", ):
+            if os.path.exists(path):
+                LD_LIBRARY_PATH.append(path)
+        LD_LIBRARY_PATH.extend(glob.glob("/usr/lib/*/libfakeroot"))
+
+        # Whether or not to use system libs depends on te presence of the next line
+        if True:
+            LD_LIBRARY_PATH.append("/usr/lib")
+            LD_LIBRARY_PATH.append("/lib")
+
+        LD_LIBRARY_PATH.append(os.path.join(self.chroot_path, "usr", "lib"))
+        LD_LIBRARY_PATH.append(os.path.join(self.chroot_path, "lib"))
+
+        env['LD_LIBRARY_PATH'] = ":".join(LD_LIBRARY_PATH)
+        env['LD_PRELOAD'] = "libfakechroot.so libfakeroot-sysv.so /usr/lib/cowdancer/libcowdancer.so"
+
+        retval = subprocess.call(["/usr/sbin/chroot", self.chroot_path] + command, cwd=self.chroot_path, env=env)
+
         return retval
 
     def yaybu(self, *args):
@@ -253,13 +282,6 @@ class FakeChrootFixture(Fixture):
         rv = self.apply_simulate(contents)
         if rv != 0:
             raise subprocess.CalledProcessError(rv, "Simulate failed rv %s" % rv)
-
-    def wait_for_cowdancer(self):
-        # give cowdancer a few seconds to exit (avoids a race where it delets another sessions .ilist)
-        for i in range(20):
-            if not os.path.exists(os.path.join(self.chroot_path, ".ilist")):
-                break
-            time.sleep(0.1)
 
     def exists(self, path):
         return os.path.exists(self._enpathinate(path))
