@@ -311,8 +311,6 @@ class Shell(object):
         cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, umask)
         self.context.changelog.apply(cmd)
         if cmd.returncode != 0:
-            self.context.changelog.info(cmd.stdout)
-            self.context.changelog.notice(cmd.stderr)
             raise error.SystemError(cmd.returncode, cmd.stdout, cmd.stderr)
         return (cmd.returncode, cmd.stdout, cmd.stderr)
 
