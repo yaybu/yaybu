@@ -270,7 +270,7 @@ class RemoteHandler(logging.Handler):
 class RemoteChangeLog(ChangeLog):
 
     def configure_session_logging(self):
-        root = logging.getLogger()
+        root = logging.getLogger("yaybu.changelog")
         root.setLevel(logging.INFO)
 
         handler = RemoteHandler(self.ctx.connection)
