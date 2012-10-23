@@ -17,6 +17,9 @@ import shutil
 from abc import ABCMeta, abstractmethod
 from BaseHTTPServer import BaseHTTPRequestHandler
 import StringIO
+import logging 
+
+logger = logging.getLogger("yaybu.core.protocol.server")
 
 class RequestHandler(BaseHTTPRequestHandler):
 
@@ -37,6 +40,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         if not self.raw_requestline:
             self.close_connection = 1
             return False
+        logger.debug("request received: %r" % self.raw_requestline)
         if not self.parse_request():
             return False
 
@@ -46,6 +50,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         if "#" in path:
             path, self.bookmark = path.split("#", 1)
         self.path = filter(None, path.split("/"))
+
+        logger.debug("request path: %r" % self.path)
 
         return True
 
