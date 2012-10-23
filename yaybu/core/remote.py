@@ -156,7 +156,7 @@ class RemoteRunner(Runner):
         try:
             return self.serve(ctx)
         except error.Error as e:
-            logger.error(Error: %r" % e)
+            logger.error("Error: %r" % e)
             return e.returncode
 
 
