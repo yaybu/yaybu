@@ -108,7 +108,10 @@ class Server(object):
  
             node.render(self.context, r, "/".join(rest))
         except Error, e:
+            logger.error(repr(e))
             e.render(r, None)
+        except Exception, e:
+            logger.exception(e)
 
         return True
 
