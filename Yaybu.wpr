@@ -6,9 +6,11 @@
 [project attributes]
 proj.directory-list = [{'dirloc': loc('.'),
                         'excludes': [u'Yaybu.egg-info',
+                                     u'tmp',
+                                     u'develop-eggs',
                                      u'eggs',
-                                     u'parts',
-                                     u'develop-eggs'],
+                                     u'base-image',
+                                     u'parts'],
                         'filter': '*',
                         'include_hidden': False,
                         'recursive': True,
