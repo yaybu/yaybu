@@ -5,8 +5,9 @@ Changelog for yaybu
 ------------------
 
 - Add new commands for dealing with collections of nodes on cloud providers:
-  ``addnode``, ``rmnode``, ``status`` and ``provision``. These are currently
-  only available if the ``IS_DEVELOPMENT`` environment variable is set.
+  ``addnode``, ``rmnode``, ``status`` and ``provision``.
+
+- NB: 0.2.0 is API incompatible with earlier versions
 
 - Mark "static" file content retrieved over a gpg stream as secret to prevent
   the content appearing in the logs.
@@ -16,7 +17,6 @@ Changelog for yaybu
 - Add a new ``yaybu bootstrap`` to simplify setup on Ubuntu boxes.
   If you are running a development build of Yaybu then the bootstrap will be of
   the latest code pushed to master on GitHub.
-
 
 0.1.28 (2012-10-13)
 -------------------
