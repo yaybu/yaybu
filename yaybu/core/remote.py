@@ -95,9 +95,11 @@ class RemoteRunner(Runner):
             logger.info("target executing command %r" % command)
             stdin, stdout, stderr = client.exec_command(command)
             self.get_server(ctx, stdin, stdout).serve_forever()
+        except Exception, e:
+            logger.exception(e)
         finally:
             for line in stderr:
-                logger.error(line)
+                logger.error("target: %s" % line)
             client.close()
         ## TODO: work out how to get exit status - probably SSHException raised
         return 0
