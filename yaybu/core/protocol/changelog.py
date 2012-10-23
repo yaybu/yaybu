@@ -16,6 +16,7 @@ import os, logging, json
 
 from yaybu.core.protocol.server import HttpResource
 
+logger = logging.getLogger("yayub.core.protocol.changelog")
 
 class ChangeLogResource(HttpResource):
 
@@ -29,7 +30,8 @@ class ChangeLogResource(HttpResource):
 
         logrecord = logging.makeLogRecord(body)
         context.changelog.handle(logrecord)
-
+        
+        logger.debug(repr(logrecord))
         request.send_response(200, "OK")
         request.send_header("Content-Type", "application/octect-stream")
         request.send_header("Content-Length", "0")
