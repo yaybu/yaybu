@@ -263,7 +263,7 @@ class Cluster:
         ## and the distro, raid and disks sections should be completed
         n = self.cloud.nodes[node.their_name]
         def interfaces():
-            for i, pub, priv in enumerate(zip(n.public_ips, n.private_ips)):
+            for i, (pub, priv) in enumerate(zip(n.public_ips, n.private_ips)):
                 yield {'name': 'eth%d' % i,
                        'address': priv, 
                        'mapped_as': pub}

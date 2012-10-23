@@ -49,6 +49,9 @@ distro_flags = {
     "Ubuntu 11.04": dict(
         name="natty",
         ),
+    "Ubuntu 11.10": dict(
+        name="oneiric",
+        ),
     "Ubuntu 12.04": dict(
         name="precise",
         ),

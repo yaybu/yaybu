@@ -141,15 +141,18 @@ class TestCluster(unittest.TestCase):
                             ),
             }
         self.assertEqual(c.get_node_info(c.roles['mailserver'].nodes[0]),
-                         {'public': '12.12.12.12',
-                          'private': '13.13.13.13',
+                         {'mapped_as': '12.12.12.12',
+                          'address': '13.13.13.13',
                           'hostname': 'dns1',
                           'fqdn': 'dns1.foo.bar',
                           'domain': 'foo.bar',
-                          'distro': 'DUMMY',
-                          'raid': 'DUMMY',
-                          'disks': 'DUMMY',
-                          'interfaces': 'DUMMY',
+                          'distro': 'TBC',
+                          'raid': 'TBC',
+                          'disks': 'TBC',
+                          'interfaces': [{'name': 'eth0', 
+                                          'address': '13.13.13.13', 
+                                          'mapped_as': '12.12.12.12',
+                                          }],
                           })
         
     def test_find_lowest_unused(self):
