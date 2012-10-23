@@ -620,10 +620,3 @@ class YaybuCmd(OptionParsingCmd):
         print
         self.do_quit()
 
-
-if os.environ.get("IS_DEVELOPMENT", "") != "YES":
-    del YaybuCmd.do_provision
-    del YaybuCmd.do_status
-    del YaybuCmd.do_addnode
-    del YaybuCmd.do_rmnode
-
