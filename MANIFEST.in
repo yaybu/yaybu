@@ -1,2 +1,4 @@
 include *.rst
 recursive-include yaybu/providers/tests *.j2
+recursive-include yaybu/recipe *.yay
+
