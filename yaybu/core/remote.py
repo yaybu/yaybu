@@ -149,13 +149,14 @@ class RemoteRunner(Runner):
         try:
             bundle = ctx.get_bundle()
         except error.Error as e:
+            logger.error("Error in run: %r" % e)
             ctx.changelog.error(str(e))
             return e.returncode
 
         try:
             return self.serve(ctx)
         except error.Error as e:
-            print >>sys.stderr, "Error: %s" % str(e)
+            logger.error(Error: %r" % e)
             return e.returncode
 
 
