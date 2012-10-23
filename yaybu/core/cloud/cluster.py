@@ -257,17 +257,26 @@ class Cluster:
         
     def get_node_info(self, node):
         """ Return a dictionary of information about the specified node """
+        ## TODO
+        ## This needs further work!
+        ## the interface names should be extracted properly
+        ## and the distro, raid and disks sections should be completed
         n = self.cloud.nodes[node.their_name]
+        def interfaces():
+            for i, pub, priv in enumerate(zip(n.public_ips, n.private_ips)):
+                yield {'name': 'eth%d' % i,
+                       'address': priv, 
+                       'mapped_as': pub}
         return {
-            'public': n.public_ips[0],
-            'private': n.private_ips[0],
+            'mapped_as': n.public_ips[0],
+            'address': n.private_ips[0],
             'hostname': n.extra['dns_name'].split(".")[0],
             'fqdn': n.extra['dns_name'],
             'domain': n.extra['dns_name'].split(".",1)[1],
-            'distro': 'DUMMY',
-            'raid': 'DUMMY',
-            'disks': 'DUMMY',
-            'interfaces': 'DUMMY',
+            'distro': 'TBC',
+            'raid': 'TBC',
+            'disks': 'TBC',
+            'interfaces': list(interfaces()),
         }
             
     def load_state(self):

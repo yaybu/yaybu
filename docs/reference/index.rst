@@ -147,15 +147,44 @@ Your roles should look like::
                 zone: <zone that the server will exist in>
                 name: <host name within the zone>
 
-Provided configuration
-----------------------
+Host API
+--------
 
 Yaybu will create a set of terms that looks like this::
 
     yaybu:
-        provider:
-        cluster:
-        argv:
+        provider: <name of provider>
+        cluster: <name of cluster>
         
     hosts:
-        
+        - role: <copy of role data>
+          rolename: <name of role>
+          address: <primary ip address>
+          mapped_as: <public address, if NATted>
+          fqdn: <fully qualified domain name for first interface/default gw>
+          hostname: <non-fqdn hostname>
+          domain: <domain part of fqdn>
+          distro: <name of distribution*>
+          raid: <name of raid system if used*>
+          disks: <structure describing disks*>
+          interfaces:
+              - name: <interface name*>
+                address: <actual ip address of interface>
+                netmask: <netmask of interface*>
+                network: <network address*>
+                broadcast: <broadcast address*>
+                gateway: <gateway address*>
+                
+NB: Those entries marked with an asterisk (*) are NOT implemented in the current
+version of Yaybu. The interface name is present but may be incorrect. It
+probably works with AWS.
+
+Finally it populates a top level term host::
+
+    host: <copy of hosts data for currently deploying host>
+    
+
+This should provide sufficient information for your configuration to be able
+to deploy the currently deploying host, and to find information about other
+servers in the cluster.
+    
