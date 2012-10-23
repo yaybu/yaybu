@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.2.0 (unreleased)
+0.2.0 (2012-10-23)
 ------------------
 
 - Add new commands for dealing with collections of nodes on cloud providers:
