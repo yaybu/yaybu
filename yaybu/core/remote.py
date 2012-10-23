@@ -80,7 +80,7 @@ class RemoteRunner(Runner):
         try:
             self.execute(client, "sudo apt-get -y update")
             self.execute(client, "sudo apt-get -y safe-upgrade")
-            self.execute(client, "sudo apt-get -y install python-setuptools")
+            self.execute(client, "sudo apt-get -y install python-setuptools build-essential python-dev")
             if os.environ.get("IS_DEVELOPMENT", "") == "YES":
                 self.execute(client, "sudo easy_install https://github.com/isotoma/yaybu/zipball/master")
             else:
