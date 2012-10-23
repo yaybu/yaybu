@@ -225,6 +225,7 @@ class RemoteRunContext(RunContext):
                 "Yaybu": rsp.getheader("Yaybu", "0"),
                 "yay": rsp.getheader("yay", "0"),
                 }
+        logger.debug("target versions: yaybu %r yay %r" % (self.versions['Yaybu'], self.versions['yay']))
 
         import pkg_resources
         if pkg_resources.parse_version(self.versions["Yaybu"]) <= pkg_resources.parse_version("0"):

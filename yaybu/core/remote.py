@@ -92,6 +92,7 @@ class RemoteRunner(Runner):
         command = self.get_yaybu_command(ctx)
         client = self.connect()
         try:
+            logger.info("target executing command %r" % command)
             stdin, stdout, stderr = client.exec_command(command)
             self.get_server(ctx, stdin, stdout).serve_forever()
         finally:

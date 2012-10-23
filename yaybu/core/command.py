@@ -526,7 +526,9 @@ class YaybuCmd(OptionParsingCmd):
         ctx = self.create_initial_context(provider, cluster_name, filename, yargs)
         cloud = self.get_cluster(ctx, provider, cluster_name, filename)
         cloud.provision_roles()
+        logger.info("Provisioning completed, updating hosts")
         for hostname in cloud.get_all_hostnames():
+            logger.info("Updating host %r" % hostname)
             host_ctx = self.create_host_context(hostname, provider, cluster_name, 
                                                 filename, yargs, cloud)
             if opts.dump:
