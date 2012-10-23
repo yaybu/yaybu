@@ -96,6 +96,8 @@ class RemoteRunner(Runner):
             stdin, stdout, stderr = client.exec_command(command)
             self.get_server(ctx, stdin, stdout).serve_forever()
         finally:
+            for line in stderr:
+                logger.error(line)
             client.close()
         ## TODO: work out how to get exit status - probably SSHException raised
         return 0
