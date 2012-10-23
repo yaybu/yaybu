@@ -105,6 +105,7 @@ class RemoteRunner(Runner):
         return 0
 
     def execute(self, client, command):
+        logger.debug("Executing %r" % command)
         stdin, stdout, stderr = client.exec_command(command)
         stdin.close()
         for l in stdout:
