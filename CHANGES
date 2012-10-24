@@ -4,7 +4,8 @@ Changelog for yaybu
 0.2.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Workaround a bug in python2.6 that causes certain Amazon S3 operations to
+  hang.
 
 
 0.2.1 (2012-10-23)
@@ -29,6 +30,7 @@ Changelog for yaybu
 - Add a new ``yaybu bootstrap`` to simplify setup on Ubuntu boxes.
   If you are running a development build of Yaybu then the bootstrap will be of
   the latest code pushed to master on GitHub.
+
 
 0.1.28 (2012-10-13)
 -------------------

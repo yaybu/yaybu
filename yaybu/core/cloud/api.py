@@ -28,6 +28,28 @@ import time
 from yaybu.core.util import memoized
 from yaybu.core import remote
 
+
+#####################################################################
+# Monkeypatch httplib so that libcloud doesn't hang on get_object
+# This is only needed on python 2.6 but should be safe for other pythons
+import httplib
+HTTPResponse = httplib.HTTPResponse
+
+class HTTPResponse27(HTTPResponse):
+
+    def read(self, amt=None):
+        if self.fp is None:
+            return ''
+        if self._method == 'HEAD':
+            self.close()
+            return ''
+        return HTTPResponse.read(self, amt)
+
+httplib.HTTPResponse = HTTPResponse27
+httplib.HTTPConnection.response_class = HTTPResponse27
+#####################################################################
+
+
 libcloud.security.VERIFY_SSL_CERT = True
 
 logger = logging.getLogger(__name__)
