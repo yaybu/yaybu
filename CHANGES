@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-0.2.2 (unreleased)
+0.2.2 (2012-10-24)
 ------------------
 
 - Workaround a bug in python2.6 that causes certain Amazon S3 operations to
