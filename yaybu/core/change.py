@@ -157,7 +157,7 @@ class ChangeLog:
         self.verbose = self.ctx.verbose
 
         self.logger = logging.getLogger("yaybu.changelog")
-        self.logger.propogate = False
+        self.logger.propagate = False
 
     def configure_session_logging(self):
         root = logging.getLogger("yaybu.changelog")
