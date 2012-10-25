@@ -4,7 +4,10 @@ Changelog for yaybu
 0.2.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Update workaround to avoid conflicts with boto (which has a HTTPResponse
+  subclass).
+
+- Remove some of the more pointless logging.
 
 
 0.2.2 (2012-10-24)
