@@ -124,7 +124,6 @@ class ResourceChange(object):
 
         # We wrap the logger so it always has context information
         logger = logging.getLogger("yaybu.changelog")
-        logger.propagate = False
         self.logger = logging.LoggerAdapter(logger, dict(resource=unicode(resource)))
 
     def info(self, message, *args):
@@ -158,6 +157,7 @@ class ChangeLog:
         self.verbose = self.ctx.verbose
 
         self.logger = logging.getLogger("yaybu.changelog")
+        self.logger.propogate = False
 
     def configure_session_logging(self):
         root = logging.getLogger("yaybu.changelog")

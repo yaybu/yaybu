@@ -54,7 +54,10 @@ def main():
     if opts.ssh_auth_sock:
         os.environ["SSH_AUTH_SOCK"] = opts.ssh_auth_sock
 
+    logging.getLogger("ssh.transport").setLevel(logging.CRITICAL)
+
     atexit.register(logging.shutdown)
+
     com = command.YaybuCmd(verbose=opts.verbose, ypath=opts.ypath, logfile=opts.logfile)
     if args:
         sys.exit(com.onecmd(" ".join(args)) or 0)
