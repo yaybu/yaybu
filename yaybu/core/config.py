@@ -14,10 +14,80 @@
 
 import os
 
-from yay.errors import Error, get_exception_context
+from yay.errors import Error, NoMatching, get_exception_context
 from yay.config import Config as BaseConfig
 
 from yaybu.error import ParseError
+
+
+class YaybuArgParsingError(Exception):
+    pass
+
+
+class YaybuArg:
+
+    def __init__(self, name, type_='string', default=None, help=None):
+        self.name = name.lower()
+        self.type = type_.lower()
+        self.default = default
+        self.help = help
+        self.value = None
+
+    def set(self, value):
+        self.value = value
+
+    def _get(self):
+        if self.value is None and self.default is not None:
+            return self.default
+        else:
+            return self.value
+
+    def get(self):
+        return self.convert(self._get())
+
+    def convert(self, value):
+        if self.type == 'string':
+            return value
+        elif self.type == 'integer':
+            try:
+                return int(value)
+            except ValueError:
+                raise YaybuArgParsingError("Cannot convert %r to an int for argument %r" % (value, self.name))
+        elif self.type == 'boolean':
+            if type(value) == type(True):
+                # might already be boolean
+                return value
+            if value.lower() in ('no', '0', 'off', 'false'):
+                return False
+            elif value.lower() in ('yes', '1', 'on', 'true'):
+                return True
+            raise YaybuArgParsingError("Cannot parse boolean from %r for argument %r" % (value, self.name))
+        else:
+            raise YaybuArgParsingError("Don't understand %r as a type for argument %r" % (self.type, self.name))
+
+
+class YaybuArgParser:
+
+    def __init__(self, *args):
+        self.args = {}
+        for a in args:
+            self.add(a)
+
+    def add(self, arg):
+        if arg.name in self.args:
+            raise YaybuArgParsingError("Duplicate argument %r specified" % (arg.name,))
+        self.args[arg.name] = arg
+
+    def parse(self, **arguments):
+        for name, value in arguments.items():
+            if name not in self.args:
+                raise YaybuArgParsingError("Unexpected argument %r provided" % (name,))
+            self.args[name].set(value)
+        return dict(self.values())
+
+    def values(self):
+        for a in self.args.values():
+            yield (a.name, a.get())
 
 
 class Config(BaseConfig):
@@ -52,6 +122,39 @@ class Config(BaseConfig):
         defaults_gpg = os.path.expanduser("~/.yaybu/defaults.yay.gpg")
         if os.path.exists(defaults_gpg):
             self.load_uri(defaults_gpg)
+
+    def set_arguments(self, **arguments):
+        parser = YaybuArgParser()
+
+        try:
+            args = self.mapping.get('yaybu').get('options').resolve()
+        except NoMatching:
+            args = []
+ 
+       for arg in args:
+            if 'name' not in arg:
+                raise KeyError("No name specified for an argument")
+            yarg = YaybuArg(arg['name'], 
+                            arg.get('type', 'string'),
+                            arg.get('default', None),
+                            arg.get('help', None)
+                            )
+            parser.add(yarg)
+
+       self.add({
+           "yaybu": {
+               "argv": parser.parse(arguments),
+               }
+           })
+
+    def set_arguments_from_argv(self, argv):
+        arguments = {}
+        for arg in argv:
+            name, value = arg.split("=", 1)
+            if name in arguments:
+                raise YaybuArgParsingError("Duplicate argument %r specified" % (name,))
+            arguments[name] = value
+        self.set_arguments(**arguments)
 
     def set_hostname(self, hostname):
         self.add({

@@ -21,73 +21,6 @@ from ssh.dsskey import DSSKey
 
 logger = logging.getLogger("yaybu.core.command")
 
-class YaybuArgParsingError(Exception):
-    pass
-
-class YaybuArg:
-    
-    def __init__(self, name, type_='string', default=None, help=None):
-        self.name = name.lower()
-        self.type = type_.lower()
-        self.default = default
-        self.help = help
-        self.value = None
-        
-    def set(self, value):
-        self.value = value
-        
-    def _get(self):
-        if self.value is None and self.default is not None:
-            return self.default
-        else:
-            return self.value
-        
-    def get(self):
-        return self.convert(self._get())
-    
-    def convert(self, value):
-        if self.type == 'string':
-            return value
-        elif self.type == 'integer':
-            try:
-                return int(value)
-            except ValueError:
-                raise YaybuArgParsingError("Cannot convert %r to an int for argument %r" % (value, self.name))
-        elif self.type == 'boolean':
-            if type(value) == type(True):
-                # might already be boolean
-                return value
-            if value.lower() in ('no', '0', 'off', 'false'):
-                return False
-            elif value.lower() in ('yes', '1', 'on', 'true'):
-                return True
-            raise YaybuArgParsingError("Cannot parse boolean from %r for argument %r" % (value, self.name))
-        else:
-            raise YaybuArgParsingError("Don't understand %r as a type for argument %r" % (self.type, self.name))
-        
-class YaybuArgParser:
-    
-    def __init__(self, *args):
-        self.args = {}
-        for a in args:
-            self.add(a)
-        
-    def add(self, arg):
-        if arg.name in self.args:
-            raise YaybuArgParsingError("Duplicate argument %r specified" % (arg.name,))
-        self.args[arg.name] = arg
-        
-    def parse(self, argv):
-        for arg in argv:
-            name, value = arg.split("=", 1)
-            if name not in self.args:
-                raise YaybuArgParsingError("Unexpected argument %r provided on command line" % (name,))
-            self.args[name].set(value)
-        return dict(self.values())
-    
-    def values(self):
-        for a in self.args.values():
-            yield (a.name, a.get())
 
 class OptionParsingCmd(cmd.Cmd):
     
@@ -453,24 +386,6 @@ class YaybuCmd(OptionParsingCmd):
                     new_cfg['hosts'].append(struct)
         ctx.get_config().add(new_cfg)
         
-    def analyze_args(self, ctx):
-        """ Extract the arguments from the yaybu.argv key and return a parser """
-        parser = YaybuArgParser()
-        try:
-            args = ctx.get_config().mapping.get('yaybu').get('options').resolve()
-        except yay.errors.NoMatching:
-            args = []
-        for arg in args:
-            if 'name' not in arg:
-                raise KeyError("No name specified for an argument")
-            yarg = YaybuArg(arg['name'], 
-                            arg.get('type', 'string'),
-                            arg.get('default', None),
-                            arg.get('help', None)
-                            )
-            parser.add(yarg)
-        return parser
-        
     def opts_provision(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
@@ -521,9 +436,7 @@ class YaybuCmd(OptionParsingCmd):
             return
         provider, cluster_name, filename = args[:3]
         ctx = self.create_initial_context(provider, cluster_name, filename)
-        yarg_parser = self.analyze_args(ctx)
-        yargs = yarg_parser.parse(args[3:])
-        ctx = self.create_initial_context(provider, cluster_name, filename, yargs)
+        ctx.set_arguments_from_argv(args[3:])
         cloud = self.get_cluster(ctx, provider, cluster_name, filename)
         cloud.provision_roles()
         logger.info("Provisioning completed, updating hosts")
