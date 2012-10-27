@@ -4,7 +4,8 @@ Changelog for yaybu
 0.2.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add a subclass of ``yay.config.Config`` that helps adapt yay for use in
+  Yaybu..
 
 
 0.2.3 (2012-10-25)

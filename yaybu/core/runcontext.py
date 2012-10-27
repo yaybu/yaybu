@@ -26,6 +26,7 @@ from yaybu.core import change, resource, vfs
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.core.shell import Shell
+from yaybu.core.config import Config
 
 logger = logging.getLogger("runcontext")
 
@@ -88,13 +89,8 @@ class RunContext(object):
                 self.connect_user, self.host = self.host.split("@", 1)
             if ":" in self.host:
                 self.host, self.port = self.host.split(":", 1)
-        extra = {
-            "yaybu": {
-                "host": self.host,
-                }
-            }
         if self._config:
-            self._config.add(extra)
+            self._config.set_hostname(self.host)
 
     def setup_shell(self, environment):
         self.shell = Shell(context=self,
@@ -137,42 +133,8 @@ class RunContext(object):
         if self._config:
             return self._config
 
-        try:
-            yay_config = {
-                "openers": {
-                    "packages": {
-                        "cachedir": os.path.expanduser("~/.yaybu/packages"),
-                        },
-                    },
-                }
-            c = yay.config.Config(searchpath=self.ypath, config=yay_config)
-
-            if self.host:
-                extra = {
-                    "yaybu": {
-                        "host": self.host,
-                        }
-                    }
-                c.add(extra)
-
-            defaults = os.path.expanduser("~/.yaybu/defaults.yay")
-            if os.path.exists(defaults):
-                c.load_uri(defaults)
-
-            defaults_gpg = os.path.expanduser("~/.yaybu/defaults.yay.gpg")
-            if os.path.exists(defaults_gpg):
-                c.load_uri(defaults_gpg)
-
-            c.load_uri(self.configfile)
-
-            self._config = c
-            return c
-
-        except yay.errors.Error, e:
-            msg = e.get_string()
-            if self.verbose > 2:
-                msg += "\n" + get_exception_context()
-            raise ParseError(e.get_string())
+        self._config = Config(self)
+        return self._config
 
     def set_bundle(self, bundle):
         self._bundle = bundle
@@ -241,7 +203,7 @@ class RemoteRunContext(RunContext):
     def get_config(self):
         self.connection.request("GET", "/config")
         rsp = self.connection.getresponse()
-        c = yay.config.Config()
+        c = Config(self)
         c.add(pickle.loads(rsp.read()))
         return c
 
