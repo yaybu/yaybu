@@ -17,11 +17,7 @@ import os
 from yay.errors import Error, NoMatching, get_exception_context
 from yay.config import Config as BaseConfig
 
-from yaybu.core.error import ParseError
-
-
-class YaybuArgParsingError(Exception):
-    pass
+from yaybu.core.error import ParseError, ArgParseError
 
 
 class YaybuArg:
@@ -52,7 +48,7 @@ class YaybuArg:
             try:
                 return int(value)
             except ValueError:
-                raise YaybuArgParsingError("Cannot convert %r to an int for argument %r" % (value, self.name))
+                raise ArgParseError("Cannot convert %r to an int for argument %r" % (value, self.name))
         elif self.type == 'boolean':
             if type(value) == type(True):
                 # might already be boolean
@@ -61,9 +57,9 @@ class YaybuArg:
                 return False
             elif value.lower() in ('yes', '1', 'on', 'true'):
                 return True
-            raise YaybuArgParsingError("Cannot parse boolean from %r for argument %r" % (value, self.name))
+            raise ArgParseError("Cannot parse boolean from %r for argument %r" % (value, self.name))
         else:
-            raise YaybuArgParsingError("Don't understand %r as a type for argument %r" % (self.type, self.name))
+            raise ArgParseError("Don't understand %r as a type for argument %r" % (self.type, self.name))
 
 
 class YaybuArgParser:
@@ -75,13 +71,13 @@ class YaybuArgParser:
 
     def add(self, arg):
         if arg.name in self.args:
-            raise YaybuArgParsingError("Duplicate argument %r specified" % (arg.name,))
+            raise ArgParseError("Duplicate argument %r specified" % (arg.name,))
         self.args[arg.name] = arg
 
     def parse(self, **arguments):
         for name, value in arguments.items():
             if name not in self.args:
-                raise YaybuArgParsingError("Unexpected argument %r provided" % (name,))
+                raise ArgParseError("Unexpected argument %r provided" % (name,))
             self.args[name].set(value)
         return dict(self.values())
 
@@ -152,7 +148,7 @@ class Config(BaseConfig):
         for arg in argv:
             name, value = arg.split("=", 1)
             if name in arguments:
-                raise YaybuArgParsingError("Duplicate argument %r specified" % (name,))
+                raise ArgParseError("Duplicate argument %r specified" % (name,))
             arguments[name] = value
         self.set_arguments(**arguments)
 

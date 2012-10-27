@@ -170,6 +170,10 @@ class UnmodifiedAsset(ExecutionError):
     handling and should be filed as a bug against Yaybu. """
     returncode = 153
 
+class ArgParseError(ParseError):
+    """ Error parsing an argument that was applied to a config """
+    returncode = 154
+
 class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our
     tests. This exception is never really raised, but it's useful to keep the

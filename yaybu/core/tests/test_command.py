@@ -2,6 +2,7 @@
 
 import unittest
 from yaybu.core import config
+from yaybu.core.error import ArgParseError
 
 
 class TestYaybuArg(unittest.TestCase):
@@ -31,7 +32,7 @@ class TestYaybuArg(unittest.TestCase):
     def test_integer_bad(self):
         arg = config.YaybuArg('foo', 'integer', default=20)
         arg.set("boo")
-        self.assertRaises(config.YaybuArgParsingError, arg.get)
+        self.assertRaises(ArgParseError, arg.get)
         
     def test_boolean(self):
         arg = config.YaybuArg('foo', 'boolean')
@@ -53,7 +54,7 @@ class TestYaybuArg(unittest.TestCase):
     def test_unknown(self):
         arg = config.YaybuArg('foo', 'meh', default=20)
         arg.set("boo")
-        self.assertRaises(config.YaybuArgParsingError, arg.get)
+        self.assertRaises(ArgParseError, arg.get)
         
         
         
