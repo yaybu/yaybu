@@ -134,6 +134,7 @@ class RunContext(object):
             return self._config
 
         self._config = Config(self)
+        self._config.load_uri(self.configfile)
         return self._config
 
     def set_bundle(self, bundle):

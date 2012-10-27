@@ -181,6 +181,9 @@ class YaybuCmd(OptionParsingCmd):
         usage: apply [options] <filename>
         Applies the specified file to the current host
         """
+        if len(args) < 1:
+            self.simple_help("apply")
+            return
         if os.path.exists("/etc/yaybu"):
             config = yay.load_uri("/etc/yaybu")
             opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
@@ -195,6 +198,8 @@ class YaybuCmd(OptionParsingCmd):
                                     env_passthrough=opts.env_passthrough,
                                     )
         ctx.changelog.configure_audit_logging()
+        if len(args) > 1:
+            ctx.get_config().set_arguments_from_argv(args[1:])
         rv = r.run(ctx)
         if rv != 0:
             raise SystemExit(rv)
@@ -202,7 +207,6 @@ class YaybuCmd(OptionParsingCmd):
     
     def opts_push(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
-        parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
@@ -214,13 +218,18 @@ class YaybuCmd(OptionParsingCmd):
         Provision the specified hostname with the specified configuration, by
         executing Yaybu on the remote system, via ssh
         """
-        if opts.host == "test://":
-            opts.host = "localhost"
+        if len(args) < 2:
+            self.simple_help("provision")
+            return
+
+        hostname = args[0]
+        if hostname == "test://":
+            hostname = "localhost"
             RUNNER = remote.TestRemoteRunner
         else:
             RUNNER = remote.RemoteRunner
 
-        ctx = runcontext.RunContext(args[0],
+        ctx = runcontext.RunContext(args[1],
                                     resume=opts.resume,
                                     no_resume=opts.no_resume,
                                     user=opts.user,
@@ -230,7 +239,10 @@ class YaybuCmd(OptionParsingCmd):
                                     env_passthrough=opts.env_passthrough,
                                     )
 
-        r = RUNNER(ctx.host)
+        if len(args) > 1:
+            ctx.get_config().set_arguments_from_argv(args[2:])
+
+        r = RUNNER(hostname)
         rv = r.run(ctx)
         return rv
 

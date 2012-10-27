@@ -17,7 +17,7 @@ import os
 from yay.errors import Error, NoMatching, get_exception_context
 from yay.config import Config as BaseConfig
 
-from yaybu.error import ParseError
+from yaybu.core.error import ParseError
 
 
 class YaybuArgParsingError(Exception):
@@ -99,7 +99,7 @@ class Config(BaseConfig):
     policies like looking in ``~/.yaybu/`` for certain things.
     """
 
-    def __init__(self, context, host=None):
+    def __init__(self, context, hostname=None):
         self.context = context
 
         config = {
@@ -110,7 +110,7 @@ class Config(BaseConfig):
                 },
             }
 
-        super(Config, self).__init__(context.ypath, config)
+        super(Config, self).__init__(searchpath=context.ypath, config=config)
 
         if hostname:
             self.set_hostname(hostname)
@@ -131,7 +131,7 @@ class Config(BaseConfig):
         except NoMatching:
             args = []
  
-       for arg in args:
+        for arg in args:
             if 'name' not in arg:
                 raise KeyError("No name specified for an argument")
             yarg = YaybuArg(arg['name'], 
@@ -141,11 +141,11 @@ class Config(BaseConfig):
                             )
             parser.add(yarg)
 
-       self.add({
-           "yaybu": {
-               "argv": parser.parse(arguments),
-               }
-           })
+        self.add({
+            "yaybu": {
+                "argv": parser.parse(**arguments),
+                }
+            })
 
     def set_arguments_from_argv(self, argv):
         arguments = {}
@@ -165,7 +165,7 @@ class Config(BaseConfig):
 
     def _reraise_yay_errors(self, func, *args, **kwargs):
         try:
-            return func(*args, **kwargs):
+            return func(*args, **kwargs)
         except Error, e:
             msg = e.get_string()
             if self.context.verbose > 2:
