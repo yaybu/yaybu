@@ -376,7 +376,7 @@ class YaybuCmd(OptionParsingCmd):
             host['role'][k] = copy.copy(v)
         return host
         
-    def decorate_config(self, ctx, provider, cluster, yargs=None, cloud=None):
+    def decorate_config(self, ctx, provider, cluster, cloud=None):
         """ Update the configuration with the details for all running nodes """
         new_cfg = {'hosts': [],
                    'yaybu': {
@@ -385,10 +385,6 @@ class YaybuCmd(OptionParsingCmd):
                        'argv': {},
                        }
                    }
-        if yargs is not None:
-            for k, v in yargs.items():
-                new_cfg['yaybu']['argv'][k] = v
-        ctx.get_config().add(new_cfg)
         if cloud is not None:
             roles = ctx.get_config().mapping.get('roles').resolve()
             for role_name, role in cloud.roles.items():
@@ -406,16 +402,16 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
         parser.add_option("-D", "--dump", default=False, action="store_true", help="Dump complete, *insecure* dumps of the configurations applied")
     
-    def create_initial_context(self, provider, cluster_name, filename, args=None):
+    def create_initial_context(self, provider, cluster_name, filename):
         """ Creates a context suitable for instantiating a cloud """
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
-        self.decorate_config(ctx, provider, cluster_name, args)
+        self.decorate_config(ctx, provider, cluster_names)
         return ctx
     
-    def create_host_context(self, hostname, provider, cluster_name, filename, args, cloud):
+    def create_host_context(self, hostname, provider, cluster_name, filename, cloud):
         """ Creates the context used to provision an actual host """
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose, resume=True)
-        self.decorate_config(ctx, provider, cluster_name, args, cloud)
+        self.decorate_config(ctx, provider, cluster_name, cloud)
         ctx.set_host(hostname)
         ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
         return ctx
@@ -448,14 +444,16 @@ class YaybuCmd(OptionParsingCmd):
             return
         provider, cluster_name, filename = args[:3]
         ctx = self.create_initial_context(provider, cluster_name, filename)
-        ctx.set_arguments_from_argv(args[3:])
+        ctx.get_config().set_arguments_from_argv(args[3:])
         cloud = self.get_cluster(ctx, provider, cluster_name, filename)
         cloud.provision_roles()
         logger.info("Provisioning completed, updating hosts")
         for hostname in cloud.get_all_hostnames():
             logger.info("Updating host %r" % hostname)
             host_ctx = self.create_host_context(hostname, provider, cluster_name, 
-                                                filename, yargs, cloud)
+                                                filename, cloud)
+
+            host_ctx.get_config().set_arguments_from_argv(args[3:])
             if opts.dump:
                 self.dump(host_ctx, "%s.yay" % hostname)
             result = self.create_runner(host_ctx, provider, hostname).run(host_ctx)
