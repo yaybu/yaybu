@@ -238,7 +238,6 @@ class FakeChrootFixture(Fixture):
         args = list(args)
         if self.test_network:
             args.insert(0, "test://")
-            args.insert(0, "--host")
             args.insert(0, "push")
         else:
             args.insert(0, "apply")
