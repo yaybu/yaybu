@@ -376,3 +376,122 @@ class Cluster:
         key = self.roles[role].key
         self.install_yaybu(node, key)
         return node
+
+    def get_key(self, ctx, provider, key_name):
+        """ Load the key specified by name. """
+        clouds = ctx.get_config().mapping.get('clouds').resolve()
+        filename = get_encrypted(clouds[provider]['keys'][key_name])
+        saved_exception = None
+        for pkey_class in (RSAKey, DSSKey):
+            try:
+                file = ctx.get_file(filename)
+                key = pkey_class.from_private_key(file)
+                return key
+            except SSHException, e:
+                saved_exception = e
+        raise saved_exception
+
+    def extract_roles(self, ctx, provider):
+        roles = ctx.get_config().mapping.get('roles').resolve()
+        for k, v in roles.items():
+            dns = None
+            if 'dns' in v:
+                zone = get_encrypted(v['dns']['zone'])
+                name = get_encrypted(v['dns']['name'])
+                dns = SimpleDNSNamingPolicy(zone, name)
+            yield Role(
+                k,
+                get_encrypted(v['key']),
+                self.get_key(ctx, provider, get_encrypted(v['key'])),
+                get_encrypted(v['instance']['image']),
+                get_encrypted(v['instance']['size']),
+                get_encrypted(v.get('depends', ())),
+                dns,
+                get_encrypted(v.get('min', 0)),
+                get_encrypted(v.get('max', None)))
+
+    def get_cluster(self, ctx, provider, cluster_name, filename):
+        """ Create a ScalableCloud object from the configuration provided.
+        """
+
+        clouds = ctx.get_config().mapping.get('clouds').resolve()
+        p = clouds.get(provider, None)
+        if p is None:
+            raise KeyError("provider %r not found" % provider)
+        roles = self.extract_roles(ctx, provider)
+        cloud = AbstractCloud(
+            get_encrypted(p['providers']['compute']),
+            get_encrypted(p['providers']['storage']),
+            get_encrypted(p['providers']['dns']),
+            get_encrypted(p['args']),
+            get_encrypted(p['images']),
+            get_encrypted(p['sizes']),
+            )
+        cluster = Cluster(cloud, cluster_name, roles)
+        return cluster
+
+    def delete_cloud(self, ctx, provider, cluster_name, filename):
+        clouds = ctx.get_config().mapping.get('clouds').resolve()
+        p = clouds.get(provider, None)
+        if p is None:
+            raise KeyError("provider %r not found" % provider)
+
+    def host_info(self, info, role_name, role):
+        """ Information for a host to be inserted into the configuration.
+        Pass an info structure from cloud.get_node_info """
+        ## TODO refactor into cloud or an adapter
+        hostname = info['fqdn']
+        host = copy.copy(info)
+        host['role'] = {}
+        host['rolename'] = role_name
+        for k, v in role.items():
+            host['role'][k] = copy.copy(v)
+        return host
+
+    def decorate_config(self, ctx, provider, cluster, cloud=None):
+        """ Update the configuration with the details for all running nodes """
+        new_cfg = {'hosts': [],
+                   'yaybu': {
+                       'provider': provider,
+                       'cluster': cluster,
+                       'argv': {},
+                       }
+                   }
+        if cloud is not None:
+            roles = ctx.get_config().mapping.get('roles').resolve()
+            for role_name, role in cloud.roles.items():
+                for node in role.nodes.values():
+                    node_info = cloud.get_node_info(node)
+                    struct = self.host_info(node_info, role_name, roles[role_name])
+                    new_cfg['hosts'].append(struct)
+        ctx.get_config().add(new_cfg)
+
+    def create_initial_context(self, provider, cluster_name, filename):
+        """ Creates a context suitable for instantiating a cloud """
+        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
+        self.decorate_config(ctx, provider, cluster_names)
+        return ctx
+    
+    def create_host_context(self, hostname, provider, cluster_name, filename, cloud):
+        """ Creates the context used to provision an actual host """
+        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose, resume=True)
+        self.decorate_config(ctx, provider, cluster_name, cloud)
+        ctx.set_host(hostname)
+        ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
+        return ctx
+
+    def create_runner(self, ctx, provider, hostname):
+        """ Create a runner for the specified host, using the key found in
+        the configuration """
+        hosts = ctx.get_config().mapping.get("hosts").resolve()
+        host = filter(lambda h: h['fqdn'] == hostname, hosts)[0]
+        key_name = host['role']['key']
+        key = self.get_key(ctx, provider, key_name)
+        r = remote.RemoteRunner(hostname, key)
+        return r
+    
+    def dump(self, ctx, filename):
+        """ Dump the configuration in a raw form """
+        cfg = ctx.get_config().get()
+        open(filename, "w").write(yay.dump(cfg))
+
