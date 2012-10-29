@@ -318,8 +318,8 @@ class YaybuCmd(OptionParsingCmd):
             self.simple_help("provision")
             return
         provider, cluster_name, filename = args[:3]
-        cluster = Cluster.get_cluster(provider, cluster_name, filename, argv=args[3:])
-        return cluster.provision()
+        cluster = Cluster(provider, cluster_name, filename, argv=args[3:])
+        return cluster.provision(dump=opts.dump)
            
     def do_zoneupdate(self, opts, args):
         """ 
@@ -330,7 +330,7 @@ class YaybuCmd(OptionParsingCmd):
             self.simple_help("zoneupdate")
             return
         provider, cluster_name, filename = args
-        cluster = Cluster.get_cluster(provider, cluster_name, filename)
+        cluster = Cluster(provider, cluster_name, filename)
         for role, nodename in cluster.get_all_roles_and_nodenames():
             cluster.node_zone_update(role.name, nodename)
         
@@ -368,7 +368,7 @@ class YaybuCmd(OptionParsingCmd):
             self.do_help((),("rmcluster",))
             return
         provider, cluster_name, filename = args
-        cluster = Cluster.get_cluster(provider, cluster_name, filename)
+        cluster = Cluster(provider, cluster_name, filename)
         for role in cluster.roles_in_order():
             print "%s %s %s min %s max %s depends %s" % (
                 role.name, role.image, role.size, role.min, role.max, role.depends)
@@ -386,7 +386,7 @@ class YaybuCmd(OptionParsingCmd):
             return
         provider, cluster_name, filename = args
         logger.info("Deleting cluster")
-        cluster = Cluster.get_cluster(provider, cluster_name, filename)
+        cluster = Cluster(provider, cluster_name, filename)
         for role, name in cluster.get_all_roles_and_nodenames():
             logger.warning("Destroying %r on request" % (name,))
             cluster.destroy_node(role, name)
