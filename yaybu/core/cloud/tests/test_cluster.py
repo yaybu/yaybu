@@ -71,9 +71,9 @@ class TestAbstractCloud(unittest.TestCase):
             'EC2_EU_WEST',
             'S3_EU_WEST',
             'DNS',
-            {},
             {'ubuntu': 'frob'},
             {'medium': 'nicate'},
+            args={},
             )
         cloud.cloud = Mock()
         cloud.cloud.images ={'frob': Mock(id='frob')}
