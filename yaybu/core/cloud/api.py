@@ -31,6 +31,7 @@ from libcloud.dns.providers import get_driver as get_dns_driver
 from libcloud.compute.deployment import MultiStepDeployment, ScriptDeployment, SSHKeyDeployment
 import libcloud.security
 from libcloud.common.types import LibcloudError
+from libcloud.storage.types import ContainerDoesNotExistError
 
 from boto.route53.exception import DNSServerError
 from boto.route53.connection import Route53Connection
@@ -102,25 +103,29 @@ class Cloud(object):
 
     """ Adapter of a cloud that provides access to runtime functionality. """
 
-    def __init__(self, compute_provider, storage_provider, dns_provider, args):
+    def __init__(self, compute_provider, storage_provider, dns_provider, args=(), compute_args=(), storage_args=()):
+        """ storage_args and compute_args will be used for preference if
+        provided. otherwise args are used for both """
         self.compute_provider = compute_provider
         self.storage_provider = storage_provider
         self.dns_provider = dns_provider
-        self.args = args
+        self.args = dict(args)
+        self.compute_args = dict(compute_args) or self.args
+        self.storage_args = dict(storage_args) or self.args
 
     @property
     @memoized
     def compute(self):
         provider = getattr(ComputeProvider, self.compute_provider)
         driver_class = get_compute_driver(provider)
-        return driver_class(**self.args)
+        return driver_class(**self.compute_args)
     
     @property
     @memoized
     def storage(self):
         provider = getattr(StorageProvider, self.storage_provider)
         driver_class = get_storage_driver(provider)
-        return driver_class(**self.args)
+        return driver_class(**self.storage_args)
     
     @property
     @memoized
@@ -175,12 +180,8 @@ class Cloud(object):
                 logger.warning("Node did not start before timeout. retrying.")
                 node.destroy()
                 continue
-            if not name in self.nodes:
-                logger.debug("Naming fail for new node. retrying.")
-                node.destroy()
-                continue
             logger.debug("Node %r running" % (name, ))
-            return self.nodes[name]
+            return node
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
 

@@ -147,8 +147,8 @@ Your roles should look like::
                 zone: <zone that the server will exist in>
                 name: <host name within the zone>
 
-Host API
---------
+Provided configuration
+----------------------
 
 Yaybu will create a set of terms that looks like this::
 
