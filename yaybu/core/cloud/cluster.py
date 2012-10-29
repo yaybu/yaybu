@@ -427,6 +427,9 @@ class Cluster:
             get_encrypted(p['args']),
             get_encrypted(p['images']),
             get_encrypted(p['sizes']),
+            args=get_encrypted(p.get('args', {})), 
+            compute_args=get_encrypted(p.get('compute_args', {})),
+            storage_args=get_encrypted(p.get('storage_args', {})),
             )
         cluster = Cluster(cloud, cluster_name, roles)
         return cluster
