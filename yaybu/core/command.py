@@ -11,13 +11,7 @@ from functools import partial
 import yay
 import yay.errors
 from yaybu.core import runner, remote, runcontext, error
-from yaybu.core.util import version, get_encrypted
-from yaybu.core.cloud.cluster import Cluster, Role
-from ssh.ssh_exception import SSHException
 from yaybu.core.cloud.cluster import Cluster
-
-from ssh.rsakey import RSAKey
-from ssh.dsskey import DSSKey
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -324,24 +318,9 @@ class YaybuCmd(OptionParsingCmd):
             self.simple_help("provision")
             return
         provider, cluster_name, filename = args[:3]
-        ctx = self.create_initial_context(provider, cluster_name, filename)
-        ctx.get_config().set_arguments_from_argv(args[3:])
-        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
-        cloud.provision_roles()
-        logger.info("Provisioning completed, updating hosts")
-        for hostname in cloud.get_all_hostnames():
-            logger.info("Updating host %r" % hostname)
-            host_ctx = self.create_host_context(hostname, provider, cluster_name, 
-                                                filename, cloud)
-
-            host_ctx.get_config().set_arguments_from_argv(args[3:])
-            if opts.dump:
-                self.dump(host_ctx, "%s.yay" % hostname)
-            result = self.create_runner(host_ctx, provider, hostname).run(host_ctx)
-            if result != 0:
-                # stop processing further hosts
-                return result
-            
+        cluster = Cluster.get_cluster(provider, cluster_name, filename, argv=args[3:])
+        return cluster.provision()
+           
     def do_zoneupdate(self, opts, args):
         """ 
         usage: zoneupdate <provider> <cluster> <filename>
@@ -351,10 +330,9 @@ class YaybuCmd(OptionParsingCmd):
             self.simple_help("zoneupdate")
             return
         provider, cluster_name, filename = args
-        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
-        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
-        for role, nodename in cloud.get_all_roles_and_nodenames():
-            cloud.node_zone_update(role.name, nodename)
+        cluster = Cluster.get_cluster(provider, cluster_name, filename)
+        for role, nodename in cluster.get_all_roles_and_nodenames():
+            cluster.node_zone_update(role.name, nodename)
         
     def do_addnode(self, opts, args):
         """
@@ -377,10 +355,10 @@ class YaybuCmd(OptionParsingCmd):
             self.do_help((),("ssh",))
             return
         provider, cluster_name, filename = args
-        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
-        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
+        cluster = self.get_cluster(provider, cluster_name, filename)
         # do some stuff
-        
+        raise NotImplementedError
+ 
     def do_info(self, opts, args):
         """
         usage: info <provider> <cluster> <filename>
@@ -390,13 +368,12 @@ class YaybuCmd(OptionParsingCmd):
             self.do_help((),("rmcluster",))
             return
         provider, cluster_name, filename = args
-        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
-        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
-        for role in cloud.roles_in_order():
+        cluster = Cluster.get_cluster(provider, cluster_name, filename)
+        for role in cluster.roles_in_order():
             print "%s %s %s min %s max %s depends %s" % (
                 role.name, role.image, role.size, role.min, role.max, role.depends)
             for node in role.nodes.values():
-                n = cloud.cloud.nodes[node.their_name]
+                n = cluster.cloud.nodes[node.their_name]
                 print "    %s %s" % (node.their_name, n.extra['dns_name'])
         
     def do_rmcluster(self, opts, args):
@@ -408,12 +385,11 @@ class YaybuCmd(OptionParsingCmd):
             self.do_help((),("rmcluster",))
             return
         provider, cluster_name, filename = args
-        ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose)
         logger.info("Deleting cluster")
-        cloud = self.get_cluster(ctx, provider, cluster_name, filename)
-        for role, name in cloud.get_all_roles_and_nodenames():
+        cluster = Cluster.get_cluster(provider, cluster_name, filename)
+        for role, name in cluster.get_all_roles_and_nodenames():
             logger.warning("Destroying %r on request" % (name,))
-            cloud.destroy_node(role, name)
+            cluster.destroy_node(role, name)
     
     def do_quit(self, opts=None, args=None):
         """ Exit yaybu """

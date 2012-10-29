@@ -6,9 +6,14 @@ import yaml
 from yaybu.core import remote
 from . import api
 from . import dependency
+from yaybu.core.util import version, get_encrypted
 
 import logging
 import abc
+
+from ssh.ssh_exception import SSHException
+from ssh.rsakey import RSAKey
+from ssh.dsskey import DSSKey
 
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 
@@ -212,7 +217,7 @@ class Cluster:
     """ Built on top of AbstractCloud, a Cluster knows about server roles and
     can create and remove nodes for those roles. """
     
-    def __init__(self, cloud, name, roles, state_bucket="yaybu-state"):
+    def __init__(self, cloud, name, roles, argv=None, state_bucket="yaybu-state"):
         """
         Args:
             name: The name of the cloud
@@ -226,6 +231,7 @@ class Cluster:
         self.roles = dict((r.name, r) for r in roles)
         for r in self.roles.values():
             self.cloud.validate(r.image, r.size)
+        self.argv = argv
         self.state_bucket = state_bucket
         self.load_state()
         
@@ -369,7 +375,30 @@ class Cluster:
         hostname = rnode.extra['dns_name']
         runner = remote.RemoteRunner(hostname, key)
         runner.install_yaybu()
-    
+
+    def provision(self):
+        self.provision_roles()
+        logger.info("Provisioning completed, updating hosts")
+        for hostname in self.get_all_hostnames():
+            logger.info("Updating host %r" % hostname)
+            host_ctx = self.create_host_context(hostname, provider, cluster_name, 
+                                                filename, cloud)
+
+            host_ctx.get_config().set_arguments_from_argv(args[3:])
+            if opts.dump:
+                self.dump(host_ctx, "%s.yay" % hostname)
+            result = self.create_runner(host_ctx, provider, hostname).run(host_ctx)
+            if result != 0:
+                # stop processing further hosts
+                return result
+
+    def delete_cloud(self, ctx, provider, cluster_name, filename):
+        clouds = ctx.get_config().mapping.get('clouds').resolve()
+        p = clouds.get(provider, None)
+        if p is None:
+            raise KeyError("provider %r not found" % provider)
+        raise NotImplementedError
+
     def provision_node(self, role):
         """ Actually create the node in the cloud. Update our local runtime
         and update the state held in the cloud. """
@@ -378,6 +407,7 @@ class Cluster:
         self.install_yaybu(node, key)
         return node
 
+    @classmethod
     def get_key(self, ctx, provider, key_name):
         """ Load the key specified by name. """
         clouds = ctx.get_config().mapping.get('clouds').resolve()
@@ -392,7 +422,8 @@ class Cluster:
                 saved_exception = e
         raise saved_exception
 
-    def extract_roles(self, ctx, provider):
+    @classmethod
+    def extract_roles(klass, ctx, provider):
         roles = ctx.get_config().mapping.get('roles').resolve()
         for k, v in roles.items():
             dns = None
@@ -403,42 +434,13 @@ class Cluster:
             yield Role(
                 k,
                 get_encrypted(v['key']),
-                self.get_key(ctx, provider, get_encrypted(v['key'])),
+                klass.get_key(ctx, provider, get_encrypted(v['key'])),
                 get_encrypted(v['instance']['image']),
                 get_encrypted(v['instance']['size']),
                 get_encrypted(v.get('depends', ())),
                 dns,
                 get_encrypted(v.get('min', 0)),
                 get_encrypted(v.get('max', None)))
-
-    def get_cluster(self, ctx, provider, cluster_name, filename):
-        """ Create a ScalableCloud object from the configuration provided.
-        """
-
-        clouds = ctx.get_config().mapping.get('clouds').resolve()
-        p = clouds.get(provider, None)
-        if p is None:
-            raise KeyError("provider %r not found" % provider)
-        roles = self.extract_roles(ctx, provider)
-        cloud = AbstractCloud(
-            get_encrypted(p['providers']['compute']),
-            get_encrypted(p['providers']['storage']),
-            get_encrypted(p['providers']['dns']),
-            get_encrypted(p['args']),
-            get_encrypted(p['images']),
-            get_encrypted(p['sizes']),
-            args=get_encrypted(p.get('args', {})), 
-            compute_args=get_encrypted(p.get('compute_args', {})),
-            storage_args=get_encrypted(p.get('storage_args', {})),
-            )
-        cluster = Cluster(cloud, cluster_name, roles)
-        return cluster
-
-    def delete_cloud(self, ctx, provider, cluster_name, filename):
-        clouds = ctx.get_config().mapping.get('clouds').resolve()
-        p = clouds.get(provider, None)
-        if p is None:
-            raise KeyError("provider %r not found" % provider)
 
     def host_info(self, info, role_name, role):
         """ Information for a host to be inserted into the configuration.
@@ -481,6 +483,8 @@ class Cluster:
         ctx = runcontext.RunContext(filename, ypath=self.ypath, verbose=self.verbose, resume=True)
         self.decorate_config(ctx, provider, cluster_name, cloud)
         ctx.set_host(hostname)
+        if self.argv:
+            ctx.get_config().set_arguments_from_argv(self.argv)
         ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
         return ctx
 
@@ -498,4 +502,30 @@ class Cluster:
         """ Dump the configuration in a raw form """
         cfg = ctx.get_config().get()
         open(filename, "w").write(yay.dump(cfg))
+
+    @classmethod
+    def get_cluster(klass, ctx, provider, cluster_name, filename, argv=None):
+        """ Create a ScalableCloud object from the configuration provided.
+        """
+        ctx = self.create_initial_context(provider, cluster_name, filename)
+        if argv:
+            ctx.get_config().set_arguments_from_argv(argv[3:])
+        clouds = ctx.get_config().mapping.get('clouds').resolve()
+        p = clouds.get(provider, None)
+        if p is None:
+            raise KeyError("provider %r not found" % provider)
+        roles = self.extract_roles(ctx, provider)
+        cloud = AbstractCloud(
+            get_encrypted(p['providers']['compute']),
+            get_encrypted(p['providers']['storage']),
+            get_encrypted(p['providers']['dns']),
+            get_encrypted(p['args']),
+            get_encrypted(p['images']),
+            get_encrypted(p['sizes']),
+            args=get_encrypted(p.get('args', {})), 
+            compute_args=get_encrypted(p.get('compute_args', {})),
+            storage_args=get_encrypted(p.get('storage_args', {})),
+            )
+        cluster = klass(cloud, cluster_name, roles, argv=argv)
+        return cluster
 
