@@ -2,9 +2,48 @@
 import unittest
 from mock import MagicMock as Mock
 from StringIO import StringIO
+import tempfile
 import yaml
 from yaybu.core.cloud import cluster
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
+from yaybu.core.cloud import role
+from yaybu.core.cloud import node
+
+roles1 = """
+
+clouds:
+    test_cloud:
+        providers:
+            compute: DUMMY
+            storage: DUMMY
+            dns: DUMMY
+        args:
+            creds: 4
+        images:
+            ubuntu: test
+        sizes:
+            medium: test
+        keys:
+            testkey: package://yaybu/core/cloud/tests/test_key.pem
+    
+roles:
+    mailserver:
+        key: testkey
+        instance:
+            image: ubuntu
+            size: medium
+        min: 1
+        max: 3
+    appserver:
+        key: testkey
+        instance:
+            image: ubuntu
+            size: medium
+        min: 1
+        max: 1
+"""
+
+
 
 class TestStateMarshaller(unittest.TestCase):
     
@@ -40,8 +79,8 @@ class TestStateMarshaller(unittest.TestCase):
 
     def test_save(self):
         roles = {}
-        roles['mailserver'] = cluster.Role('mailserver', None, None, None, None)
-        roles['appserver'] = cluster.Role('appserver', None, None, None, None)
+        roles['mailserver'] = role.Role('mailserver', None, None, None, None)
+        roles['appserver'] = role.Role('appserver', None, None, None, None)
         roles['mailserver'].nodes[0] = cluster.Node(0, 'foo', 'fooX')
         roles['mailserver'].nodes[1] = cluster.Node(1, 'bar', 'barX')
         roles['appserver'].nodes[0] = cluster.Node(0, 'baz', 'bazX')
@@ -91,30 +130,13 @@ class TestAbstractCloud(unittest.TestCase):
 class TestCluster(unittest.TestCase):
     
     def _create_cluster(self):
-        roles = [
-            cluster.Role("mailserver",
-                         "fookey",
-                         None,
-                         "ubuntu",
-                         "medium",
-                         min_=1,max_=3),
-            cluster.Role("appserver",
-                         "fookey",
-                         None,
-                         "ubuntu",
-                         "medium",
-                         min_=1,max_=1)
-            ]
-        cloud = Mock()
-        cloud.validate = Mock(return_value=None)
+        t = tempfile.NamedTemporaryFile(delete=False)
+        t.write(roles1)
+        t.close()
         # an empty container
-        container = Mock()
-        container.get_object = Mock()
-        container.get_object.side_effect = ObjectDoesNotExistError(None, None, None)
-        cloud.get_container = Mock(return_value=container)
-        c = cluster.Cluster(cloud,
+        c = cluster.Cluster("test_cloud",
                             "test_cluster",
-                            roles,
+                            t.name,
                             )
         return c
     
@@ -128,7 +150,7 @@ class TestCluster(unittest.TestCase):
             'server2': Mock(extra={'dns_name': 'dns2'}),
             'server3': Mock(extra={'dns_name': 'dns3'}),
             }
-        self.assertEqual(sorted(c.get_all_hostnames()),
+        self.assertEqual(sorted(role.RoleCollection.hostnames()),
                          ['dns1', 'dns2', 'dns3'])
         
     def test_get_node_info(self):
@@ -140,7 +162,7 @@ class TestCluster(unittest.TestCase):
                             extra={'dns_name': 'dns1.foo.bar'},
                             ),
             }
-        self.assertEqual(c.get_node_info(c.roles['mailserver'].nodes[0]),
+        self.assertEqual(node.Node.get_node_info(c.roles['mailserver'].nodes[0]),
                          {'mapped_as': '12.12.12.12',
                           'address': '13.13.13.13',
                           'hostname': 'dns1',
@@ -157,13 +179,13 @@ class TestCluster(unittest.TestCase):
         
     def test_find_lowest_unused(self):
         c = self._create_cluster()
-        self.assertEqual(c.find_lowest_unused("mailserver"), 0)
+        self.assertEqual(role.Role.find_lowest_unused("mailserver"), 0)
         c.roles["mailserver"].add_node(0, None, None)
-        self.assertEqual(c.find_lowest_unused("mailserver"), 1)
+        self.assertEqual(role.Role.find_lowest_unused("mailserver"), 1)
         c.roles["mailserver"].add_node(1, None, None)
-        self.assertEqual(c.find_lowest_unused("mailserver"), 2)
+        self.assertEqual(role.Role.find_lowest_unused("mailserver"), 2)
         del c.roles["mailserver"].nodes[1]
-        self.assertEqual(c.find_lowest_unused("mailserver"), 1)
+        self.assertEqual(role.Role.find_lowest_unused("mailserver"), 1)
         
     
         

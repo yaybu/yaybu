@@ -12,6 +12,7 @@ import yay
 import yay.errors
 from yaybu.core import runner, remote, runcontext, error
 from yaybu.core.cloud.cluster import Cluster
+from .cloud import role
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -331,8 +332,8 @@ class YaybuCmd(OptionParsingCmd):
             return
         provider, cluster_name, filename = args
         cluster = Cluster(provider, cluster_name, filename)
-        for role, nodename in cluster.get_all_roles_and_nodenames():
-            cluster.node_zone_update(role.name, nodename)
+        for role, nodename in role.get_all_roles_and_nodenames():
+            role.Role.node_zone_update(role.name, nodename)
         
     def do_addnode(self, opts, args):
         """
@@ -369,7 +370,7 @@ class YaybuCmd(OptionParsingCmd):
             return
         provider, cluster_name, filename = args
         cluster = Cluster(provider, cluster_name, filename)
-        for role in cluster.roles_in_order():
+        for role in role.RoleCollection.roles():
             print "%s %s %s min %s max %s depends %s" % (
                 role.name, role.image, role.size, role.min, role.max, role.depends)
             for node in role.nodes.values():
@@ -387,9 +388,9 @@ class YaybuCmd(OptionParsingCmd):
         provider, cluster_name, filename = args
         logger.info("Deleting cluster")
         cluster = Cluster(provider, cluster_name, filename)
-        for role, name in cluster.get_all_roles_and_nodenames():
+        for role, name in role.RoleCollection.get_all_roles_and_nodenames():
             logger.warning("Destroying %r on request" % (name,))
-            cluster.destroy_node(role, name)
+            role.destroy_node(name)
     
     def do_quit(self, opts=None, args=None):
         """ Exit yaybu """
