@@ -167,7 +167,6 @@ class ConfigDecorator:
                    'yaybu': {
                        'provider': self.cluster.provider,
                        'cluster': self.cluster.name,
-                       'argv': self.cluster.argv,
                        }
                    }
 
@@ -215,7 +214,7 @@ class Cluster:
         """ Creates a context suitable for instantiating a cloud """
         ctx = runcontext.RunContext(self.filename, ypath=self.searchpath, verbose=self.verbose, resume=resume)
         if self.argv:
-            ctx.get_config().set_arguments_from_argv(self.argv[3:])
+            ctx.get_config().set_arguments_from_argv(self.argv)
         decorator = ConfigDecorator(self)
         decorator.decorate(ctx.get_config())
         return ctx
