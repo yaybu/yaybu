@@ -159,8 +159,10 @@ class Role:
         return self.cluster.ctx.get_config().mapping.get("roles").resolve()[self.name]
         
     def add_node(self, index, name, their_name):
-        self.nodes.append(Node(self, index, name, their_name))
-        
+        n = Node(self, index, name, their_name)
+        self.nodes.append(n)
+        return n
+
     def get_node_by_our_name(self, name):
         """ Return the index and the underlying Node structure """
         for v in self.nodes:
@@ -190,11 +192,11 @@ class Role:
         index = self.find_lowest_unused()
         name = self.node_name(index)
         logger.debug("Node will be %r" % name)
-        node = self.cluster.create_node(name, self.image, self.size, self.key_name)
-        self.add_node(index, name, node.name)
+        libcloud_node = self.cluster.create_node(name, self.image, self.size, self.key_name)
+        node = self.add_node(index, name, libcloud_node.name)
         self.cluster.commit()
         self.node_zone_update(name)
-        node.install_yaybu(self.key)
+        node.install_yaybu()
         logger.info("Node provisioned: %r" % node)
 
     def find_lowest_unused(self):

@@ -89,13 +89,11 @@ class Node:
         r = self.create_runner()
         r.run(self.context())
 
-    def install_yaybu(self, key):
+    def install_yaybu(self):
         """ Install yaybu on the provided node.
            Args:
                 node: a Node instance
             """
-        rnode = self.cloud.nodes[node.name]
-        hostname = rnode.extra['dns_name']
-        runner = remote.RemoteRunner(hostname, key)
+        runner = remote.RemoteRunner(self.hostname, self.role.key)
         runner.install_yaybu()
 

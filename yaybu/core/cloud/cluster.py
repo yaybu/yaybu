@@ -224,7 +224,7 @@ class Cluster:
         clouds = self.ctx.get_config().mapping.get('clouds').resolve()
         p = clouds.get(self.provider, None)
         if p is None:
-            raise KeyError("provider %r not found" % provider)
+            raise KeyError("provider %r not found" % self.provider)
         cloud = AbstractCloud(
             get_encrypted(p['providers']['compute']),
             get_encrypted(p['providers']['storage']),
