@@ -1,4 +1,4 @@
-
+import os
 import unittest
 from mock import MagicMock as Mock
 from StringIO import StringIO
@@ -24,7 +24,7 @@ clouds:
         sizes:
             medium: test
         keys:
-            testkey: package://yaybu/core/cloud/tests/test_key.pem
+            testkey: %(pem_file)s
     
 roles:
     mailserver:
@@ -41,7 +41,7 @@ roles:
             size: medium
         min: 1
         max: 1
-"""
+""" % dict(pem_file = os.path.join(os.path.dirname(__file__), "test_key.pem"))
 
 
 
