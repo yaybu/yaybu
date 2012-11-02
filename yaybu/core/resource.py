@@ -244,7 +244,7 @@ class ResourceBundle(ordereddict.OrderedDict):
 
     @classmethod
     def create_from_yay_expression(cls, expression, verbose_errors=False):
-	""" Given a Yay expression that resolves to a list of types and
+        """ Given a Yay expression that resolves to a list of types and
         parameters, build a resource bundle.  """
         bundle = cls()
         try:
@@ -310,7 +310,7 @@ class ResourceBundle(ordereddict.OrderedDict):
             w = self.create("File", {
                 "name": watched,
                 "policy": "watched",
-                })
+            })
             w._original_hash = w.hash()
 
         return kls
@@ -338,4 +338,3 @@ class ResourceBundle(ordereddict.OrderedDict):
                 if resource.apply(ctx, config):
                     something_changed = True
         return something_changed
-
