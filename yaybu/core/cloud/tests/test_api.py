@@ -37,7 +37,8 @@ class TestCloud(unittest.TestCase):
         ComputeDriver._wait_until_running = Mock()
         mock_node = Mock()
         mock_node.name = "name"
-        ComputeDriver.list_nodes = Mock(return_value=[mock_node])
+        ComputeDriver.list_nodes.return_value = [mock_node]
+        ComputeDriver.create_node.return_value = mock_node
         c = self._make_cloud()
         node = c.create_node("name", "image", "size", "keypair")
         self.assertEqual(node, mock_node)
@@ -47,19 +48,5 @@ class TestCloud(unittest.TestCase):
         ComputeDriver._wait_until_running.side_effect = LibcloudError("Boom")
         c = self._make_cloud()
         self.assertRaises(IOError, c.create_node, "name", "image", "size", "keypair")
-        
-    def test_create_node_naming_fail(self):
-        ComputeDriver._wait_until_running = Mock()
-        mock_node = Mock()
-        mock_node.name = "fred"
-        ComputeDriver.list_nodes = Mock(return_value=[mock_node])
-        c = self._make_cloud()
-        self.assertRaises(IOError, c.create_node, "name", "image", "size", "keypair")
-        
-        
-        
-        
-        
-        
-        
-        
+
+ 
