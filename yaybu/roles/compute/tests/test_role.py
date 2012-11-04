@@ -7,7 +7,9 @@ import yaml
 from yaybu.core.cloud import cluster
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 from yaybu.core.cloud import role
-from yaybu.core.cloud import node
+
+from yaybu.roles.compute.role import Compute
+from yaybu.roles.compute.node import Node
 
 roles1 = """
 
@@ -95,10 +97,10 @@ class TestStateMarshaller(unittest.TestCase):
         c = self._create_cluster()
 
         roles = {}
-        r = roles['mailserver'] = role.Role('mailserver', None, None, None, None)
+        r = roles['mailserver'] = role.Compute('mailserver', None, None, None)
         r.add_node(0, "foo", "fooX")
         r.add_node(1, "bar", "barX")
-        r = roles['appserver'] = role.Role('appserver', None, None, None, None)
+        r = roles['appserver'] = role.Compute('appserver', None, None, None)
         r.add_node(0, "baz", "bazX")
         result = yaml.load(cluster.StateMarshaller(c).as_stream(roles.values()))
         self.assertEqual(result['version'], 1)
@@ -178,7 +180,7 @@ class TestCluster(unittest.TestCase):
                             extra={'dns_name': 'dns1.foo.bar'},
                             ),
             }
-        self.assertEqual(node.Node.get_node_info(c.roles['mailserver'].nodes[0]),
+        self.assertEqual(Node.get_node_info(c.roles['mailserver'].nodes[0]),
                          {'mapped_as': '12.12.12.12',
                           'address': '13.13.13.13',
                           'hostname': 'dns1',

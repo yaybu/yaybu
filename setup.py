@@ -39,5 +39,7 @@ setup(name='Yaybu',
       resources = yaybu.resources
       [yaybu.providers]
       providers = yaybu.providers
+      [yaybu.roles]
+      providers = yaybu.roles
       """
       )
