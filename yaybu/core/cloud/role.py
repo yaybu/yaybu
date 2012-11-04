@@ -94,12 +94,7 @@ class RoleCollection(object):
         role dependency. """
         for role in self:
             for node in role.nodes:
-                # if node.their_name is not found here, it means the 
-                # server has died but we still have state.
-                # TODO: this is an amazonism. we must keep our own record of 'their name'
-                n = self.cloud.nodes[node.their_name]
-                # TODO: another amazonism
-                yield n.extra['dns_name']
+                yield node.hostname
             
     def get_all_roles_and_nodenames(self):
         """ Returns an iterator of node names (foo/bar/0) """

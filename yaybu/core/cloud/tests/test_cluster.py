@@ -17,12 +17,15 @@ clouds:
             compute: DUMMY
             storage: DUMMY
             dns: DUMMY
-        args:
+        compute_args:
             creds: 4
+        storage_args:
+            api_key: SECRET KEY
+            api_secret: SECRET PASSWORD
         images:
-            ubuntu: test
+            ubuntu: 1
         sizes:
-            medium: test
+            medium: 1
         keys:
             testkey: %(pem_file)s
     
@@ -150,7 +153,7 @@ class TestCluster(unittest.TestCase):
             'server2': Mock(extra={'dns_name': 'dns2'}),
             'server3': Mock(extra={'dns_name': 'dns3'}),
             }
-        self.assertEqual(sorted(role.RoleCollection.hostnames()),
+        self.assertEqual(sorted(c.roles.hostnames()),
                          ['dns1', 'dns2', 'dns3'])
         
     def test_get_node_info(self):
@@ -179,22 +182,13 @@ class TestCluster(unittest.TestCase):
         
     def test_find_lowest_unused(self):
         c = self._create_cluster()
-        self.assertEqual(role.Role.find_lowest_unused("mailserver"), 0)
-        c.roles["mailserver"].add_node(0, None, None)
-        self.assertEqual(role.Role.find_lowest_unused("mailserver"), 1)
-        c.roles["mailserver"].add_node(1, None, None)
-        self.assertEqual(role.Role.find_lowest_unused("mailserver"), 2)
-        del c.roles["mailserver"].nodes[1]
-        self.assertEqual(role.Role.find_lowest_unused("mailserver"), 1)
-        
-    
-        
-                         
-        
-        
-        
-        
-        
-        
-        
-                         
+        role = c.roles["mailserver"]
+        self.assertEqual(role.find_lowest_unused(), 0)
+        role.add_node(0, None, None)
+        self.assertEqual(role.find_lowest_unused(), 1)
+        role.add_node(1, None, None)
+        self.assertEqual(role.find_lowest_unused(), 2)
+        del role.nodes[1]
+        self.assertEqual(role.find_lowest_unused(), 1)
+
+ 
