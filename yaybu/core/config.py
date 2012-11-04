@@ -155,7 +155,7 @@ class Config(BaseConfig):
     def set_hostname(self, hostname):
         self.add({
             "yaybu": {
-                "host": self.host,
+                "host": hostname,
                 }
             })
 

@@ -1,65 +1,41 @@
 
 import unittest
-from mock import MagicMock as Mock
+import testtools
+from mock import patch, MagicMock as Mock
 from libcloud.common.types import LibcloudError
 
 from yaybu.core.cloud import api
 
-api.ComputeProvider = Mock()
-api.StorageProvider = Mock()
-api.DNSDriver = Mock()
-
-StorageDriver = Mock()
-ComputeDriver = Mock()
-DNSDriver = Mock()
-
-api.get_compute_driver = lambda x: Mock(return_value=ComputeDriver)
-api.get_storage_driver = lambda x: Mock(return_value=StorageDriver)
-api.get_dns_driver = lambda x: Mock(return_value=DNSDriver)
-
-mock_image = Mock(id="image")
-mock_size = Mock(id="size")
-
-ComputeDriver.list_images = Mock(return_value=[mock_image])
-ComputeDriver.list_sizes = Mock(return_value=[mock_size])
-
-class TestCloud(unittest.TestCase):
+class TestCloud(testtools.TestCase):
     
     def _make_cloud(self):
+        self.mock_image = Mock(id="image")
+        self.mock_size = Mock(id="size")
+        self.mock_node = Mock(name="name")
+
+        for target in ("compute", "storage", "dns"):
+            p = patch.object(api.Cloud, target)
+            p.start()
+            self.addCleanup(p.stop)
+
         c = api.Cloud("compute", "storage", "dns", {})
-        c.compute_class = Mock()
-        c.storage_class = Mock()
-        c.dns_class = Mock()
+        c.compute.list_images.return_value = [self.mock_image]
+        c.compute.list_sizes.return_value = [self.mock_size]
+        c.compute._wait_until_running = Mock()
+        c.compute.list_nodes.return_value = [self.mock_node]
+        c.compute.create_node.return_value = self.mock_node
+
         return c
     
     def test_create_node_happy(self):
         """ Test the happy path """
-        ComputeDriver._wait_until_running = Mock()
-        mock_node = Mock()
-        mock_node.name = "name"
-        ComputeDriver.list_nodes = Mock(return_value=[mock_node])
         c = self._make_cloud()
         node = c.create_node("name", "image", "size", "keypair")
-        self.assertEqual(node, mock_node)
+        self.assertEqual(node, self.mock_node)
         
     def test_create_node_never_starts(self):
-        ComputeDriver._wait_until_running = Mock()
-        ComputeDriver._wait_until_running.side_effect = LibcloudError("Boom")
         c = self._make_cloud()
+        c.compute._wait_until_running.side_effect = LibcloudError("Boom")
         self.assertRaises(IOError, c.create_node, "name", "image", "size", "keypair")
-        
-    def test_create_node_naming_fail(self):
-        ComputeDriver._wait_until_running = Mock()
-        mock_node = Mock()
-        mock_node.name = "fred"
-        ComputeDriver.list_nodes = Mock(return_value=[mock_node])
-        c = self._make_cloud()
-        self.assertRaises(IOError, c.create_node, "name", "image", "size", "keypair")
-        
-        
-        
-        
-        
-        
-        
-        
+
+ 

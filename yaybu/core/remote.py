@@ -69,7 +69,7 @@ class RemoteRunner(Runner):
 
             except (socket.error, EOFError):
                 logger.warning("connection refused. retrying.")
-                time.sleep(1)
+                time.sleep(tries + 1)
         else:
             client.close()
             raise error.ConnectionError("Connection refused %d times, giving up." % self.connection_attempts)
