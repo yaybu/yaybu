@@ -49,8 +49,21 @@ roles:
 
 
 class TestStateMarshaller(unittest.TestCase):
+ 
+    def _create_cluster(self):
+        t = tempfile.NamedTemporaryFile(delete=False)
+        t.write(roles1)
+        t.close()
+        # an empty container
+        c = cluster.Cluster("test_cloud",
+                            "test_cluster",
+                            t.name,
+                            )
+        return c
     
     def test_load(self):
+        c = self._create_cluster()
+
         data = {}
         data['version'] = 1
         data['nodes'] = [
@@ -72,22 +85,22 @@ class TestStateMarshaller(unittest.TestCase):
         stream = StringIO(yaml.dump(data))
         output = {}
         output['mailserver'] = [
-            cluster.Node(0, 'foo', 'fooX'),
-            cluster.Node(1, 'bar', 'barX'),
+            (0, 'foo', 'fooX'),
+            (1, 'bar', 'barX'),
             ]
-        output['appserver'] = [
-            cluster.Node(0, 'baz', 'bazX')
-            ]
-        self.assertEqual(dict(cluster.StateMarshaller.load(stream)), output)
+        output['appserver'] = [(0, 'baz', 'bazX')]
+        self.assertEqual(output, dict(cluster.StateMarshaller(c).load(stream)))
 
     def test_save(self):
+        c = self._create_cluster()
+
         roles = {}
-        roles['mailserver'] = role.Role('mailserver', None, None, None, None)
-        roles['appserver'] = role.Role('appserver', None, None, None, None)
-        roles['mailserver'].nodes[0] = cluster.Node(0, 'foo', 'fooX')
-        roles['mailserver'].nodes[1] = cluster.Node(1, 'bar', 'barX')
-        roles['appserver'].nodes[0] = cluster.Node(0, 'baz', 'bazX')
-        result = yaml.load(cluster.StateMarshaller.as_stream(roles))
+        r = roles['mailserver'] = role.Role('mailserver', None, None, None, None)
+        r.add_node(0, "foo", "fooX")
+        r.add_node(1, "bar", "barX")
+        r = roles['appserver'] = role.Role('appserver', None, None, None, None)
+        r.add_node(0, "baz", "bazX")
+        result = yaml.load(cluster.StateMarshaller(c).as_stream(roles.values()))
         self.assertEqual(result['version'], 1)
         self.assertEqual(sorted(result['nodes']),
                          sorted([
