@@ -4,7 +4,7 @@ import testtools
 from mock import patch, MagicMock as Mock
 from libcloud.common.types import LibcloudError
 
-from yaybu.core.cloud import api
+from yaybu.roles.compute import api
 
 class TestCloud(testtools.TestCase):
     

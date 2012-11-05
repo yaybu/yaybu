@@ -6,7 +6,6 @@ import collections
 import yaml
 import copy
 from yaybu.core import remote, runcontext
-from . import api
 from . import dependency
 from yaybu.core.util import version, get_encrypted
 
@@ -15,9 +14,11 @@ import abc
 
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 from . import role
-from . import node
 from .role import RoleCollectionFactory
 from . import dns
+
+
+from yaybu.roles.compute import api
 
 
 logger = logging.getLogger(__name__)

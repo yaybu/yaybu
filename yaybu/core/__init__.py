@@ -20,3 +20,6 @@ for ep in iter_entry_points(group='yaybu.resource', name=None):
 for ep in iter_entry_points(group='yaybu.providers', name=None):
     ep.load()
 
+for ep in iter_entry_points(group='yaybu.roles', name=None):
+    ep.load()
+
