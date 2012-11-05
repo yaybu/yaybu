@@ -58,8 +58,8 @@ class Heroku(Role):
 
         self.apply_domains(context, app)
 
-	# May generate e-mail so do it last - we don't want someone looking
-	# half way through set up
+        # May generate e-mail so do it last - we don't want someone looking
+        # half way through set up
         self.apply_collaborators(context, app)
 
     def apply_collaborators(self, context, app):
@@ -92,15 +92,15 @@ class Heroku(Role):
 
     def apply_addons(self, context, app):
         """
-	Compare the state of addons to the requested state of addons and update
+        Compare the state of addons to the requested state of addons and update
         as needed.
 
         Addons are specified in the form ``type:tier`` (the docs say type:name).
 
-	Upgrading is supported - so we have to capture foo:basic ->
+        Upgrading is supported - so we have to capture foo:basic ->
         foo:advanced rather than deleting advanced and adding basic.
 
-	Because of this. currently this code assumes their won't be duplicate
+        Because of this. currently this code assumes their won't be duplicate
         add-ons (e.g. foo:basic won't be present at same time as foo:advanced).
         """
         old_addons = [a for a in addons]
@@ -173,8 +173,8 @@ class Heroku(Role):
             if not context.simulate:
                 app.config[var] = self.config['config'][var]
 
-	# Config that was removed - we can't really delete this config as we
-	# don't know if its something an addon put there
+        # Config that was removed - we can't really delete this config as we
+        # don't know if its something an addon put there
         # for var in (before - current):
         #     log.warning("Config variable '%s' present on Heroku but not configuration managed")
 
