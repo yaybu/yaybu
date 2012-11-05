@@ -118,13 +118,7 @@ class Role(object):
     def role_info(self):
         """ Return the appropriate stanza from the configuration file """
         return self.cluster.ctx.get_config().mapping.get("roles").resolve()[self.name]
-        
-    def instantiate(self):
-        """ Instantiate and install nodes for each role up to the minimum required """
-        while len(self.nodes) < self.min:
-            logger.info("Autoprovisioning node for role %r" % self.name)
-            self.instantiate_node()
-    
+   
     def node_zone_update(self, node_name):
         """ Update the DNS, if supported, with the details for this new node """
         if self.dns is None:
@@ -139,7 +133,10 @@ class Role(object):
         """ Update the cloud dns to point at the node """
         ip = node.public_ip[0]
         self.cluster.cloud.update_record(ip, zone, name)
-             
+
+    def instantiate(self):
+        raise NotImplementedError
+ 
     def provision(self, dump=False):
         raise NotImplementedError
 
