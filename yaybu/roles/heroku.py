@@ -1,20 +1,23 @@
 
+from yaybu.core.cloud.role import Role
+
 try:
     import heroku
 except ImportError:
     heroku = None
 
 
-class BaseNode(object):
-
-    def action(self, msg):
-        pass
-
-
-class Heroku(object):
+class Heroku(Role):
 
     def __init__(self, config):
         self.config = config
+
+    @classmethod
+    def create_from_yay_expression(klass, cluster, name, args):
+        return klass(cluster, name, args)
+
+    def action(self, msg):
+        pass
 
     def apply(self, context):
         if 'key' in self.config:
