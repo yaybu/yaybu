@@ -100,33 +100,6 @@ class StateMarshaller:
                                            self.cluster.name, {'content_type': 'text/yaml'})
         
         
-class ConfigDecorator:
-    
-    """ Decorates a yaybu configuration with the available details for a cluster. """
-    
-    def __init__(self, cluster):
-        self.cluster = cluster
-        
-    def decorate(self, config):
-        """ Update the configuration with the details for all running nodes """
-        new_cfg = {'hosts': [],
-                   'yaybu': {
-                       'provider': self.cluster.provider,
-                       'cluster': self.cluster.name,
-                       }
-                   }
-
-        config.add(new_cfg)
-
-        if self.cluster.cloud is not None:
-            roles = config.mapping.get('roles').resolve()
-            for role in self.cluster.roles:
-                for node in role.nodes:
-                    struct = node.host_info()
-                    new_cfg['hosts'].append(struct)
-
-        config.add(new_cfg)
-        
 class Cluster:
     
     """ Built on top of AbstractCloud, a Cluster knows about server roles and
@@ -147,22 +120,35 @@ class Cluster:
         self.verbose = verbose
         self.state_bucket = state_bucket        
         self.argv = argv
-        
+        self.roles = None
+ 
         self.ctx = self.make_context()
         self.create_roles()
-        StateMarshaller(self).load_state()
+        #StateMarshaller(self).load_state()
 
     def make_context(self, resume=False):
         """ Creates a context suitable for instantiating a cloud """
         ctx = runcontext.RunContext(self.filename, ypath=self.searchpath, verbose=self.verbose, resume=resume)
+        config = ctx.get_config()
+
+        config.add({
+            'hosts': [],
+            'yaybu': {
+                'cluster': self.name,
+                }
+            })
+
         if self.argv:
-            ctx.get_config().set_arguments_from_argv(self.argv)
-        decorator = ConfigDecorator(self)
-        decorator.decorate(ctx.get_config())
+            config.set_arguments_from_argv(self.argv)
+
+        if self.roles:
+            for r in self.roles:
+                r.decorate_config(config)
+
         return ctx
 
     def create_roles(self):
-        factory = RoleCollectionFactory(self.ctx, self.provider)
+        factory = RoleCollectionFactory(self.ctx)
         self.roles = factory.create_collection(self)
         
     def delete_cloud(self, ctx, provider, cluster_name, filename):
@@ -179,6 +165,7 @@ class Cluster:
         
     def commit(self):
         """ Store state to permanent storage """
+        return
         m = StateMarshaller(self)
         m.store_state()
 

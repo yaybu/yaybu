@@ -219,7 +219,17 @@ class Compute(Role):
         while len(self.nodes) < self.min:
             logger.info("Autoprovisioning node for role %r" % self.name)
             self.instantiate_node()
-    
+
+    def decorate_config(self, config):
+        if self.cloud is not None:
+            new_cfg = {}
+            hosts = new_cfg['hosts'] = []
+            roles = config.mapping.get('roles').resolve()
+            for node in role.nodes:
+                struct = node.host_info()
+                hosts.append(struct)
+            config.add(new_cfg)
+
     def node_zone_update(self, node_name):
         """ Update the DNS, if supported, with the details for this new node """
         if self.dns is None:

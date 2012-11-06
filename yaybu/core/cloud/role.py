@@ -32,9 +32,8 @@ class RoleCollectionFactory(object):
     """ Parses role and cloud details from a configuration and creates a
     RoleCollection based on it. """
     
-    def __init__(self, ctx, provider):
+    def __init__(self, ctx):
         self.ctx = ctx
-        self.provider = provider
         self.config = ctx.get_config()
         
     def create_collection(self, cluster):
@@ -136,6 +135,9 @@ class Role(object):
 
     def instantiate(self):
         raise NotImplementedError
+
+    def decorate_config(self, config):
+        pass
  
     def provision(self, dump=False):
         raise NotImplementedError

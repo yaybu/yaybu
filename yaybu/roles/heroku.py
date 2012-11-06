@@ -1,5 +1,8 @@
 
+from __future__ import absolute_import
+
 from yaybu.core.cloud.role import Role
+from yaybu.core.error import ArgParseError
 
 try:
     import heroku
@@ -9,41 +12,46 @@ except ImportError:
 
 class Heroku(Role):
 
-    def __init__(self, config):
+    def __init__(self, cluster, name, config):
+        super(Heroku, self).__init__(cluster, name)
         self.config = config
+
+        if not heroku:
+            raise ArgParseError("Dependency 'heroku' is required and not available")
+
+        if 'key' in self.config:
+            self.cloud = heroku.from_key(self.config['key'])
+        else:
+            if not 'username' in self.config or not 'password' in self.config:
+                raise ArgParseError("No credentials for heroku")
+            self.cloud = heroku.from_pass(self.config['username'], self.config['password'])
+
 
     @classmethod
     def create_from_yay_expression(klass, cluster, name, args):
         return klass(cluster, name, args)
 
     def action(self, msg):
-        pass
+        print msg
 
-    def apply(self, context):
-        if 'key' in self.config:
-            cloud = heroku.from_key(self.config['key'])
-        else:
-            if not 'username' in self.config or not 'password' in self.config:
-                raise ConfigurationError("No credentials for heroku")
-            cloud = heroku.from_pass(self.config['username'], self.config['password'])
-
+    def instantiate(self):
         if not 'application_id' in self.config:
             self.action("Creating new app with a random name")
             if not context.simulate:
-                app = cloud.apps.add()
+                self.app = cloud.apps.add()
             else:
-                app = SimulatedHerokuApp()
+                self.app = SimulatedHerokuApp()
 
         elif not self.config['application_id'] in cloud.apps:
             self.action("Creating new app named '%s'" % self.config['application_id'])
             if not context.simulate:
-                app = cloud.apps.add(self.config['application_id'])
+                self.app = cloud.apps.add(self.config['application_id'])
             else:
-                app = SimulatedHerokuApp()
-
+                self.app = SimulatedHerokuApp()
         else:
-            app = cloud.apps[self.config['application_id']]
+            self.app = cloud.apps[self.config['application_id']]
 
+    def provision(self, dump=False):
         self.action("Entering maintenance mode")
         if not context.simulate:
             app.maintenance(on=True)
@@ -139,7 +147,7 @@ class Heroku(Role):
     def apply_scaling(self, context, app):
         for dyno in config['dynos']:
             if not dyno in app.processes:
-                raise ConfigurationError("Tried to configure dyno '%s' but it doesn't exist in the app" % dyno)
+                raise ExecutionError("Tried to configure dyno '%s' but it doesn't exist in the app" % dyno)
 
         for dyno, scale in config['dynos'].items():
             current_scale = len(app.processes[dyno])
