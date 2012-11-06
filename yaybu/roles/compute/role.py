@@ -13,6 +13,63 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class AbstractCloud:
+
+    """ An abstraction built on top of the libcloud api. Allows you to have
+    your own internal names for images and sizes, to increase portability.
+    """
+
+    def __init__(self, compute_provider, storage_provider, dns_provider, images, sizes, args=(), compute_args=(), storage_args=()):
+        """
+        Args:
+            compute_provider: The name of the compute provider in libcloud
+            storage_provider: the name of the storage provider in libcloud
+            dns_provider: The name of the dns provider in libcloud, or 'route53'
+            args: A dictionary of arguments to provide to the providers
+            images: A dictionary of images that maps your names to the providers names
+            sizes: A dictionary of sizes that maps your names to the providers names
+        """
+        self.cloud = api.Cloud(compute_provider, storage_provider, dns_provider, args, compute_args, storage_args)
+        # DUMMY provider has numeric images and sizes
+        self.images = dict([(x,str(y)) for (x,y) in images.items()])
+        self.sizes = dict([(x,str(y)) for (x,y) in sizes.items()])
+
+    @property
+    def nodes(self):
+        return self.cloud.nodes
+
+    def get_container(self, name):
+        return self.cloud.get_container(name)
+
+    def validate(self, image, size):
+        """ Validate that the image and size requested is valid """
+        if image not in self.images:
+            raise KeyError("Image %r not known" % (image,))
+
+        if size not in self.sizes:
+            raise KeyError("Size %r not known" % (size,))
+
+        if self.images[image] not in self.cloud.images:
+            raise KeyError("Mapped image %r not known" % (self.images[image], ))
+
+        if self.sizes[size] not in self.cloud.sizes:
+            raise KeyError("Mapped size %r not known" % (self.sizes[role.size], ))
+
+    def create_node(self, name, image, size, keypair):
+        return self.cloud.create_node(
+            name,
+            self.images[image],
+            self.sizes[size],
+            keypair)
+
+    def destroy_node(self, nodename):
+        node = self.cloud.nodes[nodename]
+        self.cloud.destroy_node(node)
+
+    def update_record(self, ip, zone, name):
+        self.cloud.update_record(ip, zone, name)
+
+
 class Compute(Role):
 
     """ A runtime record of roles we know about. Each role has a list of nodes """
@@ -39,6 +96,9 @@ class Compute(Role):
         self.max = max_
         self.dns = dns
         self.nodes = []
+
+        self.provider = "aws-eu-west"
+        self.create_cloud()
 
     @classmethod
     def create_from_yay_expression(klass, cluster, name, v):
@@ -77,6 +137,23 @@ class Compute(Role):
             except SSHException, e:
                 saved_exception = e
         raise saved_exception
+
+    def create_cloud(self):
+        clouds = self.ctx.get_config().mapping.get('clouds').resolve()
+        p = clouds.get(self.provider, None)
+        if p is None:
+            raise KeyError("provider %r not found" % self.provider)
+        cloud = AbstractCloud(
+            get_encrypted(p['providers']['compute']),
+            get_encrypted(p['providers']['storage']),
+            get_encrypted(p['providers']['dns']),
+            get_encrypted(p['images']),
+            get_encrypted(p['sizes']),
+            args=get_encrypted(p.get('args', {})),
+            compute_args=get_encrypted(p.get('compute_args', {})),
+            storage_args=get_encrypted(p.get('storage_args', {})),
+            )
+        self.cloud = cloud
        
     def __iter__(self):
         """ Iterator of nodes. iterates in index order. """
@@ -121,7 +198,7 @@ class Compute(Role):
         index = self.find_lowest_unused()
         name = self.node_name(index)
         logger.debug("Node will be %r" % name)
-        libcloud_node = self.cluster.create_node(name, self.image, self.size, self.key_name)
+        libcloud_node = self.cloud.create_node(name, self.image, self.size, self.key_name)
         node = self.add_node(index, name, libcloud_node.name)
         self.cluster.commit()
         self.node_zone_update(name)
@@ -149,14 +226,14 @@ class Compute(Role):
             return
         our_node = self.get_node_by_our_name(node_name)
         zone_info = self.dns.zone_info(our_node.index)
-        their_node = self.cluster.libcloud_nodes[node_name]
+        their_node = self.cloud.nodes[node_name]
         if zone_info is not None:
             self.update_zone(their_node, zone_info[0], zone_info[1])
 
     def update_zone(self, node, zone, name):
         """ Update the cloud dns to point at the node """
         ip = node.public_ip[0]
-        self.cluster.cloud.update_record(ip, zone, name)
+        self.cloud.update_record(ip, zone, name)
              
     def destroy_node(self, nodename):
         cluster.destroy_node(nodename)

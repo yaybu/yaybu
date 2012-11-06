@@ -294,7 +294,7 @@ class YaybuCmd(OptionParsingCmd):
 
     def do_status(self, opts, args):
         """
-        usage: status <provider> [cluster]
+        usage: status [cluster]
         Describe the status of the cluster in the specified cloud.
         If no cluster is specified, all clusters are shown
         """
@@ -309,67 +309,55 @@ class YaybuCmd(OptionParsingCmd):
     
     def do_provision(self, opts, args):
         """
-        usage: provision <provider> <cluster> <filename> <name=value>...
+        usage: provision <cluster> <filename> <name=value>...
         Create a new cluster, or update the existing cluster, <cluster>
-        in the cloud <provider>, using the configuration in <filename>
+        in the cloud provider, using the configuration in <filename>
         if the configuration takes arguments these can be provided as 
         name=value name=value...
         """
-        if len(args) < 3:
+        if len(args) < 2:
             self.simple_help("provision")
             return
-        provider, cluster_name, filename = args[:3]
-        cluster = Cluster(provider, cluster_name, filename, argv=args[3:])
+        cluster_name, filename = args[:3]
+        cluster = Cluster(cluster_name, filename, argv=args[3:])
         return cluster.provision(dump=opts.dump)
            
     def do_zoneupdate(self, opts, args):
         """ 
-        usage: zoneupdate <provider> <cluster> <filename>
+        usage: zoneupdate <cluster> <filename>
         Forces a DNS update for the specified configuration
         """
-        if len(args) != 3:
+        if len(args) != 2:
             self.simple_help("zoneupdate")
             return
-        provider, cluster_name, filename = args
-        cluster = Cluster(provider, cluster_name, filename)
+        cluster_name, filename = args
+        cluster = Cluster(cluster_name, filename)
         for role, nodename in role.get_all_roles_and_nodenames():
             role.Role.node_zone_update(role.name, nodename)
         
-    def do_addnode(self, opts, args):
-        """
-        usage: addnode <provider> <cluster> <role>
-        Add a new node of the specified role to the cluster
-        """
-        
-    def do_rmnode(self, opts, args):
-        """
-        usage: rmnode <provider> <cluster> <nodeid>
-        Delete the specified node
-        """
-        
     def do_ssh(self, opts, args):
         """ 
-        usage: ssh <provider> <cluster> <name> 
+        usage: ssh <cluster> <name> 
         SSH to the node specified (with foo/bar/0 notation)
         """
-        if len(args) != 3:
+        if len(args) != 2:
             self.do_help((),("ssh",))
             return
-        provider, cluster_name, filename = args
-        cluster = self.get_cluster(provider, cluster_name, filename)
+        cluster_name, filename = args
+        cluster = self.get_cluster(cluster_name, filename)
         # do some stuff
         raise NotImplementedError
  
     def do_info(self, opts, args):
         """
-        usage: info <provider> <cluster> <filename>
+        usage: info <cluster> <filename>
         Provide information on the specified cluster
         """
-        if len(args) != 3:
+        if len(args) != 2:
             self.do_help((),("rmcluster",))
             return
-        provider, cluster_name, filename = args
-        cluster = Cluster(provider, cluster_name, filename)
+        cluster_name, filename = args
+        cluster = Cluster(cluster_name, filename)
         for role in role.RoleCollection.roles():
             print "%s %s %s min %s max %s depends %s" % (
                 role.name, role.image, role.size, role.min, role.max, role.depends)
@@ -377,17 +365,17 @@ class YaybuCmd(OptionParsingCmd):
                 n = cluster.cloud.nodes[node.their_name]
                 print "    %s %s" % (node.their_name, n.extra['dns_name'])
         
-    def do_rmcluster(self, opts, args):
+    def do_destroy(self, opts, args):
         """
-        usage: rmcluster <provider> <cluster> <filename>
+        usage: destroy <cluster> <filename>
         Delete the specified cluster completely
         """
-        if len(args) != 3:
+        if len(args) != 2:
             self.do_help((),("rmcluster",))
             return
-        provider, cluster_name, filename = args
+        cluster_name, filename = args
         logger.info("Deleting cluster")
-        cluster = Cluster(provider, cluster_name, filename)
+        cluster = Cluster(cluster_name, filename)
         for role, name in role.RoleCollection.get_all_roles_and_nodenames():
             logger.warning("Destroying %r on request" % (name,))
             role.destroy_node(name)

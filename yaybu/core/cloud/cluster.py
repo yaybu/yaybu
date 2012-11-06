@@ -99,61 +99,6 @@ class StateMarshaller:
         container.upload_object_via_stream(self.as_stream(self.cluster.roles), 
                                            self.cluster.name, {'content_type': 'text/yaml'})
         
-class AbstractCloud:
-    
-    """ An abstraction built on top of the libcloud api. Allows you to have
-    your own internal names for images and sizes, to increase portability.
-    """
-    
-    def __init__(self, compute_provider, storage_provider, dns_provider, images, sizes, args=(), compute_args=(), storage_args=()):
-        """
-        Args:
-            compute_provider: The name of the compute provider in libcloud
-            storage_provider: the name of the storage provider in libcloud
-            dns_provider: The name of the dns provider in libcloud, or 'route53'
-            args: A dictionary of arguments to provide to the providers
-            images: A dictionary of images that maps your names to the providers names
-            sizes: A dictionary of sizes that maps your names to the providers names
-        """
-        self.cloud = api.Cloud(compute_provider, storage_provider, dns_provider, args, compute_args, storage_args)
-        # DUMMY provider has numeric images and sizes
-        self.images = dict([(x,str(y)) for (x,y) in images.items()])
-        self.sizes = dict([(x,str(y)) for (x,y) in sizes.items()])
-        
-    @property
-    def nodes(self):
-        return self.cloud.nodes
-    
-    def get_container(self, name):
-        return self.cloud.get_container(name)
-            
-    def validate(self, image, size):
-        """ Validate that the image and size requested is valid """
-        if image not in self.images:
-            raise KeyError("Image %r not known" % (image,))
-        
-        if size not in self.sizes:
-            raise KeyError("Size %r not known" % (size,))
-        
-        if self.images[image] not in self.cloud.images:
-            raise KeyError("Mapped image %r not known" % (self.images[image], ))
-        
-        if self.sizes[size] not in self.cloud.sizes:
-            raise KeyError("Mapped size %r not known" % (self.sizes[role.size], ))
-            
-    def create_node(self, name, image, size, keypair):
-        return self.cloud.create_node(
-            name,
-            self.images[image],
-            self.sizes[size],
-            keypair)
-    
-    def destroy_node(self, nodename):
-        node = self.cloud.nodes[nodename]
-        self.cloud.destroy_node(node)
-    
-    def update_record(self, ip, zone, name):
-        self.cloud.update_record(ip, zone, name)
         
 class ConfigDecorator:
     
@@ -187,27 +132,23 @@ class Cluster:
     """ Built on top of AbstractCloud, a Cluster knows about server roles and
     can create and remove nodes for those roles. """
     
-    def __init__(self, provider, cluster_name, filename, argv=None, searchpath=(), verbose=True, state_bucket="yaybu-state"):
+    def __init__(self, cluster_name, filename, argv=None, searchpath=(), verbose=True, state_bucket="yaybu-state"):
         """
         Args:
-            name: The name of the cloud
-            cloud: An AbstractCloud instance
+            cluster_name: The name of the cloud
             filename: The filename of the yay file to be used for the source of roles
             argv: arguments available 
             searchpath: the yaybu search path
             state_bucket: The name of the bucket used to store the state for clusters
         """
-        self.provider = provider
         self.name = cluster_name
         self.filename = filename
         self.searchpath = searchpath
         self.verbose = verbose
         self.state_bucket = state_bucket        
         self.argv = argv
-        self.cloud = None
         
         self.ctx = self.make_context()
-        self.create_cloud()
         self.create_roles()
         StateMarshaller(self).load_state()
 
@@ -220,28 +161,9 @@ class Cluster:
         decorator.decorate(ctx.get_config())
         return ctx
 
-    def create_cloud(self):
-        clouds = self.ctx.get_config().mapping.get('clouds').resolve()
-        p = clouds.get(self.provider, None)
-        if p is None:
-            raise KeyError("provider %r not found" % self.provider)
-        cloud = AbstractCloud(
-            get_encrypted(p['providers']['compute']),
-            get_encrypted(p['providers']['storage']),
-            get_encrypted(p['providers']['dns']),
-            get_encrypted(p['images']),
-            get_encrypted(p['sizes']),
-            args=get_encrypted(p.get('args', {})), 
-            compute_args=get_encrypted(p.get('compute_args', {})),
-            storage_args=get_encrypted(p.get('storage_args', {})),
-            )
-        self.cloud = cloud
-        
     def create_roles(self):
         factory = RoleCollectionFactory(self.ctx, self.provider)
         self.roles = factory.create_collection(self)
-        for r in self.roles:
-            self.cloud.validate(r.image, r.size)        
         
     def delete_cloud(self, ctx, provider, cluster_name, filename):
         clouds = ctx.get_config().mapping.get('clouds').resolve()
@@ -260,10 +182,6 @@ class Cluster:
         m = StateMarshaller(self)
         m.store_state()
 
-    @property
-    def libcloud_nodes(self):
-        return self.cloud.nodes
-    
     def provision(self, dump):
         self.roles.provision(dump)
 
