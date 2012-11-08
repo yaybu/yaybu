@@ -11,6 +11,7 @@ class Node:
         
         self.role = role
         self.cluster = self.role.cluster
+        self.cloud = self.role.cloud
         
         # the index is a number that identifies which node within this role this is
         # for ease of reference (e.g. appserver/0, appserver/1 etc.) these are re-used
@@ -27,7 +28,7 @@ class Node:
     def lcnode(self):
         """ This fetches the node from the libcloud implementation. This is
         implemented as a property to force it to be refetched when used. """
-        return self.cluster.libcloud_nodes[self.their_name]
+        return self.cloud.nodes[self.their_name]
         
     def get_node_info(self):
         """ Return a dictionary of information about this node """

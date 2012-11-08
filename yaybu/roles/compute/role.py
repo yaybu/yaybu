@@ -1,7 +1,9 @@
 
 from .node import Node
+from . import api
 
 from yaybu.core.cloud.role import Role
+from yaybu.core.cloud import dns
 from yaybu.core.util import get_encrypted
 
 from ssh.ssh_exception import SSHException
@@ -74,7 +76,7 @@ class Compute(Role):
 
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
-    def __init__(self, cluster, name, key_name, key, image, size, depends=(), dns=None, min_=1, max_=1):
+    def __init__(self, cluster, name, key_name, image, size, depends=(), dns=None, min_=1, max_=1):
         """
         Args:
             name: Role name
@@ -88,8 +90,10 @@ class Compute(Role):
             max: The maximum number of nodes of this role the cluster should tolerate
         """
         super(Compute, self).__init__(cluster, name, depends=depends)
+        self.provider = "aws-eu-west"
+
         self.key_name = key_name
-        self.key = key
+        self.key = self.get_key()
         self.image = image
         self.size = size
         self.min = min_
@@ -97,7 +101,6 @@ class Compute(Role):
         self.dns = dns
         self.nodes = []
 
-        self.provider = "aws-eu-west"
         self.create_cloud()
 
     @classmethod
@@ -112,7 +115,6 @@ class Compute(Role):
                 cluster,
                 name,
                 get_encrypted(v['key']),
-                klass.get_key(cluster, get_encrypted(v['key'])),
                 get_encrypted(v['instance']['image']),
                 get_encrypted(v['instance']['size']),
                 get_encrypted(v.get('depends', ())),
@@ -120,11 +122,13 @@ class Compute(Role):
                 get_encrypted(v.get('min', 0)),
                 get_encrypted(v.get('max', None)))
 
-    @classmethod
-    def get_key(klass, cluster, key_name):
+    def get_key(self):
         """ Load the key specified by name. """
+        cluster = self.cluster
+        key_name = self.key_name
+
         config = cluster.ctx.get_config()
-        provider = cluster.provider
+        provider = self.provider
 
         clouds = config.mapping.get('clouds').resolve()
         filename = get_encrypted(clouds[provider]['keys'][key_name])
@@ -139,7 +143,7 @@ class Compute(Role):
         raise saved_exception
 
     def create_cloud(self):
-        clouds = self.ctx.get_config().mapping.get('clouds').resolve()
+        clouds = self.cluster.ctx.get_config().mapping.get('clouds').resolve()
         p = clouds.get(self.provider, None)
         if p is None:
             raise KeyError("provider %r not found" % self.provider)
@@ -224,8 +228,7 @@ class Compute(Role):
         if self.cloud is not None:
             new_cfg = {}
             hosts = new_cfg['hosts'] = []
-            roles = config.mapping.get('roles').resolve()
-            for node in role.nodes:
+            for node in self.nodes:
                 struct = node.host_info()
                 hosts.append(struct)
             config.add(new_cfg)
