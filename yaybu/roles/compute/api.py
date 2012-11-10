@@ -32,6 +32,9 @@ httplib.HTTPResponse = HTTPResponse27
 httplib.HTTPConnection.response_class = HTTPResponse27
 #####################################################################
 
+import libcloud.security
+libcloud.security.VERIFY_SSL_CERT = False
+libcloud.security.VERIFY_SSL_CERT_STRICT = False
 
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.storage.types import Provider as StorageProvider
@@ -45,6 +48,8 @@ from libcloud.compute.deployment import MultiStepDeployment, ScriptDeployment, S
 import libcloud.security
 from libcloud.common.types import LibcloudError
 from libcloud.storage.types import ContainerDoesNotExistError
+
+from .vmware import VMWareDriver
 
 from boto.route53.exception import DNSServerError
 from boto.route53.connection import Route53Connection
@@ -129,6 +134,8 @@ class Cloud(object):
     @property
     @memoized
     def compute(self):
+        if self.compute_provider == "vmware":
+            return VMWareDriver(**self.compute_args)
         provider = getattr(ComputeProvider, self.compute_provider)
         driver_class = get_compute_driver(provider)
         return driver_class(**self.compute_args)

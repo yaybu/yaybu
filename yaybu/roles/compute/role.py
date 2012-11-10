@@ -153,6 +153,7 @@ class Compute(Role):
                 return key
             except SSHException, e:
                 saved_exception = e
+        return None
         raise saved_exception
 
     def create_cloud(self):

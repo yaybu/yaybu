@@ -43,7 +43,7 @@ class VMWareNode(base.Node):
         return self._action("readVariable", "guestVar", "ip")
 
 
-class VMWareDriver(object):
+class VMWareDriver(base.NodeDriver):
 
     logger = logging.getLogger("yaybu.roles.compute.vmware.VMWareDriver")
 
@@ -78,7 +78,8 @@ class VMWareDriver(object):
         nodes = []
         for line in self._action("list").splitlines():
             if line.startswith("/") and os.path.exists(line):
-                nodes.append(VMWareNode(self, line.strip()))
+                n = VMWareNode(self, line.strip())
+                nodes.append(n)
         return nodes
 
     def create_node(self, name, size, image):
@@ -86,9 +87,12 @@ class VMWareDriver(object):
         if not os.path.exists(source):
             raise LibcloudError("Base image is not valid")
 
-        self._action("clone", source, "/tmp/example.vmx")
+        target = "/tmp/example.vmx"
 
-        node = VMWareNode(self, vmx)
+        self._action("clone", source, target)
+
+        node = VMWareNode(self, target)
+        node.start()
         return node
 
     def reboot_node(self, node):
@@ -97,7 +101,4 @@ class VMWareDriver(object):
     def destroy_node(self, node):
         node.destroy()
 
-if __name__ == "__main__":
-    v = VMWareDriver()
-    print v.list_nodes()
 
