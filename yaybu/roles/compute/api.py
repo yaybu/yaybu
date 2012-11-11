@@ -189,8 +189,9 @@ class Cloud(object):
             node = self.compute.create_node(
                 name=name,
                 image=self.images[image],
-                size=self.sizes[size],
-                ex_keyname=keypair)
+                size=self.sizes.get(size, None),
+                #ex_keyname=keypair
+                )
             logger.debug("Waiting for node %r to start" % (name, ))
             ## TODO: wrap this in a try/except block and terminate
             ## and recreate the node if this fails

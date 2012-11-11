@@ -13,22 +13,22 @@
 # limitations under the License.
 
 import os
+import glob
+import shutil
 import subprocess
 import logging
 
 from libcloud.compute import base
+from libcloud.compute.types import NodeState
+from libcloud.common.types import LibcloudError
 
 
 class VMWareNode(base.Node):
 
     logger = logging.getLogger("yaybu.roles.compute.vmware.VMWareNode")
 
-    def __init__(self, provider, vmx):
-        self.provider = provider
-        self.vmx = vmx
-
     def _action(self, action, *params):
-        return self.provider._action(action, self.vmx, *params)
+        return self.driver._action(action, self.id, *params)
 
     def start(self):
         self._action("start", "nogui")
@@ -38,14 +38,31 @@ class VMWareNode(base.Node):
 
     def reboot(self):
         self._action("reset", "hard")
+        self.state = NodeState.REBOOTING
+
+    def destroy(self):
+        self.stop()
+        self._action("deleteVM")
+        shutil.rmtree(os.path.dirname(self.id))
 
     def get_ip_address(self):
-        return self._action("readVariable", "guestVar", "ip")
+        return self._action("readVariable", "guestVar", "ip").strip()
+
+    def _refresh(self):
+        public_ip = self.get_ip_address()
+        if public_ip:
+            self.public_ips = [public_ip]
+            self.state = NodeState.RUNNING
+        else:
+            self.state = NodeState.UNKNOWN
 
 
 class VMWareDriver(base.NodeDriver):
 
     logger = logging.getLogger("yaybu.roles.compute.vmware.VMWareDriver")
+
+    type = 99
+    name = "vmware"
 
     def _find_vmrun(self):
         known_locations = [
@@ -62,11 +79,21 @@ class VMWareDriver(base.NodeDriver):
         self.logger.debug(command)
         p = subprocess.Popen([self._find_vmrun()] + list(params), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        self.logger.debug(command)
+        self.logger.debug(stdout)
+        if p.returncode != 0:
+            raise LibcloudError("Call to vmrun failed with exit code %d\nCall: %s\n%s" % (p.returncode, command, stderr))
         return stdout
 
     def list_images(self, location=None):
-        return []
+        vm_locations = [
+            os.path.join(os.path.expanduser("~/Documents/Virtual Machines.localized/"), "*", "*.vmx"),
+            ]
+
+        locs = []
+        for loc in vm_locations:
+            for match in glob.glob(os.path.expanduser(loc)):
+                locs.append(base.NodeImage(id=match, name="VMWare Image", driver=self))
+        return locs
 
     def list_sizes(self, location=None):
         return []
@@ -78,20 +105,41 @@ class VMWareDriver(base.NodeDriver):
         nodes = []
         for line in self._action("list").splitlines():
             if line.startswith("/") and os.path.exists(line):
-                n = VMWareNode(self, line.strip())
+                n = VMWareNode(line.strip(), line.strip(), NodeState.UNKNOWN, None, None, self)
+                n._refresh()
                 nodes.append(n)
         return nodes
+
+    def _manual_clone(self, source, target):
+        self.logger.debug("Manually cloning '%s' to '%s'" % (source, target, ))
+        src_path = os.path.dirname(source)
+        target_path = os.path.dirname(target)
+
+        shutil.copytree(src_path, target_path)
+
+        # Mutate VMX file...
+        os.rename(os.path.join(target_path, os.path.basename(source)),
+            os.path.join(target_path, os.path.basename(target)))
 
     def create_node(self, name, size, image):
         source = image.id
         if not os.path.exists(source):
             raise LibcloudError("Base image is not valid")
 
-        target = "/tmp/example.vmx"
+        target = "/Users/john/example-image/example.vmx"
 
-        self._action("clone", source, target)
+        if os.path.exists(os.path.dirname(target)):
+            raise LibcloudError("Destination folder already exists: %s" % os.path.dirname(target))
 
-        node = VMWareNode(self, target)
+        try:
+            self._action("clone", source, target)
+        except LibcloudError:
+            self._manual_clone(source, target)
+
+        if not os.path.exists(target):
+            raise LibcloudError("Unable to create clone: '%s'" % target)
+
+        node = VMWareNode(target, name, NodeState.PENDING, None, None, self)
         node.start()
         return node
 
