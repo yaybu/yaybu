@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .node import Node
 from . import api
 
 from yaybu.core.cloud.role import Role
@@ -28,68 +27,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class AbstractCloud:
-
-    """ An abstraction built on top of the libcloud api. Allows you to have
-    your own internal names for images and sizes, to increase portability.
-    """
-
-    def __init__(self, compute_provider, storage_provider, dns_provider, images, sizes, args=(), compute_args=(), storage_args=()):
-        """
-        Args:
-            compute_provider: The name of the compute provider in libcloud
-            storage_provider: the name of the storage provider in libcloud
-            dns_provider: The name of the dns provider in libcloud, or 'route53'
-            args: A dictionary of arguments to provide to the providers
-            images: A dictionary of images that maps your names to the providers names
-            sizes: A dictionary of sizes that maps your names to the providers names
-        """
-        self.cloud = api.Cloud(compute_provider, storage_provider, dns_provider, args, compute_args, storage_args)
-        # DUMMY provider has numeric images and sizes
-        self.images = dict([(x,str(y)) for (x,y) in images.items()])
-        self.sizes = dict([(x,str(y)) for (x,y) in sizes.items()])
-
-    @property
-    def nodes(self):
-        return self.cloud.nodes
-
-    def get_container(self, name):
-        return self.cloud.get_container(name)
-
-    def validate(self, image, size):
-        """ Validate that the image and size requested is valid """
-        if image not in self.images:
-            raise KeyError("Image %r not known" % (image,))
-
-        if size not in self.sizes:
-            raise KeyError("Size %r not known" % (size,))
-
-        if self.images[image] not in self.cloud.images:
-            raise KeyError("Mapped image %r not known" % (self.images[image], ))
-
-        if self.sizes[size] not in self.cloud.sizes:
-            raise KeyError("Mapped size %r not known" % (self.sizes[role.size], ))
-
-    def create_node(self, name, image, size, keypair):
-        return self.cloud.create_node(
-            name,
-            self.images[image],
-            self.sizes[size],
-            keypair)
-
-    def destroy_node(self, nodename):
-        node = self.cloud.nodes[nodename]
-        self.cloud.destroy_node(node)
-
-    def update_record(self, ip, zone, name):
-        self.cloud.update_record(ip, zone, name)
-
-
 class Compute(Role):
 
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
-    def __init__(self, cluster, name, key_name, image, size, depends=(), dns=None, min_=1, max_=1):
+    def __init__(self, cluster, name, key_name, image, size, depends=(), dns=None):
         """
         Args:
             name: Role name
@@ -104,15 +46,13 @@ class Compute(Role):
         """
         super(Compute, self).__init__(cluster, name, depends=depends)
         self.provider = "aws-eu-west"
+        self.node = None
 
         self.key_name = key_name
         self.key = self.get_key()
         self.image = image
         self.size = size
-        self.min = min_
-        self.max = max_
         self.dns = dns
-        self.nodes = []
 
         self.create_cloud()
 
@@ -161,90 +101,33 @@ class Compute(Role):
         p = clouds.get(self.provider, None)
         if p is None:
             raise KeyError("provider %r not found" % self.provider)
-        cloud = AbstractCloud(
+ 
+        self.cloud = api.Cloud(
             get_encrypted(p['providers']['compute']),
             get_encrypted(p['providers']['storage']),
             get_encrypted(p['providers']['dns']),
-            get_encrypted(p['images']),
-            get_encrypted(p['sizes']),
-            args=get_encrypted(p.get('args', {})),
-            compute_args=get_encrypted(p.get('compute_args', {})),
-            storage_args=get_encrypted(p.get('storage_args', {})),
+            get_encrypted(p.get('args', {}))
+            get_encrypted(p.get('compute_args', {}))
+            get_encrypted(p.get('storage_args', {}))
             )
-        self.cloud = cloud
-       
-    def __iter__(self):
-        """ Iterator of nodes. iterates in index order. """
-        for n in sorted(self.nodes, key=lambda x: x.index):
-            yield n
-            
+      
     def role_info(self):
         """ Return the appropriate stanza from the configuration file """
         return self.cluster.ctx.get_config().mapping.get("roles").resolve()[self.name]
         
-    def add_node(self, index, name, their_name):
-        n = Node(self, index, name, their_name)
-        self.nodes.append(n)
-        return n
-
-    def get_node_by_our_name(self, name):
-        """ Return the index and the underlying Node structure """
-        for v in self.nodes:
-            if v.name == name:
-                return v
-        raise KeyError("Node %r not found" % name)
-    
-    def get_node_by_their_name(self, name):
-        for v in self.nodes:
-            if v.their_name == name:
-                return v
-        raise KeyError("Node %r not found" % name)
-        
-    def rm_node(self, their_name):
-        for k, v in self.nodes.items():
-            if v.their_name == their_name:
-                del self.nodes[k]
-                return
-        raise KeyError("No node found with name %r" % (their_name,))
-
-    def node_name(self, index):
-        """ Name a node """
-        return "%s/%s/%s" % (self.cluster.name, self.name, index)
-
-    def instantiate_node(self):
-        """ Instantiate a new node for this role  """
-        index = self.find_lowest_unused()
-        name = self.node_name(index)
-        logger.debug("Node will be %r" % name)
-        libcloud_node = self.cloud.create_node(name, self.image, self.size, self.key_name)
-        node = self.add_node(index, name, libcloud_node.name)
+    def instantiate(self):
+        logger.debug("Node will be %r" % self.full_name)
+        self.node = self.cloud.create_node(self.full_name, self.image, self.size, self.key_name)
         self.cluster.commit()
         self.node_zone_update(name)
-        node.install_yaybu()
+        self.install_yaybu()
         logger.info("Node provisioned: %r" % node)
-
-    def find_lowest_unused(self):
-        """ Find the lowest unused index for a role. We re-use indexes for
-        nodes that have been and gone. """
-        index = 0
-        for n in self:
-            if n.index == index:
-                index += 1
-        return index
-    
-    def instantiate(self):
-        """ Instantiate and install nodes for each role up to the minimum required """
-        while len(self.nodes) < self.min:
-            logger.info("Autoprovisioning node for role %r" % self.name)
-            self.instantiate_node()
 
     def decorate_config(self, config):
         if self.cloud is not None:
             new_cfg = {}
             hosts = new_cfg['hosts'] = []
-            for node in self.nodes:
-                struct = node.host_info()
-                hosts.append(struct)
+            hosts.append(self.host_info)
             config.add(new_cfg)
 
     def node_zone_update(self, node_name):
@@ -262,11 +145,6 @@ class Compute(Role):
         ip = node.public_ip[0]
         self.cloud.update_record(ip, zone, name)
              
-    def destroy_node(self, nodename):
-        cluster.destroy_node(nodename)
-        self.rm_node(nodename)
-        self.store_state()
-    
     def provision(self, dump=False):
         """ Phase 2 of provisioning """
         for node in self:
@@ -278,4 +156,62 @@ class Compute(Role):
             if result != 0:
                 # stop processing further hosts
                 return result
+
+
+    def host_info(self):
+        """ Return a dictionary of information about this node """
+        ## TODO
+        ## This needs further work!
+        ## the interface names should be extracted properly
+        ## and the distro, raid and disks sections should be completed
+        n = self.node
+        if not n:
+            return {}
+        def interfaces():
+            for i, (pub, priv) in enumerate(zip(n.public_ips, n.private_ips)):
+                yield {'name': 'eth%d' % i,
+                       'address': priv,
+                       'mapped_as': pub}
+        return {
+            'rolename': self.name,
+            'role': copy.copy(self.role_info()),
+            'mapped_as': n.public_ips[0],
+            'address': n.private_ips[0],
+            'hostname': n.extra['dns_name'].split(".")[0],
+            'fqdn': n.extra['dns_name'],
+            'domain': n.extra['dns_name'].split(".",1)[1],
+            'distro': 'TBC',
+            'raid': 'TBC',
+            'disks': 'TBC',
+            'interfaces': list(interfaces()),
+        }
+
+    @property
+    def hostname(self):
+        return self.node.extra['dns_name']
+
+    def context(self):
+        """ Creates the context used to provision an actual host """
+        ctx = self.cluster.make_context(resume=True)
+        ctx.set_host(self.hostname)
+        ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
+        return ctx
+
+    def create_runner(self):
+        """ Create a runner for the specified host, using the key found in
+        the configuration """
+        r = remote.RemoteRunner(self.hostname, self.key)
+        return r
+
+    def provision(self):
+        r = self.create_runner()
+        r.run(self.context())
+
+    def install_yaybu(self):
+        """ Install yaybu on the provided node.
+           Args:
+                node: a Node instance
+            """
+        runner = remote.RemoteRunner(self.hostname, self.role.key)
+        runner.install_yaybu()
 
