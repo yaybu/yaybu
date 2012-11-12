@@ -12,6 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This driver presents a libcloud interface around vmrun - the command line API
+# for controlling VMWare VM's.
+
+# Base image notes:
+#1. Install vmware tools from packages.vmware.com/tools - the latest esx ones work with vmware fusion
+#2. Don't forget to delete the persistent net rules
+#3. There needs to be a user with a password/key that can get to root without sudo requiring a passphrase.
+
+
 import os
 import glob
 import shutil
@@ -86,6 +95,7 @@ class VMWareDriver(base.NodeDriver):
 
     def list_images(self, location=None):
         vm_locations = [
+            os.path.join(os.path.expanduser("~/Documents/Virtual Machines/"), "*", "*.vmx"),
             os.path.join(os.path.expanduser("~/Documents/Virtual Machines.localized/"), "*", "*.vmx"),
             ]
 

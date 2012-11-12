@@ -196,7 +196,7 @@ class Cloud(object):
             ## TODO: wrap this in a try/except block and terminate
             ## and recreate the node if this fails
             try:
-                self.compute._wait_until_running(node, timeout=60)
+                self.compute._wait_until_running(node, timeout=600)
             except LibcloudError:
                 logger.warning("Node did not start before timeout. retrying.")
                 node.destroy()
