@@ -15,6 +15,7 @@
 #####################################################################
 # Monkeypatch httplib so that libcloud doesn't hang on get_object
 # This is only needed on python 2.6 but should be safe for other pythons
+# (This fix is now upstream in libcloud, we should dep on it ASAP)
 import httplib
 HTTPResponse = httplib.HTTPResponse
 
@@ -44,8 +45,6 @@ from libcloud.compute.providers import get_driver as get_compute_driver
 from libcloud.storage.providers import get_driver as get_storage_driver
 from libcloud.dns.providers import get_driver as get_dns_driver
 
-from libcloud.compute.deployment import MultiStepDeployment, ScriptDeployment, SSHKeyDeployment
-import libcloud.security
 from libcloud.common.types import LibcloudError
 from libcloud.storage.types import ContainerDoesNotExistError
 
@@ -67,8 +66,6 @@ import time
 
 from yaybu.core.util import memoized
 from yaybu.core import remote
-
-libcloud.security.VERIFY_SSL_CERT = True
 
 logger = logging.getLogger(__name__)
 
@@ -121,24 +118,13 @@ class Cloud(object):
 
     """ Adapter of a cloud that provides access to runtime functionality. """
 
-    def __init__(self, compute_provider, storage_provider, dns_provider, args=(), compute_args=(), storage_args=()):
+    def __init__(self, storage_provider, dns_provider, args=(), storage_args=()):
         """ storage_args and compute_args will be used for preference if
         provided. otherwise args are used for both """
-        self.compute_provider = compute_provider
         self.storage_provider = storage_provider
         self.dns_provider = dns_provider
         self.args = dict(args)
-        self.compute_args = dict(compute_args) or self.args
         self.storage_args = dict(storage_args) or self.args
-
-    @property
-    @memoized
-    def compute(self):
-        if self.compute_provider == "vmware":
-            return VMWareDriver(**self.compute_args)
-        provider = getattr(ComputeProvider, self.compute_provider)
-        driver_class = get_compute_driver(provider)
-        return driver_class(**self.compute_args)
     
     @property
     @memoized
@@ -157,54 +143,12 @@ class Cloud(object):
             driver_class = get_dns_driver(provider)
             return driver_class(**self.args)
 
-    @property
-    @memoized
-    def images(self):
-        return dict((i.id, i) for i in self.compute.list_images())
-
-    @property
-    @memoized
-    def sizes(self):
-        return dict((s.id, s) for s in self.compute.list_sizes())
-
-    @property
-    def nodes(self):
-        return dict((n.name, n) for n in self.compute.list_nodes())
-
     def get_container(self, name):
         try:
             container = self.storage.get_container(container_name=name)
         except ContainerDoesNotExistError:
             container = self.storage.create_container(container_name=name)
         return container
-    
-    def destroy_node(self, node):
-        self.compute.destroy_node(node)
-            
-    def create_node(self, name, image, size, keypair):
-        """ This creates a physical node based on our node record. """
-        for tries in range(10):
-            logger.debug("Creating node %r with image %r, size %r and keypair %r" % (
-                name, image, size, keypair))
-            node = self.compute.create_node(
-                name=name,
-                image=self.images[image],
-                size=self.sizes.get(size, None),
-                #ex_keyname=keypair
-                )
-            logger.debug("Waiting for node %r to start" % (name, ))
-            ## TODO: wrap this in a try/except block and terminate
-            ## and recreate the node if this fails
-            try:
-                self.compute._wait_until_running(node, timeout=600)
-            except LibcloudError:
-                logger.warning("Node did not start before timeout. retrying.")
-                node.destroy()
-                continue
-            logger.debug("Node %r running" % (name, ))
-            return node
-        logger.error("Unable to create node successfully. giving up.")
-        raise IOError()
 
     def update_record(self, ip, zone, name):
         """ Create an A record for the ip/dns pairing """

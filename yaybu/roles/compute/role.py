@@ -12,17 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import api
+import os
+import uuid
+import logging
+import yaml
+import StringIO
+import datetime
+import collections
+import time
 
-from yaybu.core.cloud.role import Role
-from yaybu.core.cloud import dns
-from yaybu.core.util import get_encrypted
-
+from libcloud.compute.types import Provider as ComputeProvider
+from libcloud.compute.providers import get_driver as get_compute_driver
+from libcloud.common.types import LibcloudError
 from ssh.ssh_exception import SSHException
 from ssh.rsakey import RSAKey
 from ssh.dsskey import DSSKey
 
-import logging
+from .vmware import VMWareDriver
+from yaybu.core.util import memoized
+from yaybu.core import remote
+from yaybu.core.cloud.role import Role
+from yaybu.core.cloud import dns
+from yaybu.core.util import get_encrypted
+
 
 logger = logging.getLogger(__name__)
 
@@ -96,68 +108,33 @@ class Compute(Role):
         return None
         raise saved_exception
 
-    def create_cloud(self):
-        clouds = self.cluster.ctx.get_config().mapping.get('clouds').resolve()
-        p = clouds.get(self.provider, None)
-        if p is None:
-            raise KeyError("provider %r not found" % self.provider)
- 
-        self.cloud = api.Cloud(
-            get_encrypted(p['providers']['compute']),
-            get_encrypted(p['providers']['storage']),
-            get_encrypted(p['providers']['dns']),
-            get_encrypted(p.get('args', {}))
-            get_encrypted(p.get('compute_args', {}))
-            get_encrypted(p.get('storage_args', {}))
-            )
-      
+    @property
+    @memoized
+    def images(self):
+        return dict((i.id, i) for i in self.driver.list_images())
+
+    @property
+    @memoized
+    def sizes(self):
+        return dict((s.id, s) for s in self.driver.list_sizes())
+
+    @property
+    def nodes(self):
+        return dict((n.name, n) for n in self.driver.list_nodes())
+
+    @property
+    @memoized
+    def driver(self):
+        if self.compute_provider == "vmware":
+            return VMWareDriver(**self.compute_args)
+        provider = getattr(ComputeProvider, self.compute_provider)
+        driver_class = get_compute_driver(provider)
+        return driver_class(**self.compute_args)
+
     def role_info(self):
         """ Return the appropriate stanza from the configuration file """
         return self.cluster.ctx.get_config().mapping.get("roles").resolve()[self.name]
-        
-    def instantiate(self):
-        logger.debug("Node will be %r" % self.full_name)
-        self.node = self.cloud.create_node(self.full_name, self.image, self.size, self.key_name)
-        self.cluster.commit()
-        self.node_zone_update(name)
-        self.install_yaybu()
-        logger.info("Node provisioned: %r" % node)
-
-    def decorate_config(self, config):
-        if self.cloud is not None:
-            new_cfg = {}
-            hosts = new_cfg['hosts'] = []
-            hosts.append(self.host_info)
-            config.add(new_cfg)
-
-    def node_zone_update(self, node_name):
-        """ Update the DNS, if supported, with the details for this new node """
-        if self.dns is None:
-            return
-        our_node = self.get_node_by_our_name(node_name)
-        zone_info = self.dns.zone_info(our_node.index)
-        their_node = self.cloud.nodes[node_name]
-        if zone_info is not None:
-            self.update_zone(their_node, zone_info[0], zone_info[1])
-
-    def update_zone(self, node, zone, name):
-        """ Update the cloud dns to point at the node """
-        ip = node.public_ip[0]
-        self.cloud.update_record(ip, zone, name)
-             
-    def provision(self, dump=False):
-        """ Phase 2 of provisioning """
-        for node in self:
-            logger.info("Updating host %r" % node)
-            if dump:
-                host_ctx = node.context()
-                self.dump(host_ctx, "%s.yay" % hostname)
-            result = node.provision()
-            if result != 0:
-                # stop processing further hosts
-                return result
-
-
+            
     def host_info(self):
         """ Return a dictionary of information about this node """
         ## TODO
@@ -203,15 +180,94 @@ class Compute(Role):
         r = remote.RemoteRunner(self.hostname, self.key)
         return r
 
-    def provision(self):
-        r = self.create_runner()
-        r.run(self.context())
-
     def install_yaybu(self):
         """ Install yaybu on the provided node.
            Args:
                 node: a Node instance
             """
-        runner = remote.RemoteRunner(self.hostname, self.role.key)
-        runner.install_yaybu()
+        return self.create_runner().install_yaybu()
+
+    def instantiate(self):
+        logger.debug("Node will be %r" % self.full_name)
+
+        """ This creates a physical node based on our node record. """
+
+        if isinstance(self.image, dict):
+            image = node.NodeImage(
+                id = self.image['id'],
+                name = self.image.get('name', self.image['id']),
+                ram = self.image.get('extra', {}),
+                driver = self.driver,
+                )
+        else:
+            image = self.images.get(self.image, None)
+
+        if isinstance(self.size, dict):
+            size = node.NodeSize(
+                id = self.size['id'],
+                name = self.size.get('name', self.size['id']),
+                ram = self.size.get('ram', 0),
+                disk = self.size.get('disk', 0),
+                bandwidth = self.size.get('bandwidth', 0),
+                price = self.size.get('price', 0),
+                driver = self.driver,
+                )
+        else:
+            size = self.sizes.get(self.size, None)
+
+        for tries in range(10):
+            logger.debug("Creating node %r with image %r, size %r and keypair %r" % (
+                name, image, size, keypair))
+
+            node = self.driver.create_node(
+                name=name,
+                image=image,
+                size=image,
+                #ex_keyname=keypair
+                )
+
+            logger.debug("Waiting for node %r to start" % (name, ))
+            ## TODO: wrap this in a try/except block and terminate
+            ## and recreate the node if this fails
+            try:
+                self.driver._wait_until_running(node, timeout=600)
+            except LibcloudError:
+                logger.warning("Node did not start before timeout. retrying.")
+                node.destroy()
+                continue
+            logger.debug("Node %r running" % (name, ))
+            self.node = node
+
+            self.cluster.commit()
+            self.node_zone_update(name)
+            self.install_yaybu()
+            logger.info("Node provisioned: %r" % node)
+ 
+        logger.error("Unable to create node successfully. giving up.")
+        raise IOError()
+
+    def decorate_config(self, config):
+        if self.cloud is not None:
+            new_cfg = {}
+            hosts = new_cfg['hosts'] = []
+            hosts.append(self.host_info)
+            config.add(new_cfg)
+
+    def provision(self, dump=False):
+        """ Phase 2 of provisioning """
+        for node in self:
+            logger.info("Updating host %r" % node)
+            if dump:
+                host_ctx = node.context()
+                self.dump(host_ctx, "%s.yay" % hostname)
+            r = self.create_runner()
+            result = r.run(self.context())
+            if result != 0:
+                # stop processing further hosts
+                return result
+
+    def destroy(self):
+        self.node.destroy()
+
+
 
