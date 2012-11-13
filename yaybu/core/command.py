@@ -207,23 +207,17 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
             
-    def do_push(self, opts, args):
+    def do_push(self, opts, args, runner=remote.RemoteRunner):
         """
         usage: remote [options] <hostname> <filename>
         Provision the specified hostname with the specified configuration, by
         executing Yaybu on the remote system, via ssh
         """
         if len(args) < 2:
-            self.simple_help("provision")
+            self.simple_help("push")
             return
 
         hostname = args[0]
-        if hostname == "test://":
-            hostname = "localhost"
-            RUNNER = remote.TestRemoteRunner
-        else:
-            RUNNER = remote.RemoteRunner
-
         ctx = runcontext.RunContext(args[1],
                                     resume=opts.resume,
                                     no_resume=opts.no_resume,
@@ -237,7 +231,7 @@ class YaybuCmd(OptionParsingCmd):
         if len(args) > 1:
             ctx.get_config().set_arguments_from_argv(args[2:])
 
-        r = RUNNER(hostname)
+        r = runner(hostname)
         rv = r.run(ctx)
         return rv
 
