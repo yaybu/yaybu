@@ -239,10 +239,15 @@ class FakeChrootFixture(Fixture):
         if self.test_network:
             args.insert(0, "test://")
             args.insert(0, "push")
+            from yaybu.core.commands import YaybuCmd
+            from optparse import OptionParser
+            p = OptionParser()
+            y = YaybuCmd(ypath=(filespath, ))
+            y.opts_push(p)
+            return y.do_push(*p.parse_args(args))
         else:
             args.insert(0, "apply")
-
-        return self.call(["yaybu", "-v", "-v", "-d", "--ypath", filespath] + args)
+            return self.call(["yaybu", "-v", "-v", "-d", "--ypath", filespath] + args)
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """
