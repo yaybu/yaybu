@@ -25,6 +25,8 @@ import copy
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
 from libcloud.common.types import LibcloudError
+from libcloud.compute.types import NodeState
+
 from ssh.ssh_exception import SSHException
 from ssh.rsakey import RSAKey
 from ssh.dsskey import DSSKey
@@ -167,7 +169,7 @@ class Compute(Role):
         """ Creates the context used to provision an actual host """
         ctx = self.cluster.make_context(resume=True)
         ctx.set_host(self.hostname)
-        ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
+        # ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
         return ctx
 
     def create_runner(self):
@@ -187,6 +189,14 @@ class Compute(Role):
         logger.debug("Node will be %r" % self.full_name)
 
         """ This creates a physical node based on our node record. """
+
+        existing = [n for n in self.driver.list_nodes() if n.name == self.full_name and n.state != NodeState.TERMINATED]
+        if len(existing) > 1:
+            raise KeyError("There are already multiple nodes called '%s'" % self.full_name)
+        elif len(existing) == 1:
+            logger.debug("Node %r already running - not creating new node" % (self.full_name, ))
+            self.node = existing[0]
+            return
 
         if isinstance(self.image, dict):
             image = node.NodeImage(
