@@ -20,6 +20,7 @@ import StringIO
 import datetime
 import collections
 import time
+import copy
 
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
@@ -43,7 +44,7 @@ class Compute(Role):
 
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
-    def __init__(self, cluster, name, key_name, image, size, depends=(), dns=None):
+    def __init__(self, cluster, name, driver, args, key_name, image, size, depends=(), dns=None):
         """
         Args:
             name: Role name
@@ -53,20 +54,17 @@ class Compute(Role):
             size: The size of the image in your local dialect
             depends: A list of roles this role depends on
             dns: An instance of DNSNamingPolicy
-            min: The minimum number of nodes of this role the cluster should tolerate
-            max: The maximum number of nodes of this role the cluster should tolerate
         """
         super(Compute, self).__init__(cluster, name, depends=depends)
-        self.provider = "aws-eu-west"
         self.node = None
 
+        self.driver_name = driver
+        self.args = args
         self.key_name = key_name
         self.key = self.get_key()
         self.image = image
         self.size = size
         self.dns = dns
-
-        self.create_cloud()
 
     @classmethod
     def create_from_yay_expression(klass, cluster, name, v):
@@ -79,34 +77,32 @@ class Compute(Role):
         return klass(
                 cluster,
                 name,
+                get_encrypted(v['driver']),
+                get_encrypted(v['args']),
                 get_encrypted(v['key']),
-                get_encrypted(v['instance']['image']),
-                get_encrypted(v['instance']['size']),
+                get_encrypted(v['image']),
+                get_encrypted(v['size']),
                 get_encrypted(v.get('depends', ())),
                 np,
-                get_encrypted(v.get('min', 0)),
-                get_encrypted(v.get('max', None)))
+                )
 
     def get_key(self):
         """ Load the key specified by name. """
         cluster = self.cluster
-        key_name = self.key_name
 
-        config = cluster.ctx.get_config()
-        provider = self.provider
-
-        clouds = config.mapping.get('clouds').resolve()
-        filename = get_encrypted(clouds[provider]['keys'][key_name])
         saved_exception = None
         for pkey_class in (RSAKey, DSSKey):
             try:
-                file = cluster.ctx.get_file(filename)
+                file = cluster.ctx.get_file(self.key_name)
                 key = pkey_class.from_private_key(file)
                 return key
             except SSHException, e:
                 saved_exception = e
-        return None
         raise saved_exception
+
+    @property
+    def full_name(self):
+        return "%s/%s" % (self.cluster.name, self.name)
 
     @property
     @memoized
@@ -125,11 +121,11 @@ class Compute(Role):
     @property
     @memoized
     def driver(self):
-        if self.compute_provider == "vmware":
-            return VMWareDriver(**self.compute_args)
-        provider = getattr(ComputeProvider, self.compute_provider)
+        if self.driver_name == "vmware":
+            return VMWareDriver(**self.args)
+        provider = getattr(ComputeProvider, self.driver_name)
         driver_class = get_compute_driver(provider)
-        return driver_class(**self.compute_args)
+        return driver_class(**self.args)
 
     def role_info(self):
         """ Return the appropriate stanza from the configuration file """
@@ -217,54 +213,49 @@ class Compute(Role):
 
         for tries in range(10):
             logger.debug("Creating node %r with image %r, size %r and keypair %r" % (
-                name, image, size, keypair))
+                self.name, self.image, self.size, self.key))
 
             node = self.driver.create_node(
-                name=name,
+                name=self.full_name,
                 image=image,
-                size=image,
-                #ex_keyname=keypair
+                size=size,
+                ex_keyname=self.args['ex_keyname'],
                 )
 
-            logger.debug("Waiting for node %r to start" % (name, ))
+            logger.debug("Waiting for node %r to start" % (self.full_name, ))
             ## TODO: wrap this in a try/except block and terminate
             ## and recreate the node if this fails
             try:
-                self.driver._wait_until_running(node, timeout=600)
+                self.node, self.ip_addresses = self.driver._wait_until_running(node, timeout=600)
             except LibcloudError:
                 logger.warning("Node did not start before timeout. retrying.")
                 node.destroy()
                 continue
-            logger.debug("Node %r running" % (name, ))
-            self.node = node
+            logger.debug("Node %r running" % (self.full_name, ))
 
             self.cluster.commit()
-            self.node_zone_update(name)
             self.install_yaybu()
             logger.info("Node provisioned: %r" % node)
+            return
  
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
 
     def decorate_config(self, config):
-        if self.cloud is not None:
+        if self.node is not None:
             new_cfg = {}
             hosts = new_cfg['hosts'] = []
-            hosts.append(self.host_info)
+            hosts.append(self.host_info())
             config.add(new_cfg)
 
     def provision(self, dump=False):
         """ Phase 2 of provisioning """
-        for node in self:
-            logger.info("Updating host %r" % node)
-            if dump:
-                host_ctx = node.context()
-                self.dump(host_ctx, "%s.yay" % hostname)
-            r = self.create_runner()
-            result = r.run(self.context())
-            if result != 0:
-                # stop processing further hosts
-                return result
+        logger.info("Updating host %r" % self.node)
+        if dump:
+            self.dump(self.context(), "%s.yay" % self.hostname)
+        r = self.create_runner()
+        result = r.run(self.context())
+        return result
 
     def destroy(self):
         self.node.destroy()
