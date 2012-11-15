@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from . import dependency
-from . import dns
 
 from yaybu.core.util import get_encrypted
 
@@ -90,16 +89,14 @@ class Role(object):
 
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
-    def __init__(self, cluster, name, depends=(), dns=None):
+    def __init__(self, cluster, name, depends=()):
         """
         Args:
             name: Role name
             depends: A list of roles this role depends on
-            dns: An instance of DNSNamingPolicy
         """
         self.name = name
         self.depends = depends
-        self.dns = dns
         self.cluster = cluster
     
     def context(self):
