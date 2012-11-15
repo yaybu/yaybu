@@ -105,7 +105,7 @@ class Cluster:
     """ Built on top of AbstractCloud, a Cluster knows about server roles and
     can create and remove nodes for those roles. """
     
-    def __init__(self, cluster_name, filename, argv=None, searchpath=(), verbose=True, state_bucket="yaybu-state"):
+    def __init__(self, cluster_name, filename, argv=None, searchpath=(), verbose=True, simulate=False, state_bucket="yaybu-state"):
         """
         Args:
             cluster_name: The name of the cloud
@@ -117,6 +117,7 @@ class Cluster:
         self.name = cluster_name
         self.filename = filename
         self.searchpath = searchpath
+        self.simulate = simulate
         self.verbose = verbose
         self.state_bucket = state_bucket        
         self.argv = argv
@@ -128,7 +129,7 @@ class Cluster:
 
     def make_context(self, resume=False):
         """ Creates a context suitable for instantiating a cloud """
-        ctx = runcontext.RunContext(self.filename, ypath=self.searchpath, verbose=self.verbose, resume=resume)
+        ctx = runcontext.RunContext(self.filename, ypath=self.searchpath, verbose=self.verbose, simulate=self.simulate, resume=resume)
         config = ctx.get_config()
 
         config.add({

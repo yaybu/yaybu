@@ -15,14 +15,7 @@
 
 from __future__ import absolute_import
 
-import os
-import uuid
 import logging
-import yaml
-import StringIO
-import datetime
-import collections
-import time
 
 from yaybu.core.cloud.role import Role
 from yaybu.core.error import ArgParseError
@@ -36,57 +29,9 @@ import libcloud.security
 libcloud.security.VERIFY_SSL_CERT = False
 libcloud.security.VERIFY_SSL_CERT_STRICT = False
 
-from boto.route53.exception import DNSServerError
-from boto.route53.connection import Route53Connection
-from boto.route53.record import ResourceRecordSets
-from boto.route53.record import Record
+from .route53 import Route53DNSDriver
 
 logger = logging.getLogger(__name__)
-
-max_version = 1
-
-class Route53Zone:
-    
-    def __init__(self, connection, zone):
-        self.connection = connection
-        self.id = zone['Id'].replace('/hostedzone/', '')
-        
-    def get_record(self, name):
-        records = self.connection.get_all_rrsets(self.id, type=None)
-        for record in records:
-            if record.name == name:
-                return record
-        
-    def create_record(self, name, data):
-        """ Note that the name should be a dot terminated FQDN! """
-        assert isinstance(self.connection, Route53Connection)
-        record = self.get_record(name)
-        changes = ResourceRecordSets(self.connection, self.id, "")
-        if record:
-            changes.add_change("DELETE", name, 'A', 60).add_value(record.resource_records[0])
-        changes.add_change("CREATE", name, 'A', 60).add_value(data)
-        status = changes.commit()['ChangeResourceRecordSetsResponse']['ChangeInfo']
-        logger.debug("Status response is %r" % status)
-
-
-class Route53:
-    
-    """ Our driver that handles route53 using boto """
-    
-    def __init__(self, key, secret):
-        self.connection = Route53Connection(key, secret)
-        
-    def create_zone(self, domain):
-        """" Create the zone if it does not exist """
-        zone = self.connection.get_hosted_zone_by_name(domain)
-        if zone is None:
-            zone = self.connection.create_hosted_zone(domain)
-            logger.debug("Created zone %r" % domain)
-            zone = zone['CreateHostedZoneResponse']['HostedZone']
-            return Route53Zone(self.connection, zone)  
-        else:
-            zone = zone['GetHostedZoneResponse']['HostedZone']
-            return Route53Zone(self.connection, zone)
 
 
 class Zone(Role):
@@ -121,19 +66,15 @@ class Zone(Role):
     @property
     @memoized
     def driver(self):
-        if self.dns_provider == "route53":
-            return Route53(**self.args)
+        config = self.config.get("driver").resolve()
+        self.driver_name = config['id']
+        del config['id']
+        if self.driver_name == "route53":
+            return Route53DNSDriver(**config)
         else:
             driver = getattr(DNSProvider, self.driver_name)
             driver_class = get_dns_driver(driver)
-            return driver_class(**self.args)
-
-    def update_record(self, ip, zone, name):
-        """ Create an A record for the ip/dns pairing """
-        fqdn = "%s.%s." % (name, zone)
-        z = self.dns.create_zone(domain=zone)
-        record = z.create_record(name=fqdn, data=ip)
-        logger.info("Created record for %r -> %r" % (name, ip))
+            return driver_class(**self.config)
 
     def instantiate(self):
         pass
@@ -145,28 +86,34 @@ class Zone(Role):
         simulate = self.context().simulate
         params = self.role_info()
 
+        domain = params['domain'].rstrip(".") + "."
+        ttl = params.get('ttl', 0)
+        type_ = params.get('type', 'master')
+        extra = params.get('extra', {})
+
         retval = False
         zone = None
 
-        zones = [z for z in self.driver.list_zones() if z.domain == self.domain]
+        print [z for z in self.driver.list_zones()]
+        zones = [z for z in self.driver.list_zones() if z.domain == domain]
         if len(zones):
             zone = zones[0]
             changed = False
-            if self.type_ != zone.type:
+            if type_ != zone.type:
                 changed = True
-            if self.ttl != zone.ttl:
+            if ttl != zone.ttl:
                 changed = True
-            if self.extra != zone.extra:
+            if extra != zone.extra:
                 changed = True
             if changed:
-                logger.info("Updating %s" % self.domain)
+                logger.info("Updating %s" % domain)
                 if not simulate:
-                    zone.update(self.domain, self.type_, self.ttl, self.extra)
+                    zone.update(domain, type_, ttl, extra)
                 retval = True
         else:
-            logger.info("Creating %s (type=%s, ttl=%s, extra=%r)" % (self.domain, self.type_, self.ttl, self.extra))
+            logger.info("Creating %s (type=%s, ttl=%s, extra=%r)" % (domain, type_, ttl, extra))
             if not simulate:
-                zone = self.driver.create_zone(self.domain, self.type_, self.ttl, self.extra)
+                zone = self.driver.create_zone(domain, type_, ttl, extra)
             retval = True
 
         if not zone and simulate:
@@ -174,25 +121,28 @@ class Zone(Role):
         else:
             all_records = zone.list_records()
 
-        for rec in self.records:
-            type_ = self.driver._string_to_record_type(rec['type'])
+        for rec in params.get('records', []):
+            type_str = rec.get('type', 'A')
+            type_enum = self.driver._string_to_record_type(type_str)
+            ttl = rec.get('ttl', 0)
+
             found = [m for m in all_records if m.type == type_ and m.name == rec['name']]
             if len(found):
                 r = found[0]
                 changed = False
-                if rec['ttl'] != r.ttl:
+                if ttl != r.ttl:
                     changed = True
                 if rec.get('extra', {}) != r.extra:
                     changed = True
                 if changed:
                     logger.info("Updating %s" % rec['name'])
                     if not simulate:
-                        r.update(rec['name'], type_, rec['ttl'], rec.get('extra', {}))
+                        r.update(rec['name'], type_str, ttl, rec.get('extra', {}))
                     retval = True
             else:
-                logger.info("Creating %s (type=%s, ttl=%s, extra=%r)" % (rec['name'], rec['type'], rec['ttl'], rec.get('extra', {})))
+                logger.info("Creating %s.%s (type=%s, ttl=%s, extra=%r)" % (rec['name'], domain, type_str, ttl, rec.get('extra', {})))
                 if not simulate:
-                    zone.create_record(rec['name'], rec['type'], rec['ttl'], rec.get('extra', {}))
+                    zone.create_record(rec['name'], type_enum, rec['data'], rec.get('extra', {}))
                 retval = True
 
         return retval

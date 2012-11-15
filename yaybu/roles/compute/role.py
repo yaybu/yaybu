@@ -35,7 +35,6 @@ from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core import remote
 from yaybu.core.cloud.role import Role
-from yaybu.core.cloud import dns
 from yaybu.core.util import get_encrypted
 
 
@@ -46,7 +45,7 @@ class Compute(Role):
 
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
-    def __init__(self, cluster, name, driver, args, key_name, image, size, depends=(), dns=None):
+    def __init__(self, cluster, name, driver, args, key_name, image, size, depends=()):
         """
         Args:
             name: Role name
@@ -55,7 +54,6 @@ class Compute(Role):
             image: The name of the image in your local dialect
             size: The size of the image in your local dialect
             depends: A list of roles this role depends on
-            dns: An instance of DNSNamingPolicy
         """
         super(Compute, self).__init__(cluster, name, depends=depends)
         self.node = None
@@ -66,16 +64,9 @@ class Compute(Role):
         self.key = self.get_key()
         self.image = image
         self.size = size
-        self.dns = dns
 
     @classmethod
     def create_from_yay_expression(klass, cluster, name, v):
-        np = None
-        if 'dns' in v:
-            zone = get_encrypted(v['dns']['zone'])
-            name = get_encrypted(v['dns']['name'])
-            np = dns.SimpleDNSNamingPolicy(zone, name)
-
         return klass(
                 cluster,
                 name,
@@ -85,7 +76,6 @@ class Compute(Role):
                 get_encrypted(v['image']),
                 get_encrypted(v['size']),
                 get_encrypted(v.get('depends', ())),
-                np,
                 )
 
     def get_key(self):

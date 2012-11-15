@@ -313,7 +313,7 @@ class YaybuCmd(OptionParsingCmd):
             self.simple_help("provision")
             return
         cluster_name, filename = args[:2]
-        cluster = Cluster(cluster_name, filename, argv=args[2:])
+        cluster = Cluster(cluster_name, filename, argv=args[2:], simulate=opts.simulate)
         return cluster.provision(dump=opts.dump)
            
     def do_zoneupdate(self, opts, args):

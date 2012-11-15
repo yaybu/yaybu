@@ -39,9 +39,9 @@ class RoleCollectionFactory(object):
         
     def create_collection(self, cluster):
         c = RoleCollection()
-        roles = self.config.mapping.get('roles').resolve()
-        for k, v in roles.items():
-            classname = get_encrypted(v.get("class", "compute"))
+        for k in self.config.mapping.get('roles').keys():
+            v = self.config.mapping.get('roles').get(k)
+            classname = get_encrypted(v.get("class").resolve())
             r = RoleType.types[classname].create_from_yay_expression(cluster, k, v)
             c.add_role(r)
         return c
@@ -71,19 +71,6 @@ class RoleCollection(object):
         for role in graph.resolve():
             yield self.__roles[role]
         
-    def hostnames(self):
-        """ Return an iterator of all hostnames in this cluster, in order of
-        role dependency. """
-        for role in self:
-            for node in role.nodes:
-                yield node.hostname
-            
-    def get_all_roles_and_nodenames(self):
-        """ Returns an iterator of node names (foo/bar/0) """
-        for role in role.RoleCollection.roles():
-            for node in role.nodes.values():
-                yield role, node.their_name
-    
     def provision(self, dump=False):
         """ Provision everything in two phases. In the first phase, nodes are
         instantiated in the cloud and have yaybu installed on them (as
@@ -114,26 +101,15 @@ class Role(object):
         self.depends = depends
         self.dns = dns
         self.cluster = cluster
-        
+    
+    def context(self):
+        ctx = self.cluster.make_context(resume=True)
+        return ctx
+    
     def role_info(self):
         """ Return the appropriate stanza from the configuration file """
         return self.cluster.ctx.get_config().mapping.get("roles").resolve()[self.name]
    
-    def node_zone_update(self, node_name):
-        """ Update the DNS, if supported, with the details for this new node """
-        if self.dns is None:
-            return
-        our_node = self.get_node_by_our_name(node_name)
-        zone_info = self.dns.zone_info(our_node.index)
-        their_node = self.cluster.libcloud_nodes[node_name]
-        if zone_info is not None:
-            self.update_zone(their_node, zone_info[0], zone_info[1])
-
-    def update_zone(self, node, zone, name):
-        """ Update the cloud dns to point at the node """
-        ip = node.public_ip[0]
-        self.cluster.cloud.update_record(ip, zone, name)
-
     def instantiate(self):
         raise NotImplementedError
 
