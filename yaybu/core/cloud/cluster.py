@@ -15,7 +15,6 @@ import abc
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 from . import role
 from .role import RoleCollectionFactory
-from . import dns
 
 
 from yaybu.roles.compute import api
