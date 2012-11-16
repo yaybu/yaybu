@@ -151,13 +151,6 @@ class Cluster:
         factory = RoleCollectionFactory(self.ctx)
         self.roles = factory.create_collection(self)
         
-    def delete_cloud(self, ctx, provider, cluster_name, filename):
-        clouds = ctx.get_config().mapping.get('clouds').resolve()
-        p = clouds.get(provider, None)
-        if p is None:
-            raise KeyError("provider %r not found" % provider)
-        raise NotImplementedError
-
     def dump(self, ctx, filename):
         """ Dump the configuration in a raw form """
         cfg = ctx.get_config().get()
@@ -172,9 +165,4 @@ class Cluster:
     def provision(self, dump):
         self.roles.provision(dump)
 
-    def create_node(self, name, image, size, keypair):
-        return self.cloud.create_node(name, image, size, keypair)
-    
-    def update_record(self, ip, zone, name):
-        self.cloud.update_record(ip, zone, name)
-        
+
