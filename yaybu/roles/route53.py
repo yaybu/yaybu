@@ -20,6 +20,7 @@ __all__ = [
 import base64
 import hmac
 import datetime
+import uuid
 
 from hashlib import sha1
 from xml.etree import ElementTree as ET
@@ -156,11 +157,13 @@ class Route53DNSDriver(DNSDriver):
     def create_zone(self, domain, type='master', ttl=None, extra=None):
         zone = ET.Element("CreateHostedZoneRequest", {'xmlns': NAMESPACE})
         ET.SubElement(zone, "Name").text = domain
-        ET.SubElement(zone, "CallerReference").text = "UNIQUEID"
-        if extra and "comment" in extra:
-            ET.SubElement(ET.SubElement(zone, "HostedZoneConfig"), "Comment").text = extra['comment']
+        ET.SubElement(zone, "CallerReference").text = str(uuid.uuid4())
+        if extra and "Comment" in extra:
+            ET.SubElement(ET.SubElement(zone, "HostedZoneConfig"), "Comment").text = extra['Comment']
 
         response = ET.XML(self.connection.request(API_ROOT+'hostedzone', method="POST", data=ET.tostring(zone)).object)
+
+        return self._to_zone(elem=findall(element=response, xpath='HostedZone', namespace=NAMESPACE)[0])
 
     def update_zone(self, zone, domain, type='master', ttl=None, extra=None):
         # raise LibCloudError("AFAICT, update_zone doesn't make sense on AWS")
