@@ -170,8 +170,8 @@ class Route53DNSDriver(DNSDriver):
         return
 
     def delete_zone(self, zone):
-	# We have to delete all records from a zone (apart from NS and SOA)
-	# before we can delete the zone
+        # We have to delete all records from a zone (apart from NS and SOA)
+        # before we can delete the zone
         deletions = []
         for r in zone.list_records():
             if r.type in (RecordType.NS, ):
