@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from . import dependency
 
 from yaybu.core.util import get_encrypted
+from yay.errors import NoMatching
 
 from ssh.ssh_exception import SSHException
 from ssh.rsakey import RSAKey
@@ -40,7 +41,11 @@ class RoleCollectionFactory(object):
         c = RoleCollection()
         for k in self.config.mapping.get('roles').keys():
             v = self.config.mapping.get('roles').get(k)
-            classname = get_encrypted(v.get("class").resolve())
+            try:
+                classname = get_encrypted(v.get("class").resolve())
+            except NoMatching:
+                classname = "compute"
+
             r = RoleType.types[classname].create_from_yay_expression(cluster, k, v)
             c.add_role(r)
         return c
