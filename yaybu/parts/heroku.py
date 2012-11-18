@@ -1,7 +1,7 @@
 
 from __future__ import absolute_import
 
-from yaybu.core.cloud.role import Role
+from yaybu.core.cloud.part import Part
 from yaybu.core.error import ArgParseError
 
 try:
@@ -10,7 +10,7 @@ except ImportError:
     heroku = None
 
 
-class Heroku(Role):
+class Heroku(Part):
 
     def __init__(self, cluster, name, config):
         super(Heroku, self).__init__(cluster, name)

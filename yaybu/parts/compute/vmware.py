@@ -73,6 +73,9 @@ class VMWareDriver(base.NodeDriver):
     type = 99
     name = "vmware"
 
+    def __init__(self):
+        super(VMWareDriver, self).__init__(None)
+
     def _find_vmrun(self):
         known_locations = [
             "/Applications/VMWare Fusion.app/Contents/Library",
@@ -136,7 +139,7 @@ class VMWareDriver(base.NodeDriver):
         if not os.path.exists(source):
             raise LibcloudError("Base image is not valid")
 
-        target = "/Users/john/example-image/example.vmx"
+        target = "/Users/john/example-image-2/example-2.vmx"
 
         if os.path.exists(os.path.dirname(target)):
             raise LibcloudError("Destination folder already exists: %s" % os.path.dirname(target))

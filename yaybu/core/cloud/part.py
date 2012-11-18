@@ -15,65 +15,65 @@ logger = logging.getLogger(__name__)
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-class RoleType(ABCMeta):
+class PartType(ABCMeta):
 
     """ Registers the provider with the resource which it provides """
 
     types = {}
 
     def __new__(meta, class_name, bases, new_attrs):
-        cls = super(RoleType, meta).__new__(meta, class_name, bases, new_attrs)
-        meta.types[new_attrs.get("rolename", class_name.lower())] = cls
+        cls = super(PartType, meta).__new__(meta, class_name, bases, new_attrs)
+        meta.types[new_attrs.get("partname", class_name.lower())] = cls
         return cls
 
 
-## Should this just be class methods on RoleCollection?
-class RoleCollectionFactory(object):
+## Should this just be class methods on PartCollection?
+class PartCollectionFactory(object):
     
-    """ Parses role and cloud details from a configuration and creates a
-    RoleCollection based on it. """
+    """ Parses part and cloud details from a configuration and creates a
+    PartCollection based on it. """
     
     def __init__(self, ctx):
         self.ctx = ctx
         self.config = ctx.get_config()
         
     def create_collection(self, cluster):
-        c = RoleCollection()
-        for k in self.config.mapping.get('roles').keys():
-            v = self.config.mapping.get('roles').get(k)
+        c = PartCollection()
+        for k in self.config.mapping.get('parts').keys():
+            v = self.config.mapping.get('parts').get(k)
             try:
                 classname = get_encrypted(v.get("class").resolve())
             except NoMatching:
                 classname = "compute"
 
-            r = RoleType.types[classname].create_from_yay_expression(cluster, k, v)
-            c.add_role(r)
+            r = PartType.types[classname].create_from_yay_expression(cluster, k, v)
+            c.add_part(r)
         return c
         
 
-class RoleCollection(object):
+class PartCollection(object):
     
-    """ A representation of a directed graph of roles. """
+    """ A representation of a directed graph of parts. """
     
     def __init__(self):
-        self.__roles = {}
+        self.__parts = {}
         
-    def add_role(self, role):
-        self.__roles[role.name] = role
+    def add_part(self, part):
+        self.__parts[part.name] = part
         
     def __getitem__(self, name):
-        return self.__roles[name]
+        return self.__parts[name]
 
     def __iter__(self):
-        """ Return role objects in dependency order """
+        """ Return part objects in dependency order """
         graph = dependency.Graph()
-        for k, v in self.__roles.items():
+        for k, v in self.__parts.items():
             for e in v.depends:
                 graph.add_edge(k, e)
             else:
                 graph.add_node(k)
-        for role in graph.resolve():
-            yield self.__roles[role]
+        for part in graph.resolve():
+            yield self.__parts[part]
         
     def provision(self, dump=False):
         """ Provision everything in two phases. In the first phase, nodes are
@@ -88,17 +88,17 @@ class RoleCollection(object):
             r.provision()
 
 
-class Role(object):
+class Part(object):
 
-    __metaclass__ = RoleType
+    __metaclass__ = PartType
 
-    """ A runtime record of roles we know about. Each role has a list of nodes """
+    """ A runtime record of parts we know about. Each part has a list of nodes """
     
     def __init__(self, cluster, name, depends=()):
         """
         Args:
-            name: Role name
-            depends: A list of roles this role depends on
+            name: Part name
+            depends: A list of parts this part depends on
         """
         self.name = name
         self.depends = depends
@@ -108,9 +108,9 @@ class Role(object):
         ctx = self.cluster.make_context(resume=True)
         return ctx
     
-    def role_info(self):
+    def part_info(self):
         """ Return the appropriate stanza from the configuration file """
-        return self.cluster.ctx.get_config().mapping.get("roles").resolve()[self.name]
+        return self.cluster.ctx.get_config().mapping.get("parts").resolve()[self.name]
    
     def instantiate(self):
         raise NotImplementedError

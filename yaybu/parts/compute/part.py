@@ -34,21 +34,21 @@ from ssh.dsskey import DSSKey
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core import remote
-from yaybu.core.cloud.role import Role
+from yaybu.core.cloud.part import Part
 from yaybu.core.util import get_encrypted
 
 
 logger = logging.getLogger(__name__)
 
 
-class Compute(Role):
+class Compute(Part):
 
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
-    def __init__(self, cluster, name, driver, args, key_name, image, size, depends=()):
+    def __init__(self, cluster, name, driver, key_name, image, size, depends=()):
         """
         Args:
-            name: Role name
+            name: Part name
             key_name: The name of the key at the cloud provider
             key: The key itself as an SSH object
             image: The name of the image in your local dialect
@@ -63,7 +63,6 @@ class Compute(Role):
         self.args = driver
 
         self.key_name = key_name
-        self.key = self.get_key()
         self.image = image
         self.size = size
 
@@ -79,20 +78,6 @@ class Compute(Role):
                 get_encrypted(v.get('size', None)),
                 get_encrypted(v.get('depends', ())),
                 )
-
-    def get_key(self):
-        """ Load the key specified by name. """
-        cluster = self.cluster
-
-        saved_exception = None
-        for pkey_class in (RSAKey, DSSKey):
-            try:
-                file = cluster.ctx.get_file(self.key_name)
-                key = pkey_class.from_private_key(file)
-                return key
-            except SSHException, e:
-                saved_exception = e
-        raise saved_exception
 
     @property
     def full_name(self):
@@ -120,6 +105,21 @@ class Compute(Role):
         provider = getattr(ComputeProvider, self.driver_name)
         driver_class = get_compute_driver(provider)
         return driver_class(**self.args)
+
+    @property
+    @memoized
+    def key(self):
+        """ Load the key specified by name. """
+        cluster = self.cluster
+        saved_exception = None
+        for pkey_class in (RSAKey, DSSKey):
+            try:
+                file = cluster.ctx.get_file(self.key_name)
+                key = pkey_class.from_private_key(file)
+                return key
+            except SSHException, e:
+                saved_exception = e
+        raise saved_exception
 
     def role_info(self):
         """ Return the appropriate stanza from the configuration file """
@@ -215,13 +215,13 @@ class Compute(Role):
 
         for tries in range(10):
             logger.debug("Creating node %r with image %r, size %r and keypair %r" % (
-                self.name, self.image, self.size, self.key))
+                self.name, self.image, self.size, self.key_name))
 
             node = self.driver.create_node(
                 name=self.full_name,
                 image=image,
                 size=size,
-                ex_keyname=self.args['ex_keyname'],
+                #ex_keyname=self.args['ex_keyname'],
                 )
 
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
@@ -235,7 +235,6 @@ class Compute(Role):
                 continue
             logger.debug("Node %r running" % (self.full_name, ))
 
-            self.cluster.commit()
             self.install_yaybu()
             logger.info("Node provisioned: %r" % node)
             return

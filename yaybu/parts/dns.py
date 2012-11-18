@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import logging
 
-from yaybu.core.cloud.role import Role
+from yaybu.core.cloud.part import Part
 from yaybu.core.error import ArgParseError
 from yaybu.core.util import memoized
 
@@ -34,12 +34,12 @@ from .route53 import Route53DNSDriver
 logger = logging.getLogger(__name__)
 
 
-class Zone(Role):
+class Zone(Part):
 
     """
-    This role manages a single DNS zone
+    This part manages a single DNS zone
 
-        roles:
+        parts:
             mydns:
                 class: zone
                 driver:
@@ -84,7 +84,7 @@ class Zone(Role):
 
     def provision(self):
         simulate = self.context().simulate
-        params = self.role_info()
+        params = self.part_info()
 
         domain = params['domain'].rstrip(".") + "."
         ttl = params.get('ttl', 0)
