@@ -58,8 +58,10 @@ class Compute(Role):
         super(Compute, self).__init__(cluster, name, depends=depends)
         self.node = None
 
-        self.driver_name = driver
-        self.args = args
+        self.driver_name = driver['id']
+        del driver['id']
+        self.args = driver
+
         self.key_name = key_name
         self.key = self.get_key()
         self.image = image
@@ -67,14 +69,14 @@ class Compute(Role):
 
     @classmethod
     def create_from_yay_expression(klass, cluster, name, v):
+        v = v.resolve()
         return klass(
                 cluster,
                 name,
                 get_encrypted(v['driver']),
-                get_encrypted(v['args']),
                 get_encrypted(v['key']),
                 get_encrypted(v['image']),
-                get_encrypted(v['size']),
+                get_encrypted(v.get('size', None)),
                 get_encrypted(v.get('depends', ())),
                 )
 
