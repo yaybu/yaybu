@@ -4,7 +4,8 @@ import logging
 
 from yaybu.core import runcontext
 from .part import PartCollectionFactory
-
+from yaybu.core.util import memoized
+from .state import StateStorageType, SimulatedStateStorageAdaptor 
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,6 @@ class Cluster:
         self.argv = argv
         self.parts = None
  
-        self.ctx = self.make_context()
         self.create_parts()
 
     def make_context(self, resume=False):
@@ -54,15 +54,40 @@ class Cluster:
 
         return ctx
 
+    @memoized
+    def ctx(self):
+        return self.make_context()
+
+    @memoized
+    def config(self):
+        return self.ctx.get_config()
+
+    @memoized
+    def state(self):
+        try:
+            storage_config = self.config.get("state-storage").resolve()
+            klass = storage_config['class']
+            del storage_config['class']
+        except NotFound:
+            storage_config = {}
+            klass = "file-state-storage"
+
+        state = StateStorageType.registry.get(klass)(**storage_config)
+
+        if self.ctx.simulate:
+            state = SimulatedStateStorageAdaptor(state)
+
+        return state
+
     def create_parts(self):
         factory = PartCollectionFactory(self.ctx)
         self.parts = factory.create_collection(self)
-        
+
     def dump(self, ctx, filename):
         """ Dump the configuration in a raw form """
         cfg = ctx.get_config().get()
         open(filename, "w").write(yay.dump(cfg))
-        
+
     def provision(self, dump):
         self.parts.provision(dump)
 

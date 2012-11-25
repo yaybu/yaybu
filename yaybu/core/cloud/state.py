@@ -5,9 +5,9 @@ import uuid
 import logging
 import StringIO
 import datetime
-import collections
-import yaml
 import copy
+import json
+import shutil
 
 from libcloud.storage.types import Provider as StorageProvider
 from libcloud.storage.providers import get_driver as get_storage_driver
@@ -20,19 +20,94 @@ from yaybu.core.util import memoized
 logger = logging.getLogger(__name__)
 
 
-class StateMarshaller:
-    
-    """ Abstracts the stored state data. Versioned serialization interface.
-    Storage format is YAML with some header information and then a list of
-    nodes.
+class StateStorageType(type):
+    pass
+
+
+class StateStorage(object):
+
     """
-   
-    version = 1
-    """ The version that will be written when saved. """
-    
-    def __init__(self, cluster, driver):
-        self.cluster = cluster
-        self.driver_args = driver_args
+    This is a base interface for an object that can store state about a
+    cluster. It does not really care about the backend where it is stored.
+    """
+
+    __metaclass__ = StateStorageType
+
+    def get_state(self, part_name):
+        raise NotImplementedError
+
+    def set_state(self, part):
+        raise NotImplementedError
+
+
+class SimulatedStateStorageAdaptor(object):
+
+    def __init__(self, child):
+        self.child = child
+        self.data = {}
+
+    def get_state(self, part_name):
+        s = self.data.get(part_name, None)
+        if not s:
+            return self.child.get_state(part_name)
+        return x
+
+    def set_state(self, part):
+        pass
+
+
+class FileStateStorage(StateStorage):
+
+    version = 2
+
+    def get_stream(self):
+        raise NotImplementedError
+
+    def store_stream(self, store):
+        raise NotImplementedError
+
+    def as_stream(self):
+        d = {
+            'version': self.version,
+            'timestamp': str(datetime.datetime.now()),
+            }
+        parts = d['parts'] = {}
+
+	# FIXME: Iterate over cluster and serialize the parts that we find
+
+        return StringIO.StringIO(json.dumps(d))
+
+    def store(self):
+        ### TODO: fetch it first and check it hasn't changed since we last fetched it
+        ### TODO: consider supporting merging in of changes
+        self.store_stream(self.as_stream())
+
+    def load_2(self, data):
+        return data
+
+    def load(self):
+        data = json.load(self.get_stream())
+
+        loader = attr("load_"+str(data['version']), None)
+        if not loader:
+            raise RuntimeError("State file version not supported by this version of Yaybu")
+
+        self.data = data['parts']
+
+
+class LocalFileStateStorage(FileStateStorage):
+
+    def get_stream(self):
+        return open(os.path.join(os.getcwd(), ".yaybu"))
+
+    def store_stream(self, stream):
+        with open(os.path.join(os.getcwd(), ".yaybu", "w")) as fp:
+            shutil.copyfileobj(stream, fp)
+
+
+class CloudFileStateStorage(FileStateStorage):
+
+    state_bucket = "yaybu-state"
 
     @property
     @memoized
@@ -50,68 +125,23 @@ class StateMarshaller:
             container = self.driver.create_container(container_name=name)
         return container
 
-    
-    def load(self, data):
-        """ Select the appropriate loader based on the version """
-        if data is None:
-            return {}
-        d = yaml.load(data)
-        v = d['version']
-        loader = getattr(self, "load_%s" % v, None)
-        if loader is None:
-            raise KeyError("No loader available for state file version %r" % v)
-        return loader(d)
-    
-    def load_1(self, data):
-        """ Returns a dictionary of lists of nodes, indexed by role. For example, 
-        {'mailserver': [Node(0, 'cloud/mailserver/0', 'foo'), ...],
-         'appserver': [...],
-        }  """
-        
-        nodes = collections.defaultdict(lambda: [])
-        for n in data['nodes']:
-            nodes[n['role']].append((n['index'], n['name'], n['their_name']))
-        return nodes
-        
-    def as_stream(self, roles):
-        d = {
-            'version': self.version,
-            'timestamp': str(datetime.datetime.now()),
-            'nodes': [],
-            }
-        for r in roles:
-            for n in r.nodes:
-                d['nodes'].append({
-                    'role': r.name, 
-                    'index': n.index, 
-                    'name': n.name, 
-                    'their_name': n.their_name,
-                })
-        return StringIO.StringIO(yaml.dump(d))
-
-    def load_state(self):
+    def get_stream(self):
         """ Load the state file from the cloud """
         logger.debug("Loading state from bucket")
-        container = self.get_container(self.cluster.state_bucket)
+        container = self.get_container(self.state_bucket)
         try:
             bucket = container.get_object(self.cluster.name)
-            data = "".join(list(bucket.as_stream()))
-            nmap = self.load(data)
-            for role, nodes in nmap.items():
-                logger.debug("Finding nodes for role %r" % (role,))
-                for index, name, their_name in nodes:
-                    self.cluster.roles[role].add_node(index, name, their_name)
-            logger.debug("State loaded")
+            return bucket.as_stream()
         except ObjectDoesNotExistError:
-            logger.debug("State object does not exist in container")
-    
-    def store_state(self):
+            raise RuntimeError("Object does not exist")
+ 
+    def store_stream(self, stream):
         """ Store the state in the cloud """
         logger.debug("Storing state")
-        container = self.get_container(self.cluster.state_bucket)
-        ### TODO: fetch it first and check it hasn't changed since we last fetched it
-        ### TODO: consider supporting merging in of changes
-        container.upload_object_via_stream(self.as_stream(self.cluster.roles), 
-                                           self.cluster.name, {'content_type': 'text/yaml'})
+        container = self.get_container(self.state_bucket)
+        container.upload_object_via_stream(
+            stream, 
+            self.cluster.name,
+            {'content_type': 'text/yaml'}
+            )
 
- 
