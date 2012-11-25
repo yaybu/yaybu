@@ -1,26 +1,5 @@
 from __future__ import absolute_import
 
-#####################################################################
-# Monkeypatch httplib so that libcloud doesn't hang on get_object
-# This is only needed on python 2.6 but should be safe for other pythons
-# (This fix is now upstream in libcloud, we should dep on it ASAP)
-import httplib
-HTTPResponse = httplib.HTTPResponse
-
-class HTTPResponse27(HTTPResponse):
-
-    def read(self, amt=None):
-        if self.fp is None:
-            return ''
-        if self._method == 'HEAD':
-            self.close()
-            return ''
-        return HTTPResponse.read(self, amt)
-
-httplib.HTTPResponse = HTTPResponse27
-httplib.HTTPConnection.response_class = HTTPResponse27
-#####################################################################
-
 import os
 import uuid
 import logging
