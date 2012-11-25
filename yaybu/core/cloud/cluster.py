@@ -72,7 +72,7 @@ class Cluster:
             storage_config = {}
             klass = "file-state-storage"
 
-        state = StateStorageType.registry.get(klass)(**storage_config)
+        state = StateStorageType.types.get(klass)(**storage_config)
 
         if self.ctx.simulate:
             state = SimulatedStateStorageAdaptor(state)

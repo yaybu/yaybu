@@ -8,6 +8,7 @@ import datetime
 import copy
 import json
 import shutil
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 from libcloud.storage.types import Provider as StorageProvider
 from libcloud.storage.providers import get_driver as get_storage_driver
@@ -16,12 +17,22 @@ from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExis
 
 from yaybu.core.util import memoized
 
-
 logger = logging.getLogger(__name__)
 
 
-class StateStorageType(type):
-    pass
+class StateStorageType(ABCMeta):
+
+    """ Registers the provider with the resource which it provides """
+
+    types = {}
+
+    def __new__(meta, class_name, bases, new_attrs):
+        cls = super(StateStorageType, meta).__new__(meta, class_name, bases, new_attrs)
+        if new_attrs.get("concrete", True):
+            meta.types[new_attrs.get("name", class_name.lower())] = cls
+        if "concrete" in new_attrs:
+            del new_attrs['concrete']
+        return cls
 
 
 class StateStorage(object):
@@ -32,6 +43,7 @@ class StateStorage(object):
     """
 
     __metaclass__ = StateStorageType
+    concrete = False
 
     def get_state(self, part_name):
         raise NotImplementedError
@@ -40,7 +52,9 @@ class StateStorage(object):
         raise NotImplementedError
 
 
-class SimulatedStateStorageAdaptor(object):
+class SimulatedStateStorageAdaptor(StateStorage):
+
+    concrete = False
 
     def __init__(self, child):
         self.child = child
