@@ -89,6 +89,16 @@ class Cluster:
         open(filename, "w").write(yay.dump(cfg))
 
     def provision(self, dump):
-        self.parts.provision(dump)
+        """ Provision everything in two phases. In the first phase, nodes are
+        instantiated in the cloud and have yaybu installed on them (as
+        required). In the second phase the configuration is applied to each
+        node in turn, with all configuration information available for the
+        entire cluster. """
+        logger.info("Creating instances")
+        for p in self.parts:
+            p.instantiate()
 
+        logger.info("Provisioning")
+        for p in self.parts:
+            p.provision()
 

@@ -75,18 +75,6 @@ class PartCollection(object):
         for part in graph.resolve():
             yield self.__parts[part]
         
-    def provision(self, dump=False):
-        """ Provision everything in two phases. In the first phase, nodes are
-        instantiated in the cloud and have yaybu installed on them (as
-        required). In the second phase the configuration is applied to each
-        node in turn, with all configuration information available for the
-        entire cluster. """
-        for r in self:
-            r.instantiate()
-        logger.info("Provisioning completed, updating hosts")
-        for r in self:
-            r.provision()
-
 
 class Part(object):
 
