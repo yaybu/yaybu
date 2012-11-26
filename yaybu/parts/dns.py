@@ -90,7 +90,6 @@ class Zone(Part):
         retval = False
         zone = None
 
-        print [z for z in self.driver.list_zones()]
         zones = [z for z in self.driver.list_zones() if z.domain == domain]
         if len(zones):
             zone = zones[0]
@@ -122,18 +121,18 @@ class Zone(Part):
             type_enum = self.driver._string_to_record_type(type_str)
             ttl = rec.get('ttl', 0)
 
-            found = [m for m in all_records if m.type == type_ and m.name == rec['name']]
+            found = [m for m in all_records if m.type == type_enum and m.name == rec['name']]
             if len(found):
                 r = found[0]
                 changed = False
-                if ttl != r.ttl:
+                if rec['data'] != r.data:
                     changed = True
-                if rec.get('extra', {}) != r.extra:
+                if rec.get('extra', {'ttl':'0'}) != r.extra:
                     changed = True
                 if changed:
                     logger.info("Updating %s" % rec['name'])
                     if not simulate:
-                        r.update(rec['name'], type_str, ttl, rec.get('extra', {}))
+                        r.update(rec['name'], type_enum, rec['data'], rec.get('extra', {}))
                     retval = True
             else:
                 logger.info("Creating %s.%s (type=%s, ttl=%s, extra=%r)" % (rec['name'], domain, type_str, ttl, rec.get('extra', {})))
