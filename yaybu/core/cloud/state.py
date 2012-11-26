@@ -93,12 +93,9 @@ class FileStateStorage(StateStorage):
         d = {
             'version': self.version,
             'timestamp': str(datetime.datetime.now()),
+            'parts': self.data,
             }
-        parts = d['parts'] = {}
-
-	# FIXME: Iterate over cluster and serialize the parts that we find
-
-        return StringIO.StringIO(json.dumps(d))
+        return StringIO.StringIO(json.dumps(d, indent=4))
 
     def store(self):
         ### TODO: fetch it first and check it hasn't changed since we last fetched it
