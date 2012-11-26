@@ -57,6 +57,7 @@ class Compute(Part):
         """
         super(Compute, self).__init__(cluster, name, depends=depends)
         self.node = None
+        self.their_name = None
 
         self.driver_name = driver['id']
         del driver['id']
@@ -65,6 +66,14 @@ class Compute(Part):
         self.key_name = key_name
         self.image = image
         self.size = size
+
+    def get_state(self):
+        s = super(Compute, self).get_state()
+        s['their_name'] = self.their_name
+        return s
+
+    def set_state(self, state):
+        self.their_name = state.get('their_name', self.their_name)
 
     @classmethod
     def create_from_yay_expression(klass, cluster, name, v):
@@ -182,12 +191,22 @@ class Compute(Part):
 
         """ This creates a physical node based on our node record. """
 
+        if self.their_name:
+            existing = [n for n in self.driver.list_nodes() if n.name == self.their_name and n.state != NodeState.TERMINATED]
+            if len(existing) > 1:
+                raise KeyError("There are already multiple nodes called '%s'" % self.their_name)
+            elif len(existing) == 1:
+                logger.debug("Node '%s' already running - not creating new node" % (self.full_name, ))
+                self.node = existing[0]
+                return
+
         existing = [n for n in self.driver.list_nodes() if n.name == self.full_name and n.state != NodeState.TERMINATED]
         if len(existing) > 1:
             raise KeyError("There are already multiple nodes called '%s'" % self.full_name)
         elif len(existing) == 1:
             logger.debug("Node %r already running - not creating new node" % (self.full_name, ))
             self.node = existing[0]
+            self.their_name = self.node.name
             return
 
         if isinstance(self.image, dict):
@@ -234,6 +253,8 @@ class Compute(Part):
                 node.destroy()
                 continue
             logger.debug("Node %r running" % (self.full_name, ))
+
+            self.their_name = self.node.name
 
             self.install_yaybu()
             logger.info("Node provisioned: %r" % node)
