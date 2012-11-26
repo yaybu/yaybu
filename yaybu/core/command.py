@@ -12,7 +12,6 @@ import yay
 import yay.errors
 from yaybu.core import runner, remote, runcontext, error
 from yaybu.core.cloud.cluster import Cluster
-from .cloud import role
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -316,19 +315,6 @@ class YaybuCmd(OptionParsingCmd):
         cluster = Cluster(cluster_name, filename, argv=args[2:], simulate=opts.simulate)
         return cluster.provision(dump=opts.dump)
            
-    def do_zoneupdate(self, opts, args):
-        """ 
-        usage: zoneupdate <cluster> <filename>
-        Forces a DNS update for the specified configuration
-        """
-        if len(args) != 2:
-            self.simple_help("zoneupdate")
-            return
-        cluster_name, filename = args
-        cluster = Cluster(cluster_name, filename)
-        for role, nodename in role.get_all_roles_and_nodenames():
-            role.Role.node_zone_update(role.name, nodename)
-        
     def do_ssh(self, opts, args):
         """ 
         usage: ssh <cluster> <name> 
@@ -352,13 +338,8 @@ class YaybuCmd(OptionParsingCmd):
             return
         cluster_name, filename = args
         cluster = Cluster(cluster_name, filename)
-        for role in role.RoleCollection.roles():
-            print "%s %s %s min %s max %s depends %s" % (
-                role.name, role.image, role.size, role.min, role.max, role.depends)
-            for node in role.nodes.values():
-                n = cluster.cloud.nodes[node.their_name]
-                print "    %s %s" % (node.their_name, n.extra['dns_name'])
-        
+        print "Not implemented yet"
+ 
     def do_destroy(self, opts, args):
         """
         usage: destroy <cluster> <filename>
@@ -370,10 +351,8 @@ class YaybuCmd(OptionParsingCmd):
         cluster_name, filename = args
         logger.info("Deleting cluster")
         cluster = Cluster(cluster_name, filename)
-        for role, name in role.RoleCollection.get_all_roles_and_nodenames():
-            logger.warning("Destroying %r on request" % (name,))
-            role.destroy_node(name)
-    
+        cluster.destroy()
+ 
     def do_quit(self, opts=None, args=None):
         """ Exit yaybu """
         raise SystemExit
