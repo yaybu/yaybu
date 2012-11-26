@@ -91,7 +91,13 @@ class Part(object):
         self.name = name
         self.depends = depends
         self.cluster = cluster
-    
+
+    def set_state(self, state):
+        pass
+
+    def get_state(self):
+        return {}
+ 
     def context(self):
         ctx = self.cluster.make_context(resume=True)
         return ctx

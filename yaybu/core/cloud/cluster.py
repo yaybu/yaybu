@@ -3,9 +3,11 @@ from __future__ import absolute_import
 import logging
 
 from yaybu.core import runcontext
-from .part import PartCollectionFactory
-from yaybu.core.util import memoized
+from .part import PartType, PartCollection
+from yaybu.core.util import memoized, get_encrypted
 from .state import StateStorageType, SimulatedStateStorageAdaptor 
+
+from yay.errors import NoMatching
 
 logger = logging.getLogger(__name__)
 
@@ -54,23 +56,26 @@ class Cluster:
 
         return ctx
 
+    @property
     @memoized
     def ctx(self):
         return self.make_context()
 
+    @property
     @memoized
     def config(self):
         return self.ctx.get_config()
 
+    @property
     @memoized
     def state(self):
         try:
-            storage_config = self.config.get("state-storage").resolve()
+            storage_config = self.config.mapping.get("state-storage").resolve()
             klass = storage_config['class']
             del storage_config['class']
-        except NotFound:
+        except NoMatching:
             storage_config = {}
-            klass = "file-state-storage"
+            klass = "localfilestatestorage"
 
         state = StateStorageType.types.get(klass)(**storage_config)
 
@@ -80,8 +85,17 @@ class Cluster:
         return state
 
     def create_parts(self):
-        factory = PartCollectionFactory(self.ctx)
-        self.parts = factory.create_collection(self)
+        c = self.parts = PartCollection()
+        for k in self.config.mapping.get('parts').keys():
+            v = self.config.mapping.get('parts').get(k)
+            try:
+                classname = get_encrypted(v.get("class").resolve())
+            except NoMatching:
+                classname = "compute"
+
+            r = PartType.types[classname].create_from_yay_expression(self, k, v)
+            r.set_state(self.state.get_state(k))
+            c.add_part(r)
 
     def dump(self, ctx, filename):
         """ Dump the configuration in a raw form """
@@ -97,8 +111,10 @@ class Cluster:
         logger.info("Creating instances")
         for p in self.parts:
             p.instantiate()
+            self.state.set_state(p)
 
         logger.info("Provisioning")
         for p in self.parts:
             p.provision()
+            self.state.set_state(p)
 

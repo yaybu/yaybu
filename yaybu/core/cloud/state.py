@@ -57,6 +57,7 @@ class SimulatedStateStorageAdaptor(StateStorage):
     concrete = False
 
     def __init__(self, child):
+        logger.debug("Wrapping state storage in read-only adaptor")
         self.child = child
         self.data = {}
 
@@ -73,6 +74,14 @@ class SimulatedStateStorageAdaptor(StateStorage):
 class FileStateStorage(StateStorage):
 
     version = 2
+
+    def get_state(self, part_name):
+        self.load()
+        return self.data.get(part_name, {})
+
+    def set_state(self, part):
+        self.data[part.name] = part.get_state()
+        self.store()
 
     def get_stream(self):
         raise NotImplementedError
@@ -102,11 +111,14 @@ class FileStateStorage(StateStorage):
     def load(self):
         data = json.load(self.get_stream())
 
-        loader = attr("load_"+str(data['version']), None)
+        if not 'version' in data:
+            raise RuntimeError("State file has no version metadata - possible corrupt")
+
+        loader = getattr(self, "load_"+str(data['version']), None)
         if not loader:
             raise RuntimeError("State file version not supported by this version of Yaybu")
 
-        self.data = data['parts']
+        self.data = data.get('parts', {})
 
 
 class LocalFileStateStorage(FileStateStorage):
@@ -115,7 +127,7 @@ class LocalFileStateStorage(FileStateStorage):
         return open(os.path.join(os.getcwd(), ".yaybu"))
 
     def store_stream(self, stream):
-        with open(os.path.join(os.getcwd(), ".yaybu", "w")) as fp:
+        with open(os.path.join(os.getcwd(), ".yaybu"), "w") as fp:
             shutil.copyfileobj(stream, fp)
 
 

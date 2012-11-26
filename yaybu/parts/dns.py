@@ -25,10 +25,6 @@ from libcloud.dns.types import Provider as DNSProvider
 from libcloud.dns.providers import get_driver as get_dns_driver
 from libcloud.common.types import LibcloudError
 
-import libcloud.security
-libcloud.security.VERIFY_SSL_CERT = False
-libcloud.security.VERIFY_SSL_CERT_STRICT = False
-
 from .route53 import Route53DNSDriver
 
 logger = logging.getLogger(__name__)
