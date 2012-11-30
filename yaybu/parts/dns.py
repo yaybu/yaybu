@@ -75,9 +75,6 @@ class Zone(Part):
     def instantiate(self):
         pass
 
-    def decorate_config(self, config):
-        pass
-
     def provision(self):
         simulate = self.context().simulate
         params = self.part_info()

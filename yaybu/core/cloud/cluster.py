@@ -51,8 +51,10 @@ class Cluster:
             config.set_arguments_from_argv(self.argv)
 
         if self.parts:
-            for r in self.parts:
-                r.decorate_config(config)
+            parts = {}
+            for p in self.parts:
+                parts[p.name] = p.decorate_config()
+            config.add({'parts': parts})
 
         return ctx
 

@@ -263,12 +263,11 @@ class Compute(Part):
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
 
-    def decorate_config(self, config):
+    def decorate_config(self):
+        cfg = super(Computer, self).decorate_config()
         if self.node is not None:
-            new_cfg = {}
-            hosts = new_cfg['hosts'] = []
-            hosts.append(self.host_info())
-            config.add(new_cfg)
+            pass
+        return cfg
 
     def provision(self, dump=False):
         """ Phase 2 of provisioning """

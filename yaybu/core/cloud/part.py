@@ -109,8 +109,8 @@ class Part(object):
     def instantiate(self):
         raise NotImplementedError
 
-    def decorate_config(self, config):
-        pass
+    def decorate_config(self):
+        return self.part_info()
  
     def provision(self, dump=False):
         raise NotImplementedError

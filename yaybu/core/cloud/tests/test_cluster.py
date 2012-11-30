@@ -14,8 +14,11 @@ class PartTester(Part):
     def create_from_yay_expression(cls, cluster, name, v):
         return cls(cluster, name)
 
-    def decorate_config(self, config):
-        pass
+    def decorate_config(self):
+        cfg = super(PartTester, self).decorate_config()
+        if self.provisioned:
+            cfg['hello'] = "HELLO WORLD"
+        return cfg
 
     def instantiate(self):
         pass
