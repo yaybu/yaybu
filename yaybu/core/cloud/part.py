@@ -2,12 +2,8 @@ from __future__ import absolute_import
 
 from . import dependency
 
-from yaybu.core.util import get_encrypted
+from yaybu.core.util import memoized, get_encrypted
 from yay.errors import NoMatching
-
-from ssh.ssh_exception import SSHException
-from ssh.rsakey import RSAKey
-from ssh.dsskey import DSSKey
 
 import logging
 
@@ -98,20 +94,29 @@ class Part(object):
     def get_state(self):
         return {}
  
-    def context(self):
-        ctx = self.cluster.make_context(resume=True)
-        return ctx
-    
-    def part_info(self):
+    @property
+    @memoized
+    def ctx(self):
+        return self.cluster.make_context(resume=True)
+
+    @property
+    @memoized
+    def config(self):
+        return self.ctx.get_config()
+ 
+    def get_part_info(self):
         """ Return the appropriate stanza from the configuration file """
-        return self.cluster.ctx.get_config().mapping.get("parts").resolve()[self.name]
+        #return self.config.mapping.get("parts").resolve()[self.name]
+        return {}
+
+    def set_parts_info(self, info):
+        return self.config.add({
+            "parts": info,
+            })
    
     def instantiate(self):
         raise NotImplementedError
 
-    def decorate_config(self):
-        return self.part_info()
- 
     def provision(self, dump=False):
         raise NotImplementedError
 

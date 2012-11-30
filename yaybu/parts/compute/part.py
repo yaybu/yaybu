@@ -263,8 +263,8 @@ class Compute(Part):
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
 
-    def decorate_config(self):
-        cfg = super(Computer, self).decorate_config()
+    def get_part_info(self):
+        cfg = super(Computer, self).get_part_info()
         if self.node is not None:
             pass
         return cfg

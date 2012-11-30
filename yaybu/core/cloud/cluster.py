@@ -50,12 +50,6 @@ class Cluster:
         if self.argv:
             config.set_arguments_from_argv(self.argv)
 
-        if self.parts:
-            parts = {}
-            for p in self.parts:
-                parts[p.name] = p.decorate_config()
-            config.add({'parts': parts})
-
         return ctx
 
     @property
@@ -86,6 +80,12 @@ class Cluster:
 
         return state
 
+    def get_parts_info(self):
+        info = {}
+        for p in self.parts:
+            info[p.name] = p.get_part_info()
+        return info
+
     def create_parts(self):
         c = self.parts = PartCollection()
         for k in self.config.mapping.get('parts').keys():
@@ -112,11 +112,13 @@ class Cluster:
         entire cluster. """
         logger.info("Creating instances")
         for p in self.parts:
+            p.set_parts_info(self.get_parts_info())
             p.instantiate()
             self.state.set_state(p)
 
         logger.info("Provisioning")
         for p in self.parts:
+            p.set_parts_info(self.get_parts_info())
             p.provision()
             self.state.set_state(p)
 

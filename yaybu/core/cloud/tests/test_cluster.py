@@ -14,8 +14,8 @@ class PartTester(Part):
     def create_from_yay_expression(cls, cluster, name, v):
         return cls(cluster, name)
 
-    def decorate_config(self):
-        cfg = super(PartTester, self).decorate_config()
+    def get_part_info(self):
+        cfg = super(PartTester, self).get_part_info()
         if self.provisioned:
             cfg['hello'] = "HELLO WORLD"
         return cfg
@@ -25,7 +25,7 @@ class PartTester(Part):
 
     def provision(self):
         self.provisioned = True
-        self.cluster.make_context().get_config().mapping.get("parts").get(self.name).get("somevar").resolve()
+        self.config.mapping.get("parts").get(self.name).get("somevar").resolve()
 
 
 class TestClusterIntegration(testtools.TestCase):
