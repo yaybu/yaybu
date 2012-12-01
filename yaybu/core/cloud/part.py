@@ -42,7 +42,7 @@ class PartCollectionFactory(object):
             except NoMatching:
                 classname = "compute"
 
-            r = PartType.types[classname].create_from_yay_expression(cluster, k, v)
+            r = PartType.types[classname](cluster, k, v)
             c.add_part(r)
         return c
         
@@ -78,15 +78,19 @@ class Part(object):
 
     """ A runtime record of parts we know about. Each part has a list of nodes """
     
-    def __init__(self, cluster, name, depends=()):
+    def __init__(self, cluster, name, config):
         """
         Args:
             name: Part name
             depends: A list of parts this part depends on
         """
         self.name = name
-        self.depends = depends
         self.cluster = cluster
+        try:
+            self.depends = config.get('depends')
+        #except NoMatching:
+        except:
+            self.depends = ()
 
     def set_state(self, state):
         pass

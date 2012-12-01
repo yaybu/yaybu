@@ -45,7 +45,7 @@ class Compute(Part):
 
     """ A runtime record of roles we know about. Each role has a list of nodes """
     
-    def __init__(self, cluster, name, driver, key_name, image, size, depends=()):
+    def __init__(self, cluster, name, config):
         """
         Args:
             name: Part name
@@ -55,17 +55,21 @@ class Compute(Part):
             size: The size of the image in your local dialect
             depends: A list of roles this role depends on
         """
-        super(Compute, self).__init__(cluster, name, depends=depends)
+        super(Compute, self).__init__(cluster, name, config)
         self.node = None
         self.their_name = None
+
+        # FIXME: This needs to be less drastic and selectively resolve just what is needed
+        config = config.resolve()
+        driver = config['driver']
 
         self.driver_name = driver['id']
         del driver['id']
         self.args = driver
 
-        self.key_name = key_name
-        self.image = image
-        self.size = size
+        self.key_name = config['key']
+        self.image = config['image']
+        self.size = config.get('size', None)
 
     def get_state(self):
         s = super(Compute, self).get_state()
@@ -74,19 +78,6 @@ class Compute(Part):
 
     def set_state(self, state):
         self.their_name = state.get('their_name', self.their_name)
-
-    @classmethod
-    def create_from_yay_expression(klass, cluster, name, v):
-        v = v.resolve()
-        return klass(
-                cluster,
-                name,
-                get_encrypted(v['driver']),
-                get_encrypted(v['key']),
-                get_encrypted(v['image']),
-                get_encrypted(v.get('size', None)),
-                get_encrypted(v.get('depends', ())),
-                )
 
     @property
     def full_name(self):

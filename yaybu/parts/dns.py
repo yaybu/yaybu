@@ -51,18 +51,10 @@ class Zone(Part):
                     data: 192.168.1.1
     """
 
-    def __init__(self, cluster, name, config):
-        super(Zone, self).__init__(cluster, name)
-        self.config = config
-
-    @classmethod
-    def create_from_yay_expression(klass, cluster, name, args):
-        return klass(cluster, name, args)
-
     @property
     @memoized
     def driver(self):
-        config = self.config.get("driver").resolve()
+        config = self.config.mapping.get("parts").get(self.name).get("driver").resolve()
         self.driver_name = config['id']
         del config['id']
         if self.driver_name == "route53":
@@ -76,8 +68,8 @@ class Zone(Part):
         pass
 
     def provision(self):
-        simulate = self.context().simulate
-        params = self.part_info()
+        simulate = self.ctx.simulate
+        params = self.config.mapping.get("parts").get(self.name).resolve()
 
         domain = params['domain'].rstrip(".") + "."
         ttl = params.get('ttl', 0)

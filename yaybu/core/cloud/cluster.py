@@ -95,7 +95,7 @@ class Cluster:
             except NoMatching:
                 classname = "compute"
 
-            r = PartType.types[classname].create_from_yay_expression(self, k, v)
+            r = PartType.types[classname](self, k, v)
             r.set_state(self.state.get_state(k))
             c.add_part(r)
 

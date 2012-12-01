@@ -13,23 +13,19 @@ except ImportError:
 class Heroku(Part):
 
     def __init__(self, cluster, name, config):
-        super(Heroku, self).__init__(cluster, name)
-        self.config = config
-
+        super(Heroku, self).__init__(cluster, name, config)
         if not heroku:
             raise ArgParseError("Dependency 'heroku' is required and not available")
 
-        if 'key' in self.config:
-            self.cloud = heroku.from_key(self.config['key'])
-        else:
-            if not 'username' in self.config or not 'password' in self.config:
-                raise ArgParseError("No credentials for heroku")
-            self.cloud = heroku.from_pass(self.config['username'], self.config['password'])
-
-
-    @classmethod
-    def create_from_yay_expression(klass, cluster, name, args):
-        return klass(cluster, name, args)
+        try:
+            self.cloud = heroku.from_key(self.config.get('key').resolve())
+        except NoMatching:
+            try:
+                username = self.config.get('username').resolve()
+                password = self.config.get('password').resolve()
+            except NoMatching:
+                raise ArgParseError("Must specify key or username and password")
+            self.cloud = heroku.from_pass(username, password)
 
     def action(self, msg):
         print msg
