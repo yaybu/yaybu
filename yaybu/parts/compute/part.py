@@ -43,8 +43,6 @@ logger = logging.getLogger(__name__)
 
 class Compute(Part):
 
-    """ A runtime record of roles we know about. Each role has a list of nodes """
-    
     def __init__(self, cluster, name, config):
         """
         Args:
@@ -53,7 +51,7 @@ class Compute(Part):
             key: The key itself as an SSH object
             image: The name of the image in your local dialect
             size: The size of the image in your local dialect
-            depends: A list of roles this role depends on
+            depends: A list of parts this part depends on
         """
         super(Compute, self).__init__(cluster, name, config)
         self.node = None
@@ -121,37 +119,37 @@ class Compute(Part):
                 saved_exception = e
         raise saved_exception
 
-    def role_info(self):
-        """ Return the appropriate stanza from the configuration file """
-        return self.cluster.ctx.get_config().mapping.get("roles").resolve()[self.name]
-            
-    def host_info(self):
+    def get_part_info(self):
         """ Return a dictionary of information about this node """
         ## TODO
         ## This needs further work!
         ## the interface names should be extracted properly
         ## and the distro, raid and disks sections should be completed
+        info = super(Compute, self).get_part_info()
+
+        if not self.node:
+            return info
+
         n = self.node
-        if not n:
-            return {}
+
+        info['mapped_as'] = n.public_ips[0]
+        info['address'] = n.private_ips[0]
+        info['hostname'] = n.extra['dns_name'].split(".")[0]
+        info['fqdn'] = n.extra['dns_name']
+        info['domain'] = n.extra['dns_name'].split(".",1)[1]
+        info['distro'] = 'TBC'
+        info['raid'] = 'TBC'
+        info['disks'] = 'TBC'
+
         def interfaces():
             for i, (pub, priv) in enumerate(zip(n.public_ips, n.private_ips)):
                 yield {'name': 'eth%d' % i,
                        'address': priv,
                        'mapped_as': pub}
-        return {
-            'rolename': self.name,
-            'role': copy.copy(self.role_info()),
-            'mapped_as': n.public_ips[0],
-            'address': n.private_ips[0],
-            'hostname': n.extra['dns_name'].split(".")[0],
-            'fqdn': n.extra['dns_name'],
-            'domain': n.extra['dns_name'].split(".",1)[1],
-            'distro': 'TBC',
-            'raid': 'TBC',
-            'disks': 'TBC',
-            'interfaces': list(interfaces()),
-        }
+
+        info['interfaces'] = list(interfaces())
+
+        return info
 
     @property
     def hostname(self):
