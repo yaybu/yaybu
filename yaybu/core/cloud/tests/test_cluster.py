@@ -10,10 +10,6 @@ class PartTester(Part):
 
     provisioned = False
 
-    @classmethod
-    def create_from_yay_expression(cls, cluster, name, v):
-        return cls(cluster, name)
-
     def get_part_info(self):
         cfg = super(PartTester, self).get_part_info()
         if self.provisioned:
