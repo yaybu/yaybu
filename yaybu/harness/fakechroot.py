@@ -68,6 +68,7 @@ class FakeChrootFixture(Fixture):
     firstrun = True
 
     fakerootkey = None
+    faked = None
 
     testbase = os.getenv("YAYBU_TESTS_BASE", "base-image")
     test_network = os.environ.get("TEST_NETWORK", "0") == "1"
@@ -186,7 +187,7 @@ class FakeChrootFixture(Fixture):
         f.close()
         return "/tmp/" + os.path.realpath(f.name).split("/")[-1]
 
-    def call(self, command, new_save_file=False):
+    def get_env(self):
         env = os.environ.copy()
 
         env['FAKECHROOT'] = 'true'
@@ -228,21 +229,32 @@ class FakeChrootFixture(Fixture):
 
         env['LD_LIBRARY_PATH'] = ":".join(LD_LIBRARY_PATH)
         env['LD_PRELOAD'] = "libfakechroot.so libfakeroot-sysv.so /usr/lib/cowdancer/libcowdancer.so"
+        return env
 
+    def call(self, command):
+        env = self.get_env()
         retval = subprocess.call(["/usr/sbin/chroot", self.chroot_path] + command, cwd=self.chroot_path, env=env)
-
         return retval
 
     def yaybu(self, *args):
-        filespath = os.path.join("/tmp", "files")
-        args = list(args)
         if self.test_network:
+            filespath = os.path.join(self.chroot_path, "/tmp", "files")
+            args = [self.chroot_path+arg if arg.startswith("/") else arg for arg in args]
             args.insert(0, "test://")
-            args.insert(0, "push")
+            from yaybu.core.command import YaybuCmd
+            from yaybu.core.remote import TestRemoteRunner
+            from optparse import OptionParser
+            class T(TestRemoteRunner):
+                env = self.get_env()
+                cwd = self.chroot_path
+            p = OptionParser()
+            y = YaybuCmd(ypath=(filespath, ))
+            y.opts_push(p)
+            return y.do_push(*p.parse_args(args), runner=T)
         else:
+            args = list(args) 
             args.insert(0, "apply")
-
-        return self.call(["yaybu", "-v", "-v", "-d", "--ypath", filespath] + args)
+            return self.call(["yaybu", "-v", "-v", "-d", "--ypath", "/tmp/files"] + args)
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """

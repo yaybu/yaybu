@@ -7,6 +7,10 @@ Changelog for yaybu
 - Add a subclass of ``yay.config.Config`` that helps adapt yay for use in
   Yaybu..
 
+- Depend on at least 0.11.4 of libcloud to avoid hanging on S3 access.
+
+- Drop dependency on boto.
+
 
 0.2.3 (2012-10-25)
 ------------------

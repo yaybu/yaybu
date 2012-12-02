@@ -164,8 +164,8 @@ class TestRemoteRunner(RemoteRunner):
 
     def serve(self, ctx):
         import shlex
-        command = shlex.split(self.get_yaybu_command(ctx))
-        p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        command = ["/usr/sbin/chroot", self.cwd] + shlex.split(self.get_yaybu_command(ctx))
+        p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=self.env, cwd=self.cwd)
 
         try:
             self.get_server(ctx, p.stdin, p.stdout).serve_forever()

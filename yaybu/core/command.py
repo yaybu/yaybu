@@ -12,7 +12,6 @@ import yay
 import yay.errors
 from yaybu.core import runner, remote, runcontext, error
 from yaybu.core.cloud.cluster import Cluster
-from .cloud import role
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -207,23 +206,17 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
             
-    def do_push(self, opts, args):
+    def do_push(self, opts, args, runner=remote.RemoteRunner):
         """
         usage: remote [options] <hostname> <filename>
         Provision the specified hostname with the specified configuration, by
         executing Yaybu on the remote system, via ssh
         """
         if len(args) < 2:
-            self.simple_help("provision")
+            self.simple_help("push")
             return
 
         hostname = args[0]
-        if hostname == "test://":
-            hostname = "localhost"
-            RUNNER = remote.TestRemoteRunner
-        else:
-            RUNNER = remote.RemoteRunner
-
         ctx = runcontext.RunContext(args[1],
                                     resume=opts.resume,
                                     no_resume=opts.no_resume,
@@ -237,7 +230,7 @@ class YaybuCmd(OptionParsingCmd):
         if len(args) > 1:
             ctx.get_config().set_arguments_from_argv(args[2:])
 
-        r = RUNNER(hostname)
+        r = runner(hostname)
         rv = r.run(ctx)
         return rv
 
@@ -294,7 +287,7 @@ class YaybuCmd(OptionParsingCmd):
 
     def do_status(self, opts, args):
         """
-        usage: status <provider> [cluster]
+        usage: status [cluster]
         Describe the status of the cluster in the specified cloud.
         If no cluster is specified, all clusters are shown
         """
@@ -309,89 +302,57 @@ class YaybuCmd(OptionParsingCmd):
     
     def do_provision(self, opts, args):
         """
-        usage: provision <provider> <cluster> <filename> <name=value>...
+        usage: provision <cluster> <filename> <name=value>...
         Create a new cluster, or update the existing cluster, <cluster>
-        in the cloud <provider>, using the configuration in <filename>
+        in the cloud provider, using the configuration in <filename>
         if the configuration takes arguments these can be provided as 
         name=value name=value...
         """
-        if len(args) < 3:
+        if len(args) < 2:
             self.simple_help("provision")
             return
-        provider, cluster_name, filename = args[:3]
-        cluster = Cluster(provider, cluster_name, filename, argv=args[3:])
+        cluster_name, filename = args[:2]
+        cluster = Cluster(cluster_name, filename, argv=args[2:], simulate=opts.simulate)
         return cluster.provision(dump=opts.dump)
            
-    def do_zoneupdate(self, opts, args):
-        """ 
-        usage: zoneupdate <provider> <cluster> <filename>
-        Forces a DNS update for the specified configuration
-        """
-        if len(args) != 3:
-            self.simple_help("zoneupdate")
-            return
-        provider, cluster_name, filename = args
-        cluster = Cluster(provider, cluster_name, filename)
-        for role, nodename in role.get_all_roles_and_nodenames():
-            role.Role.node_zone_update(role.name, nodename)
-        
-    def do_addnode(self, opts, args):
-        """
-        usage: addnode <provider> <cluster> <role>
-        Add a new node of the specified role to the cluster
-        """
-        
-    def do_rmnode(self, opts, args):
-        """
-        usage: rmnode <provider> <cluster> <nodeid>
-        Delete the specified node
-        """
-        
     def do_ssh(self, opts, args):
         """ 
-        usage: ssh <provider> <cluster> <name> 
+        usage: ssh <cluster> <name> 
         SSH to the node specified (with foo/bar/0 notation)
         """
-        if len(args) != 3:
+        if len(args) != 2:
             self.do_help((),("ssh",))
             return
-        provider, cluster_name, filename = args
-        cluster = self.get_cluster(provider, cluster_name, filename)
+        cluster_name, filename = args
+        cluster = self.get_cluster(cluster_name, filename)
         # do some stuff
         raise NotImplementedError
  
     def do_info(self, opts, args):
         """
-        usage: info <provider> <cluster> <filename>
+        usage: info <cluster> <filename>
         Provide information on the specified cluster
         """
-        if len(args) != 3:
+        if len(args) != 2:
             self.do_help((),("rmcluster",))
             return
-        provider, cluster_name, filename = args
-        cluster = Cluster(provider, cluster_name, filename)
-        for role in role.RoleCollection.roles():
-            print "%s %s %s min %s max %s depends %s" % (
-                role.name, role.image, role.size, role.min, role.max, role.depends)
-            for node in role.nodes.values():
-                n = cluster.cloud.nodes[node.their_name]
-                print "    %s %s" % (node.their_name, n.extra['dns_name'])
-        
-    def do_rmcluster(self, opts, args):
+        cluster_name, filename = args
+        cluster = Cluster(cluster_name, filename)
+        print "Not implemented yet"
+ 
+    def do_destroy(self, opts, args):
         """
-        usage: rmcluster <provider> <cluster> <filename>
+        usage: destroy <cluster> <filename>
         Delete the specified cluster completely
         """
-        if len(args) != 3:
+        if len(args) != 2:
             self.do_help((),("rmcluster",))
             return
-        provider, cluster_name, filename = args
+        cluster_name, filename = args
         logger.info("Deleting cluster")
-        cluster = Cluster(provider, cluster_name, filename)
-        for role, name in role.RoleCollection.get_all_roles_and_nodenames():
-            logger.warning("Destroying %r on request" % (name,))
-            role.destroy_node(name)
-    
+        cluster = Cluster(cluster_name, filename)
+        cluster.destroy()
+ 
     def do_quit(self, opts=None, args=None):
         """ Exit yaybu """
         raise SystemExit

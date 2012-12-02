@@ -54,6 +54,15 @@ def main():
     if opts.ssh_auth_sock:
         os.environ["SSH_AUTH_SOCK"] = opts.ssh_auth_sock
 
+    if sys.platform == "darwin":
+        # CA certs on darwin are in the system keyring - they can be readily accessed with commands like:
+        #   security export -k /System/Library/Keychains/SystemCACertificates.keychain -t certs
+        # However i'm not sure how libcloud/python can take a stream of certs - it looks like the certs have to exist on disk!!
+        # For now, turning cert verification off on Macs.
+        import libcloud.security
+        libcloud.security.VERIFY_SSL_CERT = False
+        libcloud.security.VERIFY_SSL_CERT_STRICT = False
+
     logging.getLogger("ssh.transport").setLevel(logging.CRITICAL)
 
     atexit.register(logging.shutdown)

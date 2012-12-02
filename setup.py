@@ -25,9 +25,8 @@ setup(name='Yaybu',
           'jinja2',
           'yay >= 0.0.57',
           'python-dateutil < 2.0',
-          'apache-libcloud',
+          'apache-libcloud >= 0.11.4',
           'ssh',
-          'boto >= 2.6.0',
       ],
       extras_require = {
           'test': ['testtools', 'discover', 'mock'],
@@ -39,7 +38,7 @@ setup(name='Yaybu',
       resources = yaybu.resources
       [yaybu.providers]
       providers = yaybu.providers
-      [yaybu.roles]
-      providers = yaybu.roles
+      [yaybu.parts]
+      providers = yaybu.parts
       """
       )
