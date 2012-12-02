@@ -253,7 +253,7 @@ class Compute(Part):
         raise IOError()
 
     def get_part_info(self):
-        cfg = super(Computer, self).get_part_info()
+        cfg = super(Compute, self).get_part_info()
         if self.node is not None:
             pass
         return cfg
