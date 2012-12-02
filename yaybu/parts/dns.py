@@ -54,7 +54,7 @@ class Zone(Part):
     @property
     @memoized
     def driver(self):
-        config = self.config.mapping.get("parts").get(self.name).get("driver").resolve()
+        config = self.config.get("driver").resolve()
         self.driver_name = config['id']
         del config['id']
         if self.driver_name == "route53":
@@ -62,14 +62,14 @@ class Zone(Part):
         else:
             driver = getattr(DNSProvider, self.driver_name)
             driver_class = get_dns_driver(driver)
-            return driver_class(**self.config)
+            return driver_class(**config)
 
     def instantiate(self):
         pass
 
     def provision(self):
         simulate = self.ctx.simulate
-        params = self.config.mapping.get("parts").get(self.name).resolve()
+        params = self.config.resolve()
 
         domain = params['domain'].rstrip(".") + "."
         ttl = params.get('ttl', 0)

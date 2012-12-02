@@ -105,16 +105,20 @@ class Part(object):
 
     @property
     @memoized
-    def config(self):
+    def fullconfig(self):
         return self.ctx.get_config()
  
+    @property
+    def config(self):
+        return self.fullconfig.mapping.get("parts").get(self.name)
+
     def get_part_info(self):
         """ Return the appropriate stanza from the configuration file """
         #return self.config.mapping.get("parts").resolve()[self.name]
         return {}
 
     def set_parts_info(self, info):
-        return self.config.add({
+        return self.fullconfig.add({
             "parts": info,
             })
    

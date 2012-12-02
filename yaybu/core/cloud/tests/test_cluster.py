@@ -25,7 +25,7 @@ class PartTester(Part):
 
     def provision(self):
         self.provisioned = True
-        self.config.mapping.get("parts").get(self.name).get("somevar").resolve()
+        self.config.get("somevar").resolve()
 
 
 class TestClusterIntegration(testtools.TestCase):
