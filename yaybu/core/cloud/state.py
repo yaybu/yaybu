@@ -106,6 +106,12 @@ class FileStateStorage(StateStorage):
         return data
 
     def load(self):
+        stream = self.get_stream()
+
+        if not stream:
+            self.data = {}
+            return
+
         data = json.load(self.get_stream())
 
         if not 'version' in data:
@@ -121,7 +127,10 @@ class FileStateStorage(StateStorage):
 class LocalFileStateStorage(FileStateStorage):
 
     def get_stream(self):
-        return open(os.path.join(os.getcwd(), ".yaybu"))
+        path = os.path.join(os.getcwd(), ".yaybu")
+        if not os.path.exists(path):
+            return None
+        return open(path)
 
     def store_stream(self, stream):
         with open(os.path.join(os.getcwd(), ".yaybu"), "w") as fp:
@@ -157,13 +166,13 @@ class CloudFileStateStorage(FileStateStorage):
             return bucket.as_stream()
         except ObjectDoesNotExistError:
             raise RuntimeError("Object does not exist")
- 
+
     def store_stream(self, stream):
         """ Store the state in the cloud """
         logger.debug("Storing state")
         container = self.get_container(self.state_bucket)
         container.upload_object_via_stream(
-            stream, 
+            stream,
             self.cluster.name,
             {'content_type': 'text/yaml'}
             )
