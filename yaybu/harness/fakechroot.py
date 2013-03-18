@@ -70,7 +70,7 @@ class FakeChrootFixture(Fixture):
     fakerootkey = None
     faked = None
 
-    testbase = os.getenv("YAYBU_TESTS_BASE", "base-image")
+    testbase = os.path.realpath(os.getenv("YAYBU_TESTS_BASE", "base-image"))
     test_network = os.environ.get("TEST_NETWORK", "0") == "1"
     statefile = os.path.realpath("fakeroot.state")
 
@@ -139,32 +139,37 @@ class FakeChrootFixture(Fixture):
 
     def distro(self):
         return distro_flags[self.sundayname]['name']
-    
-    def run_commands(self, commands, distro=None):
-        for command in commands:
-            command = command % dict(base_image=self.testbase, distro=distro)
-            print ">>>", command
-            p = subprocess.Popen(shlex.split(command))
-            if p.wait():
-                raise SystemExit("Command failed")
-            
+
+    def run_command(self, command, distro=None, cwd=None):
+        command = command % dict(base_image=self.testbase, distro=distro)
+        print ">>>", command
+        p = subprocess.Popen(shlex.split(command), cwd=cwd)
+        if p.wait():
+            raise SystemExit("Command failed")
+
     def build_environment(self):
+        if os.path.exists(self.testbase):
+            return
+
         distro = self.distro()
         commands = [
             "fakeroot fakechroot debootstrap --variant=fakechroot --include=git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv,python-dev,build-essential %(distro)s %(base_image)s",
             "fakeroot fakechroot /usr/sbin/chroot %(base_image)s apt-get update",
             ]
-        if not os.path.exists(self.testbase):
-            self.run_commands(commands, distro)
+        for command in commands:
+            self.run_command(command, distro)
 
     def refresh_environment(self):
-        commands = [
-             "fakeroot fakechroot rm -rf /usr/local/lib/python2.6/dist-packages/Yaybu*",
-             "fakeroot fakechroot rm -rf /usr/local/lib/python2.7/dist-packages/Yaybu*",
-             "python setup.py sdist --dist-dir %(base_image)s",
-             "fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'",
-             ]
-        self.run_commands(commands)
+        if os.path.exists("src/yay"):
+            yay_path = os.path.join(self.testbase, "usr/local/lib/python2.*/dist-packages/yay*")
+            self.run_command('bash -c "rm -rf %s"' % yay_path)
+            self.run_command("python setup.py sdist --dist-dir %(base_image)s", cwd="src/yay")
+            self.run_command("fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /yay-*.tar.gz'")
+
+        yaybu_path = os.path.join(self.testbase, "usr/local/lib/python2.*/dist-packages/Yaybu*")
+        self.run_command('bash -c "rm -rf %s"' % yaybu_path)
+        self.run_command("python setup.py sdist --dist-dir %(base_image)s")
+        self.run_command("fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'")
 
     def cleanup_session(self):
         if self.faked:
@@ -252,7 +257,7 @@ class FakeChrootFixture(Fixture):
             y.opts_push(p)
             return y.do_push(*p.parse_args(args), runner=T)
         else:
-            args = list(args) 
+            args = list(args)
             args.insert(0, "apply")
             return self.call(["yaybu", "-v", "-v", "-d", "--ypath", "/tmp/files"] + args)
 
