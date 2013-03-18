@@ -236,7 +236,7 @@ class Compute(Part):
             ## TODO: wrap this in a try/except block and terminate
             ## and recreate the node if this fails
             try:
-                self.node, self.ip_addresses = self.driver._wait_until_running(node, timeout=600)
+                self.node, self.ip_addresses = self.driver.wait_until_running([node], timeout=600)[0]
             except LibcloudError:
                 logger.warning("Node did not start before timeout. retrying.")
                 node.destroy()
@@ -248,7 +248,7 @@ class Compute(Part):
             self.install_yaybu()
             logger.info("Node provisioned: %r" % node)
             return
- 
+
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
 
