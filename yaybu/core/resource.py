@@ -248,7 +248,7 @@ class ResourceBundle(ordereddict.OrderedDict):
         parameters, build a resource bundle.  """
         bundle = cls()
         try:
-            for node in expression.expand():
+            for node in expression.as_iterable():
                 spec = node.resolve()
                 bundle.add_from_spec(spec)
 

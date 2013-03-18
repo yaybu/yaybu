@@ -14,7 +14,7 @@
 
 import os
 import policy
-import yaml
+import json
 
 class EventState(object):
 
@@ -37,7 +37,7 @@ class EventState(object):
         if self.loaded:
             return
         if os.path.exists(self.save_file):
-            self.overrides = yaml.load(open(self.save_file))
+            self.overrides = json.load(open(self.save_file))
         self.loaded = True
 
     def override(self, resource, policy):
@@ -72,7 +72,7 @@ class EventState(object):
 
     def save(self):
         if not self.simulate:
-            yaml.dump(self.overrides, open(self.save_file, "w"),  default_flow_style=False)
+            json.dump(self.overrides, open(self.save_file, "w"))
 
 
 # module level global to preserve event state

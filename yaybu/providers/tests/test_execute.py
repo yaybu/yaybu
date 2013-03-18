@@ -103,7 +103,7 @@ class TestExecute(FakeChrootTestCase):
                     name: test
                     command: sh -c "touch $FOO"
                     environment:
-                        FOO: ${secreted_string}
+                        FOO: {{secreted_string}}
                     creates: /etc/foo_secret
             """)
         self.failUnlessExists("/etc/foo_secret")

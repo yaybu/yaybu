@@ -20,7 +20,7 @@ class TestArgumentParser(FakeChrootTestCase):
             resources:
                 - Execute:
                     name: test_missing_arg
-                    command: /bin/touch ${hello}
+                    command: /bin/touch {{hello}}
             """)
 
         self.failUnlessEqual(rv, error.ParseError.returncode)

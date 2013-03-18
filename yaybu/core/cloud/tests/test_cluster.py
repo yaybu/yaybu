@@ -36,7 +36,7 @@ class TestClusterIntegration(testtools.TestCase):
         f.close()
         path = os.path.realpath(f.name)
         self.addCleanup(os.unlink, path)
-        return path       
+        return path
 
     def _provision(self, clustername, config):
         cmd = YaybuCmd()
@@ -74,6 +74,6 @@ class TestClusterIntegration(testtools.TestCase):
                 somevar: hello
               node2:
                 class: parttester
-                somevar: ${parts.node1.hello}
+                somevar: {{parts.node1.hello}}
             """)
 

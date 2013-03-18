@@ -49,8 +49,8 @@ class LoadBalancer(Part):
                 algorithm: round-robin
 
                 members:
-                  - id: ${webnode.id}
-                    ip: ${webnode.public_ip}
+                  - id: {{webnode.id}}
+                    ip: {{webnode.public_ip}}
                     port: 8080
 
     Algorithm must be one of:

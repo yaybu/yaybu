@@ -15,7 +15,6 @@
 import os
 import uuid
 import logging
-import yaml
 import StringIO
 import datetime
 import collections

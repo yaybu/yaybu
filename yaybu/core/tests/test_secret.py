@@ -13,7 +13,7 @@ class TestWatched(FakeChrootTestCase):
             resources:
                 - Execute:
                     name: test_watched
-                    command: /bin/touch ${hello}
+                    command: /bin/touch {{hello}}
                     creates: /world
             """)
 
