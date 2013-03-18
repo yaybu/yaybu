@@ -25,7 +25,7 @@ setup(name='Yaybu',
           'jinja2',
           'yay >= 0.0.57',
           'python-dateutil < 2.0',
-          'apache-libcloud >= 0.11.4',
+          'apache-libcloud >= 0.12.1',
           'ssh',
       ],
       extras_require = {
