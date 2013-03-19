@@ -123,14 +123,14 @@ class Config(BaseConfig):
         parser = YaybuArgParser()
 
         try:
-            args = self.mapping.get('yaybu').get('options').resolve()
+            args = self.node.get('yaybu').get('options').resolve()
         except NoMatching:
             args = []
- 
+
         for arg in args:
             if 'name' not in arg:
                 raise KeyError("No name specified for an argument")
-            yarg = YaybuArg(arg['name'], 
+            yarg = YaybuArg(arg['name'],
                             arg.get('type', 'string'),
                             arg.get('default', None),
                             arg.get('help', None)
@@ -166,7 +166,7 @@ class Config(BaseConfig):
             msg = e.get_string()
             if self.context.verbose > 2:
                 msg += "\n" + get_exception_context()
-            raise ParseError(e.get_string())        
+            raise ParseError(e.get_string())
 
     def load_uri(self, *args, **kwargs):
         return self._reraise_yay_errors(super(Config, self).load_uri, *args, **kwargs)

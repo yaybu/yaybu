@@ -31,14 +31,14 @@ from yaybu.core.config import Config
 logger = logging.getLogger("runcontext")
 
 class RunContext(object):
-    
+
     """ A context object that holds the environment required to run yaybu. """
 
     simulate = False
     ypath = ()
     verbose = 0
 
-    def __init__(self, configfile, resume=False, no_resume=False, user="root", 
+    def __init__(self, configfile, resume=False, no_resume=False, user="root",
                  host=None, ypath=(), simulate=False, verbose=2,
                  env_passthrough=()):
         self.path = []
@@ -81,7 +81,7 @@ class RunContext(object):
         self.setup_changelog()
 
         self.vfs = vfs.Local(self)
-        
+
     def set_host(self, host):
         self.host = host
         if self.host:
@@ -174,7 +174,7 @@ class RemoteRunContext(RunContext):
         self.connection = HTTPConnection()
         self.check_versions()
         super(RemoteRunContext, self).__init__(configfile, **kwargs)
-        
+
     def check_versions(self):
         self.connection.request("GET", "/about")
         rsp = self.connection.getresponse()
@@ -205,7 +205,8 @@ class RemoteRunContext(RunContext):
         self.connection.request("GET", "/config")
         rsp = self.connection.getresponse()
         c = Config(self)
-        c.add(pickle.loads(rsp.read()))
+        data = pickle.loads(rsp.read())
+        c.add(data)
         return c
 
     def get_decrypted_file(self, filename, etag=None):
