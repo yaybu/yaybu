@@ -254,19 +254,20 @@ class ResourceBundle(ordereddict.OrderedDict):
 
         except LanguageError as exc:
             p = error.ParseError()
-            p.msg = exc.get_string()
+            p.msg = str(exc)
             if verbose_errors:
                 p.msg += "\n" + get_exception_context()
-            p.file = exc.file
-            p.line = exc.line
-            p.column = exc.column
+            if exc.anchor:
+                p.file = exc.anchor.source
+                p.line = exc.anchor.lineno
+            p.column = 0
             raise p
 
         except error.ParseError as exc:
-            exc.msg += "\nFile %s, line %d, column %d" % (node.name, node.line, node.column)
-            exc.file = node.name
-            exc.line = node.line
-            exc.column = node.column
+            exc.msg += "\nFile %s, line %d, column %s" % (node.anchor.source, node.anchor.lineno, "unknown")
+            exc.file = node.anchor.source
+            exc.line = node.anchor.lineno
+            exc.column = 0
             raise
 
         return bundle

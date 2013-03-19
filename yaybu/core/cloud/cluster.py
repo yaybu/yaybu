@@ -5,7 +5,7 @@ import logging
 from yaybu.core import runcontext
 from .part import PartType, PartCollection
 from yaybu.core.util import memoized, get_encrypted
-from .state import StateStorageType, SimulatedStateStorageAdaptor 
+from .state import StateStorageType, SimulatedStateStorageAdaptor
 
 from yay.errors import NoMatching
 
@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 
 
 class Cluster:
-    
+
     """ Built on top of AbstractCloud, a Cluster knows about server parts and
     can create and remove nodes for those parts. """
-    
+
     def __init__(self, cluster_name, filename, argv=None, searchpath=(), verbose=True, simulate=False):
         """
         Args:
             cluster_name: The name of the cloud
             filename: The filename of the yay file to be used for the source of parts
-            argv: arguments available 
+            argv: arguments available
             searchpath: the yaybu search path
         """
         self.name = cluster_name
@@ -32,7 +32,7 @@ class Cluster:
         self.verbose = verbose
         self.argv = argv
         self.parts = None
- 
+
         self.create_parts()
 
     def make_context(self, resume=False):
@@ -66,7 +66,7 @@ class Cluster:
     @memoized
     def state(self):
         try:
-            storage_config = self.config.mapping.get("state-storage").resolve()
+            storage_config = self.config.node.get("state-storage").resolve()
             klass = storage_config['class']
             del storage_config['class']
         except NoMatching:
@@ -88,8 +88,8 @@ class Cluster:
 
     def create_parts(self):
         c = self.parts = PartCollection()
-        for k in self.config.mapping.get('parts').keys():
-            v = self.config.mapping.get('parts').get(k)
+        for k in self.config.node.get('parts').keys():
+            v = self.config.node.get('parts').get(k)
             try:
                 classname = get_encrypted(v.get("class").resolve())
             except NoMatching:
