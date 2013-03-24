@@ -63,7 +63,7 @@ class TestFileApply(FakeChrootTestCase):
             resources:
                 - File:
                     name: /etc/templated
-                    template: package://yaybu.providers.tests/template1.j2
+                    template: {{ "package://yaybu.providers.tests/template1.j2" }}
                     template_args:
                         foo: this is foo
                         bar: 42
@@ -77,7 +77,7 @@ class TestFileApply(FakeChrootTestCase):
             resources:
                 - File:
                     name: /etc/templated
-                    template: package://yaybu.providers.tests/template_with_extends.j2
+                    template: {{ "package://yaybu.providers.tests/template_with_extends.j2" }}
                     template_args:
                         foo: this is foo
                         bar: 42
@@ -96,7 +96,7 @@ class TestFileApply(FakeChrootTestCase):
             resources:
                 - File:
                     name: /etc/test_modify_file
-                    template: package://yaybu.providers.tests/template1.j2
+                    template: {{ "package://yaybu.providers.tests/template1.j2" }}
                     template_args:
                         foo: this is a modified file
                         bar: 37
@@ -145,13 +145,13 @@ class TestFileApply(FakeChrootTestCase):
         with self.fixture.open("/etc/test_carriage_returns", "w") as fp:
             fp.write("foo\n")
         os.chmod(self.fixture._enpathinate("/etc/test_carriage_returns"), 0644)
-        
+
         rv = self.fixture.apply("""
             resources:
                 - File:
                     name: /etc/test_carriage_returns
-                    template: package://yaybu.providers.tests/test_carriage_returns.j2
-            """)
+                    template: {{ "package://yaybu.providers.tests/test_carriage_returns.j2" }}
+                    """)
         with self.fixture.open("/etc/test_carriage_returns") as fp:
             print ">>>"+fp.read()+"<<<"
         self.assertEqual(rv, 254) # nothing changed
@@ -166,7 +166,7 @@ class TestFileApply(FakeChrootTestCase):
             resources:
                 - File:
                     name: /etc/test_carriage_returns2
-                    template: package://yaybu.providers.tests/test_carriage_returns2.j2
+                    template: {{ "package://yaybu.providers.tests/test_carriage_returns2.j2" }}
             """)
         self.assertEqual(rv, 254) # nothing changed
 
@@ -179,7 +179,7 @@ class TestFileApply(FakeChrootTestCase):
             resources:
                 - File:
                     name: /etc/foo
-                    static: package://yaybu.providers.tests/test_carriage_returns2.j2
+                    static: {{ "package://yaybu.providers.tests/test_carriage_returns2.j2" }}
             """)
 
     def test_missing(self):
