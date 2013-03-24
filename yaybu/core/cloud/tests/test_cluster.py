@@ -1,4 +1,4 @@
-import testtools
+import unittest2
 import os
 import tempfile
 
@@ -24,7 +24,7 @@ class PartTester(Part):
         self.config.get("somevar").resolve()
 
 
-class TestClusterIntegration(testtools.TestCase):
+class TestClusterIntegration(unittest2.TestCase):
 
     """
     Exercises the cluster via the command line interface

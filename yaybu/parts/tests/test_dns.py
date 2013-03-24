@@ -1,4 +1,4 @@
-import testtools
+import unittest2
 import os
 import tempfile
 import mock
@@ -18,7 +18,7 @@ def list_records(self, zone):
 DummyDNSDriver.list_records = list_records
 
 
-class TestDNSProvision(testtools.TestCase):
+class TestDNSProvision(unittest2.TestCase):
 
     def _config(self, contents):
         f = tempfile.NamedTemporaryFile(delete=False)
