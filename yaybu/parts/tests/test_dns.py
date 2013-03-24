@@ -7,15 +7,7 @@ from yaybu.core.command import YaybuCmd
 from yaybu.parts.dns import Zone
 
 class ZoneTester(Zone):
-
     pass
-
-
-# DummyDNSDriver is broken in released versions of libcloud
-from libcloud.dns.drivers.dummy import DummyDNSDriver
-def list_records(self, zone):
-    return self._zones[zone.id]['records'].values()
-DummyDNSDriver.list_records = list_records
 
 
 class TestDNSProvision(unittest2.TestCase):
