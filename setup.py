@@ -29,7 +29,7 @@ setup(name='Yaybu',
           'ssh',
       ],
       extras_require = {
-          'test': ['testtools', 'discover', 'mock'],
+          'test': ['unittest2', 'discover', 'mock'],
           },
       entry_points = """
       [console_scripts]

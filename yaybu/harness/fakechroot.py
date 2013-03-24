@@ -13,8 +13,7 @@
 # limitations under the License.
 
 import os, glob, signal, shlex, subprocess, tempfile, time, shutil, StringIO
-import testtools
-from testtools.testcase import TestSkipped
+from unittest2 import SkipTest
 from yaybu.core import error
 from yaybu.util import sibpath
 
@@ -37,20 +36,8 @@ auditlog:
 """
 
 distro_flags = {
-    "Ubuntu 9.10": dict(
-        name="karmic",
-        ),
     "Ubuntu 10.04": dict(
         name="lucid",
-        ),
-    "Ubuntu 10.10": dict(
-        name="maverick",
-        ),
-    "Ubuntu 11.04": dict(
-        name="natty",
-        ),
-    "Ubuntu 11.10": dict(
-        name="oneiric",
         ),
     "Ubuntu 12.04": dict(
         name="precise",
@@ -66,7 +53,7 @@ class FakeChrootFixture(Fixture):
     """
 
     firstrun = True
-
+    sundayname = "unknown"
     fakerootkey = None
     faked = None
 
@@ -78,9 +65,10 @@ class FakeChrootFixture(Fixture):
         try:
             self.sundayname = open("/etc/issue.net","r").read().strip()[:12]
         except:
-            raise NotImplementedError("Can only run Integration tests on Ubuntu")
+            raise SkipTest("Can only run Integration tests on Ubuntu")
+
         if self.sundayname not in distro_flags:
-            raise NotImplementedError("This version of Ubuntu (%r) is not supported" % self.sundayname)
+            raise SkipTest("This version of Ubuntu (%r) is not supported" % self.sundayname)
 
         dependencies = (
             "/usr/bin/fakeroot",
@@ -91,7 +79,7 @@ class FakeChrootFixture(Fixture):
 
         for dep in dependencies:
             if not os.path.exists(dep):
-                raise NotImplementedError("Need '%s' to run integration tests" % dep)
+                raise SkipTest("Need '%s' to run integration tests" % dep)
 
         if self.firstrun:
             if not os.path.exists(self.testbase):
