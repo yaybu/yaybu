@@ -96,7 +96,7 @@ class TestExecute(FakeChrootTestCase):
 
     def test_environment_protected(self):
         self.fixture.check_apply("""
-            secreted_string.secret: /etc/foo_secret
+            secreted_string: /etc/foo_secret
 
             resources:
                 - Execute:

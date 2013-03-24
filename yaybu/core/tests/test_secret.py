@@ -8,7 +8,7 @@ class TestWatched(FakeChrootTestCase):
 
     def test_execute(self):
         self.fixture.check_apply("""
-            hello.secret: world
+            hello: world
 
             resources:
                 - Execute:
