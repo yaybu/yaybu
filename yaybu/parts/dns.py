@@ -25,8 +25,6 @@ from libcloud.dns.types import Provider as DNSProvider
 from libcloud.dns.providers import get_driver as get_dns_driver
 from libcloud.common.types import LibcloudError
 
-from .route53 import Route53DNSDriver
-
 logger = logging.getLogger(__name__)
 
 
@@ -57,12 +55,9 @@ class Zone(Part):
         config = self.config.get("driver").resolve()
         self.driver_name = config['id']
         del config['id']
-        if self.driver_name == "route53":
-            return Route53DNSDriver(**config)
-        else:
-            driver = getattr(DNSProvider, self.driver_name)
-            driver_class = get_dns_driver(driver)
-            return driver_class(**config)
+        driver = getattr(DNSProvider, self.driver_name)
+        driver_class = get_dns_driver(driver)
+        return driver_class(**config)
 
     def instantiate(self):
         pass
