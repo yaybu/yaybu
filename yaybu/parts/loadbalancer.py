@@ -26,8 +26,6 @@ from libcloud.loadbalancer.types import Provider, State
 from libcloud.loadbalancer.providers import get_driver
 from libcloud.common.types import LibcloudError
 
-from .elb import ElasticLoadBalancerDriver
-
 logger = logging.getLogger(__name__)
 
 
