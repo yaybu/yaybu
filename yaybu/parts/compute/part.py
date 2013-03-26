@@ -33,43 +33,35 @@ from ssh.dsskey import DSSKey
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core import remote
-from yaybu.core.cloud.part import Part
 from yaybu.core.util import get_encrypted
+
+from yay import ast, errors
 
 
 logger = logging.getLogger(__name__)
 
 
-class Compute(Part):
+class Compute(ast.PythonClass):
 
-    def __init__(self, cluster, name, config):
-        """
-        Args:
-            name: Part name
-            key_name: The name of the key at the cloud provider
-            key: The key itself as an SSH object
-            image: The name of the image in your local dialect
-            size: The size of the image in your local dialect
-            depends: A list of parts this part depends on
-        """
-        super(Compute, self).__init__(cluster, name, config)
+    """
+    mycompute:
+        create "yaybu.parts.compute:Compute":
+            driver:
+                id: AWS
+                key: your-amazon-key
+                secret: your-amazon-secret
+
+            key: example_key       # This key must be defined in AWS control panel to be able to SSH in
+            image: ami-ca1a14be    # Ubuntu 10.04 LTS 64bit EBS
+            size: t1.micro         # Smallest AWS size
+    """
+
+    def __init__(self, node):
+        super(Compute, self).__init__(node)
         self.node = None
         self.their_name = None
 
-        # FIXME: This needs to be less drastic and selectively resolve just what is needed
-        config = config.resolve()
-        driver = config['driver']
-
-        self.driver_name = driver['id']
-        del driver['id']
-        self.args = driver
-
-        self.key_name = config['key']
-        self.image = config['image']
-        self.size = config.get('size', None)
-
     def get_state(self):
-        s = super(Compute, self).get_state()
         s['their_name'] = self.their_name
         return s
 
@@ -91,17 +83,18 @@ class Compute(Part):
         return dict((s.id, s) for s in self.driver.list_sizes())
 
     @property
-    def nodes(self):
-        return dict((n.name, n) for n in self.driver.list_nodes())
-
-    @property
     @memoized
     def driver(self):
         if self.driver_name == "vmware":
             return VMWareDriver(**self.args)
+
+        config = self["driver"].resolve() # FIXME: Needs an as_dict()
+        self.driver_name = config['id']
+        del config['id']
+
         provider = getattr(ComputeProvider, self.driver_name)
         driver_class = get_compute_driver(provider)
-        return driver_class(**self.args)
+        return driver_class(**config)
 
     @property
     @memoized
@@ -136,9 +129,6 @@ class Compute(Part):
         info['hostname'] = n.extra['dns_name'].split(".")[0]
         info['fqdn'] = n.extra['dns_name']
         info['domain'] = n.extra['dns_name'].split(".",1)[1]
-        info['distro'] = 'TBC'
-        info['raid'] = 'TBC'
-        info['disks'] = 'TBC'
 
         def interfaces():
             for i, (pub, priv) in enumerate(zip(n.public_ips, n.private_ips)):
@@ -158,7 +148,6 @@ class Compute(Part):
         """ Creates the context used to provision an actual host """
         ctx = self.cluster.make_context(resume=True)
         ctx.set_host(self.hostname)
-        # ctx.get_config().load_uri("package://yaybu.recipe/host.yay")
         return ctx
 
     def create_runner(self):
@@ -167,58 +156,54 @@ class Compute(Part):
         r = remote.RemoteRunner(self.hostname, self.key)
         return r
 
-    def install_yaybu(self):
-        """ Install yaybu on the provided node.
-           Args:
-                node: a Node instance
-            """
-        return self.create_runner().install_yaybu()
+    def _find_node(self, name):
+        existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
+        if len(existing) > 1:
+            raise KeyError("There are already multiple nodes called '%s'" % name)
+        elif len(existing) == 1:
+            logger.debug("Node '%s' already running - not creating new node" % (name, ))
+            return existing[0]
+
+    def _get_image(self):
+        if isinstance(self.image, dict):
+            return node.NodeImage(
+                id = self.image.id.get_string(),
+                name = self.image.name.get_string(), # else id
+                ram = self.image.extra.resolve(), # FIXME: Needs as_dict
+                driver = self.driver,
+                )
+        else:
+            return self.images.get(self.image.as_string(), None)
+
+    def _get_size(self):
+        if isinstance(self.size, dict):
+            return node.NodeSize(
+                id = self.size.id.as_string(),
+                name = self.size.name.as_string(),    # FIXME: Default to self.size.id
+                ram = self.size.ram.as_int(),         # FIXME: Default to 0
+                disk = self.size.disk.as_int(),       # FIXME: Default to 0
+                bandwidth = self.bandwidth.as_int(),  # FIXME: Default to 0
+                price = self.size.price.as_int(),     # FIXME: Default to 0
+                driver = self.driver,
+                )
+        else:
+            return self.sizes.get(self.size.as_string(), None)
 
     def instantiate(self):
-        logger.debug("Node will be %r" % self.full_name)
-
         """ This creates a physical node based on our node record. """
-
-        if self.their_name:
-            existing = [n for n in self.driver.list_nodes() if n.name == self.their_name and n.state != NodeState.TERMINATED]
-            if len(existing) > 1:
-                raise KeyError("There are already multiple nodes called '%s'" % self.their_name)
-            elif len(existing) == 1:
-                logger.debug("Node '%s' already running - not creating new node" % (self.full_name, ))
-                self.node = existing[0]
-                return
-
-        existing = [n for n in self.driver.list_nodes() if n.name == self.full_name and n.state != NodeState.TERMINATED]
-        if len(existing) > 1:
-            raise KeyError("There are already multiple nodes called '%s'" % self.full_name)
-        elif len(existing) == 1:
-            logger.debug("Node %r already running - not creating new node" % (self.full_name, ))
-            self.node = existing[0]
-            self.their_name = self.node.name
+        if self.node:
             return
 
-        if isinstance(self.image, dict):
-            image = node.NodeImage(
-                id = self.image['id'],
-                name = self.image.get('name', self.image['id']),
-                ram = self.image.get('extra', {}),
-                driver = self.driver,
-                )
-        else:
-            image = self.images.get(self.image, None)
+        if self.their_name:
+            self.node = self._find_node(self.their_name)
 
-        if isinstance(self.size, dict):
-            size = node.NodeSize(
-                id = self.size['id'],
-                name = self.size.get('name', self.size['id']),
-                ram = self.size.get('ram', 0),
-                disk = self.size.get('disk', 0),
-                bandwidth = self.size.get('bandwidth', 0),
-                price = self.size.get('price', 0),
-                driver = self.driver,
-                )
-        else:
-            size = self.sizes.get(self.size, None)
+        if not self.node:
+            self.node = self._find_node(self.full_name)
+
+        if self.node:
+            return
+
+        logger.debug("Node will be %r" % self.full_name)
 
         for tries in range(10):
             logger.debug("Creating node %r with image %r, size %r and keypair %r" % (
@@ -226,48 +211,40 @@ class Compute(Part):
 
             node = self.driver.create_node(
                 name=self.full_name,
-                image=image,
-                size=size,
+                image=self._get_image(),
+                size=self._get_size(),
                 #ex_keyname=self.args['ex_keyname'],
                 )
 
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
-            ## TODO: wrap this in a try/except block and terminate
-            ## and recreate the node if this fails
+
             try:
                 self.node, self.ip_addresses = self.driver.wait_until_running([node], timeout=600)[0]
             except LibcloudError:
                 logger.warning("Node did not start before timeout. retrying.")
                 node.destroy()
                 continue
+
             logger.debug("Node %r running" % (self.full_name, ))
-
             self.their_name = self.node.name
-
-            self.install_yaybu()
-            logger.info("Node provisioned: %r" % node)
             return
 
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
 
-    def get_part_info(self):
-        cfg = super(Compute, self).get_part_info()
-        if self.node is not None:
-            pass
-        return cfg
-
-    def provision(self, dump=False):
+    def provision(self):
         """ Phase 2 of provisioning """
-        logger.info("Updating host %r" % self.node)
+        logger.info("Updating node %r" % self.full_name)
+
         if dump:
             self.dump(self.context(), "%s.yay" % self.hostname)
         r = self.create_runner()
+        r.install_yaybu()
         result = r.run(self.context())
+
+        logger.info("Node %r provisioned" % self.full_name)
+
         return result
 
     def destroy(self):
         self.node.destroy()
-
-
-

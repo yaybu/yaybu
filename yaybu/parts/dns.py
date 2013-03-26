@@ -17,10 +17,8 @@ from __future__ import absolute_import
 
 import logging
 
-from yaybu.core.cloud.part import Part
-from yaybu.core.error import ArgParseError
-from yaybu.core.util import memoized
-
+from yaybu.core.util import memoized, StateSynchroniser
+from yay import ast, errors
 from libcloud.dns.types import Provider as DNSProvider
 from libcloud.dns.providers import get_driver as get_dns_driver
 from libcloud.common.types import LibcloudError
@@ -28,31 +26,30 @@ from libcloud.common.types import LibcloudError
 logger = logging.getLogger(__name__)
 
 
-class Zone(Part):
+class Zone(ast.PythonClass):
 
     """
     This part manages a single DNS zone
 
-        parts:
-            mydns:
-                class: zone
-                driver:
-                    id: AWS
-                    key:
-                    secret:
-                domain: example.com
-                type: master
-                ttl: 60
-                records:
-                  - name: www
-                    type: A
-                    data: 192.168.1.1
+    mydns:
+        create "yaybu.parts.dns:Zone":
+            driver:
+                id: AWS
+                key:
+                secret:
+            domain: example.com
+            type: master
+            ttl: 60
+            records:
+              - name: www
+                type: A
+                data: 192.168.1.1
     """
 
     @property
     @memoized
     def driver(self):
-        config = self.config.get("driver").resolve()
+        config = self["driver"].resolve() # FIXME: Needs an as_dict()
         self.driver_name = config['id']
         del config['id']
         driver = getattr(DNSProvider, self.driver_name)
@@ -63,66 +60,71 @@ class Zone(Part):
         pass
 
     def provision(self):
+        #FIXME: Need to tie this into resolve() somehow
+
         simulate = self.ctx.simulate
-        params = self.config.resolve()
 
-        domain = params['domain'].rstrip(".") + "."
-        ttl = params.get('ttl', 0)
-        type_ = params.get('type', 'master')
-        extra = params.get('extra', {})
+        changed = self.synchronize_zone(logger, simulate)
+        changed = changed or self.synchronise_records(logger, simulate)
 
-        retval = False
-        zone = None
+        return changed
 
-        zones = [z for z in self.driver.list_zones() if z.domain == domain]
-        if len(zones):
-            zone = zones[0]
-            changed = False
-            if type_ != zone.type:
-                changed = True
-            if ttl != zone.ttl:
-                changed = True
-            if extra != zone.extra:
-                changed = True
-            if changed:
-                logger.info("Updating %s" % domain)
-                if not simulate:
-                    zone.update(domain, type_, ttl, extra)
-                retval = True
-        else:
-            logger.info("Creating %s (type=%s, ttl=%s, extra=%r)" % (domain, type_, ttl, extra))
-            if not simulate:
-                zone = self.driver.create_zone(domain, type_, ttl, extra)
-            retval = True
+    def synchronise_zone(self, logger, simulate):
+        s = StateSynchroniser(logger, simulate)
 
-        if not zone and simulate:
-            all_records = []
-        else:
-            all_records = zone.list_records()
+        domain = self.domain.as_string().rstrip(".") + "."
 
-        for rec in params.get('records', []):
-            type_str = rec.get('type', 'A')
-            type_enum = self.driver._string_to_record_type(type_str)
-            ttl = rec.get('ttl', 0)
+        s.add_master_record(
+            domain = domain,
+            type = self.type.as_string(),
+            ttl = self.ttl.as_integer(),
+            extra = self.extra.resolve(),  # FIXME: Needs as_dict()
+            )
 
-            found = [m for m in all_records if m.type == type_enum and m.name == rec['name']]
-            if len(found):
-                r = found[0]
-                changed = False
-                if rec['data'] != r.data:
-                    changed = True
-                if rec.get('extra', {'ttl':'0'}) != r.extra:
-                    changed = True
-                if changed:
-                    logger.info("Updating %s" % rec['name'])
-                    if not simulate:
-                        r.update(rec['name'], type_enum, rec['data'], rec.get('extra', {}))
-                    retval = True
-            else:
-                logger.info("Creating %s.%s (type=%s, ttl=%s, extra=%r)" % (rec['name'], domain, type_str, ttl, rec.get('extra', {})))
-                if not simulate:
-                    zone.create_record(rec['name'], type_enum, rec['data'], rec.get('extra', {}))
-                retval = True
+        for zone in self.driver.list_zones():
+            if zone.domain == domain:
+                s.add_slave_record(
+                    domain = domain,
+                    type = zone.type,
+                    ttl = zone.ttl,
+                    extra = zone.extra,
+                    )
 
-        return retval
+        return s.synchronise(
+            self.driver.create_zone,
+            self.driver.update_zone,
+            None,
+            )
 
+    def synchronise_records(self, logger, simulate, zone=None):
+        s = StateSynchroniser(logger, simulate)
+     
+        # Load the state from the config file into the synchroniser
+        for rec in self.records.as_iterable():
+            # FIXME: Catch error and raise an error with line number information
+            type_enum = self.driver._string_to_record_type(rec.type.as_string())
+
+            s.add_master_record(
+                rid = rec.name.as_string(),
+                name = rec.name.as_string(),
+                type = type_enum,               # FIXME: Need optionals
+                data = rec.data.as_string(),
+                extra = rec.extra.resolve(),    # FIXME: Need an as_dict
+                )
+
+        # Load the state from libcloud into the synchroniser
+        if zone:
+            for rec in zone.list_records():
+                s.add_slave_record(
+                    rid = rec.name,
+                    name = rec.name,
+                    type = rec.type,
+                    data = rec.data,
+                    extra = rec.extra,
+                    )
+
+        return s.synchronise(
+            zone.create_record,
+            zone.update_record,
+            zone.delete_record,
+            )

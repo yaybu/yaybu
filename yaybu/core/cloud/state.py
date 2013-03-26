@@ -174,6 +174,6 @@ class CloudFileStateStorage(FileStateStorage):
         container.upload_object_via_stream(
             stream,
             self.cluster.name,
-            {'content_type': 'text/yaml'}
+            {'content_type': 'application/json'}
             )
 

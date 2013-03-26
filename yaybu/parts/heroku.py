@@ -1,8 +1,7 @@
 
 from __future__ import absolute_import
 
-from yaybu.core.cloud.part import Part
-from yaybu.core.error import ArgParseError
+from yay import ast, errors
 
 try:
     import heroku
@@ -10,42 +9,36 @@ except ImportError:
     heroku = None
 
 
-class Heroku(Part):
+class Heroku(ast.PythonClass):
 
-    def __init__(self, cluster, name, config):
-        super(Heroku, self).__init__(cluster, name, config)
+    def __init__(self, params):
+        super(Heroku, self).__init__(params)
         if not heroku:
-            raise ArgParseError("Dependency 'heroku' is required and not available")
-
+            raise errors.TypeError("Dependency 'heroku' is required and not available", anchor=self.anchor)
         try:
-            self.cloud = heroku.from_key(self.config.get('key').resolve())
-        except NoMatching:
+            self.cloud = heroku.from_key(self.key.as_string())
+        except errors.NoMatching:
             try:
-                username = self.config.get('username').resolve()
-                password = self.config.get('password').resolve()
+                username = self.username.as_string()
+                password = self.password.as_string()
             except NoMatching:
-                raise ArgParseError("Must specify key or username and password")
+                raise errors.TypeError("Must specify key or username and password", anchor=self.anchor)
             self.cloud = heroku.from_pass(username, password)
 
     def action(self, msg):
         print msg
 
     def instantiate(self):
-        if not 'application_id' in self.config:
-            self.action("Creating new app with a random name")
+        app_id = self.application_id.as_string()
+        if not app_id in cloud.apps:
+            self.action("Creating new app named '%s'" % self['application_id'])
             if not context.simulate:
-                self.app = cloud.apps.add()
+                self.app = cloud.apps.add(app_id)
             else:
                 self.app = SimulatedHerokuApp()
 
-        elif not self.config['application_id'] in cloud.apps:
-            self.action("Creating new app named '%s'" % self.config['application_id'])
-            if not context.simulate:
-                self.app = cloud.apps.add(self.config['application_id'])
-            else:
-                self.app = SimulatedHerokuApp()
         else:
-            self.app = cloud.apps[self.config['application_id']]
+            self.app = cloud.apps[self['application_id']]
 
     def provision(self, dump=False):
         self.action("Entering maintenance mode")
@@ -68,7 +61,7 @@ class Heroku(Part):
 
     def apply_collaborators(self, context, app):
         old_state = set(c.email for c in app.collaborators)
-        new_state = set(self.config.get('collaborators', []))
+        new_state = set(self.get('collaborators', []))
 
         for collaborator in (new_state-old_state):
             self.action("Adding collaborator '%s'" % collaborator)
@@ -82,7 +75,7 @@ class Heroku(Part):
 
     def apply_domains(self, context, app):
         old_domains = set(d.domain for d in app.domains)
-        new_domains = set(self.config.get('domains', []))
+        new_domains = set(self.get('domains', []))
         
         for domain in (new_domains - old_domains):
             self.action("Adding domain name '%s'" % domain)
@@ -111,8 +104,8 @@ class Heroku(Part):
         old_addons_by_type = dict((a.type, a.name) for a in old_addons)
         assert len(old_addons) == len(old_addons_by_type)
 
-        new_addons_by_type = dict((a.split(":",1)[0], a) for a in self.config.get('addons', []))
-        assert len(self.config.get('addons', [])) == len(new_addons_by_type)
+        new_addons_by_type = dict((a.split(":",1)[0], a) for a in self.get('addons', []))
+        assert len(self.get('addons', [])) == len(new_addons_by_type)
 
         old_state = set(old_addons_by_type.keys())
         new_state = set(new_addons_by_type.keys())
@@ -159,7 +152,7 @@ class Heroku(Part):
                     app.processes.scale(0)
 
     def apply_configuration(self, context, app):
-        config = self.config['config']
+        config = self['config']
 
         before = set(app.config.data.keys())
         current = set(config.keys())
@@ -175,7 +168,7 @@ class Heroku(Part):
         for var in (current - before):
             self.action("Adding new configuration variable '%s'" % var)
             if not context.simulate:
-                app.config[var] = self.config['config'][var]
+                app.config[var] = self['config'][var]
 
         # Config that was removed - we can't really delete this config as we
         # don't know if its something an addon put there

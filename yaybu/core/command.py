@@ -313,8 +313,8 @@ class YaybuCmd(OptionParsingCmd):
             return
         cluster_name, filename = args[:2]
         cluster = Cluster(cluster_name, filename, argv=args[2:], simulate=opts.simulate)
-        return cluster.provision(dump=opts.dump)
-           
+        return cluster.resolve()
+ 
     def do_ssh(self, opts, args):
         """ 
         usage: ssh <cluster> <name> 

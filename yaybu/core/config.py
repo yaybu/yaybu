@@ -18,6 +18,9 @@ from yay.errors import Error, NoMatching, get_exception_context
 from yay.config import Config as BaseConfig
 
 from yaybu.core.error import ParseError, ArgParseError
+from yaybu.core.util import memoized
+from yaybu.core.cloud.state import StateStorageType, SimulatedStateStorageAdaptor
+
 
 
 class YaybuArg:
@@ -167,6 +170,25 @@ class Config(BaseConfig):
             if self.context.verbose > 2:
                 msg += "\n" + get_exception_context()
             raise ParseError(e.get_string())
+
+    @property
+    @memoized
+    def state(self):
+        # FIXME: Perhaps this should be done with "create" as well????
+        try:
+            storage_config = self["state-storage"].resolve() # FIXME: Need as_dict
+            klass = storage_config['class']
+            del storage_config['class']
+        except NoMatching:
+            storage_config = {}
+            klass = "localfilestatestorage"
+
+        state = StateStorageType.types.get(klass)(**storage_config)
+
+        if self.ctx.simulate:
+            state = SimulatedStateStorageAdaptor(state)
+
+        return state
 
     def load_uri(self, *args, **kwargs):
         return self._reraise_yay_errors(super(Config, self).load_uri, *args, **kwargs)
