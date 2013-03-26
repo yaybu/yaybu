@@ -58,9 +58,6 @@ class Zone(ast.PythonClass):
         driver_class = get_dns_driver(driver)
         return driver_class(**config)
 
-    def instantiate(self):
-        pass
-
     def provision(self):
         #FIXME: Need to tie this into resolve() somehow
 

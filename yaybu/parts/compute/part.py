@@ -248,5 +248,3 @@ class Compute(ast.PythonClass):
 
         return result
 
-    def destroy(self):
-        self.node.destroy()
