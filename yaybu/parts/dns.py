@@ -46,6 +46,8 @@ class Zone(ast.PythonClass):
                 data: 192.168.1.1
     """
 
+    keys = []
+
     @property
     @memoized
     def driver(self):
@@ -98,7 +100,7 @@ class Zone(ast.PythonClass):
 
     def synchronise_records(self, logger, simulate, zone=None):
         s = StateSynchroniser(logger, simulate)
-     
+
         # Load the state from the config file into the synchroniser
         for rec in self.records.as_iterable():
             # FIXME: Catch error and raise an error with line number information

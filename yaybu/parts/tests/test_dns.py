@@ -27,7 +27,7 @@ class TestDNSProvision(unittest2.TestCase):
     def test_empty_records_list(self):
         self._provision("test", """
             mydns:
-                create "yaybu.parts.test.test_dns.ZoneTester":
+                create "yaybu.parts.test.test_dns:ZoneTester":
                     driver:
                         id: DUMMY
                         api_key: dummykey

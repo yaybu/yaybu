@@ -57,6 +57,8 @@ class LoadBalancer(ast.PythonClass):
 
     """
 
+    keys = []
+
     @property
     @memoized
     def driver(self):

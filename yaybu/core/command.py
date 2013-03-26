@@ -16,7 +16,7 @@ logger = logging.getLogger("yaybu.core.command")
 
 
 class OptionParsingCmd(cmd.Cmd):
-    
+
     def parser(self):
         p = optparse.OptionParser(usage="")
         p.remove_option("-h")
@@ -52,7 +52,7 @@ class OptionParsingCmd(cmd.Cmd):
             optparse_func(parser)
             opts, args = parser.parse_args(arg.split())
             return func(opts, args)
-        
+
     def aligned_docstring(self, arg):
         """ Return a docstring for a function, aligned properly to the left """
         try:
@@ -63,7 +63,7 @@ class OptionParsingCmd(cmd.Cmd):
                 return self.nohelp % (arg,)
         except AttributeError:
             return self.nohelp % (arg,)
-                    
+
     def do_help(self, opts, args):
         arg = " ".join(args)
         if arg:
@@ -105,15 +105,15 @@ class OptionParsingCmd(cmd.Cmd):
             self.print_topics(self.doc_header,   cmds_doc,   15,80)
             self.print_topics(self.misc_header,  help.keys(),15,80)
             self.print_topics(self.undoc_header, cmds_undoc, 15,80)
-        
+
     def simple_help(self, command):
         self.do_help((),(command,))
 
 
 class YaybuCmd(OptionParsingCmd):
-    
+
     prompt = "yaybu> "
-    
+
     def __init__(self, ypath=(), verbose=2, logfile=None):
         """ Global options are provided on the command line, before the
         command """
@@ -121,7 +121,7 @@ class YaybuCmd(OptionParsingCmd):
         self.ypath = ypath
         self.verbose = verbose
         self.logfile = logfile
-        
+
     def preloop(self):
         print version()
 
@@ -131,7 +131,7 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
- 
+
     def do_remote(self, opts, args):
         """
         This command is invoked on remote systems by Yaybu and should not be used by humans
@@ -142,7 +142,7 @@ class YaybuCmd(OptionParsingCmd):
         r = runner.Runner()
         try:
             ctx = None
-            ctx = runcontext.RemoteRunContext("-", 
+            ctx = runcontext.RemoteRunContext("-",
                                     resume=opts.resume,
                                     no_resume=opts.no_resume,
                                     ypath=self.ypath,
@@ -168,7 +168,7 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
-        
+
     def do_apply(self, opts, args):
         """
         usage: apply [options] <filename>
@@ -181,7 +181,7 @@ class YaybuCmd(OptionParsingCmd):
             config = yay.load_uri("/etc/yaybu")
             opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
         r = runner.Runner()
-        ctx = runcontext.RunContext(args[0], 
+        ctx = runcontext.RunContext(args[0],
                                     resume=opts.resume,
                                     no_resume=opts.no_resume,
                                     user=opts.user,
@@ -197,14 +197,14 @@ class YaybuCmd(OptionParsingCmd):
         if rv != 0:
             raise SystemExit(rv)
         return rv
-    
+
     def opts_push(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
-            
+
     def do_push(self, opts, args, runner=remote.RemoteRunner):
         """
         usage: remote [options] <hostname> <filename>
@@ -256,7 +256,7 @@ class YaybuCmd(OptionParsingCmd):
             return e.returncode
 
         return 0
- 
+
     def do_expand(self, opts, args):
         """
         usage: expand [filename]
@@ -265,7 +265,7 @@ class YaybuCmd(OptionParsingCmd):
         if len(args) != 1:
             self.simple_help("expand")
             return
-        ctx = runcontext.RunContext(args[0], 
+        ctx = runcontext.RunContext(args[0],
                                     ypath=self.ypath,
                                     verbose=self.verbose,
                                     )
@@ -290,7 +290,7 @@ class YaybuCmd(OptionParsingCmd):
         Describe the status of the cluster in the specified cloud.
         If no cluster is specified, all clusters are shown
         """
-        
+
     def opts_provision(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
@@ -298,13 +298,13 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
         parser.add_option("-D", "--dump", default=False, action="store_true", help="Dump complete, *insecure* dumps of the configurations applied")
-    
+
     def do_provision(self, opts, args):
         """
         usage: provision <cluster> <filename> <name=value>...
         Create a new cluster, or update the existing cluster, <cluster>
         in the cloud provider, using the configuration in <filename>
-        if the configuration takes arguments these can be provided as 
+        if the configuration takes arguments these can be provided as
         name=value name=value...
         """
         if len(args) < 2:
@@ -314,7 +314,7 @@ class YaybuCmd(OptionParsingCmd):
         cluster_name, filename = args[:2]
         # cluster = Cluster(cluster_name, filename, argv=args[2:], simulate=opts.simulate)
 
-        ctx = runcontext.RunContext(args[0], 
+        ctx = runcontext.RunContext(filename,
                                     ypath=self.ypath,
                                     verbose=self.verbose,
                                     )
@@ -330,8 +330,8 @@ class YaybuCmd(OptionParsingCmd):
         return 0
 
     def do_ssh(self, opts, args):
-        """ 
-        usage: ssh <cluster> <name> 
+        """
+        usage: ssh <cluster> <name>
         SSH to the node specified (with foo/bar/0 notation)
         """
         if len(args) != 2:
@@ -341,7 +341,7 @@ class YaybuCmd(OptionParsingCmd):
         cluster = self.get_cluster(cluster_name, filename)
         # do some stuff
         raise NotImplementedError
- 
+
     def do_info(self, opts, args):
         """
         usage: info <cluster> <filename>
@@ -353,7 +353,7 @@ class YaybuCmd(OptionParsingCmd):
         cluster_name, filename = args
         cluster = Cluster(cluster_name, filename)
         print "Not implemented yet"
- 
+
     def do_destroy(self, opts, args):
         """
         usage: destroy <cluster> <filename>
@@ -366,11 +366,11 @@ class YaybuCmd(OptionParsingCmd):
         logger.info("Deleting cluster")
         cluster = Cluster(cluster_name, filename)
         cluster.destroy()
- 
+
     def do_quit(self, opts=None, args=None):
         """ Exit yaybu """
         raise SystemExit
-    
+
     def do_EOF(self, opts, args):
         """ Exit yaybu """
         print

@@ -24,7 +24,7 @@ class TestDNSProvision(unittest2.TestCase):
     def test_empty_records_list(self):
         self._provision("test", """
             mylb:
-                create "yaybu.parts.loadbalancer.LoadBalancer":
+                create "yaybu.parts.loadbalancer:LoadBalancer":
                     driver:
                         id: DUMMY
                         api_key: dummykey

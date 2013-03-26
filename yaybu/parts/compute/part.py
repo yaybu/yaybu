@@ -56,6 +56,8 @@ class Compute(ast.PythonClass):
             size: t1.micro         # Smallest AWS size
     """
 
+    keys = []
+
     def __init__(self, node):
         super(Compute, self).__init__(node)
         self.node = None
