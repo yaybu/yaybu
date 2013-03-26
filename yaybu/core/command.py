@@ -11,7 +11,6 @@ from functools import partial
 import yay
 import yay.errors
 from yaybu.core import runner, remote, runcontext, error
-from yaybu.core.cloud.cluster import Cluster
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -311,10 +310,25 @@ class YaybuCmd(OptionParsingCmd):
         if len(args) < 2:
             self.simple_help("provision")
             return
+
         cluster_name, filename = args[:2]
-        cluster = Cluster(cluster_name, filename, argv=args[2:], simulate=opts.simulate)
-        return cluster.resolve()
- 
+        # cluster = Cluster(cluster_name, filename, argv=args[2:], simulate=opts.simulate)
+
+        ctx = runcontext.RunContext(args[0], 
+                                    ypath=self.ypath,
+                                    verbose=self.verbose,
+                                    )
+
+        try:
+            cfg = ctx.get_config().get()
+        except yay.errors.LanguageError as e:
+            print str(e)
+            if self.verbose >= 2:
+                print yay.errors.get_exception_context()
+            return 1
+
+        return 0
+
     def do_ssh(self, opts, args):
         """ 
         usage: ssh <cluster> <name> 
