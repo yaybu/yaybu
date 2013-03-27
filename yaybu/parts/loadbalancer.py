@@ -69,3 +69,5 @@ class LoadBalancer(ast.PythonClass):
         driver_class = get_driver(driver)
         return driver_class(**config)
 
+    def apply(self):
+        pass

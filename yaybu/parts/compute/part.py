@@ -33,7 +33,6 @@ from ssh.dsskey import DSSKey
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core import remote
-from yaybu.core.util import get_encrypted
 
 from yay import ast, errors
 
@@ -41,11 +40,47 @@ from yay import ast, errors
 logger = logging.getLogger(__name__)
 
 
-class Instantiate(object):
-    """ This creates a physical node based on our node record. """
+class Compute(ast.PythonClass):
+    """
+    This creates a physical node based on our node record.
 
-    name = "instantiate"
-    dependencies = []
+    mycompute:
+        create "yaybu.parts.compute:Compute":
+            driver:
+                id: AWS
+                key: your-amazon-key
+                secret: your-amazon-secret
+
+            key: example_key       # This key must be defined in AWS control panel to be able to SSH in
+            image: ami-ca1a14be    # Ubuntu 10.04 LTS 64bit EBS
+            size: t1.micro         # Smallest AWS size
+    """
+
+    def __init__(self, node):
+        super(Compute, self).__init__(node)
+        self.libcloud_node = None
+        self.their_name = None
+
+    def get_state(self):
+        s['their_name'] = self.their_name
+        return s
+
+    def set_state(self, state):
+        self.their_name = state.get('their_name', self.their_name)
+
+    @property
+    def full_name(self):
+        return "%s/%s" % (self.cluster.name, self.name)
+
+    @property
+    @memoized
+    def images(self):
+        return dict((i.id, i) for i in self.driver.list_images())
+
+    @property
+    @memoized
+    def sizes(self):
+        return dict((s.id, s) for s in self.driver.list_sizes())
 
     @property
     @memoized
@@ -95,15 +130,15 @@ class Instantiate(object):
         else:
             return self.sizes.get(self.size.as_string(), None)
 
-    def _get_node_info(self):
+    def _update_node_info(self):
         """ Return a dictionary of information about this node """
-        n = self.node
+        n = self.libcloud_node
 
-        info['mapped_as'] = n.public_ips[0]
-        info['address'] = n.private_ips[0]
-        info['hostname'] = n.extra['dns_name'].split(".")[0]
-        info['fqdn'] = n.extra['dns_name']
-        info['domain'] = n.extra['dns_name'].split(".",1)[1]
+        self.metadata['mapped_as'] = n.public_ips[0]
+        self.metadata['address'] = n.private_ips[0]
+        self.metadata['hostname'] = n.extra['dns_name'].split(".")[0]
+        self.metadata['fqdn'] = n.extra['dns_name']
+        self.metadata['domain'] = n.extra['dns_name'].split(".",1)[1]
 
         def interfaces():
             for i, (pub, priv) in enumerate(zip(n.public_ips, n.private_ips)):
@@ -111,22 +146,23 @@ class Instantiate(object):
                        'address': priv,
                        'mapped_as': pub}
 
-        info['interfaces'] = list(interfaces())
+        self.metadata['interfaces'] = list(interfaces())
 
         return info
 
     def apply(self):
-        if self.node:
-            return self._get_node_info()
+        if self.libcloud_node:
+            return
 
         if self.their_name:
-            self.node = self._find_node(self.their_name)
+            self.libcloud_node = self._find_node(self.their_name)
 
-        if not self.node:
-            self.node = self._find_node(self.full_name)
+        if not self.libcloud_node:
+            self.libcloud_node = self._find_node(self.full_name)
 
-        if self.node:
-            return self._get_node_info()
+        if self.libcloud_node:
+            self._update_node_info()
+            return
 
         logger.debug("Node will be %r" % self.full_name)
 
@@ -144,126 +180,74 @@ class Instantiate(object):
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
 
             try:
-                self.node, self.ip_addresses = self.driver.wait_until_running([node], timeout=600)[0]
+                self.libcloud_node, self.ip_addresses = self.driver.wait_until_running([node], timeout=600)[0]
             except LibcloudError:
                 logger.warning("Node did not start before timeout. retrying.")
                 node.destroy()
                 continue
 
             logger.debug("Node %r running" % (self.full_name, ))
-            self.their_name = self.node.name
-            return self._get_node_info()
+            self.their_name = self.libcloud_node.name
+            self._update_node_info()
+            return
 
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
 
 
-class Provision(object):
-    """ Phase 2 of provisioning: Use yaybu to configure the server """
-
-    name = "provision"
-    dependencies = [Instantiate]
-
-    def context(self):
-        """ Creates the context used to provision an actual host """
-        ctx = self.cluster.make_context(resume=True)
-        ctx.set_host(self.hostname)
-        return ctx
-
-    def create_runner(self):
-        """ Create a runner for the specified host, using the key found in
-        the configuration """
-        r = remote.RemoteRunner(self.hostname, self.key)
-        return r
-
-    def apply(self):
-        logger.info("Updating node %r" % self.full_name)
-
-        if dump:
-            self.dump(self.context(), "%s.yay" % self.hostname)
-        r = self.create_runner()
-        r.install_yaybu()
-        result = r.run(self.context())
-
-        logger.info("Node %r provisioned" % self.full_name)
-
-        return {
-            "result": result,
-            }
-
-
-def dep_first_walk(klass):
-    stack = [klass]
-    while stack:
-        head = stack[-1]
-        if head.dependencies:
-            stack.extend(head.dependencies)
-        else:
-            yield head
-
-
-class Compute(ast.PythonClass):
+class Provision(ast.PythonClass):
 
     """
-    mycompute:
+    Use yaybu to configure a server
+
+    prototype ComputeInstance:
         create "yaybu.parts.compute:Compute":
             driver:
                 id: AWS
                 key: your-amazon-key
                 secret: your-amazon-secret
+            key: example_key               # This key must be defined in AWS control panel to be able to SSH in
+            image: ami-ca1a14be            # Ubuntu 10.04 LTS 64bit EBS
+            size: t1.micro                 # Smallest AWS size
 
-            key: example_key       # This key must be defined in AWS control panel to be able to SSH in
-            image: ami-ca1a14be    # Ubuntu 10.04 LTS 64bit EBS
-            size: t1.micro         # Smallest AWS size
+    appserver:
+        create "yaybu.parts.compute:Provision":
+            server: {{ new ComputeInstance(size="t1.medium") }}
+            resources: {{ resources }}
+
+    or
+
+    appserver:
+        create "yaybu.parts.compute:Provision":
+            server:
+                fqdn: example.com
+
+            resources: {{ resources }}
     """
 
-    keys = []
+    def apply(self):
+        logger.info("Updating node %r" % self.full_name)
 
-    key_phases = {
-        "mapped_as": Instantiate,
-        "address": Instantiate,
-        "hostname": Instantiate,
-        "fqdn": Instantiate,
-        "domain": Instantiate,
-    }
+        hostname = self.user_provided.server.fqdn.as_string()
 
-    def __init__(self, node):
-        super(Compute, self).__init__(node)
-        self.node = None
-        self.their_name = None
+        ctx = runcontext.RunContext(
+            hostname,
+            resume=True,
+            no_resume=False,
+            user=opts.user,
+            ypath=self.ypath,
+            simulate=opts.simulate,
+            verbose=self.verbose,
+            env_passthrough=opts.env_passthrough,
+            )
 
-    def get_state(self):
-        s['their_name'] = self.their_name
-        return s
+        if len(args) > 1:
+            ctx.get_config().set_arguments_from_argv(args[2:])
 
-    def set_state(self, state):
-        self.their_name = state.get('their_name', self.their_name)
+        r = runner(hostname)
+        r.install_yaybu()
+        result = r.run(ctx)
 
-    @property
-    def full_name(self):
-        return "%s/%s" % (self.cluster.name, self.name)
+        logger.info("Node %r provisioned" % self.full_name)
 
-    @property
-    @memoized
-    def images(self):
-        return dict((i.id, i) for i in self.driver.list_images())
-
-    @property
-    @memoized
-    def sizes(self):
-        return dict((s.id, s) for s in self.driver.list_sizes())
-
-    @property
-    @memoized
-    def driver(self):
-        if self.driver_name == "vmware":
-            return VMWareDriver(**self.args)
-
-        config = self["driver"].resolve() # FIXME: Needs an as_dict()
-        self.driver_name = config['id']
-        del config['id']
-
-        provider = getattr(ComputeProvider, self.driver_name)
-        driver_class = get_compute_driver(provider)
-        return driver_class(**config)
-
+        self.metadata['result'] = result

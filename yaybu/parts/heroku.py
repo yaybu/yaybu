@@ -13,8 +13,10 @@ class Heroku(ast.PythonClass):
 
     def __init__(self, params):
         super(Heroku, self).__init__(params)
+
         if not heroku:
             raise errors.TypeError("Dependency 'heroku' is required and not available", anchor=self.anchor)
+        
         try:
             self.cloud = heroku.from_key(self.key.as_string())
         except errors.NoMatching:
@@ -28,19 +30,18 @@ class Heroku(ast.PythonClass):
     def action(self, msg):
         print msg
 
-    def instantiate(self):
+    def apply(self):
         app_id = self.application_id.as_string()
         if not app_id in cloud.apps:
-            self.action("Creating new app named '%s'" % self['application_id'])
+            self.action("Creating new app named '%s'" % app_id)
             if not context.simulate:
                 self.app = cloud.apps.add(app_id)
             else:
                 self.app = SimulatedHerokuApp()
 
         else:
-            self.app = cloud.apps[self['application_id']]
+            self.app = cloud.apps[app_id]
 
-    def provision(self, dump=False):
         self.action("Entering maintenance mode")
         if not context.simulate:
             app.maintenance(on=True)

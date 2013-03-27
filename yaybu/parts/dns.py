@@ -58,7 +58,7 @@ class Zone(ast.PythonClass):
         driver_class = get_dns_driver(driver)
         return driver_class(**config)
 
-    def provision(self):
+    def apply(self):
         #FIXME: Need to tie this into resolve() somehow
 
         simulate = self.ctx.simulate
