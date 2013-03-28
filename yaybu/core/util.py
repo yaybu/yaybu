@@ -73,7 +73,7 @@ class StateSynchroniser(object):
 
     def __init__(self, logger, simulate):
         self.logger = logger
-        self.simulate
+        self.simulate = simulate
         self.master = []
         self.slave = []
 

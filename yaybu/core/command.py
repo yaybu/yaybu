@@ -311,16 +311,15 @@ class YaybuCmd(OptionParsingCmd):
             self.simple_help("provision")
             return
 
-        cluster_name, filename = args[:2]
-        # cluster = Cluster(cluster_name, filename, argv=args[2:], simulate=opts.simulate)
+        from yay.config import Config
 
-        ctx = runcontext.RunContext(filename,
-                                    ypath=self.ypath,
-                                    verbose=self.verbose,
-                                    )
+        graph = Config()
+        graph.simulate = opts.simulate
+        graph.name = args[0]
+        graph.load_uri(args[1])
 
         try:
-            cfg = ctx.get_config().get()
+            cfg = graph.resolve()
         except yay.errors.LanguageError as e:
             print str(e)
             if self.verbose >= 2:

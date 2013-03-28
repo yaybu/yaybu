@@ -61,9 +61,9 @@ class Zone(ast.PythonClass):
     def apply(self):
         #FIXME: Need to tie this into resolve() somehow
 
-        simulate = self.ctx.simulate
+        simulate = self.root.simulate
 
-        changed = self.synchronize_zone(logger, simulate)
+        changed = self.synchronise_zone(logger, simulate)
         changed = changed or self.synchronise_records(logger, simulate)
 
         return changed
@@ -71,13 +71,13 @@ class Zone(ast.PythonClass):
     def synchronise_zone(self, logger, simulate):
         s = StateSynchroniser(logger, simulate)
 
-        domain = self.domain.as_string().rstrip(".") + "."
+        domain = self.params.as_string().rstrip(".") + "."
 
         s.add_master_record(
             domain = domain,
-            type = self.type.as_string(),
-            ttl = self.ttl.as_integer(),
-            extra = self.extra.resolve(),  # FIXME: Needs as_dict()
+            type = self.params.type.as_string(),
+            ttl = self.params.ttl.as_integer(),
+            extra = self.params.extra.resolve(),  # FIXME: Needs as_dict()
             )
 
         for zone in self.driver.list_zones():
