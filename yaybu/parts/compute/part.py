@@ -69,8 +69,20 @@ class Compute(ast.PythonClass):
         self.their_name = state.get('their_name', self.their_name)
 
     @property
+    @memoized
+    def driver(self):
+        config = self.user_provided["driver"].resolve() # FIXME: Needs an as_dict()
+        self.driver_name = config['id']
+        del config['id']
+        if self.driver_name == "vmware":
+            return VMWareDriver(**config)
+        provider = getattr(ComputeProvider, self.driver_name)
+        driver_class = get_compute_driver(provider)
+        return driver_class(**config)
+
+    @property
     def full_name(self):
-        return "%s/%s" % (self.cluster.name, self.name)
+        return "%s/%s" % ("example1", self.user_provided.name)
 
     @property
     @memoized
