@@ -51,7 +51,7 @@ class Zone(ast.PythonClass):
     @property
     @memoized
     def driver(self):
-        config = self.params.driver.resolve() # FIXME: Needs an as_dict()
+        config = self.params['driver'].as_dict()
         self.driver_name = config['id']
         del config['id']
         driver = getattr(DNSProvider, self.driver_name)
@@ -69,14 +69,14 @@ class Zone(ast.PythonClass):
     def synchronise_zone(self, logger, simulate):
         s = StateSynchroniser(logger, simulate)
 
-        domain = self.params.domain.as_string().rstrip(".") + "."
+        domain = self.params['domain'].as_string().rstrip(".") + "."
 
         s.add_master_record(
             domain,
             domain = domain,
-            type = self.params.type.as_string(),
-            ttl = self.params.ttl.as_int(),
-            extra = self.params.extra.resolve(),  # FIXME: Needs as_dict()
+            type = self.params['type'].as_string(),
+            ttl = self.params['ttl'].as_int(),
+            extra = self.params['extra'].as_dict(),
             )
 
         for zone in self.driver.list_zones():
@@ -100,14 +100,14 @@ class Zone(ast.PythonClass):
         # Load the state from the config file into the synchroniser
         for rec in self.records.as_iterable():
             # FIXME: Catch error and raise an error with line number information
-            type_enum = self.driver._string_to_record_type(rec.type.as_string())
+            type_enum = self.driver._string_to_record_type(rec['type'].as_string())
 
             s.add_master_record(
-                rid = rec.name.as_string(),
-                name = rec.name.as_string(),
+                rid = rec['name'].as_string(),
+                name = rec['name'].as_string(),
                 type = type_enum,               # FIXME: Need optionals
-                data = rec.data.as_string(),
-                extra = rec.extra.resolve(),    # FIXME: Need an as_dict
+                data = rec['data'].as_string(),
+                extra = rec['extra'].as_dict(),
                 )
 
         # Load the state from libcloud into the synchroniser

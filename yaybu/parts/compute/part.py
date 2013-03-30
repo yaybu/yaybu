@@ -71,7 +71,7 @@ class Compute(ast.PythonClass):
     @property
     @memoized
     def driver(self):
-        config = self.user_provided["driver"].resolve() # FIXME: Needs an as_dict()
+        config = self.user_provided["driver"].as_dict()
         self.driver_name = config['id']
         del config['id']
         if self.driver_name == "vmware":
@@ -120,9 +120,9 @@ class Compute(ast.PythonClass):
     def _get_image(self):
         if isinstance(self.image, dict):
             return node.NodeImage(
-                id = self.image.id.get_string(),
-                name = self.image.name.get_string(), # else id
-                ram = self.image.extra.resolve(), # FIXME: Needs as_dict
+                id = self.image.id.as_string(),
+                name = self.image.name.as_string(), # else id
+                ram = self.image.extra.as_dict(),
                 driver = self.driver,
                 )
         else:

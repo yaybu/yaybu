@@ -176,7 +176,7 @@ class Config(BaseConfig):
     def state(self):
         # FIXME: Perhaps this should be done with "create" as well????
         try:
-            storage_config = self["state-storage"].resolve() # FIXME: Need as_dict
+            storage_config = self["state-storage"].as_dict()
             klass = storage_config['class']
             del storage_config['class']
         except NoMatching:

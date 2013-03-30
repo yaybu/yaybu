@@ -62,7 +62,7 @@ class LoadBalancer(ast.PythonClass):
     @property
     @memoized
     def driver(self):
-        config = self["driver"].resolve()  # FIXME: Needs an as_dict
+        config = self["driver"].as_dict()
         self.driver_name = config['id']
         del config['id']
         driver = getattr(Provider, self.driver_name)
