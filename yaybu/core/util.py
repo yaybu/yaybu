@@ -64,17 +64,17 @@ class StateSynchroniser(object):
         slave_records = dict(r for r in self.slave)
         for rid, record in self.master:
             if not rid in self.slave:
-                self.logger.info("Adding '%s'")
+                self.logger.info("Adding '%s'" % rid)
                 changed = True
                 if not self.simulate:
-                    add(rid, **record)
+                    add(**record)
                 continue
 
             if record != slave[rid]:
-                self.logger.info("Updating '%s'")
+                self.logger.info("Updating '%s'" % rid)
                 changed = True
                 if not self.simulate:
-                    update(rid, **record)
+                    update(**record)
                 continue
 
             self.logger.debug("'%s' not changed" % rid)
@@ -86,9 +86,9 @@ class StateSynchroniser(object):
         master_records = dict(r for r in self.master)
         for rid, record in self.slave:
             if not rid in self.master:
-                self.logger.info("Deleting '%s'")
+                self.logger.info("Deleting '%s'" % rid)
                 if not self.simulate:
                     changed = True
-                    delete(rid, **record)
+                    delete(**record)
 
         return changed

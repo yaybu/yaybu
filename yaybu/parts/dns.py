@@ -51,7 +51,7 @@ class Zone(ast.PythonClass):
     @property
     @memoized
     def driver(self):
-        config = self["driver"].resolve() # FIXME: Needs an as_dict()
+        config = self.params.driver.resolve() # FIXME: Needs an as_dict()
         self.driver_name = config['id']
         del config['id']
         driver = getattr(DNSProvider, self.driver_name)
@@ -59,8 +59,6 @@ class Zone(ast.PythonClass):
         return driver_class(**config)
 
     def apply(self):
-        #FIXME: Need to tie this into resolve() somehow
-
         simulate = self.root.simulate
 
         changed = self.synchronise_zone(logger, simulate)
@@ -71,12 +69,13 @@ class Zone(ast.PythonClass):
     def synchronise_zone(self, logger, simulate):
         s = StateSynchroniser(logger, simulate)
 
-        domain = self.params.as_string().rstrip(".") + "."
+        domain = self.params.domain.as_string().rstrip(".") + "."
 
         s.add_master_record(
+            domain,
             domain = domain,
             type = self.params.type.as_string(),
-            ttl = self.params.ttl.as_integer(),
+            ttl = self.params.ttl.as_int(),
             extra = self.params.extra.resolve(),  # FIXME: Needs as_dict()
             )
 
