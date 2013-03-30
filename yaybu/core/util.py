@@ -14,7 +14,7 @@ def version():
 class memoized(object):
     """
     Decorator. Caches a function's return value each time it is called.
-    If called later with the same arguments, the cached value is returned 
+    If called later with the same arguments, the cached value is returned
     (not reevaluated).
     """
     def __init__(self, func):
@@ -38,31 +38,6 @@ class memoized(object):
         '''Support instance methods.'''
         return functools.partial(self.__call__, obj)
 
-def get_encrypted(val):
-    scalar_types = (
-        types.StringType,
-        types.UnicodeType,
-        types.IntType,
-        types.BooleanType,
-        types.LongType,
-        types.NoneType)
-    if isinstance(val, stringbuilder.String):
-        return val.unprotected
-    elif isinstance(val, scalar_types):
-        return val
-    elif isinstance(val, types.DictionaryType):
-        d = {}
-        for key, value in val.items():
-            d[key] = get_encrypted(value)
-        return d
-    elif isinstance(val, (types.ListType, types.TupleType)):
-        l = []
-        for item in val:
-            l.append(get_encrypted(item))
-        return l
-    else:
-        raise ValueError("Unable to convert %r" % val)
-    
 
 class StateSynchroniser(object):
 
