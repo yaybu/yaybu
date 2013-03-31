@@ -71,7 +71,7 @@ class Compute(ast.PythonClass):
     @property
     @memoized
     def driver(self):
-        config = self.user_provided["driver"].as_dict()
+        config = self.params["driver"].as_dict()
         self.driver_name = config['id']
         del config['id']
         if self.driver_name == "vmware":
@@ -82,7 +82,7 @@ class Compute(ast.PythonClass):
 
     @property
     def full_name(self):
-        return "%s/%s" % ("example1", self.user_provided.name)
+        return "%s/%s" % ("example1", self.params.name)
 
     @property
     @memoized
@@ -240,7 +240,7 @@ class Provision(ast.PythonClass):
     def apply(self):
         logger.info("Updating node %r" % self.full_name)
 
-        hostname = self.user_provided.server.fqdn.as_string()
+        hostname = self.params.server.fqdn.as_string()
 
         ctx = runcontext.RunContext(
             hostname,
