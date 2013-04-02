@@ -61,28 +61,21 @@ class Compute(ast.PythonClass):
         self.libcloud_node = None
         self.their_name = None
 
-    def get_state(self):
-        s['their_name'] = self.their_name
-        return s
-
-    def set_state(self, state):
-        self.their_name = state.get('their_name', self.their_name)
-
     @property
     @memoized
     def driver(self):
         config = self.params["driver"].as_dict()
-        self.driver_name = config['id']
+        driver_name = config['id']
         del config['id']
         if self.driver_name == "vmware":
             return VMWareDriver(**config)
-        provider = getattr(ComputeProvider, self.driver_name)
+        provider = getattr(ComputeProvider, driver_name)
         driver_class = get_compute_driver(provider)
         return driver_class(**config)
 
     @property
     def full_name(self):
-        return "%s/%s" % ("example1", self.params.name)
+        return "%s/%s" % ("example1", str(self.params.name))
 
     @property
     @memoized
@@ -98,13 +91,12 @@ class Compute(ast.PythonClass):
     @memoized
     def key(self):
         """ Load the key specified by name. """
-        cluster = self.cluster
+        openers = self.root.openers
         saved_exception = None
         for pkey_class in (RSAKey, DSSKey):
             try:
-                file = cluster.ctx.get_file(self.key_name)
-                key = pkey_class.from_private_key(file)
-                return key
+                fp = openers.open(str(self.params.key))
+                return pkey_class.from_private_key(fp)
             except SSHException, e:
                 saved_exception = e
         raise saved_exception
@@ -119,10 +111,11 @@ class Compute(ast.PythonClass):
 
     def _get_image(self):
         if isinstance(self.image, dict):
+            id = str(self.image.id)
             return node.NodeImage(
-                id = self.image.id.as_string(),
-                name = self.image.name.as_string(), # else id
-                ram = self.image.extra.as_dict(),
+                id = id,
+                name = self.image.name.as_string(default=id), # else id
+                extra = self.image.extra.as_dict(),
                 driver = self.driver,
                 )
         else:
@@ -130,13 +123,14 @@ class Compute(ast.PythonClass):
 
     def _get_size(self):
         if isinstance(self.size, dict):
+            id = str(self.size.id)
             return node.NodeSize(
-                id = self.size.id.as_string(),
-                name = self.size.name.as_string(),    # FIXME: Default to self.size.id
-                ram = self.size.ram.as_int(),         # FIXME: Default to 0
-                disk = self.size.disk.as_int(),       # FIXME: Default to 0
-                bandwidth = self.bandwidth.as_int(),  # FIXME: Default to 0
-                price = self.size.price.as_int(),     # FIXME: Default to 0
+                id = id,
+                name = self.size.name.as_string(default=id),
+                ram = self.size.ram.as_int(default=0),
+                disk = self.size.disk.as_int(default=0),
+                bandwidth = self.bandwidth.as_int(default=0),
+                price = self.size.price.as_int(default=0),
                 driver = self.driver,
                 )
         else:
@@ -153,6 +147,7 @@ class Compute(ast.PythonClass):
         self.metadata['domain'] = n.extra['dns_name'].split(".",1)[1]
 
         def interfaces():
+            # FIXME: This is almost certainly AWS-specific...
             for i, (pub, priv) in enumerate(zip(n.public_ips, n.private_ips)):
                 yield {'name': 'eth%d' % i,
                        'address': priv,
@@ -166,8 +161,9 @@ class Compute(ast.PythonClass):
         if self.libcloud_node:
             return
 
-        if self.their_name:
-            self.libcloud_node = self._find_node(self.their_name)
+        # State stuff currently disabled
+        # if self.their_name:
+        #     self.libcloud_node = self._find_node(self.their_name)
 
         if not self.libcloud_node:
             self.libcloud_node = self._find_node(self.full_name)
@@ -194,12 +190,12 @@ class Compute(ast.PythonClass):
             try:
                 self.libcloud_node, self.ip_addresses = self.driver.wait_until_running([node], timeout=600)[0]
             except LibcloudError:
-                logger.warning("Node did not start before timeout. retrying.")
+                logger.warning("Node %r did not start before timeout. retrying." % self.full_name)
                 node.destroy()
                 continue
 
             logger.debug("Node %r running" % (self.full_name, ))
-            self.their_name = self.libcloud_node.name
+            # self.their_name = self.libcloud_node.name
             self._update_node_info()
             return
 
@@ -238,28 +234,25 @@ class Provision(ast.PythonClass):
     """
 
     def apply(self):
-        logger.info("Updating node %r" % self.full_name)
-
         hostname = self.params.server.fqdn.as_string()
+
+        logger.info("Updating node %r" % hostname)
 
         ctx = runcontext.RunContext(
             hostname,
             resume=True,
             no_resume=False,
-            user=opts.user,
-            ypath=self.ypath,
-            simulate=opts.simulate,
-            verbose=self.verbose,
-            env_passthrough=opts.env_passthrough,
+            user=self.params.server.user.as_string(default='root'),
+            ypath=self.root.searchpath,
+            simulate=self.root.simulate,
+            verbose=self.root.verbose,
+            env_passthrough=opts.root.env_passthrough,
             )
 
-        if len(args) > 1:
-            ctx.get_config().set_arguments_from_argv(args[2:])
-
-        r = runner(hostname)
+        r = remote.RemoteRunner(hostname)
         r.install_yaybu()
         result = r.run(ctx)
 
-        logger.info("Node %r provisioned" % self.full_name)
+        logger.info("Node %r provisioned" % hostname)
 
         self.metadata['result'] = result
