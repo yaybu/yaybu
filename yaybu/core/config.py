@@ -126,18 +126,17 @@ class Config(BaseConfig):
         parser = YaybuArgParser()
 
         try:
-            args = self.node.get('yaybu').get('options').resolve()
+            args = list(self.yaybu.options)
         except NoMatching:
             args = []
 
         for arg in args:
-            if 'name' not in arg:
-                raise KeyError("No name specified for an argument")
-            yarg = YaybuArg(arg['name'],
-                            arg.get('type', 'string'),
-                            arg.get('default', None),
-                            arg.get('help', None)
-                            )
+            yarg = YaybuArg(
+                str(arg.name),
+                arg.type.as_string('string'),
+                arg.default.as_string(None),
+                arg.help.as_string(None),
+                )
             parser.add(yarg)
 
         self.add({
