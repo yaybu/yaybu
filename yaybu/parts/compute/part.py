@@ -25,6 +25,7 @@ from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
 from libcloud.common.types import LibcloudError
 from libcloud.compute.types import NodeState
+from libcloud.compute.base import NodeImage, NodeSize
 
 from ssh.ssh_exception import SSHException
 from ssh.rsakey import RSAKey
@@ -67,7 +68,7 @@ class Compute(ast.PythonClass):
         config = self.params["driver"].as_dict()
         driver_name = config['id']
         del config['id']
-        if self.driver_name == "vmware":
+        if driver_name.lower() == "vmware":
             return VMWareDriver(**config)
         provider = getattr(ComputeProvider, driver_name)
         driver_class = get_compute_driver(provider)
@@ -110,41 +111,51 @@ class Compute(ast.PythonClass):
             return existing[0]
 
     def _get_image(self):
-        if isinstance(self.image, dict):
-            id = str(self.image.id)
-            return node.NodeImage(
-                id = id,
-                name = self.image.name.as_string(default=id), # else id
-                extra = self.image.extra.as_dict(),
-                driver = self.driver,
-                )
-        else:
-            return self.images.get(self.image.as_string(), None)
+        try:
+            image = self.params.image.as_dict()
+        except errors.TypeError:
+            return self.images.get(self.params.image.as_string(), None)
+             
+        id = str(self.params.image.id)
+        return NodeImage(
+            id = id,
+            name = self.params.image.name.as_string(default=id), 
+            extra = self.params.image.extra.as_dict(),
+            driver = self.driver,
+            )
 
     def _get_size(self):
-        if isinstance(self.size, dict):
-            id = str(self.size.id)
-            return node.NodeSize(
-                id = id,
-                name = self.size.name.as_string(default=id),
-                ram = self.size.ram.as_int(default=0),
-                disk = self.size.disk.as_int(default=0),
-                bandwidth = self.bandwidth.as_int(default=0),
-                price = self.size.price.as_int(default=0),
-                driver = self.driver,
-                )
-        else:
-            return self.sizes.get(self.size.as_string(), None)
+        try:
+            size = self.params.size.as_dict()
+        except errors.TypeError:
+            return self.sizes.get(self.params.size.as_string(), None)
+
+        id = str(self.params.size.id)
+        return NodeSize(
+            id = id,
+            name = self.params.size.name.as_string(default=id),
+            ram = self.params.size.ram.as_int(default=0),
+            disk = self.params.size.disk.as_int(default=0),
+            bandwidth = self.params.bandwidth.as_int(default=0),
+            price = self.params.size.price.as_int(default=0),
+            driver = self.driver,
+            )
 
     def _update_node_info(self):
         """ Return a dictionary of information about this node """
         n = self.libcloud_node
 
-        self.metadata['mapped_as'] = n.public_ips[0]
-        self.metadata['address'] = n.private_ips[0]
-        self.metadata['hostname'] = n.extra['dns_name'].split(".")[0]
-        self.metadata['fqdn'] = n.extra['dns_name']
-        self.metadata['domain'] = n.extra['dns_name'].split(".",1)[1]
+        #FIXME: GAH, AWS+libcloud...
+        #self.metadata['mapped_as'] = n.public_ips[0]
+        #self.metadata['address'] = n.private_ips[0]
+        self.metadata['address'] = n.public_ips[0]
+
+        self.metadata['fqdn'] = n.public_ips[0]
+
+        if 'dns_name' in n.extra:
+            self.metadata['hostname'] = n.extra['dns_name'].split(".")[0]
+            self.metadata['fqdn'] = n.extra['dns_name']
+            self.metadata['domain'] = n.extra['dns_name'].split(".",1)[1]
 
         def interfaces():
             # FIXME: This is almost certainly AWS-specific...
@@ -154,8 +165,6 @@ class Compute(ast.PythonClass):
                        'mapped_as': pub}
 
         self.metadata['interfaces'] = list(interfaces())
-
-        return info
 
     def apply(self):
         if self.libcloud_node:
@@ -175,8 +184,7 @@ class Compute(ast.PythonClass):
         logger.debug("Node will be %r" % self.full_name)
 
         for tries in range(10):
-            logger.debug("Creating node %r with image %r, size %r and keypair %r" % (
-                self.name, self.image, self.size, self.key_name))
+            logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
 
             node = self.driver.create_node(
                 name=self.full_name,
@@ -189,15 +197,21 @@ class Compute(ast.PythonClass):
 
             try:
                 self.libcloud_node, self.ip_addresses = self.driver.wait_until_running([node], timeout=600)[0]
+                logger.debug("Node %r running" % (self.full_name, ))
+                # self.their_name = self.libcloud_node.name
+                self._update_node_info()
+                return
+
             except LibcloudError:
                 logger.warning("Node %r did not start before timeout. retrying." % self.full_name)
                 node.destroy()
                 continue
 
-            logger.debug("Node %r running" % (self.full_name, ))
-            # self.their_name = self.libcloud_node.name
-            self._update_node_info()
-            return
+            except:
+                logger.warning("Node %r had an unexpected error - node will be cleaned up and processing will stop" % self.full_name)
+                node.destroy()
+                raise
+                return
 
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
