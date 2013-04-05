@@ -33,7 +33,7 @@ from ssh.dsskey import DSSKey
 
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
-from yaybu.core import remote
+from yaybu.core import remote, runcontext
 
 from yay import ast, errors
 
@@ -256,11 +256,11 @@ class Provision(ast.PythonClass):
             hostname,
             resume=True,
             no_resume=False,
-            user=self.params.server.user.as_string(default='root'),
-            ypath=self.root.searchpath,
+            user=self.params.server.user.as_string(default='ubuntu'),
+            ypath=self.root.openers.searchpath,
             simulate=self.root.simulate,
-            verbose=self.root.verbose,
-            env_passthrough=opts.root.env_passthrough,
+            verbose=True, #self.root.verbose,
+            env_passthrough=[], #self.root.env_passthrough,
             )
 
         r = remote.RemoteRunner(hostname)
