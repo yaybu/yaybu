@@ -36,6 +36,7 @@ from yaybu.core.util import memoized
 from yaybu.core import remote, runcontext
 
 from yay import ast, errors
+from yay.config import Config
 
 
 logger = logging.getLogger(__name__)
@@ -252,8 +253,23 @@ class Provision(ast.PythonClass):
 
         logger.info("Updating node %r" % hostname)
 
+        config = Config(searchpath=self.root.openers.searchpath)
+
+        try:
+             includes = self.params.include.as_iterable()
+        except errors.NoMatching:
+             includes = []
+
+        for include in includes:
+            config.load_uri(self)
+
+        try:
+            config.add({"resources": self.params.resources.resolve()})
+        except errors.NoMatching:
+            pass
+
         ctx = runcontext.RunContext(
-            hostname,
+            None,
             resume=True,
             no_resume=False,
             user=self.params.server.user.as_string(default='ubuntu'),
@@ -262,6 +278,7 @@ class Provision(ast.PythonClass):
             verbose=True, #self.root.verbose,
             env_passthrough=[], #self.root.env_passthrough,
             )
+        ctx.set_config(config)
 
         r = remote.RemoteRunner(hostname)
         r.install_yaybu()
@@ -270,3 +287,4 @@ class Provision(ast.PythonClass):
         logger.info("Node %r provisioned" % hostname)
 
         self.metadata['result'] = result
+
