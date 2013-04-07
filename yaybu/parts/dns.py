@@ -98,14 +98,14 @@ class Zone(ast.PythonClass):
         s = StateSynchroniser(logger, simulate)
 
         # Load the state from the config file into the synchroniser
-        for rec in self.records.as_iterable():
+        for rec in self.records:
             # FIXME: Catch error and raise an error with line number information
-            type_enum = self.driver._string_to_record_type(rec['type'].as_string())
+            type_enum = self.driver._string_to_record_type(rec.type.as_string('A'))
 
             s.add_master_record(
                 rid = rec['name'].as_string(),
                 name = rec['name'].as_string(),
-                type = type_enum,               # FIXME: Need optionals
+                type = type_enum,
                 data = rec['data'].as_string(),
                 extra = rec['extra'].as_dict(),
                 )

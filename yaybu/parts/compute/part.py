@@ -116,11 +116,11 @@ class Compute(ast.PythonClass):
             image = self.params.image.as_dict()
         except errors.TypeError:
             return self.images.get(self.params.image.as_string(), None)
-             
+
         id = str(self.params.image.id)
         return NodeImage(
             id = id,
-            name = self.params.image.name.as_string(default=id), 
+            name = self.params.image.name.as_string(default=id),
             extra = self.params.image.extra.as_dict(),
             driver = self.driver,
             )
@@ -255,18 +255,10 @@ class Provision(ast.PythonClass):
 
         config = Config(searchpath=self.root.openers.searchpath)
 
-        try:
-             includes = self.params.include.as_iterable()
-        except errors.NoMatching:
-             includes = []
+        for path in self.params.include.as_iterable(default=[]):
+            config.load_uri(path)
 
-        for include in includes:
-            config.load_uri(self)
-
-        try:
-            config.add({"resources": self.params.resources.resolve()})
-        except errors.NoMatching:
-            pass
+        config.add({"resources": self.params.resources.as_list(default=[])})
 
         ctx = runcontext.RunContext(
             None,
