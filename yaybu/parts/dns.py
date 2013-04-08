@@ -74,9 +74,9 @@ class Zone(ast.PythonClass):
         s.add_master_record(
             domain,
             domain = domain,
-            type = self.params['type'].as_string(),
-            ttl = self.params['ttl'].as_int(),
-            extra = self.params['extra'].as_dict(),
+            type = self.params['type'].as_string("master"),
+            ttl = self.params['ttl'].as_int(0),
+            extra = self.params['extra'].as_dict({}),
             )
 
         for zone in self.driver.list_zones():
