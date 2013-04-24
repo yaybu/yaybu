@@ -14,6 +14,7 @@
 
 import os
 
+from yay.openers.base import Openers, SearchpathFromGraph
 from yay.errors import Error, NoMatching, get_exception_context
 from yay.config import Config as BaseConfig
 
@@ -121,6 +122,10 @@ class Config(BaseConfig):
         defaults_gpg = os.path.expanduser("~/.yaybu/defaults.yay.gpg")
         if os.path.exists(defaults_gpg):
             self.load_uri(defaults_gpg)
+
+    def setup_openers(self, searchpath):
+        self.add({"yaybu": {"searchpath": searchpath or []}})
+        self.openers = Openers(searchpath=SearchpathFromGraph(self.yaybu.searchpath))
 
     def set_arguments(self, **arguments):
         parser = YaybuArgParser()
