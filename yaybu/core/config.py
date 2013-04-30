@@ -99,7 +99,7 @@ class Config(BaseConfig):
     policies like looking in ``~/.yaybu/`` for certain things.
     """
 
-    def __init__(self, context, hostname=None):
+    def __init__(self, context=None, hostname=None, searchpath=None):
         self.context = context
 
         config = {
@@ -110,7 +110,7 @@ class Config(BaseConfig):
                 },
             }
 
-        super(Config, self).__init__(searchpath=context.ypath, config=config)
+        super(Config, self).__init__(searchpath=searchpath, config=config)
 
         if hostname:
             self.set_hostname(hostname)
@@ -171,8 +171,7 @@ class Config(BaseConfig):
             return func(*args, **kwargs)
         except Error, e:
             msg = e.get_string()
-            if self.context.verbose > 2:
-                msg += "\n" + get_exception_context()
+            msg += "\n" + get_exception_context()
             raise ParseError(e.get_string())
 
     @property

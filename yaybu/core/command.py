@@ -10,7 +10,7 @@ from functools import partial
 
 import yay
 import yay.errors
-from yaybu.core import runner, remote, runcontext, error
+from yaybu.core import runner, remote, runcontext, error, util
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -123,7 +123,7 @@ class YaybuCmd(OptionParsingCmd):
         self.logfile = logfile
 
     def preloop(self):
-        print version()
+        print util.version()
 
     def opts_remote(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
@@ -311,7 +311,7 @@ class YaybuCmd(OptionParsingCmd):
             self.simple_help("provision")
             return
 
-        from yay.config import Config
+        from yaybu.core.config import Config
 
         graph = Config()
         graph.simulate = opts.simulate

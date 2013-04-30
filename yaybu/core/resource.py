@@ -264,9 +264,10 @@ class ResourceBundle(ordereddict.OrderedDict):
             raise p
 
         except error.ParseError as exc:
-            exc.msg += "\nFile %s, line %d, column %s" % (node.anchor.source, node.anchor.lineno, "unknown")
-            exc.file = node.anchor.source
-            exc.line = node.anchor.lineno
+            if getattr(node, "anchor", None):
+                exc.msg += "\nFile %s, line %d, column %s" % (node.anchor.source, node.anchor.lineno, "unknown")
+                exc.file = node.anchor.source
+                exc.line = node.anchor.lineno
             exc.column = 0
             raise
 

@@ -255,7 +255,7 @@ class Provision(ast.PythonClass):
 
         config = Config(searchpath=self.root.openers.searchpath)
 
-        for path in self.params.include.as_iterable(default=[]):
+        for path in self.params.includes.as_iterable(default=[]):
             config.load_uri(path)
 
         config.add({"resources": self.params.resources.as_list(default=[])})
