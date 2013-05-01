@@ -34,6 +34,7 @@ from ssh.dsskey import DSSKey
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core import remote, runcontext
+from yaybu.core.cloud.state import PartState
 
 from yay import ast, errors
 from yay.config import Config
@@ -62,6 +63,12 @@ class Compute(ast.PythonClass):
         super(Compute, self).__init__(node)
         self.libcloud_node = None
         self.their_name = None
+
+    @property
+    @memoized
+    def state(self):
+        print "state called"
+        return PartState(self.root.state, self.params.name.as_string())
 
     @property
     @memoized
@@ -146,6 +153,8 @@ class Compute(ast.PythonClass):
         """ Return a dictionary of information about this node """
         n = self.libcloud_node
 
+        self.state.update(their_name = n.name)
+
         #FIXME: GAH, AWS+libcloud...
         #self.metadata['mapped_as'] = n.public_ips[0]
         #self.metadata['address'] = n.private_ips[0]
@@ -171,9 +180,10 @@ class Compute(ast.PythonClass):
         if self.libcloud_node:
             return
 
-        # State stuff currently disabled
-        # if self.their_name:
-        #     self.libcloud_node = self._find_node(self.their_name)
+        self.state.refresh()
+
+        if "their_name" in self.state:
+            self.libcloud_node = self._find_node(self.state.their_name)
 
         if not self.libcloud_node:
             self.libcloud_node = self._find_node(self.full_name)

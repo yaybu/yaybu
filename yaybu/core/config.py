@@ -188,7 +188,7 @@ class Config(BaseConfig):
 
         state = StateStorageType.types.get(klass)(**storage_config)
 
-        if self.ctx.simulate:
+        if self.simulate:
             state = SimulatedStateStorageAdaptor(state)
 
         return state
