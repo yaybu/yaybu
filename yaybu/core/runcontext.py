@@ -168,71 +168,15 @@ class RunContext(object):
             return "/var/run/yaybu"
         return os.path.join("/var/run/yaybu", path)
 
+
 class RemoteRunContext(RunContext):
 
-    def __init__(self, configfile, **kwargs):
-        self.connection = HTTPConnection()
-        self.check_versions()
-        super(RemoteRunContext, self).__init__(configfile, **kwargs)
+    def setup_shell(self, environment):
+        self.shell = Shell(
+            context=self,
+            verbose=self.verbose,
+            simulate=self.simulate,
+            environment=environment
+            )
 
-    def check_versions(self):
-        self.connection.request("GET", "/about")
-        rsp = self.connection.getresponse()
-
-        if rsp.status != 200:
-            self.features = []
-            self.versions = {"Yaybu": "0", "yay": "0"}
-        else:
-            self.features = rsp.getheader("features", "").split(",")
-            self.versions = {
-                "Yaybu": rsp.getheader("Yaybu", "0"),
-                "yay": rsp.getheader("yay", "0"),
-                }
-        logger.debug("target versions: yaybu %r yay %r" % (self.versions['Yaybu'], self.versions['yay']))
-
-        import pkg_resources
-        if pkg_resources.parse_version(self.versions["Yaybu"]) <= pkg_resources.parse_version("0"):
-            raise Incompatible("You require a newer version of 'Yaybu' to deploy to this server")
-
-        if pkg_resources.parse_version(self.versions["yay"]) <= pkg_resources.parse_version("0"):
-            raise Incompatible("You require a newer version of 'yay' to deploy to this server")
-
-    def setup_changelog(self):
-        self.changelog = change.RemoteChangeLog(self)
-        self.changelog.configure_session_logging()
-
-    def get_config(self):
-        self.connection.request("GET", "/config")
-        rsp = self.connection.getresponse()
-        c = Config(self)
-        data = pickle.loads(rsp.read())
-        c.add(data)
-        return c
-
-    def get_decrypted_file(self, filename, etag=None):
-        self.connection.request("GET", "/encrypted/" + filename)
-        rsp = self.connection.getresponse()
-        return rsp
-
-    def get_file(self, filename, etag=None):
-        if filename.startswith("/"):
-            return super(RemoteRunContext, self).get_file(filename, etag)
-
-        headers = {}
-        if etag:
-            headers["If-None-Match"] = etag
-
-        self.connection.request("GET", "/files/?path=" + filename, '', headers)
-
-        rsp = self.connection.getresponse()
-
-        if rsp.status == 304:
-            raise UnmodifiedAsset("Cannot fetch %r as it should be cached locally" % filename)
-
-        if rsp.status == 404:
-            raise MissingAsset("Cannot fetch %r" % filename)
-
-        rsp.etag = rsp.msg.get("etag", None)
-
-        return rsp
 

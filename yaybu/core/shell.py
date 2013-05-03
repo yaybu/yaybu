@@ -61,7 +61,6 @@ class Handle(object):
         out = ''.join(self._output)
         return out
 
-
 class ShellCommand(change.Change):
 
     """ Execute and log a change """
@@ -79,97 +78,10 @@ class ShellCommand(change.Change):
         self._generated_env = {}
 
         self.user = None
-        self.uid = None
         self.group = None
-        self.gid = None
         self.homedir = None
 
         self.umask = umask
-
-        if self.simulate and not self.inert:
-            # For now, we skip this setup in simulate mode - not sure it will ever be possible
-            return
-
-        self.user = user
-        if user:
-            try:
-                u = pwd.getpwnam(user)
-            except KeyError as exc:
-                raise error.InvalidUser("There is no such user '%s'" % user)
-            self.uid = u.pw_uid
-            self.homedir = u.pw_dir
-        else:
-            self.uid = None
-            self.homedir = pwd.getpwuid(os.getuid()).pw_dir
-            self.user = pwd.getpwuid(os.getuid()).pw_name
-
-        self.group = group
-        if group:
-            try:
-                self.gid = grp.getgrnam(self.group).gr_gid
-            except KeyError as exc:
-                raise error.InvalidGroup("There is no such group '%s'" % group)
-
-    def preexec(self):
-        if self.gid is not None:
-            if self.gid != os.getgid():
-                os.setgid(self.gid)
-            if self.gid != os.getegid():
-                os.setegid(self.gid)
-
-        if self.uid is not None:
-            if self.uid != os.getuid():
-                os.setuid(self.uid)
-            if self.uid != os.geteuid():
-                os.seteuid(self.uid)
-
-        if self.umask:
-            os.umask(self.umask)
-
-        os.environ.clear()
-        os.environ.update(self._generated_env)
-
-    def communicate(self, p, stdout_fn=None, stderr_fn=None):
-        if p.stdin:
-            p.stdin.flush()
-            p.stdin.close()
-
-        stdout = Handle(p.stdout, stdout_fn)
-        stderr = Handle(p.stderr, stderr_fn)
-
-        # Initial readlist is any handle that is valid
-        readlist = [h for h in (stdout, stderr) if h.isready()]
-
-        while readlist:
-            try:
-                # Wait for data on stdout or stderr handles, but timeout after
-                # one second so that we can poll (below) and check the process
-                # hasn't disappeared.
-                rlist, wlist, xlist = select.select(readlist, [], [], 1)
-            except select.error, e:
-                if e.args[0] == errno.EINTR:
-                    continue
-                raise
-
-            # Some processes hang if we don't specifically poll for them going
-            # away. We believe that under certain cases, child processes can
-            # reuse their parent's file descriptors, and in that case, the
-            # select loop will continue until the child process goes away, which
-            # is undesirable when starting a daemon process.
-            if not rlist and not wlist and not xlist:
-                if p.poll() != None:
-                    break
-
-            # Read from all handles that select told us can be read from
-            # If they return false then we are at the end of the stream
-            # and stop reading from them
-            for r in rlist:
-                if not r.read():
-                    readlist.remove(r)
-
-        returncode = p.wait()
-
-        return returncode, stdout.output, stderr.output
 
     def _tounicode(self, l):
         """ Ensure all elements of the list are unicode """
@@ -230,9 +142,11 @@ class ShellCommand(change.Change):
                 command_exists = False
             if not os.path.exists(os.path.join(self.cwd, command[0][2:])):
                 command_exists = False
+
         elif command[0].startswith("/"):
             if not os.path.exists(command[0]):
                 command_exists = False
+
         else:
             for path in env["PATH"].split(":"):
                 if os.path.exists(os.path.join(path, command[0])):
@@ -249,6 +163,53 @@ class ShellCommand(change.Change):
             self.stderr = ""
             return
 
+        return self._execute(command, renderer)
+
+class LocalShellCommand(BaseShellCommand):
+
+    def communicate(self, p, stdout_fn=None, stderr_fn=None):
+        if p.stdin:
+            p.stdin.flush()
+            p.stdin.close()
+
+        stdout = Handle(p.stdout, stdout_fn)
+        stderr = Handle(p.stderr, stderr_fn)
+
+        # Initial readlist is any handle that is valid
+        readlist = [h for h in (stdout, stderr) if h.isready()]
+
+        while readlist:
+            try:
+                # Wait for data on stdout or stderr handles, but timeout after
+                # one second so that we can poll (below) and check the process
+                # hasn't disappeared.
+                rlist, wlist, xlist = select.select(readlist, [], [], 1)
+            except select.error, e:
+                if e.args[0] == errno.EINTR:
+                    continue
+                raise
+
+            # Some processes hang if we don't specifically poll for them going
+            # away. We believe that under certain cases, child processes can
+            # reuse their parent's file descriptors, and in that case, the
+            # select loop will continue until the child process goes away, which
+            # is undesirable when starting a daemon process.
+            if not rlist and not wlist and not xlist:
+                if p.poll() != None:
+                    break
+
+            # Read from all handles that select told us can be read from
+            # If they return false then we are at the end of the stream
+            # and stop reading from them
+            for r in rlist:
+                if not r.read():
+                    readlist.remove(r)
+
+        returncode = p.wait()
+
+        return returncode, stdout.output, stderr.output
+
+    def _execute(self, command, renderer):
         try:
             p = subprocess.Popen(command,
                                  shell=self.shell,
@@ -263,6 +224,74 @@ class ShellCommand(change.Change):
         except Exception, e:
             renderer.exception(e)
             raise
+
+
+class RemoteShellCommand(BaseShellCommand):
+
+    connection_attempts = 10
+    missing_host_key_policy = ssh.AutoAddPolicy()
+
+    def connect(self):
+        client = ssh.SSHClient()
+        client.set_missing_host_key_policy(self.missing_host_key_policy)
+        for tries in range(self.connection_attempts):
+            try:
+                if self.key is not None:
+                    client.connect(hostname=self.hostname,
+                                   username=self.username,
+                                   port=self.port,
+                                   pkey=self.key,
+                                   look_for_keys=False)
+                else:
+                    client.connect(hostname=self.hostname,
+                                   username=self.username,
+                                   port=self.port,
+                                   look_for_keys=True)
+                break
+
+            except ssh.PasswordRequiredException:
+                raise error.ConnectionError("Unable to authenticate with remote server")
+
+            except (socket.error, EOFError):
+                logger.warning("connection refused. retrying.")
+                time.sleep(tries + 1)
+        else:
+            client.close()
+            raise error.ConnectionError("Connection refused %d times, giving up." % self.connection_attempts)
+        return client
+
+    def _refresh_intel(self):
+        """ Thinking we grab env, users, groups, etc so we can do extra pre-validation... """
+        pass
+
+    def _execute(self, command, user="root", group=None):
+        client = self.connect() # This should be done once per context object
+        transport = client.get_transport()
+
+        # No need to change user if we are already the right one
+        if user == transport.get_username():
+            user = None
+
+        full_command = []
+        if user or group:
+            full_command.append('sudo')
+        if user:
+            full_command.extend(['-u', user])
+        if group:
+            full_command.extend(['-g', group])
+
+        full_command.extend("sh", "-c", " ".join(command))
+
+        channel = transport.open_session()
+        channel.exec_command(command)
+        while not channel.exit_status_ready():
+            rlist, wlist, xlist = select.select([channel], [], [])
+            if not rlist:
+                continue
+            print channel.recv(1024)
+        print channel.recv_exit_status()
+
+
 
 class ShellTextRenderer(change.TextRenderer):
 
@@ -290,6 +319,7 @@ class ShellTextRenderer(change.TextRenderer):
     def exception(self, exception):
         self.logger.notice("Exception: %r" % exception)
 
+
 class Shell(object):
 
     """ This object wraps a shell in yet another shell. When the shell is
@@ -304,13 +334,17 @@ class Shell(object):
         if environment:
             self.environment.extend(environment)
 
-    def locate_bin(self, filename):
-        return self.context.locate_bin(filename)
-
     def execute(self, command, stdin=None, shell=False, inert=False, cwd=None, env=None, user=None, group=None, umask=None, expected=0):
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, umask)
+        cmd = klass(command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, umask)
         self.context.changelog.apply(cmd)
         if expected is not None and cmd.returncode != 0:
             raise error.SystemError(cmd.returncode, cmd.stdout, cmd.stderr)
         return (cmd.returncode, cmd.stdout, cmd.stderr)
 
+
+class LocalShell(object):
+    klass = LocalShellCommand
+
+
+class RemoteShell(Shell):
+    klass = RemoteShellCommand
