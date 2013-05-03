@@ -20,6 +20,12 @@ class Local(Base):
     def stat(self, path):
         return os.stat(path)
 
+    def lexists(self, path):
+        return os.path.lexists(path)
+
+    def readlink(self, path):
+        return os.readlink(path)
+
     def open(self, path, mode, fsmode=None):
         return open(path, mode)
 
