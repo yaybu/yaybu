@@ -80,7 +80,7 @@ class RunContext(object):
         self.setup_shell(env_passthrough)
         self.setup_changelog()
 
-        self.vfs = vfs.Local(self)
+        self.vfs = vfs.Shell(self)
 
     def set_host(self, host):
         self.host = host
