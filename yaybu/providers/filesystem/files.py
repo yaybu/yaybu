@@ -50,7 +50,7 @@ class EtagRegistry(object):
     def data(self):
         if not self._data:
             self._data = {}
-            if not self.ctx.simulate or os.path.exists(self.path):
+            if not self.ctx.simulate or self.vfs.exists(self.path):
                 self._data = shelve.open(self.path, writeback=True)
         return self._data
 

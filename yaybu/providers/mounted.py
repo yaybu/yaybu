@@ -28,7 +28,7 @@ class Mounted(Provider):
 
     def apply(self, context):
         for w in self.resource.watch:
-            if os.path.exists(w):
+            if context.vfs.exists(w):
                 os.utime(w, None)
 
         return True

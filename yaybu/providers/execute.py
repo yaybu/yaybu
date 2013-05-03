@@ -53,12 +53,12 @@ class Execute(provider.Provider):
 
     def apply(self, context):
         if self.resource.creates is not None \
-           and os.path.exists(self.resource.creates):
+           and context.vfs.exists(self.resource.creates):
             #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
             return False
 
         if self.resource.touch is not None \
-                and os.path.exists(self.resource.touch):
+                and context.vfs.exists(self.resource.touch):
             return False
 
         if self.resource.unless:

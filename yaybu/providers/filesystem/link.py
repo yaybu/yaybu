@@ -69,7 +69,7 @@ class Link(provider.Provider):
         mode = None
         isalink = False
 
-        if not os.path.exists(to):
+        if not context.vfs.exists(to):
             if not context.simulate:
                 raise error.DanglingSymlink("Destination of symlink %r does not exist" % to)
             context.changelog.info("Destination of sylink %r does not exist" % to)
@@ -84,14 +84,14 @@ class Link(provider.Provider):
             isalink = False
 
         if not isalink or linkto != to:
-            if os.path.lexists(name):
+            if context.vfs.lexists(name):
                 context.shell.execute(["/bin/rm", "-rf", name])
 
             context.shell.execute(["/bin/ln", "-s", self.resource.to, name])
             changed = True
 
         try:
-            linkto = os.readlink(name)
+            linkto = context.vfs.readlink(name)
             isalink = True
         except OSError:
             isalink = False
@@ -121,8 +121,8 @@ class RemoveLink(provider.Provider):
         return super(RemoveLink, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if os.path.lexists(self.resource.name):
-            if not os.path.islink(self.resource.name):
+        if context.vfs.lexists(self.resource.name):
+            if not context.vfs.islink(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
             context.shell.execute(["/bin/rm", self.resource.name])
             return True

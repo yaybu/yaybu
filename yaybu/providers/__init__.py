@@ -20,8 +20,6 @@ from yaybu.providers import (
     subversion,
     git,
     user,
-    prompt,
-    rsync,
     service,
     mounted
     )
