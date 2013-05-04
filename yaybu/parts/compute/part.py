@@ -33,7 +33,7 @@ from ssh.dsskey import DSSKey
 
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
-from yaybu.core import remote, runcontext
+from yaybu.core import runner, runcontext
 from yaybu.core.cloud.state import PartState
 
 from yay import ast, errors
@@ -270,10 +270,11 @@ class Provision(ast.PythonClass):
 
         config.add({"resources": self.params.resources.as_list(default=[])})
 
-        ctx = runcontext.RunContext(
+        ctx = runcontext.RemoteRunContext(
             None,
             resume=True,
             no_resume=False,
+            host = hostname,
             user=self.params.server.user.as_string(default='ubuntu'),
             ypath=self.root.openers.searchpath,
             simulate=self.root.simulate,
@@ -282,8 +283,7 @@ class Provision(ast.PythonClass):
             )
         ctx.set_config(config)
 
-        r = remote.RemoteRunner(hostname)
-        r.install_yaybu()
+        r = runner.Runner()
         result = r.run(ctx)
 
         logger.info("Node %r provisioned" % hostname)

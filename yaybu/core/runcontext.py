@@ -25,7 +25,7 @@ from yay.errors import LanguageError, NotFound, NotModified, get_exception_conte
 from yaybu.core import change, resource, vfs
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.core.protocol.client import HTTPConnection
-from yaybu.core.shell import Shell
+from yaybu.core.shell import Shell, RemoteShell
 from yaybu.core.config import Config
 
 logger = logging.getLogger("runcontext")
@@ -172,7 +172,7 @@ class RunContext(object):
 class RemoteRunContext(RunContext):
 
     def setup_shell(self, environment):
-        self.shell = Shell(
+        self.shell = RemoteShell(
             context=self,
             verbose=self.verbose,
             simulate=self.simulate,

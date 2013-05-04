@@ -31,44 +31,31 @@ class LoaderError(Exception):
 
 class Runner(object):
 
-    def trampoline(self, username):
-        command = ["sudo", "-u", username] + sys.argv[0:1]
-
-        if "SSH_AUTH_SOCK" in os.environ:
-            command.extend(["--ssh-auth-sock", os.environ["SSH_AUTH_SOCK"]])
-
-        command.extend(sys.argv[1:])
-
-        os.execvp(command[0], command)
-
     def run(self, ctx, bundle=None):
         """ Run locally. """
-        if ctx.user and getpass.getuser() != ctx.user:
-            self.trampoline(ctx.user)
-            return 0
 
-        if not ctx.simulate and not os.path.exists(ctx.get_data_path()):
-            os.makedirs(ctx.get_data_path())
-
-        event.EventState.save_file = ctx.get_data_path("events.saved")
+        if not ctx.simulate and not ctx.vfs.exists(ctx.get_data_path()):
+            ctx.vfs.makedirs(ctx.get_data_path())
 
         # This makes me a little sad inside, but the whole
         # context thing needs a little thought before jumping in
+        event.state.save_file = ctx.get_data_path("events.saved")
         event.state.simulate = ctx.simulate
+        event.state.vfs = ctx.vfs
 
         if not ctx.simulate:
             save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
-            if not os.path.exists(save_parent):
-                os.mkdir(save_parent)
+            if not ctx.vfs.exists(save_parent):
+                ctx.vfs.makedirs(save_parent)
 
         try:
-            if os.path.exists(event.EventState.save_file):
+            if ctx.vfs.exists(event.EventState.save_file):
                 if ctx.resume:
                     event.state.loaded = False
-                elif ctx.no_resume:
-                    if not ctx.simulate:
-                        os.unlink(event.EventState.save_file)
-                    event.state.loaded = True
+                #elif ctx.no_resume:
+                #    if not ctx.simulate:
+                #        os.unlink(event.EventState.save_file)
+                #    event.state.loaded = True
                 else:
                     raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
 

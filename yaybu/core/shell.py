@@ -19,6 +19,7 @@ import change
 import error
 import os, getpass, pwd, grp, select
 import shlex
+import pipes
 
 from yay import String
 
@@ -29,43 +30,12 @@ class Command(String):
     pass
 
 
-class Handle(object):
-
-    def __init__(self, handle, callback=None):
-        self.handle = handle
-        self.callback = callback
-        self._output = []
-
-    def fileno(self):
-        return self.handle.fileno()
-
-    def read(self):
-        data = os.read(self.fileno(), 1024)
-        if data == "":
-            self.handle.close()
-            return False
-
-        self._output.append(data)
-
-        if self.callback:
-            for l in data.splitlines():
-                self.callback(l + "\r")
-
-        return True
-
-    def isready(self):
-        return bool(self.handle)
-
-    @property
-    def output(self):
-        out = ''.join(self._output)
-        return out
-
 class ShellCommand(change.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, inert=False, user=None, group=None, simulate=False, umask=None):
+    def __init__(self, factory, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, inert=False, user=None, group=None, simulate=False, umask=None):
+        self.factory = factory
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -163,9 +133,92 @@ class ShellCommand(change.Change):
             self.stderr = ""
             return
 
-        return self._execute(command, renderer)
+        self.returncode, self.stdout, self.stderr = self.factory._execute(command, renderer, stdin=self.stdin)
 
-class LocalShellCommand(BaseShellCommand):
+
+class Handle(object):
+
+    def __init__(self, handle, callback=None):
+        self.handle = handle
+        self.callback = callback
+        self._output = []
+
+    def fileno(self):
+        return self.handle.fileno()
+
+    def read(self):
+        data = os.read(self.fileno(), 1024)
+        if data == "":
+            self.handle.close()
+            return False
+
+        self._output.append(data)
+
+        if self.callback:
+            for l in data.splitlines():
+                self.callback(l + "\r")
+
+        return True
+
+    def isready(self):
+        return bool(self.handle)
+
+    @property
+    def output(self):
+        out = ''.join(self._output)
+        return out
+
+
+class ShellTextRenderer(change.TextRenderer):
+
+    """ Render a ShellCommand on a textual changelog. """
+
+    renderer_for = ShellCommand
+    inert = False
+
+    def command(self, command):
+        if not self.inert:
+            self.logger.notice(u"# " + u" ".join(command))
+
+    def output(self, returncode):
+        if self.verbose >= 1 and returncode != 0 and not self.inert:
+            self.logger.notice("returned %s", returncode)
+
+    def stdout(self, data):
+        if self.verbose >= 2 and not self.inert:
+            self.logger.info(data)
+
+    def stderr(self, data):
+        if self.verbose >= 1:
+            self.logger.info(data)
+
+    def exception(self, exception):
+        self.logger.notice("Exception: %r" % exception)
+
+
+class Shell(object):
+
+    """ This object wraps a shell in yet another shell. When the shell is
+    switched into "simulate" mode it can just print what would be done. """
+
+    def __init__(self, context, verbose=0, simulate=False, environment=None):
+        self.simulate = context.simulate
+        self.verbose = context.verbose
+        self.context = context
+
+        self.environment = ["SSH_AUTH_SOCK"]
+        if environment:
+            self.environment.extend(environment)
+
+    def execute(self, command, stdin=None, shell=False, inert=False, cwd=None, env=None, user=None, group=None, umask=None, expected=0):
+        cmd = ShellCommand(self, command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, umask)
+        self.context.changelog.apply(cmd)
+        if expected is not None and cmd.returncode != 0:
+            raise error.SystemError(cmd.returncode, cmd.stdout, cmd.stderr)
+        return (cmd.returncode, cmd.stdout, cmd.stderr)
+
+
+class LocalShell(Shell):
 
     def communicate(self, p, stdout_fn=None, stderr_fn=None):
         if p.stdin:
@@ -219,33 +272,41 @@ class LocalShellCommand(BaseShellCommand):
                                  env=None,
                                  preexec_fn=self.preexec,
                                  )
-            self.returncode, self.stdout, self.stderr = self.communicate(p, renderer.stdout, renderer.stderr)
+            returncode, stdout, stderr = self.communicate(p, renderer.stdout, renderer.stderr)
             renderer.output(p.returncode)
+            return returncode, stdout, stderr
         except Exception, e:
             renderer.exception(e)
             raise
 
 
-class RemoteShellCommand(BaseShellCommand):
+import paramiko as ssh
+
+class RemoteShell(Shell):
 
     connection_attempts = 10
     missing_host_key_policy = ssh.AutoAddPolicy()
+    key = None
+    _client = None
 
     def connect(self):
+        if self._client:
+            return self._client
+
         client = ssh.SSHClient()
         client.set_missing_host_key_policy(self.missing_host_key_policy)
         for tries in range(self.connection_attempts):
             try:
                 if self.key is not None:
-                    client.connect(hostname=self.hostname,
-                                   username=self.username,
-                                   port=self.port,
+                    client.connect(hostname=self.context.host,
+                                   username=self.context.connect_user or "ubuntu",
+                                   port=self.context.port or 22,
                                    pkey=self.key,
                                    look_for_keys=False)
                 else:
-                    client.connect(hostname=self.hostname,
-                                   username=self.username,
-                                   port=self.port,
+                    client.connect(hostname=self.context.host,
+                                   username=self.context.connect_user or "ubuntu",
+                                   port=self.context.port or 22,
                                    look_for_keys=True)
                 break
 
@@ -258,17 +319,18 @@ class RemoteShellCommand(BaseShellCommand):
         else:
             client.close()
             raise error.ConnectionError("Connection refused %d times, giving up." % self.connection_attempts)
+        self._client = client
         return client
 
     def _refresh_intel(self):
         """ Thinking we grab env, users, groups, etc so we can do extra pre-validation... """
         pass
 
-    def _execute(self, command, user="root", group=None):
+    def _execute(self, command, renderer, user="root", group=None, stdin=None):
         client = self.connect() # This should be done once per context object
         transport = client.get_transport()
 
-        # No need to change user if we are already the right one
+        # No need to change user if we are already the right one
         if user == transport.get_username():
             user = None
 
@@ -280,71 +342,29 @@ class RemoteShellCommand(BaseShellCommand):
         if group:
             full_command.extend(['-g', group])
 
-        full_command.extend("sh", "-c", " ".join(command))
+        if isinstance(command, list):
+            command = " ".join([pipes.quote(c) for c in command])
+        
+        full_command.extend(["sh", "-c", command])
+
+        print ' '.join([pipes.quote(c) for c in full_command])
 
         channel = transport.open_session()
-        channel.exec_command(command)
+        channel.exec_command(' '.join([pipes.quote(c) for c in full_command]))
+        
+        if stdin:
+            print stdin
+            channel.send(stdin)
+            channel.shutdown_write()
+
+        stdout = ""
         while not channel.exit_status_ready():
             rlist, wlist, xlist = select.select([channel], [], [])
             if not rlist:
                 continue
-            print channel.recv(1024)
-        print channel.recv_exit_status()
+            data = channel.recv(1024)
+            stdout += data
+            print data
+        returncode = channel.recv_exit_status()
+        return returncode, stdout, ''
 
-
-
-class ShellTextRenderer(change.TextRenderer):
-
-    """ Render a ShellCommand on a textual changelog. """
-
-    renderer_for = ShellCommand
-    inert = False
-
-    def command(self, command):
-        if not self.inert:
-            self.logger.notice(u"# " + u" ".join(command))
-
-    def output(self, returncode):
-        if self.verbose >= 1 and returncode != 0 and not self.inert:
-            self.logger.notice("returned %s", returncode)
-
-    def stdout(self, data):
-        if self.verbose >= 2 and not self.inert:
-            self.logger.info(data)
-
-    def stderr(self, data):
-        if self.verbose >= 1:
-            self.logger.info(data)
-
-    def exception(self, exception):
-        self.logger.notice("Exception: %r" % exception)
-
-
-class Shell(object):
-
-    """ This object wraps a shell in yet another shell. When the shell is
-    switched into "simulate" mode it can just print what would be done. """
-
-    def __init__(self, context, verbose=0, simulate=False, environment=None):
-        self.simulate = context.simulate
-        self.verbose = context.verbose
-        self.context = context
-
-        self.environment = ["SSH_AUTH_SOCK"]
-        if environment:
-            self.environment.extend(environment)
-
-    def execute(self, command, stdin=None, shell=False, inert=False, cwd=None, env=None, user=None, group=None, umask=None, expected=0):
-        cmd = klass(command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, umask)
-        self.context.changelog.apply(cmd)
-        if expected is not None and cmd.returncode != 0:
-            raise error.SystemError(cmd.returncode, cmd.stdout, cmd.stderr)
-        return (cmd.returncode, cmd.stdout, cmd.stderr)
-
-
-class LocalShell(object):
-    klass = LocalShellCommand
-
-
-class RemoteShell(Shell):
-    klass = RemoteShellCommand

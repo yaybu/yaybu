@@ -37,45 +37,6 @@ from yaybu.core import error
 from yay import String
 
 
-class EtagRegistry(object):
-    registries = {}
-
-    def __init__(self, ctx, path):
-        self.ctx = ctx
-        self.vfs = ctx.vfs
-        self.path = ctx.get_data_path(path)
-        self._data = None
-
-    @property
-    def data(self):
-        if not self._data:
-            self._data = {}
-            if not self.ctx.simulate or self.vfs.exists(self.path):
-                self._data = shelve.open(self.path, writeback=True)
-        return self._data
-
-    def lookup(self, path):
-        return self.data.get(path.encode("utf-8"), None)
-
-    def isdirty(self, path, etag):
-        if not path.encode("utf-8") in self.data:
-            return True
-        return self.lookup(path) != etag
-
-    def freshen(self, path, etag):
-        if self.ctx.simulate:
-            return
-        self.data[path.encode("utf-8")] = etag
-        if self.data and hasattr(self.data, 'sync'):
-            self.data.sync()
-
-    @classmethod
-    def get(cls, ctx, path):
-        if not path in cls.registries:
-            cls.registries[path] = cls(ctx, path)
-        return cls.registries[path]
-        
-
 def binary_buffers(*buffers):
 
     """ Check all of the passed buffers to see if any of them are binary. If
@@ -191,23 +152,23 @@ class FileContentChanger(change.Change):
             if st.st_size != 0:
                 self.renderer.empty_file(self.filename)
                 if not self.context.simulate:
-                    self.vfs.open(self.filename, "w").close()
+                    self.context.shell.execute(["cp", "/dev/null", self.filename])
                 self.changed = True
 
     def overwrite_existing_file(self):
         """ Change the content of an existing file """
-        self.current = open(self.filename).read()
+        self.current = self.vfs.get(self.filename)
         if self.current != self.contents:
             self.renderer.changed_file(self.filename, self.current, self.contents, self.sensitive)
             if not self.context.simulate:
-                self.vfs.open(self.filename, "w").write(self.contents)
+                self.vfs.put(self.filename, self.contents)
             self.changed = True
 
     def write_new_file(self):
         """ Write contents to a new file. """
         self.renderer.new_file(self.filename, self.contents, self.sensitive)
         if not self.context.simulate:
-            self.vfs.open(self.filename, "w").write(self.contents)
+            self.vfs.put(self.filename, self.contents)
         self.changed = True
 
     def write_file(self):
@@ -327,9 +288,7 @@ class File(provider.Provider):
         created = False
         if not context.vfs.exists(self.resource.name):
             if not context.simulate:
-                with context.vfs.open(self.resource.name, "w") as fp:
-                    fp.write("")
-                    fp.close()
+                context.shell.execute(["touch", self.resource.name])
             created = True
 
         ac = AttributeChanger(context,
@@ -338,21 +297,6 @@ class File(provider.Provider):
                               self.resource.group,
                               self.resource.mode)
         context.changelog.apply(ac)
-
-        local = EtagRegistry.get(context, "local.state")
-
-        if created:
-            context.changelog.debug("File created so will be set based on cookbook")
-            dirty = True
-        else:
-            temp_etag = local.lookup(self.resource.name)
-            if temp_etag:
-                dirty = temp_etag != context.get_file(self.resource.name).etag
-                if dirty:
-                    context.changelog.debug("File has local changes - forcing comparison to cookbook")
-            else:
-                context.changelog.debug("File is in unknown state - forcing comparison to cookbook")
-                dirty = True
 
         if self.resource.template:
             # set a special line ending
@@ -364,23 +308,9 @@ class File(provider.Provider):
             sensitive = self.has_protected_strings()
 
         elif self.resource.static:
-            # We can only do this optimization if the local data is not dirty
-            old_etag = None
             s = None
-            if not dirty:
-                remote = EtagRegistry.get(context, "remote.state")
-                old_etag = remote.lookup(self.resource.static)
-
-            try:
-                fp = context.get_file(self.resource.static, old_etag)
-            except error.UnmodifiedAsset:
-                context.changelog.debug("Skipped update as cookbook hasn't changed since last deployment")
-                return created or ac.changed
-
+            fp = context.get_file(self.resource.static)
             contents = fp.read()
-
-            remote = EtagRegistry.get(context, "remote.state")
-            remote.freshen(self.resource.static, fp.etag)
 
             sensitive = getattr(fp, 'secret', False)
 
@@ -394,9 +324,6 @@ class File(provider.Provider):
 
         fc = FileContentChanger(context, self.resource.name, contents, sensitive)
         context.changelog.apply(fc)
-
-        if not context.simulate:
-            local.freshen(self.resource.name, context.get_file(self.resource.name).etag)
 
         if created or fc.changed or ac.changed:
             return True
