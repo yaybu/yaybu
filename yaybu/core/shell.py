@@ -62,6 +62,9 @@ class ShellCommand(change.Change):
         return map(uni, l)
 
     def apply(self, renderer):
+        ctx = self.factory.context
+        vfs = ctx.vfs
+
         if isinstance(self.command, Command):
             logas = self.command.as_list(secret=True)
             command = self.command.as_list(secret=False)
@@ -80,8 +83,8 @@ class ShellCommand(change.Change):
         renderer.command(logas)
 
         env = {
-            "HOME": self.homedir,
-            "LOGNAME": self.user,
+            #"HOME": "/home/" + self.user,
+            #"LOGNAME": self.user,
             "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
             "SHELL": "/bin/sh",
             }
@@ -110,16 +113,16 @@ class ShellCommand(change.Change):
         if command[0].startswith("./"):
             if len(command[0]) <= 2:
                 command_exists = False
-            if not os.path.exists(os.path.join(self.cwd, command[0][2:])):
+            if not vfs.exists(os.path.join(self.cwd, command[0][2:])):
                 command_exists = False
 
         elif command[0].startswith("/"):
-            if not os.path.exists(command[0]):
+            if not vfs.exists(command[0]):
                 command_exists = False
 
         else:
             for path in env["PATH"].split(":"):
-                if os.path.exists(os.path.join(path, command[0])):
+                if vfs.exists(os.path.join(path, command[0])):
                     break
             else:
                 command_exists = False
@@ -133,7 +136,7 @@ class ShellCommand(change.Change):
             self.stderr = ""
             return
 
-        self.returncode, self.stdout, self.stderr = self.factory._execute(command, renderer, stdin=self.stdin)
+        self.returncode, self.stdout, self.stderr = self.factory._execute(command, renderer, stdin=self.stdin, env=env)
 
 
 class Handle(object):
@@ -326,7 +329,7 @@ class RemoteShell(Shell):
         """ Thinking we grab env, users, groups, etc so we can do extra pre-validation... """
         pass
 
-    def _execute(self, command, renderer, user="root", group=None, stdin=None):
+    def _execute(self, command, renderer, user="root", group=None, stdin=None, env=None):
         client = self.connect() # This should be done once per context object
         transport = client.get_transport()
 
@@ -345,15 +348,21 @@ class RemoteShell(Shell):
         if isinstance(command, list):
             command = " ".join([pipes.quote(c) for c in command])
         
+        if env:
+            vars = []
+            for k, v in env.items():
+                vars.append("%s=%s" % (k, pipes.quote(v)))
+            command = "export " + " ".join(vars) + "; " + command
+            full_command.extend(["env", "-"])
+
         full_command.extend(["sh", "-c", command])
 
-        print ' '.join([pipes.quote(c) for c in full_command])
+        # print ' '.join([pipes.quote(c) for c in full_command])
 
         channel = transport.open_session()
         channel.exec_command(' '.join([pipes.quote(c) for c in full_command]))
         
         if stdin:
-            print stdin
             channel.send(stdin)
             channel.shutdown_write()
 
@@ -364,7 +373,9 @@ class RemoteShell(Shell):
                 continue
             data = channel.recv(1024)
             stdout += data
-            print data
+        while channel.recv_ready():
+            data = channel.recv(1024)
+            stdout += data
         returncode = channel.recv_exit_status()
         return returncode, stdout, ''
 

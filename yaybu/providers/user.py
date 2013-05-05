@@ -13,12 +13,6 @@
 # limitations under the License.
 
 import os
-import pwd
-try:
-    import spwd
-except ImportError:
-    spwd = None
-import grp
 
 from yaybu.core import provider
 from yaybu.core import error
@@ -36,11 +30,11 @@ class User(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(User, self).isvalid(*args, **kwargs)
 
-    def get_user_info(self):
+    def get_user_info(self, context):
         fields = ("name", "passwd", "uid", "gid", "gecos", "dir", "shell")
 
         try:
-            info_tuple = pwd.getpwnam(self.resource.name)
+            info_tuple = context.vfs.getpwnam(self.resource.name)
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False
@@ -56,7 +50,7 @@ class User(provider.Provider):
             info[field] = info_tuple[i]
 
         try:
-            shadow = spwd.getspnam(self.resource.name)
+            shadow = context.vfs.getspnam(self.resource.name)
             info['passwd'] = shadow.sp_pwd
             if shadow.sp_pwd == "!":
                 info['disabled-login'] = True
@@ -70,7 +64,7 @@ class User(provider.Provider):
         if self.resource.password and self.resource.disabled_login:
             raise error.ParseError("Cannot specify password and disabled login for a user")
 
-        info = self.get_user_info()
+        info = self.get_user_info(context)
 
         if info['exists']:
             command = ['usermod']
@@ -100,7 +94,7 @@ class User(provider.Provider):
                 gid = self.resource.gid
             else:
                 try:
-                    gid = grp.getgrnam(self.resource.group).gr_gid
+                    gid = context.vfs.getgrnam(self.resource.group).gr_gid
                 except KeyError:
                     if not context.simulate:
                         raise error.InvalidGroup("Group '%s' is not valid" % self.resource.group)
@@ -113,7 +107,7 @@ class User(provider.Provider):
 
         if self.resource.groups:
             desired_groups = set(self.resource.groups)
-            current_groups = set(g.gr_name for g in grp.getgrall() if self.resource.name in g.gr_mem)
+            current_groups = set(g.gr_name for g in context.vfs.getgrall() if self.resource.name in g.gr_mem)
 
             if self.resource.append and len(desired_groups - current_groups) > 0:
                 if info["exists"]:
@@ -156,7 +150,7 @@ class UserRemove(provider.Provider):
 
     def apply(self, context):
         try:
-            existing = pwd.getpwnam(self.resource.name.encode("utf-8"))
+            existing = context.vfs.getpwnam(self.resource.name.encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such user. This is good.
             return False

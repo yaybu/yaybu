@@ -15,8 +15,6 @@
 import sys
 import os
 import stat
-import pwd
-import grp
 import logging
 
 from yaybu import resources
@@ -33,27 +31,27 @@ class Link(provider.Provider):
         # but that will be modified by the yaybu script
         return super(Link, self).isvalid(*args, **kwargs)
 
-    def _get_owner(self):
+    def _get_owner(self, context):
         """ Return the uid for the resource owner, or None if no owner is
         specified. """
         if self.resource.owner is not None:
             try:
-                return pwd.getpwnam(self.resource.owner).pw_uid
+                return context.vfs.getpwnam(self.resource.owner).pw_uid
             except KeyError:
                 raise error.InvalidUser()
 
-    def _get_group(self):
+    def _get_group(self, context):
         """ Return the gid for the resource group, or None if no group is
         specified. """
         if self.resource.group is not None:
             try:
-                return grp.getgrnam(self.resource.group).gr_gid
+                return context.vfs.getgrnam(self.resource.group).gr_gid
             except KeyError:
                 raise error.InvalidGroup()
 
-    def _stat(self):
+    def _stat(self, context):
         """ Extract stat information for the resource. """
-        st = os.lstat(self.resource.name)
+        st = context.vfs.lstat(self.resource.name)
         uid = st.st_uid
         gid = st.st_gid
         mode = stat.S_IMODE(st.st_mode)
@@ -74,11 +72,11 @@ class Link(provider.Provider):
                 raise error.DanglingSymlink("Destination of symlink %r does not exist" % to)
             context.changelog.info("Destination of sylink %r does not exist" % to)
 
-        owner = self._get_owner()
-        group = self._get_group()
+        owner = self._get_owner(context)
+        group = self._get_group(context)
 
         try:
-            linkto = os.readlink(name)
+            linkto = context.vfs.readlink(name)
             isalink = True
         except OSError:
             isalink = False
@@ -100,7 +98,7 @@ class Link(provider.Provider):
             raise error.OperationFailed("Did not create expected symbolic link")
 
         if isalink:
-            uid, gid, mode = self._stat()
+            uid, gid, mode = self._stat(context)
 
         if owner is not None and owner != uid:
             context.shell.execute(["/bin/chown", "-h", self.resource.owner, name])

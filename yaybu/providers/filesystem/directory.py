@@ -14,8 +14,6 @@
 
 import os
 import stat
-import pwd
-import grp
 import logging
 
 from yaybu import resources

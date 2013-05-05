@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-import grp
 
 from yaybu.core import provider
 from yaybu.core import error
@@ -31,11 +30,11 @@ class Group(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Group, self).isvalid(*args, **kwargs)
 
-    def get_group_info(self):
+    def get_group_info(self, context):
         fields = ("name", "passwd", "gid", "members",)
 
         try:
-            info_tuple = grp.getgrnam(self.resource.name.encode("utf-8"))
+            info_tuple = context.vfs.getgrnam(self.resource.name.encode("utf-8"))
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False
@@ -49,7 +48,7 @@ class Group(provider.Provider):
 
     def apply(self, context):
         changed = False
-        info = self.get_group_info()
+        info = self.get_group_info(context)
 
         if info["exists"]:
             command = ["groupmod"]
@@ -81,7 +80,7 @@ class GroupRemove(provider.Provider):
 
     def apply(self, context):
         try:
-            existing = grp.getgrnam(self.resource.name.encode("utf-8"))
+            existing = context.vfs.getgrnam(self.resource.name.encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such group. This is good.
             return False

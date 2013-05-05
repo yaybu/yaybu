@@ -15,17 +15,10 @@
 import os
 import sys
 import stat
-import pwd
-import grp
 import difflib
 import logging
 import string
 import shelve
-
-try:
-    import magic
-except (ImportError, AttributeError):
-    magic = None
 
 from jinja2 import Environment, BaseLoader, TemplateNotFound
 
@@ -41,13 +34,7 @@ def binary_buffers(*buffers):
 
     """ Check all of the passed buffers to see if any of them are binary. If
     any of them are binary this will return True. """
-    if not magic:
-        check = lambda buff: len(buff) == sum(1 for c in buff if c in string.printable)
-    else:
-        ms = magic.open(magic.MAGIC_MIME)
-        ms.load()
-        check = lambda buff: ms.buffer(buff).startswith("text/")
-
+    check = lambda buff: len(buff) == sum(1 for c in buff if c in string.printable)
     for buff in buffers:
         if buff and not check(buff):
             return True
@@ -82,7 +69,7 @@ class AttributeChanger(change.Change):
 
         if self.user is not None:
             try:
-                owner = pwd.getpwnam(self.user)
+                owner = self.vfs.getpwnam(self.user)
             except KeyError:
                 if not self.context.simulate:
                     raise error.InvalidUser("User '%s' not found" % self.user)
@@ -95,7 +82,7 @@ class AttributeChanger(change.Change):
 
         if self.group is not None:
             try:
-                group = grp.getgrnam(self.group)
+                group = self.vfs.getgrnam(self.group)
             except KeyError:
                 if not self.context.simulate:
                     raise error.InvalidGroup("No such group '%s'" % self.group)
@@ -131,12 +118,13 @@ class FileContentChanger(change.Change):
     catered for. Additionally the minimum changes required to the contents are
     applied, and logs of the changes made are recorded. """
 
-    def __init__(self, context, filename, contents, sensitive):
+    def __init__(self, context, filename, mode, contents, sensitive):
         self.context = context
         self.vfs = context.vfs
         self.filename = filename
         self.current = ""
         self.contents = contents
+        self.mode = mode
         self.changed = False
         self.renderer = None
         self.sensitive = sensitive
@@ -161,14 +149,14 @@ class FileContentChanger(change.Change):
         if self.current != self.contents:
             self.renderer.changed_file(self.filename, self.current, self.contents, self.sensitive)
             if not self.context.simulate:
-                self.vfs.put(self.filename, self.contents)
+                self.vfs.put(self.filename, self.contents, self.mode)
             self.changed = True
 
     def write_new_file(self):
         """ Write contents to a new file. """
         self.renderer.new_file(self.filename, self.contents, self.sensitive)
         if not self.context.simulate:
-            self.vfs.put(self.filename, self.contents)
+            self.vfs.put(self.filename, self.contents, self.mode)
         self.changed = True
 
     def write_file(self):
@@ -282,22 +270,6 @@ class File(provider.Provider):
 
         self.check_path(context, os.path.dirname(name), context.simulate)
 
-        # If a file doesn't exist we create an empty one. This means we can
-        # ensure the user, group and permissions are in their final state
-        # *BEFORE* we write to them.
-        created = False
-        if not context.vfs.exists(self.resource.name):
-            if not context.simulate:
-                context.shell.execute(["touch", self.resource.name])
-            created = True
-
-        ac = AttributeChanger(context,
-                              self.resource.name,
-                              self.resource.owner,
-                              self.resource.group,
-                              self.resource.mode)
-        context.changelog.apply(ac)
-
         if self.resource.template:
             # set a special line ending
             # this strips the \n from the template line meaning no blank line,
@@ -322,10 +294,17 @@ class File(provider.Provider):
             contents = None
             sensitive = False
 
-        fc = FileContentChanger(context, self.resource.name, contents, sensitive)
+        fc = FileContentChanger(context, self.resource.name, self.resource.mode, contents, sensitive)
         context.changelog.apply(fc)
 
-        if created or fc.changed or ac.changed:
+        ac = AttributeChanger(context,
+                              self.resource.name,
+                              self.resource.owner,
+                              self.resource.group,
+                              self.resource.mode)
+        context.changelog.apply(ac)
+
+        if fc.changed or ac.changed:
             return True
 
 class RemoveFile(provider.Provider):
