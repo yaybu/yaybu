@@ -34,7 +34,7 @@ from ssh.dsskey import DSSKey
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core import runner, runcontext
-from yaybu.core.cloud.state import PartState
+from yaybu.core.state import PartState
 
 from yay import ast, errors
 from yay.config import Config
