@@ -161,7 +161,7 @@ class ShellTextRenderer(change.TextRenderer):
         self.logger.notice("Exception: %r" % exception)
 
 
-class Shell(object):
+class Transport(object):
 
     """ This object wraps a shell in yet another shell. When the shell is
     switched into "simulate" mode it can just print what would be done. """

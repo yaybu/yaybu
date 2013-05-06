@@ -1,3 +1,3 @@
 
-from .local import LocalShell
-from .ssh import RemoteShell
+from .local import LocalTransport
+from .ssh import RemoteTransport

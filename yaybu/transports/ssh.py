@@ -24,7 +24,7 @@ from ..core import error
 from . import base
 
 
-class RemoteShell(base.Shell):
+class RemoteTransport(base.Transport):
 
     connection_attempts = 10
     missing_host_key_policy = ssh.AutoAddPolicy()
@@ -86,7 +86,7 @@ class RemoteShell(base.Shell):
 
         if isinstance(command, list):
             command = " ".join([pipes.quote(c) for c in command])
-        
+
         if env:
             vars = []
             for k, v in env.items():
@@ -100,7 +100,7 @@ class RemoteShell(base.Shell):
 
         channel = transport.open_session()
         channel.exec_command(' '.join([pipes.quote(c) for c in full_command]))
-        
+
         if stdin:
             channel.send(stdin)
             channel.shutdown_write()

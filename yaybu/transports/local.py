@@ -57,7 +57,7 @@ class Handle(object):
         return out
 
 
-class LocalShell(base.Shell):
+class LocalTransport(base.Transport):
 
     def communicate(self, p, stdout_fn=None, stderr_fn=None):
         if p.stdin:
