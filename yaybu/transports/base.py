@@ -58,7 +58,7 @@ class ShellCommand(change.Change):
 
     def apply(self, renderer):
         ctx = self.factory.context
-        vfs = ctx.vfs
+        transport = ctx.transport
 
         if isinstance(self.command, Command):
             logas = self.command.as_list(secret=True)
@@ -108,16 +108,16 @@ class ShellCommand(change.Change):
         if command[0].startswith("./"):
             if len(command[0]) <= 2:
                 command_exists = False
-            if not vfs.exists(os.path.join(self.cwd, command[0][2:])):
+            if not transport.exists(os.path.join(self.cwd, command[0][2:])):
                 command_exists = False
 
         elif command[0].startswith("/"):
-            if not vfs.exists(command[0]):
+            if not transport.exists(command[0]):
                 command_exists = False
 
         else:
             for path in env["PATH"].split(":"):
-                if vfs.exists(os.path.join(path, command[0])):
+                if transport.exists(os.path.join(path, command[0])):
                     break
             else:
                 command_exists = False

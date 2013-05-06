@@ -31,18 +31,18 @@ class Directory(provider.Provider):
 
     def check_path(self, context, directory):
         simulate = context.simulate
-        vfs = context.vfs
+        transport = context.transport
         frags = directory.split("/")
         path = "/"
         for i in frags:
             path = os.path.join(path, i)
-            if not vfs.exists(path):
+            if not transport.exists(path):
                 if self.resource.parents:
                     return
                 if simulate:
                     return
                 raise error.PathComponentMissing(path)
-            if not vfs.isdir(path):
+            if not transport.isdir(path):
                 raise error.PathComponentNotDirectory(path)
 
     def apply(self, context):
@@ -53,7 +53,7 @@ class Directory(provider.Provider):
                               self.resource.owner,
                               self.resource.group,
                               self.resource.mode)
-        if not context.vfs.exists(self.resource.name):
+        if not context.transport.exists(self.resource.name):
             command = ["/bin/mkdir"]
             if self.resource.parents:
                 command.append("-p")
@@ -75,9 +75,9 @@ class RemoveDirectory(provider.Provider):
         return super(RemoveDirectory, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if context.vfs.exists(self.resource.name) and not context.vfs.isdir(self.resource.name):
+        if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
-        if context.vfs.exists(self.resource.name):
+        if context.transport.exists(self.resource.name):
             context.shell.execute(["/bin/rmdir", self.resource.name])
             changed = True
         else:
@@ -93,9 +93,9 @@ class RemoveDirectoryRecursive(provider.Provider):
         return super(RemoveDirectoryRecursive, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if context.vfs.exists(self.resource.name) and not context.vfs.isdir(self.resource.name):
+        if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
-        if context.vfs.exists(self.resource.name):
+        if context.transport.exists(self.resource.name):
             context.shell.execute(["/bin/rm", "-rf", self.resource.name])
             changed = True
         else:

@@ -34,7 +34,7 @@ class Group(provider.Provider):
         fields = ("name", "passwd", "gid", "members",)
 
         try:
-            info_tuple = context.vfs.getgrnam(self.resource.name.encode("utf-8"))
+            info_tuple = context.transport.getgrnam(self.resource.name.encode("utf-8"))
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False
@@ -80,7 +80,7 @@ class GroupRemove(provider.Provider):
 
     def apply(self, context):
         try:
-            existing = context.vfs.getgrnam(self.resource.name.encode("utf-8"))
+            existing = context.transport.getgrnam(self.resource.name.encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such group. This is good.
             return False

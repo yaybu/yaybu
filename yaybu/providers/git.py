@@ -42,7 +42,7 @@ class Git(Provider):
 
         command.extend(list(args))
 
-        if context.vfs.exists(self.resource.name):
+        if context.transport.exists(self.resource.name):
             cwd = self.resource.name
         else:
             cwd = os.path.dirname(self.resource.name)
@@ -54,7 +54,7 @@ class Git(Provider):
         typical clone, does not check it out
 
         """
-        if not context.vfs.exists(self.resource.name):
+        if not context.transport.exists(self.resource.name):
             try:
                 cmd = ["/bin/mkdir", self.resource.name]
                 context.shell.execute(cmd, user=self.resource.user)
@@ -104,7 +104,7 @@ class Git(Provider):
 
     def action_checkout(self, context):
         # Determine which SHA is currently checked out.
-        if context.vfs.exists(os.path.join(self.resource.name, ".git")):
+        if context.transport.exists(os.path.join(self.resource.name, ".git")):
             try:
                 rv, stdout, stderr = self.git(context, "rev-parse", "--verify", "HEAD", inert=True)
             except SystemError:
@@ -159,7 +159,7 @@ class Git(Provider):
         log.info("Syncing %s" % self.resource)
 
         # If necessary, clone the repository
-        if not context.vfs.exists(os.path.join(self.resource.name, ".git")):
+        if not context.transport.exists(os.path.join(self.resource.name, ".git")):
             self.action_clone(context)
         else:
             self.action_update_remote(context)

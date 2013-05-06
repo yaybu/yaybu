@@ -34,7 +34,7 @@ class Execute(provider.Provider):
         env = self.resource.environment or None
 
         try:
-            rc, stdout, stderr = shell.execute(command, 
+            rc, stdout, stderr = shell.execute(command,
                 cwd=cwd,
                 env=env,
                 user=self.resource.user,
@@ -53,12 +53,12 @@ class Execute(provider.Provider):
 
     def apply(self, context):
         if self.resource.creates is not None \
-           and context.vfs.exists(self.resource.creates):
+           and context.transport.exists(self.resource.creates):
             #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
             return False
 
         if self.resource.touch is not None \
-                and context.vfs.exists(self.resource.touch):
+                and context.transport.exists(self.resource.touch):
             return False
 
         if self.resource.unless:

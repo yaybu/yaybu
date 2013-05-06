@@ -36,8 +36,8 @@ class EventState(object):
     def load(self):
         if self.loaded:
             return
-        if self.vfs.path.exists(self.save_file):
-            self.overrides = json.load(self.vfs.get(self.save_file))
+        if self.transport.path.exists(self.save_file):
+            self.overrides = json.load(self.transport.get(self.save_file))
         self.loaded = True
 
     def override(self, resource, policy):
@@ -73,7 +73,7 @@ class EventState(object):
     def save(self):
         if not self.simulate:
             data = json.dumps(self.overrides)
-            self.vfs.put(self.save_file, data)
+            self.transport.put(self.save_file, data)
 
 
 # module level global to preserve event state

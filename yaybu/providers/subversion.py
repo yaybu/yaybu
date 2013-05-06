@@ -46,7 +46,7 @@ class Svn(Provider):
         return self.resource.repository + "/" + self.resource.branch
 
     def action_checkout(self, context):
-        if context.vfs.exists(self.resource.name):
+        if context.transport.exists(self.resource.name):
             return
 
         log.debug("Checking out %s" % self.resource)
@@ -54,14 +54,14 @@ class Svn(Provider):
         return True
 
     def apply(self, context):
-        if not context.vfs.exists("/usr/bin/svn"):
+        if not context.transport.exists("/usr/bin/svn"):
             error_string = "'/usr/bin/svn' is not available; update your configuration to install subversion?"
             if not context.simulate:
                 raise MissingDependency(error_string)
             log.info(error_string)
             log.info("This error was ignored in simulate mode")
 
-        if not context.vfs.exists(self.resource.name):
+        if not context.transport.exists(self.resource.name):
             return self.action_checkout(context)
 
         log.debug("Syncing %s" % self.resource)
@@ -99,7 +99,7 @@ class Svn(Provider):
         return changed
 
     def action_export(self, context):
-        if context.vfs.exists(self.resource.name):
+        if context.transport.exists(self.resource.name):
             return
         log.debug("Exporting %s" % self.resource)
         self.svn(context, "export", self.url, self.resource.name)

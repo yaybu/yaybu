@@ -20,23 +20,15 @@ from yaybu.providers.filesystem import files
 class ProviderTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.local_state = mock.Mock()
-        self.remote_state = mock.Mock()
-
-        files.EtagRegistry.registries = {
-            "local.state": self.local_state,
-            "remote.state": self.remote_state,
-            }
-
         self.ctx = mock.Mock()
         self.ctx.simulate = False
 
         self.exists = ["/"]
-        def vfs_exists(path):
+        def transport_exists(path):
             return path in self.exists
-        self.ctx.vfs.exists.side_effect = vfs_exists
+        self.ctx.transport.exists.side_effect = transport_exists
 
-        fp = self.ctx.vfs.open.return_value = mock.MagicMock()
+        fp = self.ctx.transport.open.return_value = mock.MagicMock()
         fp.__exit__.return_value = None
 
 
@@ -73,39 +65,39 @@ class TestFileDelete(unittest.TestCase):
         f.name = "/tmp/test_file_exists"
 
         ctx = mock.Mock()
-        ctx.vfs.exists.return_value = True
-        ctx.vfs.isfile.return_value = True
+        ctx.transport.exists.return_value = True
+        ctx.transport.isfile.return_value = True
 
         p = files.RemoveFile(f)
         changed = p.apply(ctx)
 
         self.failUnlessEqual(changed, True)
-        ctx.vfs.delete.assert_called_once_with("/tmp/test_file_exists")
+        ctx.transport.delete.assert_called_once_with("/tmp/test_file_exists")
 
     def test_file_doesnt_exist(self):
         f = mock.Mock()
         f.name = "/tmp/test_file_exists"
 
         ctx = mock.Mock()
-        ctx.vfs.exists.return_value = False
-        ctx.vfs.isfile.return_value = True
+        ctx.transport.exists.return_value = False
+        ctx.transport.isfile.return_value = True
 
         p = files.RemoveFile(f)
         changed = p.apply(ctx)
 
         self.failUnlessEqual(changed, False)
-        self.failUnlessEqual(ctx.vfs.delete.called, False)
+        self.failUnlessEqual(ctx.transport.delete.called, False)
 
     def test_exists_notfile(self):
         f = mock.Mock()
         f.name = "/tmp/test_file_exists"
 
         ctx = mock.Mock()
-        ctx.vfs.exists.return_value = True
-        ctx.vfs.isfile.return_value = False
+        ctx.transport.exists.return_value = True
+        ctx.transport.isfile.return_value = False
 
         p = files.RemoveFile(f)
 
         self.failUnlessRaises(error.InvalidProvider, p.apply, ctx)
-        self.failUnlessEqual(ctx.vfs.delete.called, False)
+        self.failUnlessEqual(ctx.transport.delete.called, False)
 

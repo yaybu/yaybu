@@ -34,7 +34,7 @@ class User(provider.Provider):
         fields = ("name", "passwd", "uid", "gid", "gecos", "dir", "shell")
 
         try:
-            info_tuple = context.vfs.getpwnam(self.resource.name)
+            info_tuple = context.transport.getpwnam(self.resource.name)
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False
@@ -50,7 +50,7 @@ class User(provider.Provider):
             info[field] = info_tuple[i]
 
         try:
-            shadow = context.vfs.getspnam(self.resource.name)
+            shadow = context.transport.getspnam(self.resource.name)
             info['passwd'] = shadow.sp_pwd
             if shadow.sp_pwd == "!":
                 info['disabled-login'] = True
@@ -94,7 +94,7 @@ class User(provider.Provider):
                 gid = self.resource.gid
             else:
                 try:
-                    gid = context.vfs.getgrnam(self.resource.group).gr_gid
+                    gid = context.transport.getgrnam(self.resource.group).gr_gid
                 except KeyError:
                     if not context.simulate:
                         raise error.InvalidGroup("Group '%s' is not valid" % self.resource.group)
@@ -107,7 +107,7 @@ class User(provider.Provider):
 
         if self.resource.groups:
             desired_groups = set(self.resource.groups)
-            current_groups = set(g.gr_name for g in context.vfs.getgrall() if self.resource.name in g.gr_mem)
+            current_groups = set(g.gr_name for g in context.transport.getgrall() if self.resource.name in g.gr_mem)
 
             if self.resource.append and len(desired_groups - current_groups) > 0:
                 if info["exists"]:
@@ -150,7 +150,7 @@ class UserRemove(provider.Provider):
 
     def apply(self, context):
         try:
-            existing = context.vfs.getpwnam(self.resource.name.encode("utf-8"))
+            existing = context.transport.getpwnam(self.resource.name.encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such user. This is good.
             return False

@@ -136,3 +136,62 @@ class LocalTransport(base.Transport):
         except Exception, e:
             renderer.exception(e)
             raise
+
+    def exists(self, path):
+        return os.path.exists(path)
+
+    def isfile(self, path):
+        return os.path.isfile(path)
+
+    def isdir(self, path):
+        return os.path.isdir(path)
+
+    def islink(self, path):
+        return os.path.islink(path)
+
+    def stat(self, path):
+        return os.stat(path)
+
+    def lexists(self, path):
+        return os.path.lexists(path)
+
+    def readlink(self, path):
+        return os.readlink(path)
+
+    def lstat(self, path):
+        return os.lstat(path)
+
+    def get(self, path):
+        return open(path).read()
+
+    def put(self, path, contents, chmod=0o644):
+        fd = os.open(path, os.O_WRONLY|os.O_CREAT|os.O_FSYNC|os.O_DIRECT, chmod)
+        os.write(fd, contents)
+        os.close(fd)
+
+    def makedirs(self, path):
+        os.makedirs(path)
+
+    def getgrall(self):
+        return grp.getgrall()
+
+    def getgrnam(self, name):
+        return grp.getgrnam(name)
+       
+    def getgrgid(self, gid):
+        return grp.getgrgid(gid)
+
+    def getpwall(self):
+        return pwd.getpwall()
+
+    def getpwnam(self, name):
+        return pwd.getpwnam(name)
+
+    def getpwuid(self, uid):
+        return pwd.getpwuid(uid)
+
+    def getspall(self):
+        return spwd.getspall()
+
+    def getspnam(self, name):
+        return spwd.getspnam(name)

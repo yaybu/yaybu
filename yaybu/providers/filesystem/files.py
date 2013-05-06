@@ -46,7 +46,7 @@ class AttributeChanger(change.Change):
 
     def __init__(self, context, filename, user=None, group=None, mode=None):
         self.context = context
-        self.vfs = context.vfs
+        self.transport = context.transport
         self.filename = filename
         self.user = user
         self.group = group
@@ -60,16 +60,16 @@ class AttributeChanger(change.Change):
         gid = None
         mode = None
 
-        if self.vfs.exists(self.filename):
+        if self.transport.exists(self.filename):
             exists = True
-            st = self.vfs.stat(self.filename)
+            st = self.transport.stat(self.filename)
             uid = st.st_uid
             gid = st.st_gid
             mode = stat.S_IMODE(st.st_mode)
 
         if self.user is not None:
             try:
-                owner = self.vfs.getpwnam(self.user)
+                owner = self.transport.getpwnam(self.user)
             except KeyError:
                 if not self.context.simulate:
                     raise error.InvalidUser("User '%s' not found" % self.user)
@@ -82,7 +82,7 @@ class AttributeChanger(change.Change):
 
         if self.group is not None:
             try:
-                group = self.vfs.getgrnam(self.group)
+                group = self.transport.getgrnam(self.group)
             except KeyError:
                 if not self.context.simulate:
                     raise error.InvalidGroup("No such group '%s'" % self.group)
@@ -120,7 +120,7 @@ class FileContentChanger(change.Change):
 
     def __init__(self, context, filename, mode, contents, sensitive):
         self.context = context
-        self.vfs = context.vfs
+        self.transport = context.transport
         self.filename = filename
         self.current = ""
         self.contents = contents
@@ -131,12 +131,12 @@ class FileContentChanger(change.Change):
 
     def empty_file(self):
         """ Write an empty file """
-        exists = self.vfs.exists(self.filename)
+        exists = self.transport.exists(self.filename)
         if not exists:
             self.context.shell.execute(["touch", self.filename])
             self.changed = True
         else:
-            st = self.vfs.stat(self.filename)
+            st = self.transport.stat(self.filename)
             if st.st_size != 0:
                 self.renderer.empty_file(self.filename)
                 if not self.context.simulate:
@@ -145,23 +145,23 @@ class FileContentChanger(change.Change):
 
     def overwrite_existing_file(self):
         """ Change the content of an existing file """
-        self.current = self.vfs.get(self.filename)
+        self.current = self.transport.get(self.filename)
         if self.current != self.contents:
             self.renderer.changed_file(self.filename, self.current, self.contents, self.sensitive)
             if not self.context.simulate:
-                self.vfs.put(self.filename, self.contents, self.mode)
+                self.transport.put(self.filename, self.contents, self.mode)
             self.changed = True
 
     def write_new_file(self):
         """ Write contents to a new file. """
         self.renderer.new_file(self.filename, self.contents, self.sensitive)
         if not self.context.simulate:
-            self.vfs.put(self.filename, self.contents, self.mode)
+            self.transport.put(self.filename, self.contents, self.mode)
         self.changed = True
 
     def write_file(self):
         """ Write to either an existing or new file """
-        exists = self.vfs.exists(self.filename)
+        exists = self.transport.exists(self.filename)
         if exists:
             self.overwrite_existing_file()
         else:
@@ -227,10 +227,10 @@ class File(provider.Provider):
         path = "/"
         for i in frags:
             path = os.path.join(path, i)
-            if not ctx.vfs.exists(path): #FIXME
+            if not ctx.transport.exists(path): #FIXME
                 if not simulate:
                     raise error.PathComponentMissing(path)
-            elif not ctx.vfs.isdir(path):
+            elif not ctx.transport.isdir(path):
                 raise error.PathComponentNotDirectory(path)
 
     def has_protected_strings(self):
@@ -315,10 +315,10 @@ class RemoveFile(provider.Provider):
         return super(RemoveFile, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if context.vfs.exists(self.resource.name):
-            if not context.vfs.isfile(self.resource.name):
+        if context.transport.exists(self.resource.name):
+            if not context.transport.isfile(self.resource.name):
                 raise error.InvalidProvider("%s exists and is not a file" % self.resource.name)
-            context.vfs.delete(self.resource.name)
+            context.transport.delete(self.resource.name)
             changed = True
         else:
             context.changelog.debug("File %s missing already so not removed" % self.resource.name)

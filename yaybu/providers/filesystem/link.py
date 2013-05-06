@@ -36,7 +36,7 @@ class Link(provider.Provider):
         specified. """
         if self.resource.owner is not None:
             try:
-                return context.vfs.getpwnam(self.resource.owner).pw_uid
+                return context.transport.getpwnam(self.resource.owner).pw_uid
             except KeyError:
                 raise error.InvalidUser()
 
@@ -45,13 +45,13 @@ class Link(provider.Provider):
         specified. """
         if self.resource.group is not None:
             try:
-                return context.vfs.getgrnam(self.resource.group).gr_gid
+                return context.transport.getgrnam(self.resource.group).gr_gid
             except KeyError:
                 raise error.InvalidGroup()
 
     def _stat(self, context):
         """ Extract stat information for the resource. """
-        st = context.vfs.lstat(self.resource.name)
+        st = context.transport.lstat(self.resource.name)
         uid = st.st_uid
         gid = st.st_gid
         mode = stat.S_IMODE(st.st_mode)
@@ -67,7 +67,7 @@ class Link(provider.Provider):
         mode = None
         isalink = False
 
-        if not context.vfs.exists(to):
+        if not context.transport.exists(to):
             if not context.simulate:
                 raise error.DanglingSymlink("Destination of symlink %r does not exist" % to)
             context.changelog.info("Destination of sylink %r does not exist" % to)
@@ -76,20 +76,20 @@ class Link(provider.Provider):
         group = self._get_group(context)
 
         try:
-            linkto = context.vfs.readlink(name)
+            linkto = context.transport.readlink(name)
             isalink = True
         except OSError:
             isalink = False
 
         if not isalink or linkto != to:
-            if context.vfs.lexists(name):
+            if context.transport.lexists(name):
                 context.shell.execute(["/bin/rm", "-rf", name])
 
             context.shell.execute(["/bin/ln", "-s", self.resource.to, name])
             changed = True
 
         try:
-            linkto = context.vfs.readlink(name)
+            linkto = context.transport.readlink(name)
             isalink = True
         except OSError:
             isalink = False
@@ -119,8 +119,8 @@ class RemoveLink(provider.Provider):
         return super(RemoveLink, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if context.vfs.lexists(self.resource.name):
-            if not context.vfs.islink(self.resource.name):
+        if context.transport.lexists(self.resource.name):
+            if not context.transport.islink(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
             context.shell.execute(["/bin/rm", self.resource.name])
             return True

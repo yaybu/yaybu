@@ -22,7 +22,7 @@ import yay
 from yay.openers import Openers
 from yay.errors import LanguageError, NotFound, NotModified, get_exception_context
 
-from yaybu.core import change, resource, vfs
+from yaybu.core import change, resource
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.transport import LocalTransport, RemoteTransport
@@ -80,8 +80,6 @@ class RunContext(object):
         self.setup_shell(env_passthrough)
         self.setup_changelog()
 
-        self.vfs = vfs.Shell(self)
-
     def set_host(self, host):
         self.host = host
         if self.host:
@@ -93,7 +91,7 @@ class RunContext(object):
             self._config.set_hostname(self.host)
 
     def setup_shell(self, environment):
-        self.shell = LocalTransport(context=self,
+        self.transport = LocalTransport(context=self,
             verbose=self.verbose,
             simulate=self.simulate,
             environment=environment)
@@ -172,7 +170,7 @@ class RunContext(object):
 class RemoteRunContext(RunContext):
 
     def setup_shell(self, environment):
-        self.shell = RemoteTransport(
+        self.transport = RemoteTransport(
             context=self,
             verbose=self.verbose,
             simulate=self.simulate,

@@ -34,22 +34,22 @@ class Runner(object):
     def run(self, ctx, bundle=None):
         """ Run locally. """
 
-        if not ctx.simulate and not ctx.vfs.exists(ctx.get_data_path()):
-            ctx.vfs.makedirs(ctx.get_data_path())
+        if not ctx.simulate and not ctx.transport.exists(ctx.get_data_path()):
+            ctx.transport.makedirs(ctx.get_data_path())
 
         # This makes me a little sad inside, but the whole
         # context thing needs a little thought before jumping in
         event.state.save_file = ctx.get_data_path("events.saved")
         event.state.simulate = ctx.simulate
-        event.state.vfs = ctx.vfs
+        event.state.transport = ctx.transport
 
         if not ctx.simulate:
             save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
-            if not ctx.vfs.exists(save_parent):
-                ctx.vfs.makedirs(save_parent)
+            if not ctx.transport.exists(save_parent):
+                ctx.transport.makedirs(save_parent)
 
         try:
-            if ctx.vfs.exists(event.EventState.save_file):
+            if ctx.transport.exists(event.EventState.save_file):
                 if ctx.resume:
                     event.state.loaded = False
                 #elif ctx.no_resume:
