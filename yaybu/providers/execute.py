@@ -45,7 +45,7 @@ class Execute(provider.Provider):
         except error.SystemError as exc:
             rc = exc.returncode
 
-        if not shell.simulate:
+        if not transport.simulate:
             if expected_returncode != None and expected_returncode != rc:
                 raise error.CommandError("%s failed with return code %d" % (self.resource, rc))
 
