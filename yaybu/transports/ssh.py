@@ -20,10 +20,11 @@ import paramiko as ssh
 
 from yay import String
 
-from . import error
+from ..core import error
+from . import base
 
 
-class RemoteShell(Shell):
+class RemoteShell(base.Shell):
 
     connection_attempts = 10
     missing_host_key_policy = ssh.AutoAddPolicy()

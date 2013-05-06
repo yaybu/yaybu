@@ -18,7 +18,7 @@ import shlex
 
 from yay import String
 
-from . import change, error
+from ..core import change, error
 
 class Command(String):
     """ Horrible horrible cludge """

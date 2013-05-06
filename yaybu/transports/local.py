@@ -20,7 +20,7 @@ import pipes
 
 from yay import String
 
-from . import error
+from ..core import error
 from . import base
 
 
