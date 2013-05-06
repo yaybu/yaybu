@@ -30,6 +30,8 @@ class Directory(provider.Provider):
         return super(Directory, self).isvalid(*args, **kwargs)
 
     def check_path(self, context, directory):
+        if context.isdir(directory):
+            return
         simulate = context.simulate
         transport = context.transport
         frags = directory.split("/")

@@ -223,6 +223,8 @@ class File(provider.Provider):
         return super(File, self).isvalid(*args, **kwargs)
 
     def check_path(self, ctx, directory, simulate):
+        if ctx.path.isdir(directory):
+            return
         frags = directory.split("/")
         path = "/"
         for i in frags:
