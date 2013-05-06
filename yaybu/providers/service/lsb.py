@@ -59,10 +59,10 @@ class _LsbServiceMixin(utils._ServiceMixin):
             return False
 
         for ln in need_deleting:
-            context.shell.execute(["rm", ln])
+            context.transport.execute(["rm", ln])
 
         for ln in need_creating:
-            context.shell.execute(["ln", "-s", "/etc/init.d/%s" % self.resource.name, ln])
+            context.transport.execute(["ln", "-s", "/etc/init.d/%s" % self.resource.name, ln])
 
         return True
 

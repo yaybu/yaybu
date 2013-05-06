@@ -24,7 +24,7 @@ def is_installed(context, resource):
     command = ["dpkg-query", "-W", "-f='${Status}'", resource.name]
 
     try:
-        rc, stdout, stderr = context.shell.execute(command, inert=True)
+        rc, stdout, stderr = context.transport.execute(command, inert=True)
     except error.SystemError as exc:
         if exc.returncode == 1:
             return False
@@ -60,7 +60,7 @@ class AptInstall(provider.Provider):
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
 
         try:
-            context.shell.execute(command, env=env)
+            context.transport.execute(command, env=env)
         except error.SystemError as exc:
             raise error.AptError("%s failed with return code %d" % (self.resource, exc.returncode))
 
@@ -89,7 +89,7 @@ class AptUninstall(provider.Provider):
         command.append(self.resource.name)
 
         try:
-            context.shell.execute(command, env=env)
+            context.transport.execute(command, env=env)
         except error.SystemError as exc:
             raise error.AptError("%s failed to uninstall with return code %d" % (self.resource, exc.returncode))
 

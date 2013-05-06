@@ -77,7 +77,7 @@ class AttributeChanger(change.Change):
                 owner = None
 
             if not owner or owner.pw_uid != uid:
-                self.context.shell.execute(["/bin/chown", self.user, self.filename])
+                self.transport.execute(["/bin/chown", self.user, self.filename])
                 self.changed = True
 
         if self.group is not None:
@@ -90,20 +90,20 @@ class AttributeChanger(change.Change):
                 group = None
 
             if not group or group.gr_gid != gid:
-                self.context.shell.execute(["/bin/chgrp", self.group, self.filename])
+                self.transport.execute(["/bin/chgrp", self.group, self.filename])
                 self.changed = True
 
         if self.mode is not None and mode is not None:
             if mode != self.mode:
-                self.context.shell.execute(["/bin/chmod", "%o" % self.mode, self.filename])
+                self.transport.execute(["/bin/chmod", "%o" % self.mode, self.filename])
 
                 # Clear the user and group bits
                 # We don't need to set them as chmod will *set* this bits with an octal
                 # but won't clear them without a symbolic mode
                 if mode & stat.S_ISGID and not self.mode & stat.S_ISGID:
-                    self.context.shell.execute(["/bin/chmod", "g-s", self.filename])
+                    self.transport.execute(["/bin/chmod", "g-s", self.filename])
                 if mode & stat.S_ISUID and not self.mode & stat.S_ISUID:
-                    self.context.shell.execute(["/bin/chmod", "u-s", self.filename])
+                    self.transport.execute(["/bin/chmod", "u-s", self.filename])
 
                 self.changed = True
 
@@ -133,14 +133,14 @@ class FileContentChanger(change.Change):
         """ Write an empty file """
         exists = self.transport.exists(self.filename)
         if not exists:
-            self.context.shell.execute(["touch", self.filename])
+            self.transport.execute(["touch", self.filename])
             self.changed = True
         else:
             st = self.transport.stat(self.filename)
             if st.st_size != 0:
                 self.renderer.empty_file(self.filename)
                 if not self.context.simulate:
-                    self.context.shell.execute(["cp", "/dev/null", self.filename])
+                    self.transport.execute(["cp", "/dev/null", self.filename])
                 self.changed = True
 
     def overwrite_existing_file(self):
@@ -223,7 +223,7 @@ class File(provider.Provider):
         return super(File, self).isvalid(*args, **kwargs)
 
     def check_path(self, ctx, directory, simulate):
-        if ctx.path.isdir(directory):
+        if ctx.transport.isdir(directory):
             return
         frags = directory.split("/")
         path = "/"

@@ -47,7 +47,7 @@ class Git(Provider):
         else:
             cwd = os.path.dirname(self.resource.name)
 
-        return context.shell.execute(command, user=self.resource.user, cwd=cwd, **kwargs)
+        return context.transport.execute(command, user=self.resource.user, cwd=cwd, **kwargs)
 
     def action_clone(self, context):
         """Adds resource.repository as a remote, but unlike a
@@ -57,7 +57,7 @@ class Git(Provider):
         if not context.transport.exists(self.resource.name):
             try:
                 cmd = ["/bin/mkdir", self.resource.name]
-                context.shell.execute(cmd, user=self.resource.user)
+                context.transport.execute(cmd, user=self.resource.user)
             except SystemError:
                 raise CheckoutError("Cannot create the repository directory")
 

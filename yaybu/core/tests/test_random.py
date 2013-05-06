@@ -21,11 +21,11 @@ class Test_Random(FakeChrootTestCase):
         for name, klass in self.resource_args(resource):
             d[name] = klass._generate_valid()
         r = resource(**d)
-        shell = mock.Mock()
+        transport = mock.Mock()
         ctx = mock.Mock()
         ctx.simulate = True
-        ctx.shell = shell
-        ctx.shell.execute = mock.Mock(return_value=(0, '', ''))
+        ctx.transport = transport
+        ctx.transport.execute = mock.Mock(return_value=(0, '', ''))
         config = mock.Mock()
         try:
             r.apply(ctx, config)

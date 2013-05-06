@@ -83,9 +83,9 @@ class Link(provider.Provider):
 
         if not isalink or linkto != to:
             if context.transport.lexists(name):
-                context.shell.execute(["/bin/rm", "-rf", name])
+                context.transport.execute(["/bin/rm", "-rf", name])
 
-            context.shell.execute(["/bin/ln", "-s", self.resource.to, name])
+            context.transport.execute(["/bin/ln", "-s", self.resource.to, name])
             changed = True
 
         try:
@@ -101,11 +101,11 @@ class Link(provider.Provider):
             uid, gid, mode = self._stat(context)
 
         if owner is not None and owner != uid:
-            context.shell.execute(["/bin/chown", "-h", self.resource.owner, name])
+            context.transport.execute(["/bin/chown", "-h", self.resource.owner, name])
             changed = True
 
         if group is not None and group != gid:
-            context.shell.execute(["/bin/chgrp", "-h", self.resource.group, name])
+            context.transport.execute(["/bin/chgrp", "-h", self.resource.group, name])
             changed = True
 
         return changed
@@ -122,7 +122,7 @@ class RemoveLink(provider.Provider):
         if context.transport.lexists(self.resource.name):
             if not context.transport.islink(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
-            context.shell.execute(["/bin/rm", self.resource.name])
+            context.transport.execute(["/bin/rm", self.resource.name])
             return True
         return False
 

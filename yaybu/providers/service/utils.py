@@ -27,7 +27,7 @@ class _ServiceMixin(object):
     def status(self, context):
         if self.resource.running:
             try:
-                context.shell.execute(self.resource.running, inert=True)
+                context.transport.execute(self.resource.running, inert=True)
             except error.SystemError:
                 return "not-running"
             else:
@@ -53,7 +53,7 @@ class _ServiceMixin(object):
 
     def do(self, context, action):
         try:
-            context.shell.execute(self.get_command(action))
+            context.transport.execute(self.get_command(action))
         except error.SystemError as exc:
             raise error.CommandError("%s failed with return code %d" % (action, exc.returncode))
 

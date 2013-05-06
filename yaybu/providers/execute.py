@@ -28,13 +28,13 @@ class Execute(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Execute, self).isvalid(*args, **kwargs)
 
-    def execute(self, shell, command, expected_returncode=None, inert=False):
+    def execute(self, transport, command, expected_returncode=None, inert=False):
         # Filter out empty strings...
         cwd = self.resource.cwd or None
         env = self.resource.environment or None
 
         try:
-            rc, stdout, stderr = shell.execute(command,
+            rc, stdout, stderr = transport.execute(command,
                 cwd=cwd,
                 env=env,
                 user=self.resource.user,
@@ -63,7 +63,7 @@ class Execute(provider.Provider):
 
         if self.resource.unless:
             try:
-                if self.execute(context.shell, self.resource.unless, inert=True) == 0:
+                if self.execute(context.transport, self.resource.unless, inert=True) == 0:
                     return False
             except error.InvalidUser as exc:
                 # If a simulation and user missing then we can run our 'unless'
@@ -84,10 +84,10 @@ class Execute(provider.Provider):
 
         commands = [self.resource.command] if self.resource.command else self.resource.commands
         for command in commands:
-            self.execute(context.shell, command, self.resource.returncode)
+            self.execute(context.transport, command, self.resource.returncode)
 
         if self.resource.touch is not None:
-            context.shell.execute(["touch", self.resource.touch])
+            context.transport.execute(["touch", self.resource.touch])
 
         return True
 

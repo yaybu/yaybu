@@ -15,6 +15,11 @@
 import os
 import pipes
 import select
+import stat
+import pwd
+import grp
+import spwd
+import posix
 
 import paramiko as ssh
 

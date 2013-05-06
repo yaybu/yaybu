@@ -64,7 +64,7 @@ class Group(provider.Provider):
         if not changed:
             return False
 
-        returncode, stdout, stderr = context.shell.execute(command)
+        returncode, stdout, stderr = context.transport.execute(command)
         if returncode != 0:
             raise error.GroupError("%s failed with return code %d" % (self.resource, returncode))
 
@@ -87,7 +87,7 @@ class GroupRemove(provider.Provider):
 
         command = ["groupdel", self.resource.name]
 
-        returncode, stdout, stderr = context.shell.execute(command)
+        returncode, stdout, stderr = context.transport.execute(command)
         if returncode != 0:
             raise error.GroupError("Removing group %s failed with return code %d" % (self.resource, returncode))
 

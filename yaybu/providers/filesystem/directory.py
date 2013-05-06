@@ -30,7 +30,7 @@ class Directory(provider.Provider):
         return super(Directory, self).isvalid(*args, **kwargs)
 
     def check_path(self, context, directory):
-        if context.isdir(directory):
+        if context.transport.isdir(directory):
             return
         simulate = context.simulate
         transport = context.transport
@@ -60,7 +60,7 @@ class Directory(provider.Provider):
             if self.resource.parents:
                 command.append("-p")
             command.append(self.resource.name.encode("utf-8"))
-            context.shell.execute(command)
+            context.transport.execute(command)
             changed = True
         ac.apply(context)
         if changed or ac.changed:
@@ -80,7 +80,7 @@ class RemoveDirectory(provider.Provider):
         if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if context.transport.exists(self.resource.name):
-            context.shell.execute(["/bin/rmdir", self.resource.name])
+            context.transport.execute(["/bin/rmdir", self.resource.name])
             changed = True
         else:
             changed = False
@@ -98,7 +98,7 @@ class RemoveDirectoryRecursive(provider.Provider):
         if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if context.transport.exists(self.resource.name):
-            context.shell.execute(["/bin/rm", "-rf", self.resource.name])
+            context.transport.execute(["/bin/rm", "-rf", self.resource.name])
             changed = True
         else:
             changed = False

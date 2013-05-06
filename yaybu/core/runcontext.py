@@ -25,7 +25,7 @@ from yay.errors import LanguageError, NotFound, NotModified, get_exception_conte
 from yaybu.core import change, resource
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.core.protocol.client import HTTPConnection
-from yaybu.transport import LocalTransport, RemoteTransport
+from yaybu.transports import LocalTransport, RemoteTransport
 from yaybu.core.config import Config
 
 logger = logging.getLogger("runcontext")
