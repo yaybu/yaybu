@@ -1,4 +1,4 @@
-# Copyright 2011 Isotoma Limited
+# Copyright 2011-2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,192 +13,13 @@
 # limitations under the License.
 
 import os
-import sys
-import stat
-import difflib
-import logging
-import string
-import shelve
 
 from jinja2 import Environment, BaseLoader, TemplateNotFound
 
-from yaybu import resources
-from yaybu.core import provider
-from yaybu.core import change
-from yaybu.core import error
+from yaybu import resources, changes
+from yaybu.core import error, provider
 
 from yay import String
-
-
-def binary_buffers(*buffers):
-
-    """ Check all of the passed buffers to see if any of them are binary. If
-    any of them are binary this will return True. """
-    check = lambda buff: len(buff) == sum(1 for c in buff if c in string.printable)
-    for buff in buffers:
-        if buff and not check(buff):
-            return True
-    return False
-
-class AttributeChanger(change.Change):
-
-    """ Make the changes required to a file's attributes """
-
-    def __init__(self, context, filename, user=None, group=None, mode=None):
-        self.context = context
-        self.transport = context.transport
-        self.filename = filename
-        self.user = user
-        self.group = group
-        self.mode = mode
-        self.changed = False
-
-    def apply(self, renderer):
-        """ Apply the changes """
-        exists = False
-        uid = None
-        gid = None
-        mode = None
-
-        if self.transport.exists(self.filename):
-            exists = True
-            st = self.transport.stat(self.filename)
-            uid = st.st_uid
-            gid = st.st_gid
-            mode = stat.S_IMODE(st.st_mode)
-
-        if self.user is not None:
-            try:
-                owner = self.transport.getpwnam(self.user)
-            except KeyError:
-                if not self.context.simulate:
-                    raise error.InvalidUser("User '%s' not found" % self.user)
-                self.context.changelog.info("User '%s' not found; assuming this recipe will create it" % self.user)
-                owner = None
-
-            if not owner or owner.pw_uid != uid:
-                self.transport.execute(["/bin/chown", self.user, self.filename])
-                self.changed = True
-
-        if self.group is not None:
-            try:
-                group = self.transport.getgrnam(self.group)
-            except KeyError:
-                if not self.context.simulate:
-                    raise error.InvalidGroup("No such group '%s'" % self.group)
-                self.context.changelog.info("Group '%s' not found; assuming this recipe will create it" % self.group) #FIXME
-                group = None
-
-            if not group or group.gr_gid != gid:
-                self.transport.execute(["/bin/chgrp", self.group, self.filename])
-                self.changed = True
-
-        if self.mode is not None and mode is not None:
-            if mode != self.mode:
-                self.transport.execute(["/bin/chmod", "%o" % self.mode, self.filename])
-
-                # Clear the user and group bits
-                # We don't need to set them as chmod will *set* this bits with an octal
-                # but won't clear them without a symbolic mode
-                if mode & stat.S_ISGID and not self.mode & stat.S_ISGID:
-                    self.transport.execute(["/bin/chmod", "g-s", self.filename])
-                if mode & stat.S_ISUID and not self.mode & stat.S_ISUID:
-                    self.transport.execute(["/bin/chmod", "u-s", self.filename])
-
-                self.changed = True
-
-
-class AttributeChangeRenderer(change.TextRenderer):
-    renderer_for = AttributeChanger
-
-
-class FileContentChanger(change.Change):
-
-    """ Apply a content change to a file in a managed way. Simulation mode is
-    catered for. Additionally the minimum changes required to the contents are
-    applied, and logs of the changes made are recorded. """
-
-    def __init__(self, context, filename, mode, contents, sensitive):
-        self.context = context
-        self.transport = context.transport
-        self.filename = filename
-        self.current = ""
-        self.contents = contents
-        self.mode = mode
-        self.changed = False
-        self.renderer = None
-        self.sensitive = sensitive
-
-    def empty_file(self):
-        """ Write an empty file """
-        exists = self.transport.exists(self.filename)
-        if not exists:
-            self.transport.execute(["touch", self.filename])
-            self.changed = True
-        else:
-            st = self.transport.stat(self.filename)
-            if st.st_size != 0:
-                self.renderer.empty_file(self.filename)
-                if not self.context.simulate:
-                    self.transport.execute(["cp", "/dev/null", self.filename])
-                self.changed = True
-
-    def overwrite_existing_file(self):
-        """ Change the content of an existing file """
-        self.current = self.transport.get(self.filename)
-        if self.current != self.contents:
-            self.renderer.changed_file(self.filename, self.current, self.contents, self.sensitive)
-            if not self.context.simulate:
-                self.transport.put(self.filename, self.contents, self.mode)
-            self.changed = True
-
-    def write_new_file(self):
-        """ Write contents to a new file. """
-        self.renderer.new_file(self.filename, self.contents, self.sensitive)
-        if not self.context.simulate:
-            self.transport.put(self.filename, self.contents, self.mode)
-        self.changed = True
-
-    def write_file(self):
-        """ Write to either an existing or new file """
-        exists = self.transport.exists(self.filename)
-        if exists:
-            self.overwrite_existing_file()
-        else:
-            self.write_new_file()
-
-    def apply(self, renderer):
-        """ Apply the changes necessary to the file contents. """
-        self.renderer = renderer
-        if self.contents is None:
-            self.empty_file()
-        else:
-            self.write_file()
-
-
-class FileChangeTextRenderer(change.TextRenderer):
-    renderer_for = FileContentChanger
-
-    def empty_file(self, filename):
-        self.logger.notice("Emptied file %s", filename)
-
-    def new_file(self, filename, contents, sensitive):
-        self.logger.notice("Writing new file '%s'" % filename)
-        if not sensitive:
-            self.diff("", contents)
-
-    def changed_file(self, filename, previous, replacement, sensitive):
-        self.logger.notice("Changed file %s", filename)
-        if not sensitive:
-            self.diff(previous, replacement)
-
-    def diff(self, previous, replacement):
-        if not binary_buffers(previous, replacement):
-            diff = "".join(difflib.unified_diff(previous.splitlines(1), replacement.splitlines(1)))
-            for l in diff.splitlines():
-                self.logger.info("    %s", l)
-        else:
-            self.logger.notice("Binary contents; not showing delta")
 
 
 class YaybuTemplateLoader(BaseLoader):
@@ -296,10 +117,10 @@ class File(provider.Provider):
             contents = None
             sensitive = False
 
-        fc = FileContentChanger(context, self.resource.name, self.resource.mode, contents, sensitive)
+        fc = changes.FileContentChanger(self.resource.name, self.resource.mode, contents, sensitive)
         context.changelog.apply(fc)
 
-        ac = AttributeChanger(context,
+        ac = changes.AttributeChanger(
                               self.resource.name,
                               self.resource.owner,
                               self.resource.group,
@@ -308,6 +129,7 @@ class File(provider.Provider):
 
         if fc.changed or ac.changed:
             return True
+
 
 class RemoveFile(provider.Provider):
     policies = (resources.file.FileRemovePolicy,)

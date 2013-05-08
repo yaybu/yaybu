@@ -16,10 +16,9 @@ import os
 import stat
 import logging
 
-from yaybu import resources
+from yaybu import resources, changes
 from yaybu.core import provider, error
 
-from yaybu.providers.filesystem.files import AttributeChanger
 
 class Directory(provider.Provider):
 
@@ -50,7 +49,7 @@ class Directory(provider.Provider):
     def apply(self, context):
         changed = False
         self.check_path(context, os.path.dirname(self.resource.name))
-        ac = AttributeChanger(context,
+        ac = changes.AttributeChanger(
                               self.resource.name,
                               self.resource.owner,
                               self.resource.group,
@@ -62,11 +61,12 @@ class Directory(provider.Provider):
             command.append(self.resource.name.encode("utf-8"))
             context.transport.execute(command)
             changed = True
-        ac.apply(context)
+        context.changelog.apply(ac)
         if changed or ac.changed:
             return True
         else:
             return False
+
 
 class RemoveDirectory(provider.Provider):
 
@@ -85,6 +85,7 @@ class RemoveDirectory(provider.Provider):
         else:
             changed = False
         return changed
+
 
 class RemoveDirectoryRecursive(provider.Provider):
 

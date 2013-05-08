@@ -23,6 +23,7 @@ from yay.openers import Openers
 from yay.errors import LanguageError, NotFound, NotModified, get_exception_context
 
 from yaybu.core import change, resource
+from yaybu import changes
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.core.protocol.client import HTTPConnection
 from yaybu.transports import LocalTransport, RemoteTransport
@@ -97,7 +98,7 @@ class RunContext(object):
             environment=environment)
 
     def setup_changelog(self):
-        self.changelog = change.ChangeLog(self)
+        self.changelog = changes.ChangeLog(self)
         self.changelog.configure_session_logging()
 
     def locate(self, paths, filename):
