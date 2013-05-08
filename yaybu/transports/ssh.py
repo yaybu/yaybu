@@ -15,11 +15,7 @@
 import os
 import pipes
 import select
-import stat
-import pwd
-import grp
-import spwd
-import posix
+import collections
 
 import paramiko
 
@@ -27,6 +23,22 @@ from yay import String
 
 from ..core import error
 from . import base
+
+
+stat_result = collections.namedtuple("stat_result", \
+    ("st_mode", "st_ino", "st_dev", "st_nlink", "st_uid", "st_gid", \
+    "st_size", "st_atime", "st_mtime", "st_ctime"))
+
+struct_group = collections.namedtuple("struct_group", \
+    ("gr_name", "gr_passwd", "gr_gid", "gr_mem"))
+
+struct_passwd = collections.namedtuple("struct_passwd", \
+    ("pw_name", "pw_passwd", "pw_uid", "pw_gid", "pw_gecos", "pw_dir", \
+    "pw_shell"))
+
+struct_spwd = collections.namedtuple("struct_spwd", \
+    ("sp_nam", "sp_pwd", "sp_lastchg", "sp_min", "sp_max", "sp_warn", \
+    "sp_inact", "sp_expire", "sp_flag", ))
 
 
 class RemoteTransport(base.Transport):
@@ -139,7 +151,7 @@ class RemoteTransport(base.Transport):
 
     def stat(self, path):
         data = self._execute(["stat", "-L", "-t", path], None)[1].split(" ")
-        return posix.stat_result((
+        return stat_result(
             int(data[3], 16), # st_mode
             int(data[8]), #st_ino
             int(data[7], 16), #st_dev
@@ -150,11 +162,11 @@ class RemoteTransport(base.Transport):
             int(data[11]), # st_atime
             int(data[12]), # st_mtime
             int(data[13]), # st_ctime
-            ))
+            )
 
     def lstat(self, path):
         data = self._execute(["stat", "-t", path], None)[1].split(" ")
-        return posix.stat_result((
+        return stat_result(
             int(data[3], 16), # st_mode
             int(data[8]), #st_ino
             int(data[7], 16), #st_dev
@@ -165,7 +177,7 @@ class RemoteTransport(base.Transport):
             int(data[11]), # st_atime
             int(data[12]), # st_mtime
             int(data[13]), # st_ctime
-            ))
+            )
 
     def lexists(self, path):
         # stat command uses lstat syscall by default
@@ -194,19 +206,19 @@ class RemoteTransport(base.Transport):
             if not line.strip():
                 continue
             tup = line.split(":")
-            yield grp.struct_group((
+            yield struct_group(
                 tup[0],
                 tup[1],
                 int(tup[2]),
                 tup[3].split(","),
-                ))
+                )
 
     def getgrnam(self, name):
         for group in self.getgrall():
             if group.gr_name == name:
                 return group
         raise KeyError(name)
-       
+
     def getgrgid(self, gid):
         for group in self.getgrall():
             if gr.gr_gid == gid:
@@ -219,7 +231,7 @@ class RemoteTransport(base.Transport):
             if not line.strip():
                 continue
             tup = line.split(":")
-            yield pwd.struct_passwd((
+            yield struct_passwd(
                 tup[0],
                 tup[1],
                 int(tup[2]),
@@ -227,7 +239,7 @@ class RemoteTransport(base.Transport):
                 tup[4],
                 tup[5],
                 tup[6]
-                ))
+                )
 
     def getpwnam(self, name):
         for user in self.getpwall():
@@ -246,7 +258,7 @@ class RemoteTransport(base.Transport):
         for line in susers.split("\n"):
             if not line.strip():
                 continue
-            yield spwd.struct_spwd(line.split(":"))
+            yield struct_spwd(*line.split(":"))
 
     def getspnam(self, name):
         for suser in self.getspall():
