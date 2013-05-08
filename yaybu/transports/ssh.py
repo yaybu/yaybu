@@ -21,7 +21,7 @@ import grp
 import spwd
 import posix
 
-import paramiko as ssh
+import paramiko
 
 from yay import String
 
@@ -32,7 +32,7 @@ from . import base
 class RemoteTransport(base.Transport):
 
     connection_attempts = 10
-    missing_host_key_policy = ssh.AutoAddPolicy()
+    missing_host_key_policy = paramiko.AutoAddPolicy()
     key = None
     _client = None
 
@@ -40,7 +40,7 @@ class RemoteTransport(base.Transport):
         if self._client:
             return self._client
 
-        client = ssh.SSHClient()
+        client = paramiko.SSHClient()
         client.set_missing_host_key_policy(self.missing_host_key_policy)
         for tries in range(self.connection_attempts):
             try:
@@ -57,7 +57,7 @@ class RemoteTransport(base.Transport):
                                    look_for_keys=True)
                 break
 
-            except ssh.PasswordRequiredException:
+            except paramiko.PasswordRequiredException:
                 raise error.ConnectionError("Unable to authenticate with remote server")
 
             except (socket.error, EOFError):
