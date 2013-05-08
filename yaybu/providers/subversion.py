@@ -14,7 +14,7 @@
 
 import os, logging
 
-from yaybu.transports.base import Command
+from yaybu.changes.execute import Command
 from yaybu.core.provider import Provider
 from yaybu.core.error import MissingDependency
 from yaybu import resources
