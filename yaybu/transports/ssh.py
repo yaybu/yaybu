@@ -200,6 +200,9 @@ class RemoteTransport(base.Transport):
     def makedirs(self, path):
         return self._execute(["mkdir", "-p", path], None)
 
+    def unlink(self, path):
+        return self._execute(["rm", "-f", path], None)
+
     def getgrall(self):
         groups = self.get("/etc/group")
         for line in groups.split("\n"):

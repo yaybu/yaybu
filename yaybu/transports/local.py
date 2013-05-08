@@ -172,6 +172,9 @@ class LocalTransport(base.Transport):
     def makedirs(self, path):
         os.makedirs(path)
 
+    def unlink(self, path):
+        os.unlink(path)
+
     def getgrall(self):
         return grp.getgrall()
 

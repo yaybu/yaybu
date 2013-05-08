@@ -52,10 +52,10 @@ class Runner(object):
             if ctx.transport.exists(event.EventState.save_file):
                 if ctx.resume:
                     event.state.loaded = False
-                #elif ctx.no_resume:
-                #    if not ctx.simulate:
-                #        os.unlink(event.EventState.save_file)
-                #    event.state.loaded = True
+                elif ctx.no_resume:
+                    if not ctx.simulate:
+                        ctx.transport.unlink(event.EventState.save_file)
+                    event.state.loaded = True
                 else:
                     raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
 
