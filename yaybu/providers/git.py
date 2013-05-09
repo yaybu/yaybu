@@ -18,6 +18,8 @@ import re
 from yaybu.core.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError
 from yaybu import resources
+from yaybu.changes import ShellCommand
+
 
 log = logging.getLogger("git")
 
@@ -47,7 +49,9 @@ class Git(Provider):
         else:
             cwd = os.path.dirname(self.resource.name)
 
-        return context.transport.execute(command, user=self.resource.user, cwd=cwd, **kwargs)
+        cmd = ShellCommand(command, user=self.resource.user, cwd=cwd, **kwargs)
+        context.changelog.apply(cmd)
+        return cmd.returncode
 
     def action_clone(self, context):
         """Adds resource.repository as a remote, but unlike a
@@ -57,7 +61,7 @@ class Git(Provider):
         if not context.transport.exists(self.resource.name):
             try:
                 cmd = ["/bin/mkdir", self.resource.name]
-                context.transport.execute(cmd, user=self.resource.user)
+                context.changelog.apply(ShellCommand(cmd, user=self.resource.user))
             except SystemError:
                 raise CheckoutError("Cannot create the repository directory")
 

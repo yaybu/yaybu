@@ -16,6 +16,7 @@ import stat
 
 from yaybu import error, resources
 from . import base
+from .execute import ShellCommand
 
 
 class AttributeChanger(base.Change):
@@ -55,7 +56,7 @@ class AttributeChanger(base.Change):
                 owner = None
 
             if not owner or owner.pw_uid != uid:
-                transport.execute(["/bin/chown", self.user, self.filename])
+                context.changelog.apply(ShellCommand(["/bin/chown", self.user, self.filename]))
                 self.changed = True
 
         if self.group is not None:
@@ -68,20 +69,20 @@ class AttributeChanger(base.Change):
                 group = None
 
             if not group or group.gr_gid != gid:
-                transport.execute(["/bin/chgrp", self.group, self.filename])
+                context.changelog.apply(ShellCommand(["/bin/chgrp", self.group, self.filename]))
                 self.changed = True
 
         if self.mode is not None and mode is not None:
             if mode != self.mode:
-                transport.execute(["/bin/chmod", "%o" % self.mode, self.filename])
+                context.changelog.apply(ShellCommand(["/bin/chmod", "%o" % self.mode, self.filename]))
 
                 # Clear the user and group bits
                 # We don't need to set them as chmod will *set* this bits with an octal
                 # but won't clear them without a symbolic mode
                 if mode & stat.S_ISGID and not self.mode & stat.S_ISGID:
-                    transport.execute(["/bin/chmod", "g-s", self.filename])
+                    context.changelog.apply(ShellCommand(["/bin/chmod", "g-s", self.filename]))
                 if mode & stat.S_ISUID and not self.mode & stat.S_ISUID:
-                    transport.execute(["/bin/chmod", "u-s", self.filename])
+                    context.changelog.apply(ShellCommand(["/bin/chmod", "u-s", self.filename]))
 
                 self.changed = True
 

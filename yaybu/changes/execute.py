@@ -30,7 +30,7 @@ class ShellCommand(base.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell, stdin, cwd=None, env=None, env_passthru=None, verbose=0, inert=False, user=None, group=None, simulate=False, umask=None):
+    def __init__(self, command, shell=None, stdin=None, cwd=None, env=None, env_passthru=None, verbose=0, inert=False, user=None, group=None, simulate=False, umask=None, expected=0):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -47,6 +47,7 @@ class ShellCommand(base.Change):
         self.homedir = None
 
         self.umask = umask
+        self.expected = expected
 
     def _tounicode(self, l):
         """ Ensure all elements of the list are unicode """
@@ -131,6 +132,9 @@ class ShellCommand(base.Change):
             return
 
         self.returncode, self.stdout, self.stderr = transport._execute(command, renderer, stdin=self.stdin, env=env)
+
+        if self.expected is not None and self.returncode != self.expected:
+            raise error.SystemError(self.returncode, self.stdout, self.stderr)
 
 
 class ShellTextRenderer(base.TextRenderer):

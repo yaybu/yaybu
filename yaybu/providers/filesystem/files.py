@@ -16,8 +16,9 @@ import os
 
 from jinja2 import Environment, BaseLoader, TemplateNotFound
 
-from yaybu import resources, changes
+from yaybu import resources
 from yaybu.core import error, provider
+from yaybu.changes import ShellCommand, AttributeChanger, FileContentChanger
 
 from yay import String
 
@@ -117,10 +118,10 @@ class File(provider.Provider):
             contents = None
             sensitive = False
 
-        fc = changes.FileContentChanger(self.resource.name, self.resource.mode, contents, sensitive)
+        fc = FileContentChanger(self.resource.name, self.resource.mode, contents, sensitive)
         context.changelog.apply(fc)
 
-        ac = changes.AttributeChanger(
+        ac = AttributeChanger(
                               self.resource.name,
                               self.resource.owner,
                               self.resource.group,

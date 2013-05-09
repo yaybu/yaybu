@@ -18,6 +18,8 @@ from yaybu.changes.execute import Command
 from yaybu.core.provider import Provider
 from yaybu.core.error import MissingDependency
 from yaybu import resources
+from yaybu.changes import ShellCommand
+
 
 import shlex
 
@@ -126,11 +128,10 @@ class Svn(Provider):
 
     def info(self, context, uri):
         command = self.get_svn_args("info", uri)
-        returncode, stdout, stderr = context.transport.execute(command, inert=True)
+        returncode, stdout, stderr = context.transport.execute(command)
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
     def svn(self, context, action, *args, **kwargs):
         command = self.get_svn_args(action, *args, **kwargs)
-        return context.transport.execute(command, user=self.resource.user)
-
-
+        sc = context.changelog.apply(ShellCommand(command, user=self.resource.user))
+        return sc.returncode, sc.stdout, sc.stderr

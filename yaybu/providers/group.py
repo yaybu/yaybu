@@ -17,6 +17,8 @@ import os
 from yaybu.core import provider
 from yaybu.core import error
 from yaybu import resources
+from yaybu.changes import ShellCommand
+
 
 import logging
 
@@ -64,9 +66,10 @@ class Group(provider.Provider):
         if not changed:
             return False
 
-        returncode, stdout, stderr = context.transport.execute(command)
-        if returncode != 0:
-            raise error.GroupError("%s failed with return code %d" % (self.resource, returncode))
+        try:
+            context.changelog.apply(ShellCommand(command))
+        except error.SystemError as exc:
+            raise error.GroupError("%s on %s failed with return code %d" % (command[0], self.resource, exc.returncode))
 
         return True
 
@@ -87,9 +90,10 @@ class GroupRemove(provider.Provider):
 
         command = ["groupdel", self.resource.name]
 
-        returncode, stdout, stderr = context.transport.execute(command)
-        if returncode != 0:
-            raise error.GroupError("Removing group %s failed with return code %d" % (self.resource, returncode))
+        try:
+            context.changelog.apply(ShellCommand(command))
+        except error.SystemError as exc:
+            raise error.GroupError("groupdel on %s failed with return code %d" % (self.resource, exc.returncode))
 
         return True
 

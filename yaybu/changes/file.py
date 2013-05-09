@@ -20,6 +20,7 @@ from jinja2 import Environment, BaseLoader, TemplateNotFound
 
 from yaybu import error, resources
 from . import base
+from .execute import ShellCommand
 
 
 def binary_buffers(*buffers):
@@ -52,14 +53,13 @@ class FileContentChanger(base.Change):
         """ Write an empty file """
         exists = context.transport.exists(self.filename)
         if not exists:
-            context.transport.execute(["touch", self.filename])
+            context.changelog.apply(ShellCommand(["touch", self.filename]))
             self.changed = True
         else:
             st = context.transport.stat(self.filename)
             if st.st_size != 0:
                 self.renderer.empty_file(self.filename)
-                if not self.context.simulate:
-                    context.transport.execute(["cp", "/dev/null", self.filename])
+                context.changelog.apply(ShellCommand(["cp", "/dev/null", self.filename]))
                 self.changed = True
 
     def overwrite_existing_file(self, context):

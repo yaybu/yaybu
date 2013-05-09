@@ -67,7 +67,6 @@ class Compute(ast.PythonClass):
     @property
     @memoized
     def state(self):
-        print "state called"
         return PartState(self.root.state, self.params.name.as_string())
 
     @property
