@@ -42,10 +42,8 @@ class ShellCommand(base.Change):
         self.simulate = simulate
         self._generated_env = {}
 
-        self.user = None
-        self.group = None
-        self.homedir = None
-
+        self.user = user
+        self.group = group
         self.umask = umask
         self.expected = expected
 
@@ -131,7 +129,7 @@ class ShellCommand(base.Change):
             self.stderr = ""
             return
 
-        self.returncode, self.stdout, self.stderr = transport.execute(command, stdin=self.stdin, stdout=renderer.stdout, stderr=renderer.stderr, env=env)
+        self.returncode, self.stdout, self.stderr = transport.execute(command, stdin=self.stdin, stdout=renderer.stdout, stderr=renderer.stderr, env=env, user=self.user, group=self.group, cwd=self.cwd)
 
         if self.expected is not None and self.returncode != self.expected:
             raise error.SystemError(self.returncode, self.stdout, self.stderr)

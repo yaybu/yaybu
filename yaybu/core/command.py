@@ -10,7 +10,7 @@ from functools import partial
 
 import yay
 import yay.errors
-from yaybu.core import runner, remote, runcontext, error, util
+from yaybu.core import runner, runcontext, error, util
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -169,7 +169,7 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
 
-    def do_push(self, opts, args, runner=remote.RemoteRunner):
+    def do_push(self, opts, args):
         """
         usage: remote [options] <hostname> <filename>
         Provision the specified hostname with the specified configuration, by

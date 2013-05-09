@@ -103,39 +103,42 @@ class LocalTransport(base.Transport):
 
     def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
         def preexec():
-            if self.gid is not None:
-                if self.gid != os.getgid():
-                    os.setgid(self.gid)
-                if self.gid != os.getegid():
-                    os.setegid(self.gid)
+            if group:
+                try:
+                    gid = grp.getgrnam(group).gr_gid
+                except KeyError:
+                    raise error.InvalidGroup("No such group '%s'" % group)
+                if gid != os.getgid():
+                    os.setgid(gid)
+                if gid != os.getegid():
+                    os.setegid(gid)
 
-            if self.uid is not None:
-                if self.uid != os.getuid():
-                    os.setuid(self.uid)
-                if self.uid != os.geteuid():
-                    os.seteuid(self.uid)
+            if user:
+                try:
+                    uid = pwd.getpwnam(user).pw_uid
+                except KeyError:
+                    raise error.InvalidUser("No such user '%s'" % user)
+                if uid != os.getuid():
+                    os.setuid(uid)
+                if uid != os.geteuid():
+                    os.seteuid(uid)
 
-            if self.umask:
-                os.umask(self.umask)
+            if umask:
+                os.umask(umask)
 
-            os.environ.clear()
-            os.environ.update(self._generated_env)
+            if env:
+                os.environ.clear()
+                os.environ.update(env)
 
-        try:
-            p = subprocess.Popen(command,
-                                 shell=self.shell,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 cwd=self.cwd,
-                                 env=None,
-                                 preexec_fn=preexec,
-                                 )
-            returncode, stdout, stderr = self.communicate(p, stdout, stderr)
-            renderer.output(p.returncode)
-            return returncode, stdout, stderr
-        except Exception, e:
-            renderer.exception(e)
-            raise
+        p = subprocess.Popen(command,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             cwd=cwd,
+                             env=None,
+                             preexec_fn=preexec,
+                             )
+        returncode, stdout, stderr = self.communicate(p, stdout, stderr)
+        return returncode, stdout, stderr
 
     def exists(self, path):
         return os.path.exists(path)

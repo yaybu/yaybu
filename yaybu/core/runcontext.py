@@ -22,10 +22,9 @@ import yay
 from yay.openers import Openers
 from yay.errors import LanguageError, NotFound, NotModified, get_exception_context
 
-from yaybu.core import change, resource
+from yaybu.core import resource
 from yaybu import changes
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
-from yaybu.core.protocol.client import HTTPConnection
 from yaybu.transports import LocalTransport, RemoteTransport
 from yaybu.core.config import Config
 
