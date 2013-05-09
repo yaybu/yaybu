@@ -277,7 +277,7 @@ class Provision(ast.PythonClass):
             user=self.params.server.user.as_string(default='ubuntu'),
             ypath=self.root.openers.searchpath,
             simulate=self.root.simulate,
-            verbose=True, #self.root.verbose,
+            verbose=2, #self.root.verbose,
             env_passthrough=[], #self.root.env_passthrough,
             )
         ctx.set_config(config)

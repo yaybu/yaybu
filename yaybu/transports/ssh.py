@@ -85,7 +85,7 @@ class RemoteTransport(base.Transport):
         """ Thinking we grab env, users, groups, etc so we can do extra pre-validation... """
         pass
 
-    def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0):
+    def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
         client = self.connect() # This should be done once per context object
         transport = client.get_transport()
 
@@ -122,20 +122,26 @@ class RemoteTransport(base.Transport):
             channel.send(stdin)
             channel.shutdown_write()
 
-        stdout = ""
+        stdout_buffer = ""
         while not channel.exit_status_ready():
             rlist, wlist, xlist = select.select([channel], [], [])
             if not rlist:
                 continue
             data = channel.recv(1024)
-            stdout += data
+            if data:
+                if stdout:
+                    stdout(data)
+                stdout_buffer += data
 
         while channel.recv_ready():
             data = channel.recv(1024)
-            stdout += data
+            if data:
+                if stdout:
+                    stdout(data)
+                stdout_buffer += data
 
         returncode = channel.recv_exit_status()
-        return returncode, stdout, ''
+        return returncode, stdout_buffer, ''
 
     def exists(self, path):
         return self.execute(["test", "-e", path])[0] == 0

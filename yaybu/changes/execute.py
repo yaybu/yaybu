@@ -131,7 +131,7 @@ class ShellCommand(base.Change):
             self.stderr = ""
             return
 
-        self.returncode, self.stdout, self.stderr = transport.execute(command, stdin=self.stdin, env=env)
+        self.returncode, self.stdout, self.stderr = transport.execute(command, stdin=self.stdin, stdout=renderer.stdout, stderr=renderer.stderr, env=env)
 
         if self.expected is not None and self.returncode != self.expected:
             raise error.SystemError(self.returncode, self.stdout, self.stderr)
@@ -142,7 +142,6 @@ class ShellTextRenderer(base.TextRenderer):
     """ Render a ShellCommand on a textual changelog. """
 
     renderer_for = ShellCommand
-    inert = False
 
     def command(self, command):
         if not self.inert:
@@ -153,7 +152,7 @@ class ShellTextRenderer(base.TextRenderer):
             self.logger.notice("returned %s", returncode)
 
     def stdout(self, data):
-        if self.verbose >= 2 and not self.inert:
+        if self.verbose >= 2:
             self.logger.info(data)
 
     def stderr(self, data):
