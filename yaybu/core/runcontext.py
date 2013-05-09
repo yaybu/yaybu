@@ -90,11 +90,11 @@ class RunContext(object):
         if self._config:
             self._config.set_hostname(self.host)
 
-    def setup_shell(self, environment):
+    def setup_shell(self, env_passthrough):
         self.transport = LocalTransport(context=self,
             verbose=self.verbose,
             simulate=self.simulate,
-            environment=environment)
+            env_passthrough=env_passthrough)
 
     def setup_changelog(self):
         self.changelog = changes.ChangeLog(self)
@@ -169,11 +169,11 @@ class RunContext(object):
 
 class RemoteRunContext(RunContext):
 
-    def setup_shell(self, environment):
+    def setup_shell(self, env_passthrough):
         self.transport = RemoteTransport(
             context=self,
             verbose=self.verbose,
             simulate=self.simulate,
-            environment=environment
+            env_passthrough=env_passthrough
             )
 

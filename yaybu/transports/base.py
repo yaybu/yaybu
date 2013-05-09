@@ -20,11 +20,11 @@ class Transport(object):
     """ This object wraps a shell in yet another shell. When the shell is
     switched into "simulate" mode it can just print what would be done. """
 
-    def __init__(self, context, verbose=0, simulate=False, environment=None):
+    def __init__(self, context, verbose=0, simulate=False, env_passthrough=None):
         self.simulate = context.simulate
         self.verbose = context.verbose
         self.context = context
 
-        self.environment = ["SSH_AUTH_SOCK"]
-        if environment:
-            self.environment.extend(environment)
+        self.env_passthrough = ["SSH_AUTH_SOCK"]
+        if env_passthrough:
+            self.env_passthrough.extend(env_passthrough)

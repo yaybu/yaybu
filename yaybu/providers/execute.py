@@ -41,7 +41,7 @@ class Execute(provider.Provider):
 
         if self.resource.unless:
             try:
-                if self.transport.execute(self.resource.unless) == 0:
+                if context.transport.execute(self.resource.unless)[0] == 0:
                     return False
 
             except error.InvalidUser as exc:

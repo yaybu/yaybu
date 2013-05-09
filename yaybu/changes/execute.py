@@ -30,16 +30,12 @@ class ShellCommand(base.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell=None, stdin=None, cwd=None, env=None, env_passthru=None, verbose=0, user=None, group=None, simulate=False, umask=None, expected=0):
+    def __init__(self, command, shell=None, stdin=None, cwd=None, env=None, user=None, group=None, umask=None, expected=0):
         self.command = command
         self.shell = shell
         self.stdin = stdin
         self.cwd = cwd
         self.env = env
-        self.env_passthru = env_passthru
-        self.verbose = verbose
-        self.simulate = simulate
-        self._generated_env = {}
 
         self.user = user
         self.group = group
@@ -73,16 +69,8 @@ class ShellCommand(base.Change):
         renderer.command(logas)
 
         env = {
-            #"HOME": "/home/" + self.user,
-            "LOGNAME": self.user,
             "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-            "SHELL": "/bin/sh",
             }
-
-        if self.env_passthru:
-            for var in self.env_passthru:
-                if var in os.environ:
-                    env[var] = os.environ[var]
 
         if self.env:
             for key, item in self.env.iteritems():
@@ -91,9 +79,7 @@ class ShellCommand(base.Change):
                 else:
                     env[key] = item
 
-        self._generated_env = env
-
-        if self.simulate:
+        if ctx.simulate:
             self.returncode = 0
             self.stdout = ""
             self.stderr = ""
@@ -139,8 +125,7 @@ class ShellTextRenderer(base.TextRenderer):
     renderer_for = ShellCommand
 
     def command(self, command):
-        if not self.inert:
-            self.logger.notice(u"# " + u" ".join(command))
+        self.logger.notice(u"# " + u" ".join(command))
 
     def output(self, returncode):
         if self.verbose >= 1 and returncode != 0 and not self.inert:

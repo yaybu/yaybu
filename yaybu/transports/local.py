@@ -15,6 +15,10 @@
 import logging
 import subprocess
 import os, getpass, pwd, grp, select
+try:
+    import spwd
+except ImportError:
+    spwd = None
 import shlex
 import pipes
 
@@ -102,6 +106,25 @@ class LocalTransport(base.Transport):
         return returncode, stdout.output, stderr.output
 
     def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
+        if not user:
+            user = pwd.getpwuid(os.getuid()).pw_name
+
+        newenv = {}
+        if self.env_passthrough:
+            for var in self.env_passthrough:
+                if var in os.environ:
+                    newenv[var] = os.environ[var]
+        
+        newenv.update({
+            #"HOME": "/home/" + self.user,
+            "LOGNAME": user,
+            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "SHELL": "/bin/sh",
+            })
+
+        if env:
+            newenv.update(env)
+
         def preexec():
             if group:
                 try:
@@ -126,15 +149,11 @@ class LocalTransport(base.Transport):
             if umask:
                 os.umask(umask)
 
-            if env:
-                os.environ.clear()
-                os.environ.update(env)
-
         p = subprocess.Popen(command,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
-                             cwd=cwd,
-                             env=None,
+                             cwd=cwd or "/",
+                             env=newenv,
                              preexec_fn=preexec,
                              )
         returncode, stdout, stderr = self.communicate(p, stdout, stderr)
@@ -168,7 +187,7 @@ class LocalTransport(base.Transport):
         return open(path).read()
 
     def put(self, path, contents, chmod=0o644):
-        fd = os.open(path, os.O_WRONLY|os.O_CREAT|os.O_FSYNC|os.O_DIRECT, chmod)
+        fd = os.open(path, os.O_WRONLY|os.O_CREAT|os.O_SYNC|os.O_DIRECT, chmod)
         os.write(fd, contents)
         os.close(fd)
 
