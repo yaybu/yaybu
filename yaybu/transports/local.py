@@ -101,7 +101,7 @@ class LocalTransport(base.Transport):
 
         return returncode, stdout.output, stderr.output
 
-    def _execute(self, command, renderer):
+    def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0):
         def preexec():
             if self.gid is not None:
                 if self.gid != os.getgid():

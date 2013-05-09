@@ -131,7 +131,7 @@ class ShellCommand(base.Change):
             self.stderr = ""
             return
 
-        self.returncode, self.stdout, self.stderr = transport._execute(command, renderer, stdin=self.stdin, env=env)
+        self.returncode, self.stdout, self.stderr = transport.execute(command, stdin=self.stdin, env=env)
 
         if self.expected is not None and self.returncode != self.expected:
             raise error.SystemError(self.returncode, self.stdout, self.stderr)

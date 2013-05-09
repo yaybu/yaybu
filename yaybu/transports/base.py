@@ -28,13 +28,3 @@ class Transport(object):
         self.environment = ["SSH_AUTH_SOCK"]
         if environment:
             self.environment.extend(environment)
-
-    def execute(self, command, stdin=None, shell=False, inert=False, cwd=None, env=None, user=None, group=None, umask=None, expected=0):
-        #FIXME: Deprecated
-        from yaybu.changes import ShellCommand
-        cmd = ShellCommand(command, shell, stdin, cwd, env, self.environment, self.verbose, inert, user, group, self.simulate, umask)
-        self.context.changelog.apply(cmd)
-        if expected is not None and cmd.returncode != 0:
-            raise error.SystemError(cmd.returncode, cmd.stdout, cmd.stderr)
-        return (cmd.returncode, cmd.stdout, cmd.stderr)
-

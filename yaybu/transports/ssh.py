@@ -85,7 +85,7 @@ class RemoteTransport(base.Transport):
         """ Thinking we grab env, users, groups, etc so we can do extra pre-validation... """
         pass
 
-    def _execute(self, command, renderer, user="root", group=None, stdin=None, env=None):
+    def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0):
         client = self.connect() # This should be done once per context object
         transport = client.get_transport()
 
@@ -138,19 +138,19 @@ class RemoteTransport(base.Transport):
         return returncode, stdout, ''
 
     def exists(self, path):
-        return self._execute(["test", "-e", path], None)[0] == 0
+        return self.execute(["test", "-e", path])[0] == 0
 
     def isfile(self, path):
-        return self._execute(["test", "-f", path], None)[0] == 0
+        return self.execute(["test", "-f", path])[0] == 0
 
     def isdir(self, path):
-        return self._execute(["test", "-d", path], None)[0] == 0
+        return self.execute(["test", "-d", path])[0] == 0
 
     def islink(self, path):
-        return self._execute(["test", "-L", path], None)[0] == 0
+        return self.execute(["test", "-L", path])[0] == 0
 
     def stat(self, path):
-        data = self._execute(["stat", "-L", "-t", path], None)[1].split(" ")
+        data = self.execute(["stat", "-L", "-t", path])[1].split(" ")
         return stat_result(
             int(data[3], 16), # st_mode
             int(data[8]), #st_ino
@@ -165,7 +165,7 @@ class RemoteTransport(base.Transport):
             )
 
     def lstat(self, path):
-        data = self._execute(["stat", "-t", path], None)[1].split(" ")
+        data = self.execute(["stat", "-t", path])[1].split(" ")
         return stat_result(
             int(data[3], 16), # st_mode
             int(data[8]), #st_ino
@@ -181,27 +181,27 @@ class RemoteTransport(base.Transport):
 
     def lexists(self, path):
         # stat command uses lstat syscall by default
-        return self._execute(["stat", path], None)[0] == 0
+        return self.execute(["stat", path])[0] == 0
 
     def readlink(self, path):
         try:
-            link = self._execute(["readlink", path], None)[1].split("\n")[0].strip()
+            link = self.execute(["readlink", path])[1].split("\n")[0].strip()
             return link
         except SystemError:
             raise OSError
 
     def get(self, path):
-        return self._execute(["cat", path], None)[1]
+        return self.execute(["cat", path])[1]
 
     def put(self, path, contents, chmod=0o644):
         umask = 0o777 - chmod
-        return self._execute("umask %o && tee %s > /dev/null" % (umask, path), None, stdin=contents)
+        return self.execute("umask %o && tee %s > /dev/null" % (umask, path), stdin=contents)
 
     def makedirs(self, path):
-        return self._execute(["mkdir", "-p", path], None)
+        return self.execute(["mkdir", "-p", path])
 
     def unlink(self, path):
-        return self._execute(["rm", "-f", path], None)
+        return self.execute(["rm", "-f", path])
 
     def getgrall(self):
         groups = self.get("/etc/group")

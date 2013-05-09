@@ -25,7 +25,7 @@ def is_installed(context, resource):
     command = ["dpkg-query", "-W", "-f='${Status}'", resource.name]
 
     try:
-        rc, stdout, stderr = context.transport.execute(command, inert=True)
+        rc, stdout, stderr = context.transport.execute(command)
     except error.SystemError as exc:
         if exc.returncode == 1:
             return False
