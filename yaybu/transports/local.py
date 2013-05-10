@@ -24,7 +24,7 @@ import pipes
 
 from yay import String
 
-from ..core import error
+from .. import error
 from . import base
 
 

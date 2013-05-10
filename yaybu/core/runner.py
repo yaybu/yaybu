@@ -19,7 +19,7 @@ import logging.handlers
 import subprocess
 import getpass
 
-from yaybu.core import error
+from yaybu import error
 from yaybu.core import runcontext
 from yaybu.core import event
 
