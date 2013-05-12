@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, glob, signal, shlex, subprocess, tempfile, time, shutil, StringIO
+import os, sys, glob, signal, shlex, subprocess, tempfile, time, shutil, StringIO
 from unittest2 import SkipTest
-from yaybu.core import error
+from yaybu import error
 from yaybu.util import sibpath
 
 from yaybu.harness.fixture import Fixture
@@ -128,20 +128,27 @@ class FakeChrootFixture(Fixture):
     def distro(self):
         return distro_flags[self.sundayname]['name']
 
+    def msg(self, *msg):
+        sys.__stdout__.write("%s\n" % " ".join(msg))
+        sys.__stdout__.flush()
+
     def run_command(self, command, distro=None, cwd=None):
         command = command % dict(base_image=self.testbase, distro=distro)
-        print ">>>", command
-        p = subprocess.Popen(shlex.split(command), cwd=cwd)
-        if p.wait():
+        self.msg(">>>", command)
+        p = subprocess.Popen(shlex.split(command), cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p.communicate()
+        if p.returncode:
             raise SystemExit("Command failed")
 
     def build_environment(self):
         if os.path.exists(self.testbase):
             return
 
+        self.msg("Need to create a base fakechroot! This might take some time...")
+
         distro = self.distro()
         commands = [
-            "fakeroot fakechroot debootstrap --variant=fakechroot --include=git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv,python-dev,build-essential %(distro)s %(base_image)s",
+            "fakeroot fakechroot debootstrap --variant=fakechroot --include=sudo,git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv,python-dev,build-essential %(distro)s %(base_image)s",
             "fakeroot fakechroot /usr/sbin/chroot %(base_image)s apt-get update",
             ]
         for command in commands:
@@ -149,11 +156,13 @@ class FakeChrootFixture(Fixture):
 
     def refresh_environment(self):
         if os.path.exists("src/yay"):
+            self.msg("(re) installing dev copy of yay")
             yay_path = os.path.join(self.testbase, "usr/local/lib/python2.*/dist-packages/yay*")
             self.run_command('bash -c "rm -rf %s"' % yay_path)
             self.run_command("python setup.py sdist --dist-dir %(base_image)s", cwd="src/yay")
             self.run_command("fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /yay-*.tar.gz'")
 
+        self.msg("(re) installing dev copy of Yaybu")
         yaybu_path = os.path.join(self.testbase, "usr/local/lib/python2.*/dist-packages/Yaybu*")
         self.run_command('bash -c "rm -rf %s"' % yaybu_path)
         self.run_command("python setup.py sdist --dist-dir %(base_image)s")
@@ -226,8 +235,10 @@ class FakeChrootFixture(Fixture):
 
     def call(self, command):
         env = self.get_env()
-        retval = subprocess.call(["/usr/sbin/chroot", self.chroot_path] + command, cwd=self.chroot_path, env=env)
-        return retval
+        p = subprocess.Popen(["/usr/sbin/chroot", self.chroot_path] + command, cwd=self.chroot_path, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        stdout, stderr = p.communicate()
+        print stdout
+        return p.returncode
 
     def yaybu(self, *args):
         if self.test_network:

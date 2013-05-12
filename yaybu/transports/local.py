@@ -105,59 +105,17 @@ class LocalTransport(base.Transport):
 
         return returncode, stdout.output, stderr.output
 
-    def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
-        if not user:
-            user = pwd.getpwuid(os.getuid()).pw_name
-
-        newenv = {}
-        if self.env_passthrough:
-            for var in self.env_passthrough:
-                if var in os.environ:
-                    newenv[var] = os.environ[var]
-        
-        newenv.update({
-            #"HOME": "/home/" + self.user,
-            "LOGNAME": user,
-            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-            "SHELL": "/bin/sh",
-            })
-
-        if env:
-            newenv.update(env)
-
-        def preexec():
-            if group:
-                try:
-                    gid = grp.getgrnam(group).gr_gid
-                except KeyError:
-                    raise error.InvalidGroup("No such group '%s'" % group)
-                if gid != os.getgid():
-                    os.setgid(gid)
-                if gid != os.getegid():
-                    os.setegid(gid)
-
-            if user:
-                try:
-                    uid = pwd.getpwnam(user).pw_uid
-                except KeyError:
-                    raise error.InvalidUser("No such user '%s'" % user)
-                if uid != os.getuid():
-                    os.setuid(uid)
-                if uid != os.geteuid():
-                    os.seteuid(uid)
-
-            if umask:
-                os.umask(umask)
-
+    def _execute(self, command, stdin=None, stdout=None, stderr=None):
         p = subprocess.Popen(command,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
-                             cwd=cwd or "/",
-                             env=newenv,
-                             preexec_fn=preexec,
+                             cwd="/tmp",
                              )
         returncode, stdout, stderr = self.communicate(p, stdout, stderr)
         return returncode, stdout, stderr
+
+    def whoami(self):
+        return pwd.getpwuid(os.getuid()).pw_name
 
     def exists(self, path):
         return os.path.exists(path)
@@ -187,7 +145,7 @@ class LocalTransport(base.Transport):
         return open(path).read()
 
     def put(self, path, contents, chmod=0o644):
-        fd = os.open(path, os.O_WRONLY|os.O_CREAT|os.O_SYNC|os.O_DIRECT, chmod)
+        fd = os.open(path, os.O_WRONLY|os.O_CREAT|os.O_SYNC, chmod)
         os.write(fd, contents)
         os.close(fd)
 

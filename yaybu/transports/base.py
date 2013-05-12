@@ -13,7 +13,10 @@
 # limitations under the License.
 
 import logging
-from ..core import error
+import pipes
+import os
+
+from .. import error
 
 class Transport(object):
 
@@ -28,3 +31,58 @@ class Transport(object):
         self.env_passthrough = ["SSH_AUTH_SOCK"]
         if env_passthrough:
             self.env_passthrough.extend(env_passthrough)
+
+    def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
+        # No need to change user if we are already the right one
+        if not user:
+            user = self.whoami()
+
+        changeuser = (user != self.whoami())
+
+        full_command = []
+        if changeuser or group:
+            full_command.append('sudo')
+            full_command.append('-E')
+        if changeuser:
+            full_command.extend(['-u', user])
+        if group:
+            full_command.extend(['-g', group])
+
+        if isinstance(command, list):
+            command = " ".join([pipes.quote(c) for c in command])
+
+        parts = []
+
+        newenv = {}
+        if self.env_passthrough:
+            for var in self.env_passthrough:
+                if var in os.environ:
+                    newenv[var] = os.environ[var]
+
+        newenv.update({
+            #"HOME": "/home/" + self.user,
+            "LOGNAME": user,
+            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "SHELL": "/bin/sh",
+            })
+
+        if env:
+            newenv.update(env)
+
+        full_command.extend(["env", "-i"])
+        for k, v in newenv.items():
+            full_command.append("%s=%s" % (k, v))
+
+        parts = []
+        if umask:
+            parts.append("umask %o" % umask)
+
+        parts.extend([
+            "cd %s" % (cwd or "/"),
+            command,
+            ])
+
+        full_command.extend(["sh", "-c", "; ".join(parts)])
+        print full_command 
+        return self._execute(full_command, stdin, stdout, stderr)
+

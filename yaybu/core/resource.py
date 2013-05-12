@@ -13,12 +13,12 @@
 # limitations under the License.
 
 import sys, os, hashlib
-from argument import Argument, List, PolicyArgument, String
-import policy
-import error
+from yaybu.core.argument import Argument, List, PolicyArgument, String
+from yaybu.core import policy
+from yaybu import error
 import collections
-import ordereddict
-import event
+from yaybu.core import ordereddict
+from yaybu.core import event
 
 from yay.errors import LanguageError, get_exception_context
 

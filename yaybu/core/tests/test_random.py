@@ -7,6 +7,7 @@ from yaybu.core import error
 
 import mock
 
+"""
 class Test_Random(FakeChrootTestCase):
 
     # needs more work, particularly the File argument
@@ -35,3 +36,5 @@ class Test_Random(FakeChrootTestCase):
     def NOtest_random(self):
         for r in resource.ResourceType.resources.values():
             self.resource_test_valid(r)
+"""
+

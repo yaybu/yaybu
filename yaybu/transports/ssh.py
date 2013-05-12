@@ -21,7 +21,7 @@ import paramiko
 
 from yay import String
 
-from ..core import error
+from .. import error
 from . import base
 
 
@@ -85,35 +85,12 @@ class RemoteTransport(base.Transport):
         """ Thinking we grab env, users, groups, etc so we can do extra pre-validation... """
         pass
 
-    def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
+    def whoami(self):
+        return self.connect().get_transport().get_username()
+
+    def _execute(self, command, stdin, stdout, stderr):
         client = self.connect() # This should be done once per context object
         transport = client.get_transport()
-
-        # No need to change user if we are already the right one
-        if user == transport.get_username():
-            user = None
-
-        full_command = []
-        if user or group:
-            full_command.append('sudo')
-        if user:
-            full_command.extend(['-u', user])
-        if group:
-            full_command.extend(['-g', group])
-
-        if isinstance(command, list):
-            command = " ".join([pipes.quote(c) for c in command])
-
-        if env:
-            vars = []
-            for k, v in env.items():
-                vars.append("%s=%s" % (k, pipes.quote(v)))
-            command = "export " + " ".join(vars) + "; " + command
-            full_command.extend(["env", "-"])
-
-        full_command.extend(["sh", "-c", command])
-
-        # print ' '.join([pipes.quote(c) for c in full_command])
 
         channel = transport.open_session()
         channel.exec_command(' '.join([pipes.quote(c) for c in full_command]))

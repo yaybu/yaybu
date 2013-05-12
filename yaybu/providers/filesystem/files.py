@@ -143,7 +143,7 @@ class RemoveFile(provider.Provider):
         if context.transport.exists(self.resource.name):
             if not context.transport.isfile(self.resource.name):
                 raise error.InvalidProvider("%s exists and is not a file" % self.resource.name)
-            context.transport.delete(self.resource.name)
+            context.changelog.apply(ShellCommand(["rm", self.resource.name]))
             changed = True
         else:
             context.changelog.debug("File %s missing already so not removed" % self.resource.name)

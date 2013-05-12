@@ -27,9 +27,9 @@ from libcloud.common.types import LibcloudError
 from libcloud.compute.types import NodeState
 from libcloud.compute.base import NodeImage, NodeSize
 
-from ssh.ssh_exception import SSHException
-from ssh.rsakey import RSAKey
-from ssh.dsskey import DSSKey
+from paramiko.ssh_exception import SSHException
+from paramiko.rsakey import RSAKey
+from paramiko.dsskey import DSSKey
 
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized

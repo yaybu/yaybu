@@ -104,7 +104,7 @@ class ShellCommand(base.Change):
                 command_exists = False
 
         if not command_exists:
-            if not self.simulate:
+            if not ctx.simulate:
                 raise error.BinaryMissing("Command '%s' not found" % command[0])
             renderer.stderr("Command '%s' not found; assuming this recipe will create it" % command[0])
             self.returncode = 0
@@ -112,7 +112,7 @@ class ShellCommand(base.Change):
             self.stderr = ""
             return
 
-        self.returncode, self.stdout, self.stderr = transport.execute(command, stdin=self.stdin, stdout=renderer.stdout, stderr=renderer.stderr, env=env, user=self.user, group=self.group, cwd=self.cwd)
+        self.returncode, self.stdout, self.stderr = transport.execute(command, stdin=self.stdin, stdout=renderer.stdout, stderr=renderer.stderr, env=env, user=self.user, group=self.group, cwd=self.cwd, umask=self.umask)
 
         if self.expected is not None and self.returncode != self.expected:
             raise error.SystemError(self.returncode, self.stdout, self.stderr)

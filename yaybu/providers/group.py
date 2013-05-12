@@ -69,7 +69,7 @@ class Group(provider.Provider):
         try:
             context.changelog.apply(ShellCommand(command))
         except error.SystemError as exc:
-            raise error.GroupError("%s on %s failed with return code %d" % (command[0], self.resource, exc.returncode))
+            raise error.InvalidGroup("%s on %s failed with return code %d" % (command[0], self.resource, exc.returncode))
 
         return True
 
@@ -93,7 +93,7 @@ class GroupRemove(provider.Provider):
         try:
             context.changelog.apply(ShellCommand(command))
         except error.SystemError as exc:
-            raise error.GroupError("groupdel on %s failed with return code %d" % (self.resource, exc.returncode))
+            raise error.InvalidGroup("groupdel on %s failed with return code %d" % (self.resource, exc.returncode))
 
         return True
 

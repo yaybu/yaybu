@@ -50,9 +50,9 @@ class AttributeChanger(base.Change):
             try:
                 owner = transport.getpwnam(self.user)
             except KeyError:
-                if not self.context.simulate:
+                if not context.simulate:
                     raise error.InvalidUser("User '%s' not found" % self.user)
-                self.context.changelog.info("User '%s' not found; assuming this recipe will create it" % self.user)
+                context.changelog.info("User '%s' not found; assuming this recipe will create it" % self.user)
                 owner = None
 
             if not owner or owner.pw_uid != uid:
@@ -63,9 +63,9 @@ class AttributeChanger(base.Change):
             try:
                 group = transport.getgrnam(self.group)
             except KeyError:
-                if not self.context.simulate:
+                if not context.simulate:
                     raise error.InvalidGroup("No such group '%s'" % self.group)
-                self.context.changelog.info("Group '%s' not found; assuming this recipe will create it" % self.group) #FIXME
+                context.changelog.info("Group '%s' not found; assuming this recipe will create it" % self.group) #FIXME
                 group = None
 
             if not group or group.gr_gid != gid:
