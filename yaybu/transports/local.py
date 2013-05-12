@@ -61,10 +61,12 @@ class Handle(object):
         return out
 
 
-class LocalTransport(base.Transport):
+class LocalExecute(object):
 
-    def communicate(self, p, stdout_fn=None, stderr_fn=None):
+    def communicate(self, p, stdin=None, stdout_fn=None, stderr_fn=None):
         if p.stdin:
+            if stdin:
+                p.stdin.write(stdin)
             p.stdin.flush()
             p.stdin.close()
 
@@ -106,13 +108,22 @@ class LocalTransport(base.Transport):
         return returncode, stdout.output, stderr.output
 
     def _execute(self, command, stdin=None, stdout=None, stderr=None):
+        #print command
         p = subprocess.Popen(command,
+                             stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
                              cwd="/tmp",
+                             env=self.env,
                              )
-        returncode, stdout, stderr = self.communicate(p, stdout, stderr)
+        returncode, stdout, stderr = self.communicate(p, stdin, stdout, stderr)
+        #print ">>", returncode
+        #print ">>", stdout
+        #print ">>", stderr
         return returncode, stdout, stderr
+
+
+class LocalTransport(LocalExecute, base.Transport):
 
     def whoami(self):
         return pwd.getpwuid(os.getuid()).pw_name
@@ -178,3 +189,5 @@ class LocalTransport(base.Transport):
 
     def getspnam(self, name):
         return spwd.getspnam(name)
+
+

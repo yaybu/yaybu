@@ -35,6 +35,48 @@ auditlog:
    mode: file
 """
 
+sudo = """
+#! /usr/bin/python
+
+import optparse
+import sys
+import pwd
+import grp
+import os
+
+print "FAKE-SUDO called"
+
+p = optparse.OptionParser()
+p.add_option("-u", "--user", default="root")
+p.add_option("-g", "--group", default=None)
+
+for i, arg in enumerate(sys.argv):
+    if arg == "--":
+        break
+else:
+    print "FAKE-SUDO: No '--' provided"
+    sys.exit(1)
+
+opts, args = p.parse_args(sys.argv[:i])
+args = sys.argv[i+1:]
+
+if not opts.group:
+    opts.group = grp.getgrgid(pwd.getpwnam(opts.user).pw_gid).gr_name
+
+uid = pwd.getpwnam(opts.user).pw_uid
+gid = grp.getgrnam(opts.group).gr_gid
+
+if os.getgid() != gid:
+    print "FAKE-SUDO: Changing gid from %d to %d" % (os.getgid(), gid)
+    os.setgid(gid)
+
+if os.getuid() != uid:
+    print "FAKE-SUDO: Changing uid from %d to %d" % (os.getuid(), uid)
+    os.setuid(uid)
+
+os.execvp(args[0], args)
+""".lstrip()
+
 distro_flags = {
     "Ubuntu 10.04": dict(
         name="lucid",
@@ -115,6 +157,10 @@ class FakeChrootFixture(Fixture):
         with self.open("/etc/yaybu", "w") as fp:
             fp.write(yaybu_cfg)
 
+        with self.open("/usr/bin/sudo", "w") as fp:
+            fp.write(sudo)
+        os.chmod(self._enpathinate("/usr/bin/sudo"), 0o755)
+
     def cleanUp(self):
         self.cleanup_session()
         if os.path.exists(self.ilist_path):
@@ -193,8 +239,16 @@ class FakeChrootFixture(Fixture):
         env = os.environ.copy()
 
         env['FAKECHROOT'] = 'true'
-        # env['FAKECHROOT_EXCLUDE_PATH'] = ":".join([
-        #    ])
+        env['FAKECHROOT_EXCLUDE_PATH'] = ":".join([
+            '/dev', '/proc', '/sys', self.chroot_path,
+            ])
+        env['FAKECHROOT_CMD_SUBST'] = ":".join([
+            '/usr/sbin/chroot=/usr/sbin/chroot.fakechroot',
+            '/sbin/ldconfig=/bin/true',
+            '/usr/bin/ischroot=/bin/true',
+            '/usr/bin/ldd=/usr/bin/ldd.fakechroot',
+            ])
+        env['FAKECHROOT_BASE'] = self.chroot_path
 
         # Set up fakeroot stuff
         env['FAKEROOTKEY'] = self.get_session()
@@ -235,30 +289,34 @@ class FakeChrootFixture(Fixture):
 
     def call(self, command):
         env = self.get_env()
-        p = subprocess.Popen(["/usr/sbin/chroot", self.chroot_path] + command, cwd=self.chroot_path, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p = subprocess.Popen(command, cwd=self.chroot_path, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, stderr = p.communicate()
         print stdout
         return p.returncode
 
     def yaybu(self, *args):
-        if self.test_network:
-            filespath = os.path.join(self.chroot_path, "/tmp", "files")
-            args = [self.chroot_path+arg if arg.startswith("/") else arg for arg in args]
-            args.insert(0, "test://")
-            from yaybu.core.command import YaybuCmd
-            from yaybu.core.remote import TestRemoteRunner
-            from optparse import OptionParser
-            class T(TestRemoteRunner):
-                env = self.get_env()
-                cwd = self.chroot_path
-            p = OptionParser()
-            y = YaybuCmd(ypath=(filespath, ))
-            y.opts_push(p)
-            return y.do_push(*p.parse_args(args), runner=T)
-        else:
-            args = list(args)
-            args.insert(0, "apply")
-            return self.call(["yaybu", "-v", "-v", "-d", "--ypath", "/tmp/files"] + args)
+        filespath = os.path.join(self.chroot_path, "/tmp", "files")
+        args = [self.chroot_path+arg if arg.startswith("/") else arg for arg in args]
+        from yaybu.core.command import YaybuCmd
+        from yaybu.core.runcontext import RunContext
+        from yaybu.transports import FakechrootTransport
+        from optparse import OptionParser
+        class T(FakechrootTransport):
+            env = self.get_env()
+            chroot_path = self.chroot_path
+        class Context(RunContext):
+            Transport = T
+        p = OptionParser()
+        y = YaybuCmd(ypath=(filespath, ))
+        y.ypath = [filespath]
+        y.verbose = 2
+        y.debug = True
+        y.opts_push(p)
+        try:
+            return y.do_apply(*p.parse_args(args), context=Context)
+        except SystemError:
+            return 0
+        # return self.call(["yaybu", "-v", "-v", "-d", "--ypath", "/tmp/files"] + args)
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """

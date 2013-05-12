@@ -37,6 +37,7 @@ class RunContext(object):
     simulate = False
     ypath = ()
     verbose = 0
+    Transport = RemoteTransport
 
     def __init__(self, configfile, resume=False, no_resume=False, user="root",
                  host=None, ypath=(), simulate=False, verbose=2,
@@ -91,7 +92,7 @@ class RunContext(object):
             self._config.set_hostname(self.host)
 
     def setup_shell(self, env_passthrough):
-        self.transport = LocalTransport(context=self,
+        self.transport = self.Transport(context=self,
             verbose=self.verbose,
             simulate=self.simulate,
             env_passthrough=env_passthrough)
@@ -166,14 +167,4 @@ class RunContext(object):
             return "/var/run/yaybu"
         return os.path.join("/var/run/yaybu", path)
 
-
-class RemoteRunContext(RunContext):
-
-    def setup_shell(self, env_passthrough):
-        self.transport = RemoteTransport(
-            context=self,
-            verbose=self.verbose,
-            simulate=self.simulate,
-            env_passthrough=env_passthrough
-            )
 

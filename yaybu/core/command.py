@@ -133,7 +133,7 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
 
-    def do_apply(self, opts, args):
+    def do_apply(self, opts, args, context=runcontext.RunContext):
         """
         usage: apply [options] <filename>
         Applies the specified file to the current host
@@ -145,7 +145,7 @@ class YaybuCmd(OptionParsingCmd):
             config = yay.load_uri("/etc/yaybu")
             opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
         r = runner.Runner()
-        ctx = runcontext.RunContext(args[0],
+        ctx = context(args[0],
                                     resume=opts.resume,
                                     no_resume=opts.no_resume,
                                     user=opts.user,
@@ -158,8 +158,8 @@ class YaybuCmd(OptionParsingCmd):
         if len(args) > 1:
             ctx.get_config().set_arguments_from_argv(args[1:])
         rv = r.run(ctx)
-        if rv != 0:
-            raise SystemExit(rv)
+        #if rv != 0:
+        #    raise SystemExit(rv)
         return rv
 
     def opts_push(self, parser):

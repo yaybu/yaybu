@@ -1,3 +1,6 @@
 
 from .local import LocalTransport
-from .ssh import RemoteTransport
+from .remote import RemoteTransport
+from .ssh import SSHTransport
+from .fakechroot import FakechrootTransport
+

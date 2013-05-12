@@ -23,6 +23,8 @@ class Transport(object):
     """ This object wraps a shell in yet another shell. When the shell is
     switched into "simulate" mode it can just print what would be done. """
 
+    env = None
+
     def __init__(self, context, verbose=0, simulate=False, env_passthrough=None):
         self.simulate = context.simulate
         self.verbose = context.verbose
@@ -42,11 +44,12 @@ class Transport(object):
         full_command = []
         if changeuser or group:
             full_command.append('sudo')
-            full_command.append('-E')
         if changeuser:
             full_command.extend(['-u', user])
         if group:
             full_command.extend(['-g', group])
+        if changeuser or group:
+            full_command.append("--")
 
         if isinstance(command, list):
             command = " ".join([pipes.quote(c) for c in command])
@@ -58,6 +61,9 @@ class Transport(object):
             for var in self.env_passthrough:
                 if var in os.environ:
                     newenv[var] = os.environ[var]
+
+        if self.env:
+            newenv.update(self.env)
 
         newenv.update({
             #"HOME": "/home/" + self.user,
@@ -83,6 +89,5 @@ class Transport(object):
             ])
 
         full_command.extend(["sh", "-c", "; ".join(parts)])
-        print full_command 
         return self._execute(full_command, stdin, stdout, stderr)
 
