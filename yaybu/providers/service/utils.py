@@ -38,19 +38,18 @@ class _ServiceMixin(object):
         if not self.resource.pidfile:
             return "unknown"
 
-        if not os.path.exists(self.resource.pidfile):
+        if not context.transport.exists(self.resource.pidfile):
             return "not-running"
 
-        pid = open(self.resource.pidfile).read().strip()
+        pid = context.transport.get(self.resource.pidfile).strip()
         try:
             pid = int(pid)
         except:
             return "unknown"
 
-        try:
-            os.kill(pid, 0)
+        if context.transport.execute(["kill", "-0", str(pid)])[0] == 0:
             return "running"
-        except OSError, e:
+        else:
             return "not-running"
 
     def do(self, context, action):
