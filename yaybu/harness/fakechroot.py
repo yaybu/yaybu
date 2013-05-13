@@ -136,7 +136,6 @@ class FakeChrootFixture(Fixture):
     faked = None
 
     testbase = os.path.realpath(os.getenv("YAYBU_TESTS_BASE", "base-image"))
-    test_network = os.environ.get("TEST_NETWORK", "0") == "1"
     statefile = os.path.realpath("fakeroot.state")
 
     def setUp(self):
@@ -159,14 +158,8 @@ class FakeChrootFixture(Fixture):
             if not os.path.exists(dep):
                 raise SkipTest("Need '%s' to run integration tests" % dep)
 
-        if self.firstrun:
-            if not os.path.exists(self.testbase):
-                self.build_environment()
-            self.refresh_environment()
-
-            # We only refresh the base environment once, so
-            # set this on the class to make sure any other fixtures pick it up
-            FakeChrootFixture.firstrun = False
+        if not os.path.exists(self.testbase):
+            self.build_environment()
 
         self.clone()
 
@@ -239,20 +232,6 @@ class FakeChrootFixture(Fixture):
             ]
         for command in commands:
             self.run_command(command, distro)
-
-    def refresh_environment(self):
-        if os.path.exists("src/yay"):
-            self.msg("(re) installing dev copy of yay")
-            yay_path = os.path.join(self.testbase, "usr/local/lib/python2.*/dist-packages/yay*")
-            self.run_command('bash -c "rm -rf %s"' % yay_path)
-            self.run_command("python setup.py sdist --dist-dir %(base_image)s", cwd="src/yay")
-            self.run_command("fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /yay-*.tar.gz'")
-
-        self.msg("(re) installing dev copy of Yaybu")
-        yaybu_path = os.path.join(self.testbase, "usr/local/lib/python2.*/dist-packages/Yaybu*")
-        self.run_command('bash -c "rm -rf %s"' % yaybu_path)
-        self.run_command("python setup.py sdist --dist-dir %(base_image)s")
-        self.run_command("fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'")
 
     def cleanup_session(self):
         if self.faked:
