@@ -54,7 +54,10 @@ class RemoteTransport(object):
         return self.execute(["test", "-L", path])[0] == 0
 
     def stat(self, path):
-        data = self.execute(["stat", "-L", "-t", path])[1].split(" ")
+        returncode, stdout, stderr = self.execute(["stat", "-L", "-t", path])
+        if returncode != 0:
+            raise OSError
+        data = stdout.split(" ")
         return stat_result(
             int(data[3], 16), # st_mode
             int(data[8]), #st_ino
@@ -69,7 +72,10 @@ class RemoteTransport(object):
             )
 
     def lstat(self, path):
-        data = self.execute(["stat", "-t", path])[1].split(" ")
+        returncode, stdout, stderr = self.execute(["stat", "-t", path])
+        if returncode != 0:
+            raise OSError
+        data = stdout.split(" ")
         return stat_result(
             int(data[3], 16), # st_mode
             int(data[8]), #st_ino
@@ -88,11 +94,10 @@ class RemoteTransport(object):
         return self.execute(["stat", path])[0] == 0
 
     def readlink(self, path):
-        try:
-            link = self.execute(["readlink", path])[1].split("\n")[0].strip()
-            return link
-        except SystemError:
+        returncode, stdout, stderr = self.execute(["readlink", path])
+        if returncode != 0:
             raise OSError
+        return stdout.split("\n")[0].strip()
 
     def get(self, path):
         return self.execute(["cat", path])[1]
