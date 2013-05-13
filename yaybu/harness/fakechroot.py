@@ -70,12 +70,48 @@ if os.getgid() != gid:
     print "FAKE-SUDO: Changing gid from %d to %d" % (os.getgid(), gid)
     os.setgid(gid)
 
+if os.getegid() != gid:
+    print "FAKE-SUDO: Changing egid from %d to %d" % (os.getegid(), gid)
+    os.setegid(gid)
+
 if os.getuid() != uid:
     print "FAKE-SUDO: Changing uid from %d to %d" % (os.getuid(), uid)
     os.setuid(uid)
 
+if os.geteuid() != uid:
+    print "FAKE-SUDO: Changing euid from %d to %d" % (os.geteuid(), uid)
+    os.seteuid(uid)
+
+sys.stdout.flush()
 os.execvp(args[0], args)
 """.lstrip()
+
+env = """
+#! /usr/bin/python
+print "FAKE-ENV called"
+
+import sys
+import os
+
+argv = sys.argv[:]
+while argv[0] != "-i":
+    argv.pop(0)
+argv.pop(0)
+
+env = {}
+
+for k, v in os.environ.items():
+    if k.startswith("FAKECHROOT") or k.startswith("FAKEROOT") or k.startswith("COWDANCER") or k == "LD_PRELOAD" or k == "LD_LIBRARY_PATH":
+        env[k] = v
+
+while "=" in argv[0]:
+    k, v = argv[0].split("=", 1)
+    env[k] = v
+    argv.pop(0)
+
+os.execvpe(argv[0], argv, env)
+""".lstrip()
+
 
 distro_flags = {
     "Ubuntu 10.04": dict(
@@ -160,6 +196,10 @@ class FakeChrootFixture(Fixture):
         with self.open("/usr/bin/sudo", "w") as fp:
             fp.write(sudo)
         os.chmod(self._enpathinate("/usr/bin/sudo"), 0o755)
+
+        with self.open("/usr/bin/env", "w") as fp:
+            fp.write(env)
+        os.chmod(self._enpathinate("/usr/bin/env"), 0o755)
 
     def cleanUp(self):
         self.cleanup_session()
@@ -393,7 +433,8 @@ class FakeChrootFixture(Fixture):
         return os.stat(self._enpathinate(path))
 
     def _enpathinate(self, path):
-        return os.path.join(self.chroot_path, *path.split(os.path.sep))
+        path = os.path.join(self.chroot_path, path.lstrip('/'))
+        return path
 
     def get_user(self, user):
         users_list = open(self._enpathinate("/etc/passwd")).read().splitlines()
