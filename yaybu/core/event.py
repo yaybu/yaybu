@@ -36,8 +36,8 @@ class EventState(object):
     def load(self):
         if self.loaded:
             return
-        if self.transport.path.exists(self.save_file):
-            self.overrides = json.load(self.transport.get(self.save_file))
+        if self.transport.exists(self.save_file):
+            self.overrides = json.loads(self.transport.get(self.save_file))
         self.loaded = True
 
     def override(self, resource, policy):
@@ -81,6 +81,6 @@ class EventState(object):
 # alternatives may be uglier
 state = EventState()
 
-def reset():
+def reset(load=False):
     global state
-    state = EventState()
+    state = EventState(load)

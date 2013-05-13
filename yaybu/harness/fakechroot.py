@@ -236,6 +236,9 @@ class FakeChrootFixture(Fixture):
         return p.returncode
 
     def yaybu(self, *args):
+        from yaybu.core import event
+        event.reset(True)
+
         filespath = os.path.join(self.chroot_path, "/tmp", "files")
         args = [self.chroot_path+arg if arg.startswith("/") else arg for arg in args]
         from yaybu.core.command import YaybuCmd
