@@ -168,6 +168,7 @@ class TestResourceBundle(unittest.TestCase):
     def setUp(self):
         from yaybu.core import event
         event.reset()
+        event.EventState.transport = Mock()
 
     def test_creation(self):
         resources = resource.ResourceBundle.create_from_list([
