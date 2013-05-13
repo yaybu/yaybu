@@ -12,19 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try:
-    from fixtures import Fixture as BaseFixture
-except ImportError:
-    class BaseFixture(object):
-        """
-        I am a Fixture compatible with the fixtures API by Robert Collins
-        If the fixtures package is installed I won't be used.
-        """
-        def getDetails(self):
-            return {}
 
-
-class Fixture(BaseFixture):
+class Fixture(object):
 
     """ A base class for Fixtures that providing virtual environments to deploy configuration in.
 

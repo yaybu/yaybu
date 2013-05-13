@@ -18,6 +18,7 @@ import shlex
 from yaybu.core import provider
 from yaybu.core import error
 from yaybu import resources
+from yaybu.changes import ShellCommand
 
 
 class Execute(provider.Provider):
@@ -28,43 +29,21 @@ class Execute(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Execute, self).isvalid(*args, **kwargs)
 
-    def execute(self, shell, command, expected_returncode=None, inert=False):
-        # Filter out empty strings...
-        cwd = self.resource.cwd or None
-        env = self.resource.environment or None
-
-        try:
-            rc, stdout, stderr = shell.execute(command, 
-                cwd=cwd,
-                env=env,
-                user=self.resource.user,
-                group=self.resource.group,
-                inert=inert,
-                umask=self.resource.umask
-                )
-        except error.SystemError as exc:
-            rc = exc.returncode
-
-        if not shell.simulate:
-            if expected_returncode != None and expected_returncode != rc:
-                raise error.CommandError("%s failed with return code %d" % (self.resource, rc))
-
-        return rc
-
     def apply(self, context):
         if self.resource.creates is not None \
-           and os.path.exists(self.resource.creates):
+           and context.transport.exists(self.resource.creates):
             #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
             return False
 
         if self.resource.touch is not None \
-                and os.path.exists(self.resource.touch):
+                and context.transport.exists(self.resource.touch):
             return False
 
         if self.resource.unless:
             try:
-                if self.execute(context.shell, self.resource.unless, inert=True) == 0:
+                if context.transport.execute(self.resource.unless)[0] == 0:
                     return False
+
             except error.InvalidUser as exc:
                 # If a simulation and user missing then we can run our 'unless'
                 # guard. We bail out with True so that Yaybu treates the
@@ -73,6 +52,7 @@ class Execute(provider.Provider):
                     context.changelog.info("User '%s' not found; assuming this recipe will create it" % self.resource.user)
                     return True
                 raise
+
             except error.InvalidGroup as exc:
                 # If a simulation and group missing then we can run our 'unless'
                 # guard. We bail out with True so that Yaybu treates the
@@ -84,10 +64,21 @@ class Execute(provider.Provider):
 
         commands = [self.resource.command] if self.resource.command else self.resource.commands
         for command in commands:
-            self.execute(context.shell, command, self.resource.returncode)
+            try:
+                context.changelog.apply(ShellCommand(command,
+                    cwd=self.resource.cwd or None,
+                    env=self.resource.environment or None,
+                    user=self.resource.user,
+                    group=self.resource.group,
+                    umask=self.resource.umask
+                    ))
+            except error.SystemError as exc:
+                rc = exc.returncode
+                if self.resource.returncode is not None and rc != self.resource.returncode:
+                    raise error.CommandError("%s failed with return code %d" % (self.resource, rc))
 
         if self.resource.touch is not None:
-            context.shell.execute(["touch", self.resource.touch])
+            context.changelog.apply(ShellCommand(["touch", self.resource.touch]))
 
         return True
 

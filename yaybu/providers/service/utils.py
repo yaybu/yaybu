@@ -16,6 +16,8 @@ import os
 
 from yaybu.core import error
 from yaybu import resources
+from yaybu.changes import ShellCommand
+
 
 # http://upstart.ubuntu.com/getting-started.html
 # http://upstart.ubuntu.com/cookbook/#initctl-status
@@ -26,34 +28,32 @@ class _ServiceMixin(object):
 
     def status(self, context):
         if self.resource.running:
-            try:
-                context.shell.execute(self.resource.running, inert=True)
-            except error.SystemError:
-                return "not-running"
-            else:
+            rc, stdout, stderr = context.transport.execute(self.resource.running)
+            if rc == 0:
                 return "running"
+            else:
+                return "not-running"            
 
         if not self.resource.pidfile:
             return "unknown"
 
-        if not os.path.exists(self.resource.pidfile):
+        if not context.transport.exists(self.resource.pidfile):
             return "not-running"
 
-        pid = open(self.resource.pidfile).read().strip()
+        pid = context.transport.get(self.resource.pidfile).strip()
         try:
             pid = int(pid)
         except:
             return "unknown"
 
-        try:
-            os.kill(pid, 0)
+        if context.transport.execute(["kill", "-0", str(pid)])[0] == 0:
             return "running"
-        except OSError, e:
+        else:
             return "not-running"
 
     def do(self, context, action):
         try:
-            context.shell.execute(self.get_command(action))
+            context.changelog.apply(ShellCommand(self.get_command(action)))
         except error.SystemError as exc:
             raise error.CommandError("%s failed with return code %d" % (action, exc.returncode))
 

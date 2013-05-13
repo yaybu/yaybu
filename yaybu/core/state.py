@@ -19,6 +19,36 @@ from yaybu.core.util import memoized
 
 logger = logging.getLogger(__name__)
 
+class PartState(object):
+
+    def __init__(self, state, partid):
+        self.state = state
+        self.partid = partid
+        self.data = {}
+
+    def refresh(self):
+        self.data = self.state.get_state(self.partid)
+
+    def update(self, **kwargs):
+        self.refresh()
+        self.data.update(kwargs)
+        self.state.set_state(self.partid, self.data)
+
+    def keys(self):
+        return self.data.keys()
+
+    def __contains__(self, key):
+        return key in self.data
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __getattr__(self, key):
+        try:
+            return self.data[key]
+        except KeyError:
+            raise AttributeError(key)
+
 
 class StateStorageType(ABCMeta):
 
@@ -48,7 +78,7 @@ class StateStorage(object):
     def get_state(self, part_name):
         raise NotImplementedError
 
-    def set_state(self, part):
+    def set_state(self, part_name, state):
         raise NotImplementedError
 
 
@@ -67,7 +97,7 @@ class SimulatedStateStorageAdaptor(StateStorage):
             return self.child.get_state(part_name)
         return x
 
-    def set_state(self, part):
+    def set_state(self, part_name, state):
         pass
 
 
@@ -79,8 +109,8 @@ class FileStateStorage(StateStorage):
         self.load()
         return self.data.get(part_name, {})
 
-    def set_state(self, part):
-        self.data[part.name] = part.get_state()
+    def set_state(self, part_name, state):
+        self.data[part_name] = state
         self.store()
 
     def get_stream(self):
@@ -174,6 +204,6 @@ class CloudFileStateStorage(FileStateStorage):
         container.upload_object_via_stream(
             stream,
             self.cluster.name,
-            {'content_type': 'text/yaml'}
+            {'content_type': 'application/json'}
             )
 

@@ -66,7 +66,7 @@ class _UpstartServiceMixin(utils._ServiceMixin):
     def status(self, context):
         command = ["/sbin/status", self.resource.name]
         try:
-            rv, stdout, stderr = context.shell.execute(command, inert=True)
+            rv, stdout, stderr = context.transport.execute(command)
         except error.SystemError as exc:
             raise error.CommandError("Got exit code of %d whilst trying to determine status" % exc.returncode)
 

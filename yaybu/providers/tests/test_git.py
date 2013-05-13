@@ -13,8 +13,8 @@ class GitTest(FakeChrootTestCase):
     access; this should ideally change in future.
     """
     # Assume presence of a master branch in the repos below
-    UPSTREAM_REPO = "git://github.com/isotoma/isotoma.recipe.django.git"
-    UPSTREAM_REPO_2 = "git://github.com/isotoma/yaybu.git"
+    UPSTREAM_REPO = '{{ "git://github.com/isotoma/isotoma.recipe.django.git" }}'
+    UPSTREAM_REPO_2 = '{{ "git://github.com/isotoma/yaybu.git" }}'
 
     OTHER_UPSTREAM_REF = "version3"
 

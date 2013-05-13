@@ -17,28 +17,23 @@ from __future__ import absolute_import
 
 import logging
 
-from yaybu.core.cloud.part import Part
-from yaybu.core.error import ArgParseError
 from yaybu.core.util import memoized
-
+from yay import ast, errors
 from libcloud.loadbalancer.base import Member, Algorithm
 from libcloud.loadbalancer.types import Provider, State
 from libcloud.loadbalancer.providers import get_driver
 from libcloud.common.types import LibcloudError
 
-from .elb import ElasticLoadBalancerDriver
-
 logger = logging.getLogger(__name__)
 
 
-class LoadBalancer(Part):
+class LoadBalancer(ast.PythonClass):
 
     """
     This part manages a libcloud load balancer
 
-        parts:
-            balancer:
-                class: loadbalancer
+        mylb:
+            create "yaybu.parts.loadbalancer:LoadBalancer":
                 driver:
                     id: AWS
                     key:
@@ -49,8 +44,8 @@ class LoadBalancer(Part):
                 algorithm: round-robin
 
                 members:
-                  - id: ${webnode.id}
-                    ip: ${webnode.public_ip}
+                  - id: {{webnode.id}}
+                    ip: {{webnode.public_ip}}
                     port: 8080
 
     Algorithm must be one of:
@@ -62,22 +57,17 @@ class LoadBalancer(Part):
 
     """
 
-    def __init__(self, cluster, name, config):
-        super(LoadBalancer, self).__init__(cluster, name, config)
+    keys = []
 
     @property
     @memoized
     def driver(self):
-        config = self.config.get("driver").resolve()
+        config = self["driver"].as_dict()
         self.driver_name = config['id']
         del config['id']
         driver = getattr(Provider, self.driver_name)
         driver_class = get_driver(driver)
-        return driver_class(**self.config)
+        return driver_class(**config)
 
-    def instantiate(self):
+    def apply(self):
         pass
-
-    def provision(self):
-        pass
-

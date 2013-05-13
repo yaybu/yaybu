@@ -15,12 +15,12 @@
 import sys
 import os
 import stat
-import pwd
-import grp
 import logging
 
 from yaybu import resources
 from yaybu.core import provider, error
+from yaybu.changes import ShellCommand
+
 
 class Link(provider.Provider):
 
@@ -33,27 +33,27 @@ class Link(provider.Provider):
         # but that will be modified by the yaybu script
         return super(Link, self).isvalid(*args, **kwargs)
 
-    def _get_owner(self):
+    def _get_owner(self, context):
         """ Return the uid for the resource owner, or None if no owner is
         specified. """
         if self.resource.owner is not None:
             try:
-                return pwd.getpwnam(self.resource.owner).pw_uid
+                return context.transport.getpwnam(self.resource.owner).pw_uid
             except KeyError:
                 raise error.InvalidUser()
 
-    def _get_group(self):
+    def _get_group(self, context):
         """ Return the gid for the resource group, or None if no group is
         specified. """
         if self.resource.group is not None:
             try:
-                return grp.getgrnam(self.resource.group).gr_gid
+                return context.transport.getgrnam(self.resource.group).gr_gid
             except KeyError:
                 raise error.InvalidGroup()
 
-    def _stat(self):
+    def _stat(self, context):
         """ Extract stat information for the resource. """
-        st = os.lstat(self.resource.name)
+        st = context.transport.lstat(self.resource.name)
         uid = st.st_uid
         gid = st.st_gid
         mode = stat.S_IMODE(st.st_mode)
@@ -69,29 +69,29 @@ class Link(provider.Provider):
         mode = None
         isalink = False
 
-        if not os.path.exists(to):
+        if not context.transport.exists(to):
             if not context.simulate:
                 raise error.DanglingSymlink("Destination of symlink %r does not exist" % to)
             context.changelog.info("Destination of sylink %r does not exist" % to)
 
-        owner = self._get_owner()
-        group = self._get_group()
+        owner = self._get_owner(context)
+        group = self._get_group(context)
 
         try:
-            linkto = os.readlink(name)
+            linkto = context.transport.readlink(name)
             isalink = True
         except OSError:
             isalink = False
 
         if not isalink or linkto != to:
-            if os.path.lexists(name):
-                context.shell.execute(["/bin/rm", "-rf", name])
+            if context.transport.lexists(name):
+                context.changelog.apply(ShellCommand(["/bin/rm", "-rf", name]))
 
-            context.shell.execute(["/bin/ln", "-s", self.resource.to, name])
+            context.changelog.apply(ShellCommand(["/bin/ln", "-s", self.resource.to, name]))
             changed = True
 
         try:
-            linkto = os.readlink(name)
+            linkto = context.transport.readlink(name)
             isalink = True
         except OSError:
             isalink = False
@@ -100,14 +100,14 @@ class Link(provider.Provider):
             raise error.OperationFailed("Did not create expected symbolic link")
 
         if isalink:
-            uid, gid, mode = self._stat()
+            uid, gid, mode = self._stat(context)
 
         if owner is not None and owner != uid:
-            context.shell.execute(["/bin/chown", "-h", self.resource.owner, name])
+            context.changelog.apply(ShellCommand(["/bin/chown", "-h", self.resource.owner, name]))
             changed = True
 
         if group is not None and group != gid:
-            context.shell.execute(["/bin/chgrp", "-h", self.resource.group, name])
+            context.changelog.apply(ShellCommand(["/bin/chgrp", "-h", self.resource.group, name]))
             changed = True
 
         return changed
@@ -121,10 +121,10 @@ class RemoveLink(provider.Provider):
         return super(RemoveLink, self).isvalid(*args, **kwargs)
 
     def apply(self, context):
-        if os.path.lexists(self.resource.name):
-            if not os.path.islink(self.resource.name):
+        if context.transport.lexists(self.resource.name):
+            if not context.transport.islink(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
-            context.shell.execute(["/bin/rm", self.resource.name])
+            context.changelog.apply(ShellCommand(["/bin/rm", self.resource.name]))
             return True
         return False
 

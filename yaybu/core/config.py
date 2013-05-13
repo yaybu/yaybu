@@ -14,10 +14,14 @@
 
 import os
 
+from yay.openers.base import Openers, SearchpathFromGraph
 from yay.errors import Error, NoMatching, get_exception_context
 from yay.config import Config as BaseConfig
 
 from yaybu.core.error import ParseError, ArgParseError
+from yaybu.core.util import memoized
+from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
+
 
 
 class YaybuArg:
@@ -95,7 +99,7 @@ class Config(BaseConfig):
     policies like looking in ``~/.yaybu/`` for certain things.
     """
 
-    def __init__(self, context, hostname=None):
+    def __init__(self, context=None, hostname=None, searchpath=None):
         self.context = context
 
         config = {
@@ -106,7 +110,7 @@ class Config(BaseConfig):
                 },
             }
 
-        super(Config, self).__init__(searchpath=context.ypath, config=config)
+        super(Config, self).__init__(searchpath=searchpath, config=config)
 
         if hostname:
             self.set_hostname(hostname)
@@ -119,22 +123,25 @@ class Config(BaseConfig):
         if os.path.exists(defaults_gpg):
             self.load_uri(defaults_gpg)
 
+    def setup_openers(self, searchpath):
+        self.add({"yaybu": {"searchpath": searchpath or []}})
+        self.openers = Openers(searchpath=SearchpathFromGraph(self.yaybu.searchpath))
+
     def set_arguments(self, **arguments):
         parser = YaybuArgParser()
 
         try:
-            args = self.mapping.get('yaybu').get('options').resolve()
+            args = list(self.yaybu.options)
         except NoMatching:
             args = []
- 
+
         for arg in args:
-            if 'name' not in arg:
-                raise KeyError("No name specified for an argument")
-            yarg = YaybuArg(arg['name'], 
-                            arg.get('type', 'string'),
-                            arg.get('default', None),
-                            arg.get('help', None)
-                            )
+            yarg = YaybuArg(
+                str(arg.name),
+                arg.type.as_string('string'),
+                arg.default.as_string(None),
+                arg.help.as_string(None),
+                )
             parser.add(yarg)
 
         self.add({
@@ -164,9 +171,27 @@ class Config(BaseConfig):
             return func(*args, **kwargs)
         except Error, e:
             msg = e.get_string()
-            if self.context.verbose > 2:
-                msg += "\n" + get_exception_context()
-            raise ParseError(e.get_string())        
+            msg += "\n" + get_exception_context()
+            raise ParseError(e.get_string())
+
+    @property
+    @memoized
+    def state(self):
+        # FIXME: Perhaps this should be done with "create" as well????
+        try:
+            storage_config = self["state-storage"].as_dict()
+            klass = storage_config['class']
+            del storage_config['class']
+        except NoMatching:
+            storage_config = {}
+            klass = "localfilestatestorage"
+
+        state = StateStorageType.types.get(klass)(**storage_config)
+
+        if self.simulate:
+            state = SimulatedStateStorageAdaptor(state)
+
+        return state
 
     def load_uri(self, *args, **kwargs):
         return self._reraise_yay_errors(super(Config, self).load_uri, *args, **kwargs)

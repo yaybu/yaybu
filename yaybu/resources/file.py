@@ -98,11 +98,11 @@ class File(Resource):
     template_args = Dict(default={})
     """The arguments passed to the template."""
 
-    def hash(self):
-        if not os.path.exists(self.name):
+    def hash(self, ctx):
+        if not ctx.transport.exists(self.name):
             return ""
-        return hashlib.sha1(open(self.name).read()).hexdigest() + \
-            str(os.stat(self.name).st_mtime)
+        return hashlib.sha1(ctx.transport.get(self.name)).hexdigest() + \
+            str(ctx.transport.stat(self.name).st_mtime)
 
 
 class FileApplyPolicy(Policy):

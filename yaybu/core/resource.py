@@ -13,12 +13,12 @@
 # limitations under the License.
 
 import sys, os, hashlib
-from argument import Argument, List, PolicyArgument, String
-import policy
-import error
+from yaybu.core.argument import Argument, List, PolicyArgument, String
+from yaybu.core import policy
+from yaybu import error
 import collections
-import ordereddict
-import event
+from yaybu.core import ordereddict
+from yaybu.core import event
 
 from yay.errors import LanguageError, get_exception_context
 
@@ -248,25 +248,27 @@ class ResourceBundle(ordereddict.OrderedDict):
         parameters, build a resource bundle.  """
         bundle = cls()
         try:
-            for node in expression.expand():
+            for node in expression.get_iterable():
                 spec = node.resolve()
                 bundle.add_from_spec(spec)
 
         except LanguageError as exc:
             p = error.ParseError()
-            p.msg = exc.get_string()
+            p.msg = str(exc)
             if verbose_errors:
                 p.msg += "\n" + get_exception_context()
-            p.file = exc.file
-            p.line = exc.line
-            p.column = exc.column
+            if exc.anchor:
+                p.file = exc.anchor.source
+                p.line = exc.anchor.lineno
+            p.column = 0
             raise p
 
         except error.ParseError as exc:
-            exc.msg += "\nFile %s, line %d, column %d" % (node.name, node.line, node.column)
-            exc.file = node.name
-            exc.line = node.line
-            exc.column = node.column
+            if getattr(node, "anchor", None):
+                exc.msg += "\nFile %s, line %d, column %s" % (node.anchor.source, node.anchor.lineno, "unknown")
+                exc.file = node.anchor.source
+                exc.line = node.anchor.lineno
+            exc.column = 0
             raise
 
         return bundle
@@ -311,7 +313,7 @@ class ResourceBundle(ordereddict.OrderedDict):
                 "name": watched,
                 "policy": "watched",
             })
-            w._original_hash = w.hash()
+            w._original_hash = None
 
         return kls
 
@@ -332,9 +334,14 @@ class ResourceBundle(ordereddict.OrderedDict):
     def apply(self, ctx, config):
         """ Apply the resources to the system, using the provided context and
         overall configuration. """
+        for resource in self.values():
+           if hasattr(resource, "_original_hash"):
+               resource._original_hash = resource.hash(ctx)
+
         something_changed = False
         for resource in self.values():
             with ctx.changelog.resource(resource):
                 if resource.apply(ctx, config):
                     something_changed = True
         return something_changed
+

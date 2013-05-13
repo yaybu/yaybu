@@ -49,7 +49,7 @@ class TestGroup(FakeChrootTestCase):
                     gid: 100
             """)
 
-        self.failUnlessEqual(rv, 4)
+        self.failUnlessEqual(rv, 140)
         self.failUnlessRaises(KeyError, self.fixture.get_group, "test")
 
     def test_add_group_and_use_it(self):

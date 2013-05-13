@@ -46,17 +46,17 @@ class Execute(Resource):
 
         Execute:
           name: core_packages_apt_key
-          command: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys ${source.key}
+          command: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys {{source.key}}
 
     A much more complex example. This shows executing a command if a checkout synchronises::
 
-        Execute.foreach bi in ${flavour.base_images}:
-          name: base-image-${bi}
+        Execute.foreach bi in {{flavour.base_images}}:
+          name: base-image-{{bi}}
           policy:
               apply:
                   when: sync
                   on: /var/local/checkouts/ci
-          command: ./vmbuilder-${bi}
+          command: ./vmbuilder-{{bi}}
           cwd: /var/local/checkouts/ci
           user: root
 

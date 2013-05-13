@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
-import testtools
+import unittest2
 
-
-class TestCase(testtools.TestCase):
+class TestCase(unittest2.TestCase):
 
     def useFixture(self, fixture):
         """ Use a fixture in a test case.
@@ -29,7 +27,8 @@ class TestCase(testtools.TestCase):
         :return: The fixture, after setting it up and scheduling a cleanup for it
         """
         self.fixture = fixture
-        return super(TestCase, self).useFixture(fixture)
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.cleanUp)
 
     def failUnlessExists(self, path):
         if not self.fixture.exists(path):

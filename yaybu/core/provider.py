@@ -16,7 +16,7 @@
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-import policy
+from yaybu.core import policy
 
 class ProviderType(ABCMeta):
 

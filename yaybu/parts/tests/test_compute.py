@@ -1,10 +1,14 @@
-import testtools
+import unittest2
 import os
 import tempfile
 import mock
+from mock import MagicMock as Mock
+
+from libcloud.common.types import LibcloudError
 
 from yaybu.core.command import YaybuCmd
 from yaybu.parts.compute import Compute
+
 
 class ComputeTester(Compute):
 
@@ -19,7 +23,7 @@ class ComputeTester(Compute):
         self.node.extra['dns_name'] = "fooo.bar.baz.example.com"
 
 
-class TestClusterIntegration(testtools.TestCase):
+class TestClusterIntegration(unittest2.TestCase):
 
     """
     Exercises the cluster via the command line interface
@@ -31,7 +35,7 @@ class TestClusterIntegration(testtools.TestCase):
         f.close()
         path = os.path.realpath(f.name)
         self.addCleanup(os.unlink, path)
-        return path       
+        return path
 
     def _provision(self, clustername, config):
         cmd = YaybuCmd()
@@ -39,14 +43,13 @@ class TestClusterIntegration(testtools.TestCase):
 
     def test_empty_compute_node(self):
         self._provision("test", """
-            parts:
-              node1:
-                class: computetester
-                driver:
-                    id: DUMMY
-                    creds: dummykey
-                image: ubuntu
-                size: big
-                key: foo
+            mylb:
+                create "yaybu.parts.tests.test_compute:Compute":
+                    driver:
+                        id: DUMMY
+                        creds: dummykey
+                    image: ubuntu
+                    size: big
+                    key: foo
             """)
 

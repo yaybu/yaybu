@@ -14,7 +14,7 @@ def version():
 class memoized(object):
     """
     Decorator. Caches a function's return value each time it is called.
-    If called later with the same arguments, the cached value is returned 
+    If called later with the same arguments, the cached value is returned
     (not reevaluated).
     """
     def __init__(self, func):
@@ -38,28 +38,57 @@ class memoized(object):
         '''Support instance methods.'''
         return functools.partial(self.__call__, obj)
 
-def get_encrypted(val):
-    scalar_types = (
-        types.StringType,
-        types.UnicodeType,
-        types.IntType,
-        types.BooleanType,
-        types.LongType,
-        types.NoneType)
-    if isinstance(val, stringbuilder.String):
-        return val.unprotected
-    elif isinstance(val, scalar_types):
-        return val
-    elif isinstance(val, types.DictionaryType):
-        d = {}
-        for key, value in val.items():
-            d[key] = get_encrypted(value)
-        return d
-    elif isinstance(val, (types.ListType, types.TupleType)):
-        l = []
-        for item in val:
-            l.append(get_encrypted(item))
-        return l
-    else:
-        raise ValueError("Unable to convert %r" % val)
-    
+
+class StateSynchroniser(object):
+
+    """
+    I am a helper for synchronising 2 seperate states - by working out the
+    differences and applying them to the slave node.
+    """
+
+    def __init__(self, logger, simulate):
+        self.logger = logger
+        self.simulate = simulate
+        self.master = []
+        self.slave = []
+
+    def add_master_record(self, rid, **record):
+        self.master.append((rid, record))
+
+    def add_slave_record(self, rid, **record):
+        self.slave.append((rid, record))
+
+    def synchronise(self, add, update, delete):
+        changed = False
+
+        slave_records = dict(r for r in self.slave)
+        for rid, record in self.master:
+            if not rid in self.slave:
+                self.logger.info("Adding '%s'" % rid)
+                changed = True
+                if not self.simulate:
+                    add(**record)
+                continue
+
+            if record != slave[rid]:
+                self.logger.info("Updating '%s'" % rid)
+                changed = True
+                if not self.simulate:
+                    update(**record)
+                continue
+
+            self.logger.debug("'%s' not changed" % rid)
+
+        # If delete is not specified then don't bother checking it
+        if not delete:
+            return changed
+
+        master_records = dict(r for r in self.master)
+        for rid, record in self.slave:
+            if not rid in self.master:
+                self.logger.info("Deleting '%s'" % rid)
+                if not self.simulate:
+                    changed = True
+                    delete(**record)
+
+        return changed

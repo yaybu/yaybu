@@ -14,10 +14,12 @@
 
 import os, logging
 
-from yaybu.core.shell import Command
+from yaybu.changes.execute import Command
 from yaybu.core.provider import Provider
 from yaybu.core.error import MissingDependency
 from yaybu import resources
+from yaybu.changes import ShellCommand
+
 
 import shlex
 
@@ -46,7 +48,7 @@ class Svn(Provider):
         return self.resource.repository + "/" + self.resource.branch
 
     def action_checkout(self, context):
-        if os.path.exists(self.resource.name):
+        if context.transport.exists(self.resource.name):
             return
 
         log.debug("Checking out %s" % self.resource)
@@ -54,14 +56,14 @@ class Svn(Provider):
         return True
 
     def apply(self, context):
-        if not os.path.exists("/usr/bin/svn"):
+        if not context.transport.exists("/usr/bin/svn"):
             error_string = "'/usr/bin/svn' is not available; update your configuration to install subversion?"
             if not context.simulate:
                 raise MissingDependency(error_string)
             log.info(error_string)
             log.info("This error was ignored in simulate mode")
 
-        if not os.path.exists(self.resource.name):
+        if not context.transport.exists(self.resource.name):
             return self.action_checkout(context)
 
         log.debug("Syncing %s" % self.resource)
@@ -99,7 +101,7 @@ class Svn(Provider):
         return changed
 
     def action_export(self, context):
-        if os.path.exists(self.resource.name):
+        if context.transport.exists(self.resource.name):
             return
         log.debug("Exporting %s" % self.resource)
         self.svn(context, "export", self.url, self.resource.name)
@@ -126,11 +128,10 @@ class Svn(Provider):
 
     def info(self, context, uri):
         command = self.get_svn_args("info", uri)
-        returncode, stdout, stderr = context.shell.execute(command, inert=True)
+        returncode, stdout, stderr = context.transport.execute(command)
         return dict(x.split(": ") for x in stdout.split("\n") if x)
 
     def svn(self, context, action, *args, **kwargs):
         command = self.get_svn_args(action, *args, **kwargs)
-        return context.shell.execute(command, user=self.resource.user)
-
-
+        sc = context.changelog.apply(ShellCommand(command, user=self.resource.user))
+        return sc.returncode, sc.stdout, sc.stderr

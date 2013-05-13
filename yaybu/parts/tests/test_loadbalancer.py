@@ -4,10 +4,7 @@ import tempfile
 import mock
 
 from yaybu.core.command import YaybuCmd
-from yaybu.parts.dns import Zone
-
-class ZoneTester(Zone):
-    pass
+from yaybu.parts.loadbalancer import LoadBalancer
 
 
 class TestDNSProvision(unittest2.TestCase):
@@ -26,14 +23,10 @@ class TestDNSProvision(unittest2.TestCase):
 
     def test_empty_records_list(self):
         self._provision("test", """
-            mydns:
-                create "yaybu.parts.test.test_dns:ZoneTester":
+            mylb:
+                create "yaybu.parts.loadbalancer:LoadBalancer":
                     driver:
                         id: DUMMY
                         api_key: dummykey
                         api_secret: dummysecret
-                    domain: example.com
-                    records: []
             """)
-
-
