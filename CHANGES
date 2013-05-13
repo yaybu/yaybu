@@ -1,6 +1,18 @@
 Changelog for yaybu
 ===================
 
+0.3.0 (unreleased)
+------------------
+
+- New line of development based upon the latest iteration of yay (yay3).
+
+- Refactor provisioner backend to use "transports" (rather than starting a
+  remote copy of yaybu that communicates with the local yaybu)
+
+- Refactor the libcloud code to integrate with the yay3 "graph" - so that nodes
+  are started on demand and ordering is implicit.
+
+
 0.2.4 (unreleased)
 ------------------
 
