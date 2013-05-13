@@ -21,12 +21,14 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
         return "root"
 
     def _execute(self, command, stdin=None, stdout=None, stderr=None):
+        paths = [os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "testing"))]
         if self.env and "PATH" in self.env:
-            for p in self.env['PATH'].split(":"):
-                path = os.path.join(self.env["FAKECHROOT_BASE"], p.lstrip("/"), command[0])
-                if os.path.exists(path):
-                    command[0] = path
-                    break
+            paths.extend(os.path.join(self.env["FAKECHROOT_BASE"], p.lstrip("/")) for p in self.env["PATH"].split(":"))
+        for p in paths:
+            path = os.path.join(p, command[0])
+            if os.path.exists(path):
+                command[0] = path
+                break
 
         return super(FakechrootTransport, self)._execute(
             command,

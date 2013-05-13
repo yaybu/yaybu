@@ -35,84 +35,6 @@ auditlog:
    mode: file
 """
 
-sudo = """
-#! /usr/bin/python
-
-import optparse
-import sys
-import pwd
-import grp
-import os
-
-print "FAKE-SUDO called"
-
-p = optparse.OptionParser()
-p.add_option("-u", "--user", default="root")
-p.add_option("-g", "--group", default=None)
-
-for i, arg in enumerate(sys.argv):
-    if arg == "--":
-        break
-else:
-    print "FAKE-SUDO: No '--' provided"
-    sys.exit(1)
-
-opts, args = p.parse_args(sys.argv[:i])
-args = sys.argv[i+1:]
-
-if not opts.group:
-    opts.group = grp.getgrgid(pwd.getpwnam(opts.user).pw_gid).gr_name
-
-uid = pwd.getpwnam(opts.user).pw_uid
-gid = grp.getgrnam(opts.group).gr_gid
-
-if os.getgid() != gid:
-    print "FAKE-SUDO: Changing gid from %d to %d" % (os.getgid(), gid)
-    os.setgid(gid)
-
-if os.getegid() != gid:
-    print "FAKE-SUDO: Changing egid from %d to %d" % (os.getegid(), gid)
-    os.setegid(gid)
-
-if os.getuid() != uid:
-    print "FAKE-SUDO: Changing uid from %d to %d" % (os.getuid(), uid)
-    os.setuid(uid)
-
-if os.geteuid() != uid:
-    print "FAKE-SUDO: Changing euid from %d to %d" % (os.geteuid(), uid)
-    os.seteuid(uid)
-
-sys.stdout.flush()
-os.execvp(args[0], args)
-""".lstrip()
-
-env = """
-#! /usr/bin/python
-print "FAKE-ENV called"
-
-import sys
-import os
-
-argv = sys.argv[:]
-while argv[0] != "-i":
-    argv.pop(0)
-argv.pop(0)
-
-env = {}
-
-for k, v in os.environ.items():
-    if k.startswith("FAKECHROOT") or k.startswith("FAKEROOT") or k.startswith("COWDANCER") or k == "LD_PRELOAD" or k == "LD_LIBRARY_PATH":
-        env[k] = v
-
-while "=" in argv[0]:
-    k, v = argv[0].split("=", 1)
-    env[k] = v
-    argv.pop(0)
-
-os.execvpe(argv[0], argv, env)
-""".lstrip()
-
-
 distro_flags = {
     "Ubuntu 10.04": dict(
         name="lucid",
@@ -121,6 +43,7 @@ distro_flags = {
         name="precise",
         ),
    }
+
 
 class FakeChrootFixture(Fixture):
 
@@ -186,14 +109,6 @@ class FakeChrootFixture(Fixture):
         with self.open("/etc/yaybu", "w") as fp:
             fp.write(yaybu_cfg)
 
-        with self.open("/usr/bin/sudo", "w") as fp:
-            fp.write(sudo)
-        os.chmod(self._enpathinate("/usr/bin/sudo"), 0o755)
-
-        with self.open("/usr/bin/env", "w") as fp:
-            fp.write(env)
-        os.chmod(self._enpathinate("/usr/bin/env"), 0o755)
-
     def cleanUp(self):
         self.cleanup_session()
         if os.path.exists(self.ilist_path):
@@ -255,19 +170,26 @@ class FakeChrootFixture(Fixture):
         return "/tmp/" + os.path.realpath(f.name).split("/")[-1]
 
     def get_env(self):
-        env = os.environ.copy()
+        env = {}
+
+        path = os.path.realpath(os.path.join(self.chroot_path, ".."))
 
         env['FAKECHROOT'] = 'true'
         env['FAKECHROOT_EXCLUDE_PATH'] = ":".join([
-            '/dev', '/proc', '/sys', self.chroot_path,
+            '/dev', '/proc', '/sys', path,
             ])
         env['FAKECHROOT_CMD_SUBST'] = ":".join([
             '/usr/sbin/chroot=/usr/sbin/chroot.fakechroot',
             '/sbin/ldconfig=/bin/true',
             '/usr/bin/ischroot=/bin/true',
             '/usr/bin/ldd=/usr/bin/ldd.fakechroot',
+            '/usr/bin/sudo=%s' % os.path.join(path, "testing", "sudo"),
+            '/usr/bin/env=%s' % os.path.join(path, "testing", "env"),
             ])
         env['FAKECHROOT_BASE'] = self.chroot_path
+
+        if "FAKECHROOT_DEBUG" in os.environ:
+            env['FAKECHROOT_DEBUG'] = 'true'
 
         # Set up fakeroot stuff
         env['FAKEROOTKEY'] = self.get_session()
