@@ -22,10 +22,10 @@ import yay
 from yay.openers import Openers
 from yay.errors import LanguageError, NotFound, NotModified, get_exception_context
 
-from yaybu.core import change, resource, vfs
+from yaybu.core import resource
+from yaybu import changes
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
-from yaybu.core.protocol.client import HTTPConnection
-from yaybu.core.shell import Shell
+from yaybu.transports import LocalTransport, RemoteTransport
 from yaybu.core.config import Config
 
 logger = logging.getLogger("runcontext")
@@ -37,6 +37,7 @@ class RunContext(object):
     simulate = False
     ypath = ()
     verbose = 0
+    Transport = RemoteTransport
 
     def __init__(self, configfile, resume=False, no_resume=False, user="root",
                  host=None, ypath=(), simulate=False, verbose=2,
@@ -80,8 +81,6 @@ class RunContext(object):
         self.setup_shell(env_passthrough)
         self.setup_changelog()
 
-        self.vfs = vfs.Shell(self)
-
     def set_host(self, host):
         self.host = host
         if self.host:
@@ -92,14 +91,14 @@ class RunContext(object):
         if self._config:
             self._config.set_hostname(self.host)
 
-    def setup_shell(self, environment):
-        self.shell = Shell(context=self,
+    def setup_shell(self, env_passthrough):
+        self.transport = self.Transport(context=self,
             verbose=self.verbose,
             simulate=self.simulate,
-            environment=environment)
+            env_passthrough=env_passthrough)
 
     def setup_changelog(self):
-        self.changelog = change.ChangeLog(self)
+        self.changelog = changes.ChangeLog(self)
         self.changelog.configure_session_logging()
 
     def locate(self, paths, filename):
@@ -168,71 +167,4 @@ class RunContext(object):
             return "/var/run/yaybu"
         return os.path.join("/var/run/yaybu", path)
 
-class RemoteRunContext(RunContext):
-
-    def __init__(self, configfile, **kwargs):
-        self.connection = HTTPConnection()
-        self.check_versions()
-        super(RemoteRunContext, self).__init__(configfile, **kwargs)
-
-    def check_versions(self):
-        self.connection.request("GET", "/about")
-        rsp = self.connection.getresponse()
-
-        if rsp.status != 200:
-            self.features = []
-            self.versions = {"Yaybu": "0", "yay": "0"}
-        else:
-            self.features = rsp.getheader("features", "").split(",")
-            self.versions = {
-                "Yaybu": rsp.getheader("Yaybu", "0"),
-                "yay": rsp.getheader("yay", "0"),
-                }
-        logger.debug("target versions: yaybu %r yay %r" % (self.versions['Yaybu'], self.versions['yay']))
-
-        import pkg_resources
-        if pkg_resources.parse_version(self.versions["Yaybu"]) <= pkg_resources.parse_version("0"):
-            raise Incompatible("You require a newer version of 'Yaybu' to deploy to this server")
-
-        if pkg_resources.parse_version(self.versions["yay"]) <= pkg_resources.parse_version("0"):
-            raise Incompatible("You require a newer version of 'yay' to deploy to this server")
-
-    def setup_changelog(self):
-        self.changelog = change.RemoteChangeLog(self)
-        self.changelog.configure_session_logging()
-
-    def get_config(self):
-        self.connection.request("GET", "/config")
-        rsp = self.connection.getresponse()
-        c = Config(self)
-        data = pickle.loads(rsp.read())
-        c.add(data)
-        return c
-
-    def get_decrypted_file(self, filename, etag=None):
-        self.connection.request("GET", "/encrypted/" + filename)
-        rsp = self.connection.getresponse()
-        return rsp
-
-    def get_file(self, filename, etag=None):
-        if filename.startswith("/"):
-            return super(RemoteRunContext, self).get_file(filename, etag)
-
-        headers = {}
-        if etag:
-            headers["If-None-Match"] = etag
-
-        self.connection.request("GET", "/files/?path=" + filename, '', headers)
-
-        rsp = self.connection.getresponse()
-
-        if rsp.status == 304:
-            raise UnmodifiedAsset("Cannot fetch %r as it should be cached locally" % filename)
-
-        if rsp.status == 404:
-            raise MissingAsset("Cannot fetch %r" % filename)
-
-        rsp.etag = rsp.msg.get("etag", None)
-
-        return rsp
 

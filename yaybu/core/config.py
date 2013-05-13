@@ -20,7 +20,7 @@ from yay.config import Config as BaseConfig
 
 from yaybu.core.error import ParseError, ArgParseError
 from yaybu.core.util import memoized
-from yaybu.core.cloud.state import StateStorageType, SimulatedStateStorageAdaptor
+from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
 
 
 

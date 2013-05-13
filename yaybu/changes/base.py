@@ -7,7 +7,7 @@ import logging
 import types
 import json
 
-from yaybu.core import error
+from yaybu import error
 
 logger = logging.getLogger("audit")
 
@@ -222,7 +222,7 @@ class ChangeLog:
         """ Execute the change, passing it the appropriate renderer to use. """
         renderers = []
         text_class = ChangeRendererType.renderers.get(("text", change.__class__), None)
-        return change.apply(text_class(self, self.verbose))
+        return change.apply(self.ctx, text_class(self, self.verbose))
 
     def info(self, message, *args, **kwargs):
         """ Write a textual information message. This is used for both the
@@ -249,31 +249,4 @@ class ChangeLog:
 
     def handle(self, record):
         self.logger.handle(record)
-
-
-class RemoteHandler(logging.Handler):
-
-    def __init__(self, connection):
-        logging.Handler.__init__(self)
-        self.connection = connection
-
-    def emit(self, record):
-        data = json.dumps(record.__dict__)
-
-        self.connection.request("POST", "/changelog/", data, {"Content-Length": len(data)})
-        rsp = self.connection.getresponse()
-
-        lngth = rsp.getheader("Content-Length", 0)
-        rsp.read(lngth)
-
-
-class RemoteChangeLog(ChangeLog):
-
-    def configure_session_logging(self):
-        root = logging.getLogger("yaybu.changelog")
-        root.setLevel(logging.INFO)
-
-        handler = RemoteHandler(self.ctx.connection)
-        handler.setFormatter(logging.Formatter("%(message)s"))
-        root.addHandler(handler)
 

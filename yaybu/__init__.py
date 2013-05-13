@@ -13,4 +13,5 @@
 # limitations under the License.
 
 __import__('pkg_resources').declare_namespace('yaybu')
+#import yaybu.core
 

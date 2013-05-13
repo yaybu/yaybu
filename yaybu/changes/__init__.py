@@ -1,4 +1,4 @@
-# Copyright 2011 Isotoma Limited
+# Copyright 2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pkg_resources import iter_entry_points
 
-from . import ordereddict
-from . import policy
-from . import resource
-
-for ep in iter_entry_points(group='yaybu.resource', name=None):
-    ep.load()
-
-for ep in iter_entry_points(group='yaybu.providers', name=None):
-    ep.load()
-
-for ep in iter_entry_points(group='yaybu.parts', name=None):
-    ep.load()
-
+from .base import ChangeLog
+from .attributes import AttributeChanger
+from .file import FileContentChanger
+from .execute import ShellCommand

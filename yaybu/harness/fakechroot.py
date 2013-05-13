@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, glob, signal, shlex, subprocess, tempfile, time, shutil, StringIO
+import os, sys, glob, signal, shlex, subprocess, tempfile, time, shutil, StringIO
 from unittest2 import SkipTest
-from yaybu.core import error
+from yaybu import error
 from yaybu.util import sibpath
 
 from yaybu.harness.fixture import Fixture
@@ -44,6 +44,7 @@ distro_flags = {
         ),
    }
 
+
 class FakeChrootFixture(Fixture):
 
     """
@@ -58,7 +59,6 @@ class FakeChrootFixture(Fixture):
     faked = None
 
     testbase = os.path.realpath(os.getenv("YAYBU_TESTS_BASE", "base-image"))
-    test_network = os.environ.get("TEST_NETWORK", "0") == "1"
     statefile = os.path.realpath("fakeroot.state")
 
     def setUp(self):
@@ -81,14 +81,8 @@ class FakeChrootFixture(Fixture):
             if not os.path.exists(dep):
                 raise SkipTest("Need '%s' to run integration tests" % dep)
 
-        if self.firstrun:
-            if not os.path.exists(self.testbase):
-                self.build_environment()
-            self.refresh_environment()
-
-            # We only refresh the base environment once, so
-            # set this on the class to make sure any other fixtures pick it up
-            FakeChrootFixture.firstrun = False
+        if not os.path.exists(self.testbase):
+            self.build_environment()
 
         self.clone()
 
@@ -128,36 +122,31 @@ class FakeChrootFixture(Fixture):
     def distro(self):
         return distro_flags[self.sundayname]['name']
 
+    def msg(self, *msg):
+        sys.__stdout__.write("%s\n" % " ".join(msg))
+        sys.__stdout__.flush()
+
     def run_command(self, command, distro=None, cwd=None):
         command = command % dict(base_image=self.testbase, distro=distro)
-        print ">>>", command
-        p = subprocess.Popen(shlex.split(command), cwd=cwd)
-        if p.wait():
+        self.msg(">>>", command)
+        p = subprocess.Popen(shlex.split(command), cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p.communicate()
+        if p.returncode:
             raise SystemExit("Command failed")
 
     def build_environment(self):
         if os.path.exists(self.testbase):
             return
 
+        self.msg("Need to create a base fakechroot! This might take some time...")
+
         distro = self.distro()
         commands = [
-            "fakeroot fakechroot debootstrap --variant=fakechroot --include=git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv,python-dev,build-essential %(distro)s %(base_image)s",
+            "fakeroot fakechroot debootstrap --variant=fakechroot --include=sudo,git-core,python-setuptools,ubuntu-keyring,gpgv,build-essential %(distro)s %(base_image)s",
             "fakeroot fakechroot /usr/sbin/chroot %(base_image)s apt-get update",
             ]
         for command in commands:
             self.run_command(command, distro)
-
-    def refresh_environment(self):
-        if os.path.exists("src/yay"):
-            yay_path = os.path.join(self.testbase, "usr/local/lib/python2.*/dist-packages/yay*")
-            self.run_command('bash -c "rm -rf %s"' % yay_path)
-            self.run_command("python setup.py sdist --dist-dir %(base_image)s", cwd="src/yay")
-            self.run_command("fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /yay-*.tar.gz'")
-
-        yaybu_path = os.path.join(self.testbase, "usr/local/lib/python2.*/dist-packages/Yaybu*")
-        self.run_command('bash -c "rm -rf %s"' % yaybu_path)
-        self.run_command("python setup.py sdist --dist-dir %(base_image)s")
-        self.run_command("fakeroot fakechroot /usr/sbin/chroot %(base_image)s sh -c 'easy_install /Yaybu-*.tar.gz'")
 
     def cleanup_session(self):
         if self.faked:
@@ -181,11 +170,26 @@ class FakeChrootFixture(Fixture):
         return "/tmp/" + os.path.realpath(f.name).split("/")[-1]
 
     def get_env(self):
-        env = os.environ.copy()
+        env = {}
+
+        path = os.path.realpath(os.path.join(self.chroot_path, ".."))
 
         env['FAKECHROOT'] = 'true'
-        # env['FAKECHROOT_EXCLUDE_PATH'] = ":".join([
-        #    ])
+        env['FAKECHROOT_EXCLUDE_PATH'] = ":".join([
+            '/dev', '/proc', '/sys', path,
+            ])
+        env['FAKECHROOT_CMD_SUBST'] = ":".join([
+            '/usr/sbin/chroot=/usr/sbin/chroot.fakechroot',
+            '/sbin/ldconfig=/bin/true',
+            '/usr/bin/ischroot=/bin/true',
+            '/usr/bin/ldd=/usr/bin/ldd.fakechroot',
+            '/usr/bin/sudo=%s' % os.path.join(path, "testing", "sudo"),
+            '/usr/bin/env=%s' % os.path.join(path, "testing", "env"),
+            ])
+        env['FAKECHROOT_BASE'] = self.chroot_path
+
+        if "FAKECHROOT_DEBUG" in os.environ:
+            env['FAKECHROOT_DEBUG'] = 'true'
 
         # Set up fakeroot stuff
         env['FAKEROOTKEY'] = self.get_session()
@@ -226,28 +230,37 @@ class FakeChrootFixture(Fixture):
 
     def call(self, command):
         env = self.get_env()
-        retval = subprocess.call(["/usr/sbin/chroot", self.chroot_path] + command, cwd=self.chroot_path, env=env)
-        return retval
+        p = subprocess.Popen(command, cwd=self.chroot_path, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        stdout, stderr = p.communicate()
+        print stdout
+        return p.returncode
 
     def yaybu(self, *args):
-        if self.test_network:
-            filespath = os.path.join(self.chroot_path, "/tmp", "files")
-            args = [self.chroot_path+arg if arg.startswith("/") else arg for arg in args]
-            args.insert(0, "test://")
-            from yaybu.core.command import YaybuCmd
-            from yaybu.core.remote import TestRemoteRunner
-            from optparse import OptionParser
-            class T(TestRemoteRunner):
-                env = self.get_env()
-                cwd = self.chroot_path
-            p = OptionParser()
-            y = YaybuCmd(ypath=(filespath, ))
-            y.opts_push(p)
-            return y.do_push(*p.parse_args(args), runner=T)
-        else:
-            args = list(args)
-            args.insert(0, "apply")
-            return self.call(["yaybu", "-v", "-v", "-d", "--ypath", "/tmp/files"] + args)
+        from yaybu.core import event
+        event.reset(True)
+
+        filespath = os.path.join(self.chroot_path, "/tmp", "files")
+        args = [self.chroot_path+arg if arg.startswith("/") else arg for arg in args]
+        from yaybu.core.command import YaybuCmd
+        from yaybu.core.runcontext import RunContext
+        from yaybu.transports import FakechrootTransport
+        from optparse import OptionParser
+        class T(FakechrootTransport):
+            env = self.get_env()
+            chroot_path = self.chroot_path
+        class Context(RunContext):
+            Transport = T
+        p = OptionParser()
+        y = YaybuCmd(ypath=(filespath, ))
+        y.ypath = [filespath]
+        y.verbose = 2
+        y.debug = True
+        y.opts_push(p)
+        try:
+            return y.do_apply(*p.parse_args(args), context=Context)
+        except SystemError:
+            return 0
+        # return self.call(["yaybu", "-v", "-v", "-d", "--ypath", "/tmp/files"] + args)
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """
@@ -324,7 +337,8 @@ class FakeChrootFixture(Fixture):
         return os.stat(self._enpathinate(path))
 
     def _enpathinate(self, path):
-        return os.path.join(self.chroot_path, *path.split(os.path.sep))
+        path = os.path.join(self.chroot_path, path.lstrip('/'))
+        return path
 
     def get_user(self, user):
         users_list = open(self._enpathinate("/etc/passwd")).read().splitlines()

@@ -63,7 +63,9 @@ def main():
         libcloud.security.VERIFY_SSL_CERT = False
         libcloud.security.VERIFY_SSL_CERT_STRICT = False
 
+
     logging.getLogger("ssh.transport").setLevel(logging.CRITICAL)
+    logging.getLogger("paramiko.transport").setLevel(logging.CRITICAL)
 
     atexit.register(logging.shutdown)
 

@@ -17,6 +17,7 @@ import os, shlex, glob
 from yaybu.core import provider
 from yaybu.providers.service import utils
 from yaybu import resources
+from yaybu.changes import ShellCommand
 
 
 class _LsbServiceMixin(utils._ServiceMixin):
@@ -59,10 +60,10 @@ class _LsbServiceMixin(utils._ServiceMixin):
             return False
 
         for ln in need_deleting:
-            context.shell.execute(["rm", ln])
+            context.changelog.apply(ShellCommand(["rm", ln]))
 
         for ln in need_creating:
-            context.shell.execute(["ln", "-s", "/etc/init.d/%s" % self.resource.name, ln])
+            context.changelog.apply(ShellCommand(["ln", "-s", "/etc/init.d/%s" % self.resource.name, ln]))
 
         return True
 

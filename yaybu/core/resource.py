@@ -13,12 +13,12 @@
 # limitations under the License.
 
 import sys, os, hashlib
-from argument import Argument, List, PolicyArgument, String
-import policy
-import error
+from yaybu.core.argument import Argument, List, PolicyArgument, String
+from yaybu.core import policy
+from yaybu import error
 import collections
-import ordereddict
-import event
+from yaybu.core import ordereddict
+from yaybu.core import event
 
 from yay.errors import LanguageError, get_exception_context
 
@@ -313,7 +313,7 @@ class ResourceBundle(ordereddict.OrderedDict):
                 "name": watched,
                 "policy": "watched",
             })
-            w._original_hash = w.hash()
+            w._original_hash = None
 
         return kls
 
@@ -334,9 +334,14 @@ class ResourceBundle(ordereddict.OrderedDict):
     def apply(self, ctx, config):
         """ Apply the resources to the system, using the provided context and
         overall configuration. """
+        for resource in self.values():
+           if hasattr(resource, "_original_hash"):
+               resource._original_hash = resource.hash(ctx)
+
         something_changed = False
         for resource in self.values():
             with ctx.changelog.resource(resource):
                 if resource.apply(ctx, config):
                     something_changed = True
         return something_changed
+

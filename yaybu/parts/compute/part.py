@@ -27,14 +27,14 @@ from libcloud.common.types import LibcloudError
 from libcloud.compute.types import NodeState
 from libcloud.compute.base import NodeImage, NodeSize
 
-from ssh.ssh_exception import SSHException
-from ssh.rsakey import RSAKey
-from ssh.dsskey import DSSKey
+from paramiko.ssh_exception import SSHException
+from paramiko.rsakey import RSAKey
+from paramiko.dsskey import DSSKey
 
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
-from yaybu.core import remote, runcontext
-from yaybu.core.cloud.state import PartState
+from yaybu.core import runner, runcontext
+from yaybu.core.state import PartState
 
 from yay import ast, errors
 from yay.config import Config
@@ -67,7 +67,6 @@ class Compute(ast.PythonClass):
     @property
     @memoized
     def state(self):
-        print "state called"
         return PartState(self.root.state, self.params.name.as_string())
 
     @property
@@ -270,20 +269,20 @@ class Provision(ast.PythonClass):
 
         config.add({"resources": self.params.resources.as_list(default=[])})
 
-        ctx = runcontext.RunContext(
+        ctx = runcontext.RemoteRunContext(
             None,
             resume=True,
             no_resume=False,
+            host = hostname,
             user=self.params.server.user.as_string(default='ubuntu'),
             ypath=self.root.openers.searchpath,
             simulate=self.root.simulate,
-            verbose=True, #self.root.verbose,
+            verbose=2, #self.root.verbose,
             env_passthrough=[], #self.root.env_passthrough,
             )
         ctx.set_config(config)
 
-        r = remote.RemoteRunner(hostname)
-        r.install_yaybu()
+        r = runner.Runner()
         result = r.run(ctx)
 
         logger.info("Node %r provisioned" % hostname)

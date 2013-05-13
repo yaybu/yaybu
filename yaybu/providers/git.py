@@ -18,6 +18,8 @@ import re
 from yaybu.core.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError
 from yaybu import resources
+from yaybu.changes import ShellCommand
+
 
 log = logging.getLogger("git")
 
@@ -31,7 +33,7 @@ class Git(Provider):
     def isvalid(self, policy, resource, yay):
         return resource.scm and resource.scm.lower() == "git"
 
-    def git(self, context, action, *args, **kwargs):
+    def get_git_command(self, action, *args):
         command = [
             "git",
             #"--git-dir=%s" % os.path.join(self.resource.name, ".git"),
@@ -41,58 +43,57 @@ class Git(Provider):
         ]
 
         command.extend(list(args))
+        return command
 
-        if context.vfs.exists(self.resource.name):
-            cwd = self.resource.name
-        else:
-            cwd = os.path.dirname(self.resource.name)
+    def info(self, context, action, *args):
+        rc, stdout, stderr = context.transport.execute(
+            self.get_git_command(action, *args),
+            user=self.resource.user,
+            cwd=self.resource.name,
+            )
+        return rc, stdout, stderr
 
-        return context.shell.execute(command, user=self.resource.user, cwd=cwd, **kwargs)
+    def action(self, context, action, *args):
+        context.changelog.apply(ShellCommand(
+            self.get_git_command(action, *args),
+            user=self.resource.user,
+            cwd=self.resource.name,
+            ))
 
     def action_clone(self, context):
         """Adds resource.repository as a remote, but unlike a
         typical clone, does not check it out
 
         """
-        if not context.vfs.exists(self.resource.name):
-            try:
-                cmd = ["/bin/mkdir", self.resource.name]
-                context.shell.execute(cmd, user=self.resource.user)
-            except SystemError:
-                raise CheckoutError("Cannot create the repository directory")
-
-            try:
-                self.git(context, "init", self.resource.name)
-            except SystemError:
-                raise CheckoutError("Cannot initialise local repository.")
-
-            self.action_set_remote(context)
-            return True
-        else:
-            return False
-
-    def action_set_remote(self, context):
-        git_parameters = [
-            "remote", "add",
-            self.REMOTE_NAME,
-            self.resource.repository,
-        ]
+        try:
+            cmd = ["/bin/mkdir", self.resource.name]
+            context.changelog.apply(ShellCommand(cmd, user=self.resource.user))
+        except SystemError:
+            raise CheckoutError("Cannot create the repository directory")
 
         try:
-            rv, out, err = self.git(context, *git_parameters)
+            self.action(context, "init", self.resource.name)
+        except SystemError:
+            raise CheckoutError("Cannot initialise local repository.")
+
+        self.action_set_remote(context)
+
+    def action_set_remote(self, context):
+        try:
+            self.action(context, "remote", "add", self.REMOTE_NAME, self.resource.repository)
         except SystemError:
             raise CheckoutError("Could not set the remote repository.")
 
     def action_update_remote(self, context):
         # Determine if the remote repository has changed
         remote_re = re.compile(self.REMOTE_NAME + r"\t(.*) \(.*\)\n")
-        rv, stdout, stderr = self.git(context, "remote", "-v", inert=True)
+        rv, stdout, stderr = self.info(context, "remote", "-v")
         remote = remote_re.search(stdout)
         if remote:
             if not self.resource.repository == remote.group(1):
                 log.info("The remote repository has changed.")
                 try:
-                    self.git(context, "remote", "rm", self.REMOTE_NAME)
+                    self.action(context, "remote", "rm", self.REMOTE_NAME)
                 except SystemError:
                     raise CheckoutError("Could not delete remote '%s'" % self.REMOTE_NAME)
                 self.action_set_remote(context)
@@ -102,11 +103,11 @@ class Git(Provider):
 
         return False
 
-    def action_checkout(self, context):
+    def checkout_needed(self, context):
         # Determine which SHA is currently checked out.
-        if context.vfs.exists(os.path.join(self.resource.name, ".git")):
+        if context.transport.exists(os.path.join(self.resource.name, ".git")):
             try:
-                rv, stdout, stderr = self.git(context, "rev-parse", "--verify", "HEAD", inert=True)
+                rv, stdout, stderr = self.info(context, "rev-parse", "--verify", "HEAD")
             except SystemError:
                 head_sha = '0' * 40
             else:
@@ -115,18 +116,18 @@ class Git(Provider):
         else:
             head_sha = '0' * 40
 
-        changed = True
         # Revision takes precedent over branch
         if self.resource.revision:
             newref = self.resource.revision
-            if newref == head_sha:
-                changed = False
+            if newref != head_sha:
+                return newref
+
         elif self.resource.branch:
             try:
-                rv, stdout, stderr = self.git(context, "ls-remote",
-                                        self.resource.repository, inert=True)
+                rv, stdout, stderr = context.transport.execute(["git", "ls-remote", self.resource.repository], cwd="/tmp")
             except SystemError:
                 raise CheckoutError("Could not query the remote repository")
+
             r = re.compile('([0-9a-f]{40})\t(.*)\n')
             refs_to_shas = dict([(b,a) for (a,b) in r.findall(stdout)])
 
@@ -138,33 +139,45 @@ class Git(Provider):
                 if annotated_tag in refs_to_shas.keys():
                     as_tag = annotated_tag
                 newref = self.resource.branch
-                changed = head_sha != refs_to_shas.get(as_tag)
+                if head_sha != refs_to_shas.get(as_tag):
+                    return newref
+
             elif as_branch in refs_to_shas.keys():
                 newref = "remotes/%s/%s" % (
                     self.REMOTE_NAME,
                     self.resource.branch
                 )
-                changed = head_sha != refs_to_shas.get(as_branch)
+                if head_sha != refs_to_shas.get(as_branch):
+                    return newref
+
+            else:
+                raise CheckoutError("Cannot find a branch or tag called '%s'" % self.resource.branch)
+
         else:
             raise CheckoutError("You must specify either a revision or a branch")
 
-        if changed:
-            rv, stdout, stderr = self.git(context, "checkout", newref)
-            if not rv == 0:
-                raise CheckoutError("Could not check out '%s'" % newref)
+    def action_checkout(self, context, newref):
+        try:
+            self.action(context, "fetch", self.REMOTE_NAME)
+        except SystemError:
+            raise CheckoutError("Could not fetch '%s'" % self.resource.repository)
 
-        return changed
+        try:
+            self.action(context, "checkout", newref)
+        except SystemError:
+            raise CheckoutError("Could not check out '%s'" % newref)
 
     def apply(self, context):
-        log.info("Syncing %s" % self.resource)
-
         # If necessary, clone the repository
-        if not context.vfs.exists(os.path.join(self.resource.name, ".git")):
+        if not context.transport.exists(os.path.join(self.resource.name, ".git")):
             self.action_clone(context)
+            changed = True
         else:
-            self.action_update_remote(context)
+            changed = self.action_update_remote(context)
 
-        # Always update the REMOTE_NAME remote
-        self.git(context, "fetch", self.REMOTE_NAME)
+        newref = self.checkout_needed(context)
+        if newref:
+            self.action_checkout(context, newref)
 
-        return self.action_checkout(context)
+        return changed or newref
+

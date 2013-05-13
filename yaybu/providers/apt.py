@@ -15,8 +15,9 @@
 import os
 
 from yaybu.core import provider
-from yaybu.core import error
+from yaybu import error
 from yaybu import resources
+from yaybu.changes import ShellCommand
 
 
 def is_installed(context, resource):
@@ -24,7 +25,7 @@ def is_installed(context, resource):
     command = ["dpkg-query", "-W", "-f='${Status}'", resource.name]
 
     try:
-        rc, stdout, stderr = context.shell.execute(command, inert=True)
+        rc, stdout, stderr = context.transport.execute(command)
     except error.SystemError as exc:
         if exc.returncode == 1:
             return False
@@ -60,7 +61,7 @@ class AptInstall(provider.Provider):
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
 
         try:
-            context.shell.execute(command, env=env)
+            context.changelog.apply(ShellCommand(command, env=env))
         except error.SystemError as exc:
             raise error.AptError("%s failed with return code %d" % (self.resource, exc.returncode))
 
@@ -89,10 +90,8 @@ class AptUninstall(provider.Provider):
         command.append(self.resource.name)
 
         try:
-            context.shell.execute(command, env=env)
+            context.changelog.apply(ShellCommand(command, env=env))
         except error.SystemError as exc:
             raise error.AptError("%s failed to uninstall with return code %d" % (self.resource, exc.returncode))
 
         return True
-
-
