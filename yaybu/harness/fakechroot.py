@@ -227,7 +227,7 @@ class FakeChrootFixture(Fixture):
 
         distro = self.distro()
         commands = [
-            "fakeroot fakechroot debootstrap --variant=fakechroot --include=sudo,git-core,python-setuptools,python-dateutil,python-magic,ubuntu-keyring,gpgv,python-dev,build-essential %(distro)s %(base_image)s",
+            "fakeroot fakechroot debootstrap --variant=fakechroot --include=sudo,git-core,python-setuptools,ubuntu-keyring,gpgv,build-essential %(distro)s %(base_image)s",
             "fakeroot fakechroot /usr/sbin/chroot %(base_image)s apt-get update",
             ]
         for command in commands:
