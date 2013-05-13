@@ -28,12 +28,11 @@ class _ServiceMixin(object):
 
     def status(self, context):
         if self.resource.running:
-            try:
-                context.transport.execute(self.resource.running)
-            except error.SystemError:
-                return "not-running"
-            else:
+            rc, stdout, stderr = context.transport.execute(self.resource.running)
+            if rc == 0:
                 return "running"
+            else:
+                return "not-running"            
 
         if not self.resource.pidfile:
             return "unknown"
