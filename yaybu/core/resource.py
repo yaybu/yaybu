@@ -313,7 +313,7 @@ class ResourceBundle(ordereddict.OrderedDict):
                 "name": watched,
                 "policy": "watched",
             })
-            w._original_hash = w.hash()
+            w._original_hash = None
 
         return kls
 
@@ -334,9 +334,14 @@ class ResourceBundle(ordereddict.OrderedDict):
     def apply(self, ctx, config):
         """ Apply the resources to the system, using the provided context and
         overall configuration. """
+        for resource in self.values():
+           if hasattr(resource, "_original_hash"):
+               resource._original_hash = resource.hash(ctx)
+
         something_changed = False
         for resource in self.values():
             with ctx.changelog.resource(resource):
                 if resource.apply(ctx, config):
                     something_changed = True
         return something_changed
+
