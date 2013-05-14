@@ -18,10 +18,9 @@ import datetime
 from yaybu.core import (resource,
                         argument,
                         policy,
-                        error,
                         provider,
-                        change,
                         )
+from yaybu import error
 
 from mock import Mock
 
