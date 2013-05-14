@@ -10,7 +10,7 @@ from functools import partial
 
 import yay
 import yay.errors
-from yaybu.core import runcontext, error, util
+from yaybu.core import error, util
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -133,24 +133,7 @@ class YaybuCmd(OptionParsingCmd):
         if len(args) != 1:
             self.simple_help("expand")
             return
-        ctx = runcontext.RunContext(args[0],
-                                    ypath=self.ypath,
-                                    verbose=self.verbose,
-                                    )
-
-        try:
-            cfg = ctx.get_config().get()
-        except yay.errors.LanguageError as e:
-            print str(e)
-            if self.verbose >= 2:
-                print yay.errors.get_exception_context()
-            return 1
-
-        if self.verbose <= 2:
-            cfg = dict(resources=cfg.get("resources", []))
-        print yay.dump(cfg)
-
-        return 0
+        return 1
 
     def do_status(self, opts, args):
         """
