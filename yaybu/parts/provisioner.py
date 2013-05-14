@@ -109,8 +109,8 @@ class Provision(ast.PythonClass):
             bundle.bind()
             changed = bundle.apply(self, None)
 
-            if not self.simulate and os.path.exists(event.EventState.save_file):
-                os.unlink(event.EventState.save_file)
+            if not self.simulate and self.transport.exists(event.EventState.save_file):
+                self.transport.unlink(event.EventState.save_file)
 
             if not changed:
                 # nothing changed
