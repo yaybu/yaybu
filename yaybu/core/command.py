@@ -181,11 +181,26 @@ class YaybuCmd(OptionParsingCmd):
 
         try:
             cfg = graph.resolve()
+
         except yay.errors.LanguageError as e:
             print str(e)
             if self.verbose >= 2:
                 print yay.errors.get_exception_context()
             return 1
+
+        except error.ExecutionError, e:
+            # this will have been reported by the context manager, so we wish to terminate
+            # but not to raise it further. Other exceptions should be fully reported with
+            # tracebacks etc automatically
+            # graph.changelog.error("Terminated due to execution error in processing")
+            return e.returncode
+
+        except error.Error, e:
+            # If its not an Execution error then it won't have been logged by the
+            # Resource.apply() machinery - make sure we log it here.
+            # graph.changelog.write(str(e))
+            # graph.changelog.error("Terminated due to error in processing")
+            return e.returncode
 
         return 0
 

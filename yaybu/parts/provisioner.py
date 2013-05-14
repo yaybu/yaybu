@@ -26,9 +26,8 @@ from yay import ast, errors
 from yay.errors import LanguageError, NotFound, NotModified
 
 from yaybu.core import resource
-from yaybu import changes, error
+from yaybu import changes, error, transports
 from yaybu.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
-from yaybu.transports import SSHTransport
 from yaybu.core.config import Config
 from yaybu.core import event
 
@@ -48,6 +47,8 @@ class Provision(ast.PythonClass):
 
             resources: {{ resources }}
     """
+
+    Transport = transports.SSHTransport
 
     def apply(self):
         hostname = self.params.server.fqdn.as_string()
@@ -69,7 +70,7 @@ class Provision(ast.PythonClass):
         if os.path.exists("/etc/yaybu"):
             self.options = yay.load_uri("/etc/yaybu")
 
-        self.transport = SSHTransport(
+        self.transport = self.Transport(
             context=self,
             verbose = root.verbose,
             simulate = root.simulate,
@@ -93,54 +94,30 @@ class Provision(ast.PythonClass):
             if not self.transport.exists(save_parent):
                 self.transport.makedirs(save_parent)
 
-        try:
-            if self.transport.exists(event.EventState.save_file):
-                if self.resume:
-                    event.state.loaded = False
-                elif self.no_resume:
-                    if not self.simulate:
-                        self.transport.unlink(event.EventState.save_file)
-                    event.state.loaded = True
-                else:
-                    raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
-
-            # Actually apply the configuration
-            bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources, verbose_errors=self.verbose>2)
-            bundle.bind()
-            changed = bundle.apply(self, None)
-
-            if not self.simulate and self.transport.exists(event.EventState.save_file):
-                self.transport.unlink(event.EventState.save_file)
-
-            if not changed:
-                # nothing changed
-                self.changelog.info("No changes were required")
-                result = 254
+        if self.transport.exists(event.EventState.save_file):
+            if self.resume:
+                event.state.loaded = False
+            elif self.no_resume:
+                if not self.simulate:
+                    self.transport.unlink(event.EventState.save_file)
+                event.state.loaded = True
             else:
-                self.changelog.info("All changes were applied successfully")
-                result = 0
+                raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
 
-        except error.ExecutionError, e:
-            # this will have been reported by the context manager, so we wish to terminate
-            # but not to raise it further. Other exceptions should be fully reported with
-            # tracebacks etc automatically
-            self.changelog.error("Terminated due to execution error in processing")
-            result = e.returncode
+        # Actually apply the configuration
+        bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources, verbose_errors=self.verbose>2)
+        bundle.bind()
+        changed = bundle.apply(self, None)
+        
+        if not self.simulate and self.transport.exists(event.EventState.save_file):
+            self.transport.unlink(event.EventState.save_file)
 
-        except error.Error, e:
-            # If its not an Execution error then it won't have been logged by the
-            # Resource.apply() machinery - make sure we log it here.
-            self.changelog.write(str(e))
-            self.changelog.error("Terminated due to error in processing")
-            result = e.returncode
+        if not changed:
+            # nothing changed
+            raise error.NothingChanged("No changes were required")
 
-        except SystemExit:
-            # A normal sys.exit() is fine..
-            raise
-
+        self.changelog.info("All changes were applied successfully to %s" % hostname)
         logger.info("Node %r provisioned" % hostname)
-
-        self.metadata['result'] = result
 
     def get_file(self, filename, etag=None):
         try:
