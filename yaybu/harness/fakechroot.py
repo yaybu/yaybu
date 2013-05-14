@@ -177,7 +177,7 @@ class FakeChrootFixture(Fixture):
         f = tempfile.NamedTemporaryFile(dir=os.path.join(self.chroot_path, 'tmp'), delete=False)
         f.write(contents)
         f.close()
-        return "/tmp/" + os.path.realpath(f.name).split("/")[-1]
+        return f.name, "/tmp/" + os.path.realpath(f.name).split("/")[-1]
 
     def get_env(self):
         env = {}
@@ -257,7 +257,6 @@ class FakeChrootFixture(Fixture):
         Provision.Transport = FakechrootTransport
 
         filespath = os.path.join(self.chroot_path, "/tmp", "files")
-        args = [self.chroot_path+arg if arg.startswith("/") else arg for arg in args]
         from yaybu.core.command import YaybuCmd
         from optparse import OptionParser
 
@@ -268,7 +267,7 @@ class FakeChrootFixture(Fixture):
         y.debug = True
         y.opts_up(p)
         try:
-            return y.do_up(*p.parse_args(args))
+            return y.do_up(*p.parse_args(list(args)))
         except SystemError:
             return 0
 
@@ -278,7 +277,7 @@ class FakeChrootFixture(Fixture):
         return self.yaybu(*args)
 
     def apply(self, contents, *args):
-        path = self.write_temporary_file(contents)
+        path = self.write_temporary_file(contents)[0]
         path2 = self.write_temporary_file(
             """
             include "%s"
@@ -287,12 +286,12 @@ class FakeChrootFixture(Fixture):
                     server:
                         fqdn: fakechroot:///
                     resources: {{ resources }}
-            """ % path)
+            """ % path)[0]
 
         return self.yaybu("-C", path2, *args)
 
     def apply_simulate(self, contents):
-        path = self.write_temporary_file(contents)
+        path = self.write_temporary_file(contents)[0]
         path2 = self.write_temporary_file(
             """
             include "%s"
@@ -301,7 +300,8 @@ class FakeChrootFixture(Fixture):
                     server:
                         fqdn: fakechroot:///
                     resources: {{ resources }}
-            """ % path)
+            """ % path)[0]
+
         return self.simulate("-C", path2)
 
     def check_apply(self, contents, *args, **kwargs):
