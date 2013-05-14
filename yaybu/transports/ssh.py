@@ -73,7 +73,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         transport = client.get_transport()
 
         channel = transport.open_session()
-        channel.exec_command(' '.join([pipes.quote(c) for c in full_command]))
+        channel.exec_command(' '.join([pipes.quote(c) for c in command]))
 
         if stdin:
             channel.send(stdin)

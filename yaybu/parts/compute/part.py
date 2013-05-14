@@ -269,7 +269,7 @@ class Provision(ast.PythonClass):
 
         config.add({"resources": self.params.resources.as_list(default=[])})
 
-        ctx = runcontext.RemoteRunContext(
+        ctx = runcontext.RunContext(
             None,
             resume=True,
             no_resume=False,

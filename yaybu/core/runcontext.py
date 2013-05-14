@@ -25,7 +25,7 @@ from yay.errors import LanguageError, NotFound, NotModified, get_exception_conte
 from yaybu.core import resource
 from yaybu import changes
 from yaybu.core.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
-from yaybu.transports import LocalTransport, RemoteTransport
+from yaybu.transports import SSHTransport
 from yaybu.core.config import Config
 
 logger = logging.getLogger("runcontext")
@@ -37,7 +37,7 @@ class RunContext(object):
     simulate = False
     ypath = ()
     verbose = 0
-    Transport = RemoteTransport
+    Transport = SSHTransport
 
     def __init__(self, configfile, resume=False, no_resume=False, user="root",
                  host=None, ypath=(), simulate=False, verbose=2,

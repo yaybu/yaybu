@@ -30,7 +30,7 @@ class ShellCommand(base.Change):
 
     """ Execute and log a change """
 
-    def __init__(self, command, shell=None, stdin=None, cwd=None, env=None, user=None, group=None, umask=None, expected=0):
+    def __init__(self, command, shell=None, stdin=None, cwd=None, env=None, user="root", group=None, umask=None, expected=0):
         self.command = command
         self.shell = shell
         self.stdin = stdin
