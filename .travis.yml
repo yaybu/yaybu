@@ -1,9 +1,5 @@
 language: python
 
-env:
-  - TEST_NETWORK=0
-  - TEST_NETWORK=1
-
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y -q fakeroot fakechroot cowdancer python-dateutil
@@ -12,5 +8,5 @@ install:
   - python bootstrap.py
   - ./bin/buildout
 
-script: ./bin/test discover
+script: ./bin/test -v
 
