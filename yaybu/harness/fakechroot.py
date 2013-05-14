@@ -42,6 +42,9 @@ distro_flags = {
     "Ubuntu 12.04": dict(
         name="precise",
         ),
+    "Ubuntu 12.10": dict(
+        name="quantal",
+    )
    }
 
 
@@ -105,6 +108,9 @@ class FakeChrootFixture(Fixture):
         if os.path.islink(os.path.join(self.chroot_path, "var", "run")):
             os.unlink(os.path.join(self.chroot_path, "var", "run"))
             os.mkdir(os.path.join(self.chroot_path, "var", "run"))
+
+        os.mkdir(os.path.join(self.chroot_path, "etc"))
+        os.mkdir(os.path.join(self.chroot_path, "tmp"))
 
         with self.open("/etc/yaybu", "w") as fp:
             fp.write(yaybu_cfg)
