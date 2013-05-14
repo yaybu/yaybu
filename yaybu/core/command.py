@@ -162,41 +162,6 @@ class YaybuCmd(OptionParsingCmd):
         #    raise SystemExit(rv)
         return rv
 
-    def opts_push(self, parser):
-        parser.add_option("-s", "--simulate", default=False, action="store_true")
-        parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
-        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
-        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
-        parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
-
-    def do_push(self, opts, args):
-        """
-        usage: remote [options] <hostname> <filename>
-        Provision the specified hostname with the specified configuration, by
-        executing Yaybu on the remote system, via ssh
-        """
-        if len(args) < 2:
-            self.simple_help("push")
-            return
-
-        hostname = args[0]
-        ctx = runcontext.RunContext(args[1],
-                                    resume=opts.resume,
-                                    no_resume=opts.no_resume,
-                                    user=opts.user,
-                                    ypath=self.ypath,
-                                    simulate=opts.simulate,
-                                    verbose=self.verbose,
-                                    env_passthrough=opts.env_passthrough,
-                                    )
-
-        if len(args) > 1:
-            ctx.get_config().set_arguments_from_argv(args[2:])
-
-        r = runner(hostname)
-        rv = r.run(ctx)
-        return rv
-
     def do_bootstrap(self, opts, args):
         """
         usage: bootstrap [options] <username>@<hostname>:<port>
