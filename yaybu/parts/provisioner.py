@@ -30,7 +30,7 @@ class Provision(ast.PythonClass):
     Use yaybu to configure a server
 
     appserver:
-        create "yaybu.parts.compute:Provision":
+        create "yaybu.parts:Provision":
             server:
                 fqdn: example.com
 
@@ -42,25 +42,12 @@ class Provision(ast.PythonClass):
 
         logger.info("Updating node %r" % hostname)
 
-        config = Config(searchpath=self.root.openers.searchpath)
-
-        for path in self.params.includes.as_iterable(default=[]):
-            config.load_uri(path)
-
-        config.add({"resources": self.params.resources.as_list(default=[])})
-
         ctx = runcontext.RunContext(
-            None,
-            resume=self.root.resume,
-            no_resume=self.root.no_resume,
-            host = hostname,
+            self.root,
+            self.params.resources,
+            host=hostname,
             user=self.params.server.user.as_string(default='ubuntu'),
-            ypath=self.root.openers.searchpath,
-            simulate=self.root.simulate,
-            verbose=self.root.verbose,
-            env_passthrough=self.root.env_passthrough,
             )
-        ctx.set_config(config)
 
         r = runner.Runner()
         result = r.run(ctx)

@@ -16,7 +16,7 @@ import os
 import pipes
 import select
 import collections
-
+import socket
 import paramiko
 
 from yay import String
@@ -42,13 +42,13 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
             try:
                 if self.key is not None:
                     client.connect(hostname=self.context.host,
-                                   username=self.context.connect_user or "ubuntu",
+                                   username=self.context.user or "ubuntu",
                                    port=self.context.port or 22,
                                    pkey=self.key,
                                    look_for_keys=False)
                 else:
                     client.connect(hostname=self.context.host,
-                                   username=self.context.connect_user or "ubuntu",
+                                   username=self.context.user or "ubuntu",
                                    port=self.context.port or 22,
                                    look_for_keys=True)
                 break

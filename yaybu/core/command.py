@@ -185,6 +185,8 @@ class YaybuCmd(OptionParsingCmd):
         graph.resume = opts.resume
         graph.no_resume = opts.no_resume
         graph.user = opts.user
+        if not len(self.ypath):
+            self.ypath.append(os.getcwd())
         graph.ypath = self.ypath
         graph.verbose = self.verbose
         graph.env_passthrough = opts.env_passthrough

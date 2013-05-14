@@ -64,7 +64,7 @@ class Runner(object):
                 ctx.set_bundle(bundle)
 
             # Actually apply the configuration
-            changed = ctx.get_bundle().apply(ctx, ctx.get_config())
+            changed = ctx.bundle.apply(ctx, None)
 
             if not ctx.simulate and os.path.exists(event.EventState.save_file):
                 os.unlink(event.EventState.save_file)
