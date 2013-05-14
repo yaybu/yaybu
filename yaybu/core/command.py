@@ -159,7 +159,7 @@ class YaybuCmd(OptionParsingCmd):
         If no cluster is specified, all clusters are shown
         """
 
-    def opts_provision(self, parser):
+    def opts_up(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
@@ -167,11 +167,11 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
         parser.add_option("-C", "--config", default="Yaybufile", action="store", help="Name of configuration to load")
 
-    def do_provision(self, opts, args):
+    def do_up(self, opts, args):
         """
-        usage: provision <cluster> <filename> <name=value>...
-        Create a new cluster, or update the existing cluster, <cluster>
-        in the cloud provider, using the configuration in <filename>
+        usage: up <name=value>...
+        Create a new cluster, or update an existing cluster,
+        in the cloud provider, using the configuration in Yaybufile
         if the configuration takes arguments these can be provided as
         name=value name=value...
         """
