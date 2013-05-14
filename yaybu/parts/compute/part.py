@@ -33,12 +33,9 @@ from paramiko.dsskey import DSSKey
 
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
-from yaybu.core import runner, runcontext
 from yaybu.core.state import PartState
 
 from yay import ast, errors
-from yay.config import Config
-
 
 logger = logging.getLogger(__name__)
 
@@ -225,67 +222,4 @@ class Compute(ast.PythonClass):
 
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
-
-
-class Provision(ast.PythonClass):
-
-    """
-    Use yaybu to configure a server
-
-    prototype ComputeInstance:
-        create "yaybu.parts.compute:Compute":
-            driver:
-                id: AWS
-                key: your-amazon-key
-                secret: your-amazon-secret
-            key: example_key               # This key must be defined in AWS control panel to be able to SSH in
-            image: ami-ca1a14be            # Ubuntu 10.04 LTS 64bit EBS
-            size: t1.micro                 # Smallest AWS size
-
-    appserver:
-        create "yaybu.parts.compute:Provision":
-            server: {{ new ComputeInstance(size="t1.medium") }}
-            resources: {{ resources }}
-
-    or
-
-    appserver:
-        create "yaybu.parts.compute:Provision":
-            server:
-                fqdn: example.com
-
-            resources: {{ resources }}
-    """
-
-    def apply(self):
-        hostname = self.params.server.fqdn.as_string()
-
-        logger.info("Updating node %r" % hostname)
-
-        config = Config(searchpath=self.root.openers.searchpath)
-
-        for path in self.params.includes.as_iterable(default=[]):
-            config.load_uri(path)
-
-        config.add({"resources": self.params.resources.as_list(default=[])})
-
-        ctx = runcontext.RunContext(
-            None,
-            resume=True,
-            no_resume=False,
-            host = hostname,
-            user=self.params.server.user.as_string(default='ubuntu'),
-            ypath=self.root.openers.searchpath,
-            simulate=self.root.simulate,
-            verbose=2, #self.root.verbose,
-            env_passthrough=[], #self.root.env_passthrough,
-            )
-        ctx.set_config(config)
-
-        r = runner.Runner()
-        result = r.run(ctx)
-
-        logger.info("Node %r provisioned" % hostname)
-
-        self.metadata['result'] = result
 
