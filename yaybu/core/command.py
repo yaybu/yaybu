@@ -10,7 +10,7 @@ from functools import partial
 
 import yay
 import yay.errors
-from yaybu.core import runner, runcontext, error, util
+from yaybu.core import runcontext, error, util
 
 logger = logging.getLogger("yaybu.core.command")
 

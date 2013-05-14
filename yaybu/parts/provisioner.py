@@ -15,7 +15,7 @@
 import os
 import logging
 
-from yaybu.core import runner, runcontext
+from yaybu.core import runcontext
 
 from yay import ast, errors
 from yay.config import Config
@@ -49,8 +49,7 @@ class Provision(ast.PythonClass):
             user=self.params.server.user.as_string(default='ubuntu'),
             )
 
-        r = runner.Runner()
-        result = r.run(ctx)
+        result = ctx.apply()
 
         logger.info("Node %r provisioned" % hostname)
 
