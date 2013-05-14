@@ -262,6 +262,7 @@ class YaybuCmd(OptionParsingCmd):
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
         parser.add_option("-D", "--dump", default=False, action="store_true", help="Dump complete, *insecure* dumps of the configurations applied")
+        parser.add_option("-C", "--config", default="Yaybufile", action="store", help="Name of configuration to load")
 
     def do_provision(self, opts, args):
         """
@@ -271,16 +272,12 @@ class YaybuCmd(OptionParsingCmd):
         if the configuration takes arguments these can be provided as
         name=value name=value...
         """
-        if len(args) < 2:
-            self.simple_help("provision")
-            return
-
         from yaybu.core.config import Config
 
         graph = Config()
         graph.simulate = opts.simulate
-        graph.name = args[0]
-        graph.load_uri(args[1])
+        graph.name = "example"
+        graph.load_uri(os.path.realpath(opts.config))
 
         try:
             cfg = graph.resolve()
