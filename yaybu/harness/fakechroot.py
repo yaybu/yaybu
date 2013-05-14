@@ -109,8 +109,12 @@ class FakeChrootFixture(Fixture):
             os.unlink(os.path.join(self.chroot_path, "var", "run"))
             os.mkdir(os.path.join(self.chroot_path, "var", "run"))
 
-        os.mkdir(os.path.join(self.chroot_path, "etc"))
-        os.mkdir(os.path.join(self.chroot_path, "tmp"))
+        # mkdir was needed by Doug on Quantal - but blows up on Lucid and
+        # Precise - so added exists guard
+        if not os.path.exists(self.chroot_path, "etc"):
+            os.mkdir(os.path.join(self.chroot_path, "etc"))
+        if not os.path.exists(self.chroot_path, "tmp"):
+            os.mkdir(os.path.join(self.chroot_path, "tmp"))
 
         with self.open("/etc/yaybu", "w") as fp:
             fp.write(yaybu_cfg)
