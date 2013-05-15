@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yaybu import error
+from yay import errors
 
 class PolicyType(type):
 
@@ -89,19 +90,19 @@ class Present(ArgumentAssertion):
     def test(self, resource):
         """ Test that the argument this asserts for is present in the
         resource. """
-        if getattr(resource, self.name) is not None:
+        try:
+            resource.inner[self.name].resolve()
             return True
-        return False
+        except errors.NoMatching:
+            return False
 
-class Absent(ArgumentAssertion):
+class Absent(Present):
 
     """ The argument has not been specified by the user and has no default
     value. An argument with a default value is always defined. """
 
     def test(self, resource):
-        if getattr(resource, self.name) is None:
-            return True
-        return False
+        return not super(Absent, self).test(resource)
 
 class AND(ArgumentAssertion):
 

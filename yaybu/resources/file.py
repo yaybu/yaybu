@@ -77,7 +77,7 @@ class File(Resource):
     with a digit will be interpreted as a GID, otherwise it will be looked up
     using the python 'grp' module."""
 
-    mode = Octal(default=0644)
+    mode = Octal(default="644")
     """A mode representation as an octal. This can begin with leading zeros if
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work."""

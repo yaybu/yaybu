@@ -1,4 +1,4 @@
-# Copyright 2011 Isotoma Limited
+# Copyright 2011-2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 import unicodedata
 import random
 import yay
+from yay import errors
+
 
 unicode_glyphs = ''.join(
     unichr(char)
@@ -36,58 +38,52 @@ urlparse.uses_netloc.append("package")
 
 class Argument(object):
 
-    """ Stores the argument value on the instance object. It's a bit fugly,
-    neater ways of doing this that do not involve passing extra arguments to
-    Argument are welcome. """
+    """
+    Adds a property descriptor to a class that automatically validates and
+    resolves members of a yay AST node.
+
+    It is immutable.
+    """
 
     metaclass = ABCMeta
-    argument_id = 0
 
     def __init__(self, **kwargs):
         self.default = kwargs.pop("default", None)
         self.__doc__ = kwargs.pop("help", None)
-        self.arg_id = "argument_%d" % Argument.argument_id
-        Argument.argument_id += 1
 
     def __get__(self, instance, owner):
         if instance is None:
-            # sphinx complains?
-            #raise AttributeError
-            return None
-        if hasattr(instance, self.arg_id):
-            return getattr(instance, self.arg_id)
-        else:
+            return self
+        try:
+            return instance.inner[self.name].resolve()
+        except errors.NoMatching:
             return self.default
 
-    @abstractmethod
-    def __set__(self, instance, value):
-        """ Set the property. The value will be a UTF-8 encoded string read from the yaml source file. """
-
+ 
 class Boolean(Argument):
 
     """ Represents a boolean. "1", "yes", "on" and "true" are all considered
     to be True boolean values. Anything else is False. """
 
-    def __set__(self, instance, value):
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        value = instance.inner.resolve()
         if type(value) in types.StringTypes:
-            if value.lower() in ("1", "yes", "on", "true"):
-                value = True
-            else:
-                value = False
-        else:
-            value = bool(value)
-        setattr(instance, self.arg_id, value)
+           if value.lower() in ("1", "yes", "on", "true"):
+                return True
+           return False
+        return bool(value)
+
 
 class String(Argument):
 
     """ Represents a string. """
 
-    def __set__(self, instance, value):
-        if value is None:
-            pass
-        elif not isinstance(value, (unicode, yay.String)):
-            value = unicode(value, 'utf-8')
-        setattr(instance, self.arg_id, value)
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return instance.inner[self.name].as_string(default=self.default)
 
     @classmethod
     def _generate_valid(self):
@@ -96,19 +92,19 @@ class String(Argument):
             l.append(random.choice(unicode_glyphs))
         return "".join(l)
 
+
 class FullPath(Argument):
 
     """ Represents a full path on the filesystem. This should start with a
     '/'. """
 
-    def __set__(self, instance, value):
-        if value is None:
-            pass
-        elif not isinstance(value, unicode):
-            value = unicode(value, 'utf-8')
-        if not value.startswith("/"):
-            raise error.ParseError("%s is not a full path" % value)
-        setattr(instance, self.arg_id, value)
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        value = instance.inner[self.name].as_string(default=self.default)
+        #if not value.startswith("/"):
+        #    raise error.ParseError("%s is not a full path" % value)
+        return value
 
     @classmethod
     def _generate_valid(self):
@@ -118,29 +114,30 @@ class FullPath(Argument):
             l.append(random.choice(unicode_glyphs))
         return "/" + "".join(l)
 
+
 class Integer(Argument):
 
     """ Represents an integer argument taken from the source file. This can
     throw an :py:exc:error.ParseError if the passed in value cannot represent
     a base-10 integer. """
 
-    def __set__(self, instance, value):
-        if not isinstance(value, int):
-            try:
-                value = int(value)
-            except ValueError:
-                raise error.ParseError("%s is not an integer" % value)
-        setattr(instance, self.arg_id, value)
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        instance.inner[self.name].as_int(default=self.default)
 
     @classmethod
     def _generate_valid(self):
         return random.randint(0,sys.maxint)
+
 
 class DateTime(Argument):
 
     """ Represents a date and time. This is parsed in ISO8601 format. """
 
     def __set__(self, instance, value):
+        if instance is None:
+            return self
         if isinstance(value, basestring):
             value = dateutil.parser.parse(value)
         setattr(instance, self.arg_id, value)
@@ -149,29 +146,46 @@ class DateTime(Argument):
     def _generate_valid(self):
         return datetime.datetime.fromtimestamp(random.randint(0, sys.maxint))
 
+
 class Octal(Integer):
 
     """ An octal integer.  This is specifically used for file permission modes. """
 
-    def __set__(self, instance, value):
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        try:
+            value = instance.inner[self.name].resolve()
+        except errors.NoMatching:
+            value = self.default
         if isinstance(value, int):
             # we assume this is due to lame magic in yaml and rebase it
-            value = int(str(value), 8)
-        else:
-            value = int(value, 8)
-        setattr(instance, self.arg_id, value)
+            return int(str(value), 8)
+        return int(value, 8)
+
+    @classmethod
+    def _generate_valid(self):
+        return random.choice([0755, 0644, 0777])
+
 
 class Dict(Argument):
-    def __set__(self, instance, value):
-        setattr(instance, self.arg_id, value)
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return instance.inner[self.name].as_dict(default=self.default)
 
     @classmethod
     def _generate_valid(self):
         return {}
 
+
 class List(Argument):
-    def __set__(self, instance, value):
-        setattr(instance, self.arg_id, value)
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return instance.inner[self.name].as_list(default=self.default)
 
     @classmethod
     def _generate_valid(self):
@@ -183,14 +197,14 @@ class File(Argument):
     """ Provided with a URL, this can get files by various means. Often used
     with the package:// scheme """
 
-    def __set__(self, instance, value):
-        setattr(instance, self.arg_id, value)
+    pass
 
 
 class StandardPolicy:
 
     def __init__(self, policy_name):
         self.policy_name = policy_name
+
 
 class PolicyTrigger:
 
@@ -207,6 +221,7 @@ class PolicyTrigger:
             raise error.BindingError("%r cannot bind to non-existant event %s on resource %r" % (target, self.when, resources[self.on]))
         resources[self.on].register_observer(self.when, target, self.policy, self.immediately)
         return resources[self.on]
+
 
 class PolicyCollection:
 
@@ -229,17 +244,27 @@ class PolicyCollection:
             import policy
             return policy.NullPolicy
 
+
 class PolicyArgument(Argument):
 
     """ Parses the policy: argument for resources, including triggers etc. """
 
-    def __set__(self, instance, value):
-        """ Set either a default policy or a set of triggers on the policy collection """
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+
+        try:
+            value = instance.inner[self.name].resolve()
+        except errors.NoMatching:
+            #return PolicyCollection(instance.policies.default())
+            return None
+
         if type(value) in types.StringTypes:
             if not value in instance.policies:
                 raise error.ParseError("'%s' is not a valid policy for %r" % (value, instance))
-            coll = PolicyCollection(StandardPolicy(value))
-        elif isinstance(value, dict):
+            return PolicyCollection(StandardPolicy(value))
+
+        if isinstance(value, dict):
             triggers = []
             for policy, conditions in value.items():
                 if not policy in instance.policies:
@@ -254,8 +279,7 @@ class PolicyArgument(Argument):
                             on=condition['on'],
                             immediately=condition.get('immediately', 'true') == 'true')
                         )
-            coll = PolicyCollection(triggers=triggers)
-        else:
-            raise error.ParseError("Expected either a string literal or mapping as 'policy' argument for %r" % instance)
+            return PolicyCollection(triggers=triggers)
 
-        setattr(instance, self.arg_id, coll)
+        raise error.ParseError("Expected either a string literal or mapping as 'policy' argument for %r" % instance)
+

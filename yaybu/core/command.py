@@ -193,11 +193,13 @@ class YaybuCmd(OptionParsingCmd):
             # but not to raise it further. Other exceptions should be fully reported with
             # tracebacks etc automatically
             # graph.changelog.error("Terminated due to execution error in processing")
+            print str(e)
             return e.returncode
 
         except error.Error, e:
             # If its not an Execution error then it won't have been logged by the
             # Resource.apply() machinery - make sure we log it here.
+            print str(e)
             # graph.changelog.write(str(e))
             # graph.changelog.error("Terminated due to error in processing")
             return e.returncode
