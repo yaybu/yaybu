@@ -21,7 +21,7 @@ from yaybu.core import ordereddict
 from yaybu.core import event
 
 from yay import errors
-from yay.ast import PythonicWrapper
+from yay.ast import bind, PythonicWrapper
 from yay.errors import LanguageError, get_exception_context
 
 class ResourceType(type):
@@ -180,8 +180,7 @@ class Resource(object):
 
         # Error if doesn't conform to policy
         this_policy = self.get_default_policy()
-        if not this_policy.conforms(self):
-            raise error.NonConformingPolicy(this_policy.name)
+        this_policy.validate(self)
 
         # throws an exception if there is not oneandonlyone provider
         provider = this_policy.get_provider(self)
@@ -233,10 +232,6 @@ class Resource(object):
 
     def __repr__(self):
         return self.id
-
-    def __unicode__(self):
-        classname = getattr(self, '__resource_name__', self.__class__.__name__)
-        return u"%s[%s]" % (classname, self.inner.name.as_string())
 
 
 class ResourceBundle(ordereddict.OrderedDict):
@@ -329,10 +324,10 @@ class ResourceBundle(ordereddict.OrderedDict):
 
         # Create implicit File[] nodes for any watched files
         for watched in resource.watch:
-            w = self.add("File", {
+            w = self.add("File", bind({
                 "name": watched,
                 "policy": "watched",
-            })
+            }))
             w._original_hash = None
 
         return resource

@@ -128,6 +128,5 @@ class ExecutePolicy(Policy):
     default = True
     signature = (Present("name"),
         XOR(Present("command"), Present("commands")),
-        XOR(Present("creates"), Present("touch")),
         )
 

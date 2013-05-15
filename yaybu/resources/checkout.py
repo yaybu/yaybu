@@ -75,7 +75,6 @@ class CheckoutSyncPolicy(Policy):
     signature = (
         Present("name"),
         Present("repository"),
-        Present("branch"),
         )
 
 
@@ -91,6 +90,5 @@ class CheckoutExportPolicy(Policy):
     signature = (
         Present("name"),
         Present("repository"),
-        Present("branch"),
         )
 

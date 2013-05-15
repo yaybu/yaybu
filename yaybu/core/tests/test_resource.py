@@ -78,31 +78,25 @@ class TestArgumentAssertion(unittest.TestCase):
             signature = [policy.Present("foo")]
         class Q(policy.Policy):
             signature = [policy.Present("bar")]
-        class R(policy.Policy):
-            signature = [policy.Present("baz")]
-        f = F(bind(dict(name="test")))
+        f = F(bind(dict(name="test", foo="bar")))
         self.assertEqual(P.conforms(f), True)
         self.assertEqual(Q.conforms(f), False)
-        self.assertRaises(AttributeError, R.conforms, f)
 
     def test_absent(self):
         class P(policy.Policy):
             signature = [policy.Absent("foo")]
         class Q(policy.Policy):
             signature = [policy.Absent("bar")]
-        class R(policy.Policy):
-            signature = [policy.Absent("baz")]
-        f = F(bind(dict(name="test")))
+        f = F(bind(dict(name="test", foo="bar")))
         self.assertEqual(P.conforms(f), False)
         self.assertEqual(Q.conforms(f), True)
-        self.assertRaises(AttributeError, R.conforms, f)
 
     def test_and(self):
         class P(policy.Policy):
             signature = [policy.Present("foo"),
                          policy.Absent("bar"),
                          ]
-        f = F(bind(dict(name="test")))
+        f = F(bind(dict(name="test", foo="bar")))
         self.assertEqual(P.conforms(f), True)
 
     def test_xor(self):
@@ -116,9 +110,9 @@ class TestArgumentAssertion(unittest.TestCase):
         g = G(bind(dict(name="test", foo="yes")))
         self.assertEqual(P.conforms(g), True)
         g = G(bind(dict(name="test", bar="yes")))
-        self.assertEqual(P.conforms(g), False)
-        g = G(bind(dict(name="test", foo="yes", bar="yes")))
         self.assertEqual(P.conforms(g), True)
+        g = G(bind(dict(name="test", foo="yes", bar="yes")))
+        self.assertEqual(P.conforms(g), False)
 
 
 class Ev1(resource.Resource):
