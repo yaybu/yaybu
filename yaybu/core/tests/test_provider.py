@@ -20,6 +20,7 @@ from yaybu.core import (resource,
                         argument,
                         provider,
                         error)
+from yay.ast import bind
 
 class R(resource.Resource):
     foo = argument.String()
@@ -51,10 +52,10 @@ class Prov2(provider.Provider):
 class TestOrchestration(unittest.TestCase):
 
     def test_validate(self):
-        r = R(name="1", foo="a", bar="b")
+        r = R(bind(dict(name="1", foo="a", bar="b")))
         pol = r.get_default_policy()
         self.assertEqual(r.get_default_policy().get_provider({}), Prov1)
-        r = R(name="2")
+        r = R(bind(dict(name="2")))
         self.assertRaises(error.NonConformingPolicy, r.validate)
-        r = R(name="3", policy="p1")
+        r = R(bind(dict(name="3", policy="p1")))
         self.assertRaises(error.NonConformingPolicy, r.validate)

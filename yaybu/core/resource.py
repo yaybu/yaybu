@@ -250,7 +250,7 @@ class ResourceBundle(ordereddict.OrderedDict):
         """ Given a list of types and parameters, build a resource bundle """
         from yay.ast import bind
         nodes = bind(specification)
-        return self.create_from_yay_expression(nodes)
+        return cls.create_from_yay_expression(nodes)
 
     @classmethod
     def create_from_yay_expression(cls, expression, verbose_errors=False):
@@ -329,8 +329,8 @@ class ResourceBundle(ordereddict.OrderedDict):
 
         # Create implicit File[] nodes for any watched files
         for watched in resource.watch:
-            w = self.create("File", {
-                "name": watched.as_string(),
+            w = self.add("File", {
+                "name": watched,
                 "policy": "watched",
             })
             w._original_hash = None

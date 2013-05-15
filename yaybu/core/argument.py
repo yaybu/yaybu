@@ -124,7 +124,7 @@ class Integer(Argument):
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        instance.inner[self.name].as_int(default=self.default)
+        return instance.inner[self.name].as_int(default=self.default)
 
     @classmethod
     def _generate_valid(self):
@@ -135,12 +135,14 @@ class DateTime(Argument):
 
     """ Represents a date and time. This is parsed in ISO8601 format. """
 
-    def __set__(self, instance, value):
+    def __get__(self, instance, onwer):
         if instance is None:
             return self
+        value = instance.inner[self.name].as_string(default=self.default)
+        if not value:
+            return None
         if isinstance(value, basestring):
-            value = dateutil.parser.parse(value)
-        setattr(instance, self.arg_id, value)
+            return dateutil.parser.parse(value)
 
     @classmethod
     def _generate_valid(self):
