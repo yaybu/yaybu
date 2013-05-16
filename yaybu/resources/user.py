@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from yaybu.core.resource import Resource
-from yaybu.core.policy import Policy
+from yaybu.core.policy import Policy, Present, NAND
 from yaybu.core.argument import (
     String,
     FullPath,
@@ -100,6 +100,11 @@ class UserApplyPolicy(Policy):
     resource = User
     name = "apply"
     default = True
+
+    signature = (
+        Present("name"),
+        NAND(Present("password"), Present("disabled_login")),
+        )
 
 
 class UserRemovePolicy(Policy):
