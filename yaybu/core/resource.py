@@ -20,6 +20,8 @@ import collections
 from yaybu.core import ordereddict
 from yaybu.core import event
 
+from yay import errors
+from yay.ast import bind, PythonicWrapper
 from yay.errors import LanguageError, get_exception_context
 
 class ResourceType(type):
@@ -30,21 +32,24 @@ class ResourceType(type):
     resources = {}
 
     def __new__(meta, class_name, bases, new_attrs):
-        cls = type.__new__(meta, class_name, bases, new_attrs)
-        cls.__args__ = []
-        for b in bases:
-            if hasattr(b, "__args__"):
-                cls.__args__.extend(b.__args__)
+        cls = type.__new__(meta, class_name, bases, {})
+
+	# Ultimately do this like Django and have a contribute_to_class, i
+	# think
+        for k, v in new_attrs.items():
+            if isinstance(v, Argument):
+                v.name = k #.replace("_", "-")
+            setattr(cls, k, v)
+
         cls.policies = AvailableResourcePolicies()
+
         if class_name != 'Resource':
             rname = new_attrs.get("__resource_name__", class_name)
             if rname in meta.resources:
                 raise error.ParseError("Redefinition of resource %s" % rname)
             else:
                 meta.resources[rname] = cls
-        for key, value in new_attrs.items():
-            if isinstance(value, Argument):
-                cls.__args__.append(key)
+
         return cls
 
     @classmethod
@@ -79,9 +84,6 @@ class Resource(object):
 
     __metaclass__ = ResourceType
 
-    # The arguments for this resource, set in the metaclass
-    __args__ = []
-
     policies = AvailableResourcePolicies()
     """ A dictionary of policy names mapped to policy classes (not objects).
 
@@ -103,7 +105,7 @@ class Resource(object):
 
     name = String()
 
-    watch = List()
+    watch = List(default=[])
     """ A list of files to monitor while this resource is applied
 
     The file will be hashed before and after a resource is applied.
@@ -127,26 +129,37 @@ class Resource(object):
                   on: File[/var/local/sites/foobar/apache/apache.cfg]
     """
 
-    def __init__(self, **kwargs):
-        """ Pass a dictionary of arguments and they will be updated from the
-        supplied data. """
-        setattr(self, "name", kwargs["name"])
-        for key, value in kwargs.items():
-            if not key in self.__args__:
-                raise error.ParseError("'%s' is not a valid option for resource %s" % (key, self))
-            setattr(self, key, value)
+    def __init__(self, inner):
+        """ Takes a reference to a Yay AST node """
+        self.inner = PythonicWrapper(inner)
         self.observers = collections.defaultdict(list)
+
+    @classmethod
+    def get_argument_names(klass):
+        for k in dir(klass):
+            attr = getattr(klass, k)
+            if isinstance(attr, Argument):
+                yield attr.name
+
+    def get_argument_values(self):
+        """ Return all argument names and values in a dictionary. If an
+        argument has no default and has not been set, it's value in the
+        dictionary will be None. """
+
+        retval = {}
+        for key in self.get_argument_names():
+            retval[key] = getattr(self, key, None)
 
     def register_observer(self, when, resource, policy, immediately):
         self.observers[when].append((immediately, resource, policy))
 
-    def validate(self, yay=None):
-        """ Given the provided yay configuration dictionary, validate that
-        this resource is correctly specified. Will raise an exception if it is
-        invalid. Returns the provider if it is valid.
+    def validate(self):
+        """ Validate that this resource is correctly specified. Will raise
+        an exception if it is invalid. Returns True if it is valid.
 
         We only validate if:
 
+           - only known arguments are specified
            - the chosen policies all exist, or
            - there is at least one default policy, and
            - the arguments provided conform with all selected policies, and
@@ -156,13 +169,21 @@ class Resource(object):
         be able to implement the required policies.
 
         """
-        if yay is None:
-            yay = {}
+
+        # This will throw any error if any of our validation fails
+        self.get_argument_values()
+
+        # Only allow keys that are in the schema
+        for key in self.inner.keys():
+            if not key in self.get_argument_names():
+                raise error.ParseError("'%s' is not a valid option for resource %s" % (key, self))
+
+        # Error if doesn't conform to policy
         this_policy = self.get_default_policy()
-        if not this_policy.conforms(self):
-            raise error.NonConformingPolicy(this_policy.name)
+        this_policy.validate(self)
+
         # throws an exception if there is not oneandonlyone provider
-        provider = this_policy.get_provider(self, yay)
+        provider = this_policy.get_provider(self)
         return True
 
     def apply(self, context, yay=None, policy=None):
@@ -204,28 +225,13 @@ class Resource(object):
         """ Return an instantiated policy for this resource. """
         return event.state.policy(self)
 
-    def dict_args(self):
-
-        """ Return all argument names and values in a dictionary. If an
-        argument has no default and has not been set, it's value in the
-        dictionary will be None. """
-
-        d = {}
-        for a in self.__args__:
-            d[a] = getattr(self, a, None)
-        return d
-
     @property
     def id(self):
         classname = getattr(self, '__resource_name__', self.__class__.__name__)
-        return "%s[%s]" % (classname, self.name.encode("utf-8"))
+        return "%s[%s]" % (classname, self.inner.name.as_string())
 
     def __repr__(self):
         return self.id
-
-    def __unicode__(self):
-        classname = getattr(self, '__resource_name__', self.__class__.__name__)
-        return u"%s[%s]" % (classname, self.name)
 
 
 class ResourceBundle(ordereddict.OrderedDict):
@@ -237,10 +243,9 @@ class ResourceBundle(ordereddict.OrderedDict):
     @classmethod
     def create_from_list(cls, specification):
         """ Given a list of types and parameters, build a resource bundle """
-        bundle = cls()
-        for spec in specification:
-            bundle.add_from_spec(spec)
-        return bundle
+        from yay.ast import bind
+        nodes = bind(specification)
+        return cls.create_from_yay_expression(nodes)
 
     @classmethod
     def create_from_yay_expression(cls, expression, verbose_errors=False):
@@ -249,8 +254,7 @@ class ResourceBundle(ordereddict.OrderedDict):
         bundle = cls()
         try:
             for node in expression.get_iterable():
-                spec = node.resolve()
-                bundle.add_from_spec(spec)
+                bundle.add_from_node(node)
 
         except LanguageError as exc:
             p = error.ParseError()
@@ -279,46 +283,54 @@ class ResourceBundle(ordereddict.OrderedDict):
             k = k.replace("-", "_")
             yield str(k),v
 
-    def add_from_spec(self, spec):
-        if not hasattr(spec, "keys"):
+    def add_from_node(self, spec):
+        try:
+            spec.as_dict()
+        except errors.TypeError:
             raise error.ParseError("Not a valid Resource definition")
 
-        if len(spec.keys()) > 1:
+        keys = list(spec.keys())
+        if len(keys) > 1:
             raise error.ParseError("Too many keys in list item")
 
-        typename, instances = spec.items()[0]
-        if not isinstance(instances, list):
-            instances = [instances]
+        typename = keys[0]
+        instances = spec.get_key(typename)
 
-        for instance in instances:
+        try:
+            instances.as_dict()
+            iterable = [instances]
+        except errors.TypeError:
+            iterable = instances.get_iterable()
+
+        for instance in iterable:
             self.add(typename, instance)
 
     def add(self, typename, instance):
-        if not isinstance(instance, dict):
-            raise error.ParseError("Expected mapping for %s, got %s" % (typename, instance))
+        if not hasattr(instance, "keys"):
+            raise error.ParseError("Expected mapping for %s" % typename)
 
         try:
-            kls = ResourceType.resources[typename](**dict(self.key_remap(instance)))
+            kls = ResourceType.resources[typename]
         except KeyError:
             raise error.ParseError("There is no resource type of '%s'" % typename)
 
-        if kls.id in self:
-            raise error.ParseError("'%s' cannot be defined multiple times" % kls.id)
+        resource = kls(instance)
+        if resource.id in self:
+            raise error.ParseError("'%s' cannot be defined multiple times" % resource.id)
 
-        self[kls.id] = kls
+        resource.validate()
+
+        self[resource.id] = resource
 
         # Create implicit File[] nodes for any watched files
-        for watched in instance.get("watch", []):
-            w = self.create("File", {
+        for watched in resource.watch:
+            w = self.add("File", bind({
                 "name": watched,
                 "policy": "watched",
-            })
+            }))
             w._original_hash = None
 
-        return kls
-
-    # DEPRECATED
-    create = add
+        return resource
 
     def bind(self):
         """ Bind all the resources so they can observe each others for policy
@@ -344,4 +356,3 @@ class ResourceBundle(ordereddict.OrderedDict):
                 if resource.apply(ctx, config):
                     something_changed = True
         return something_changed
-

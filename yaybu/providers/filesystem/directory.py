@@ -59,7 +59,7 @@ class Directory(provider.Provider):
             command = ["/bin/mkdir"]
             if self.resource.parents:
                 command.append("-p")
-            command.append(self.resource.name.encode("utf-8"))
+            command.append(self.resource.name.decode("utf-8"))
             context.changelog.apply(ShellCommand(command))
             changed = True
         context.changelog.apply(ac)

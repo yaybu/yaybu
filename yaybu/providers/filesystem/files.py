@@ -110,10 +110,6 @@ class File(provider.Provider):
 
             sensitive = getattr(fp, 'secret', False)
 
-        elif self.resource.encrypted:
-            contents = context.get_decrypted_file(self.resource.encrypted).read()
-            sensitive = True
-
         else:
             contents = None
             sensitive = False

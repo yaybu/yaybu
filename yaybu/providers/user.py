@@ -63,9 +63,6 @@ class User(provider.Provider):
         return info
 
     def apply(self, context):
-        if self.resource.password and self.resource.disabled_login:
-            raise error.ParseError("Cannot specify password and disabled login for a user")
-
         info = self.get_user_info(context)
 
         if info['exists']:

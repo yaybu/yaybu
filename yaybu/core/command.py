@@ -10,7 +10,7 @@ from functools import partial
 
 import yay
 import yay.errors
-from yaybu.core import runner, runcontext, error, util
+from yaybu.core import error, util
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -125,102 +125,6 @@ class YaybuCmd(OptionParsingCmd):
     def preloop(self):
         print util.version()
 
-    def opts_apply(self, parser):
-        parser.add_option("-s", "--simulate", default=False, action="store_true")
-        #parser.add_option("--host", default=None, action="store", help="A host to remotely run yaybu on")
-        parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
-        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
-        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
-        parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
-
-    def do_apply(self, opts, args, context=runcontext.RunContext):
-        """
-        usage: apply [options] <filename>
-        Applies the specified file to the current host
-        """
-        if len(args) < 1:
-            self.simple_help("apply")
-            return
-        if os.path.exists("/etc/yaybu"):
-            config = yay.load_uri("/etc/yaybu")
-            opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
-        r = runner.Runner()
-        ctx = context(args[0],
-                                    resume=opts.resume,
-                                    no_resume=opts.no_resume,
-                                    user=opts.user,
-                                    ypath=self.ypath,
-                                    simulate=opts.simulate,
-                                    verbose=self.verbose,
-                                    env_passthrough=opts.env_passthrough,
-                                    )
-        ctx.changelog.configure_audit_logging()
-        if len(args) > 1:
-            ctx.get_config().set_arguments_from_argv(args[1:])
-        rv = r.run(ctx)
-        #if rv != 0:
-        #    raise SystemExit(rv)
-        return rv
-
-    def opts_push(self, parser):
-        parser.add_option("-s", "--simulate", default=False, action="store_true")
-        parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
-        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
-        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
-        parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
-
-    def do_push(self, opts, args):
-        """
-        usage: remote [options] <hostname> <filename>
-        Provision the specified hostname with the specified configuration, by
-        executing Yaybu on the remote system, via ssh
-        """
-        if len(args) < 2:
-            self.simple_help("push")
-            return
-
-        hostname = args[0]
-        ctx = runcontext.RunContext(args[1],
-                                    resume=opts.resume,
-                                    no_resume=opts.no_resume,
-                                    user=opts.user,
-                                    ypath=self.ypath,
-                                    simulate=opts.simulate,
-                                    verbose=self.verbose,
-                                    env_passthrough=opts.env_passthrough,
-                                    )
-
-        if len(args) > 1:
-            ctx.get_config().set_arguments_from_argv(args[2:])
-
-        r = runner(hostname)
-        rv = r.run(ctx)
-        return rv
-
-    def do_bootstrap(self, opts, args):
-        """
-        usage: bootstrap [options] <username>@<hostname>:<port>
-        Prepare the specified target to run Yaybu
-        """
-        host = args[0]
-        username = "ubuntu"
-        port = 22
-
-        if "@" in host:
-            username, host = host.split("@", 1)
-
-        if ":" in host:
-            host, port = host.rsplit(":", 1)
-
-        r = remote.RemoteRunner(host, username=username, port=port)
-        try:
-            r.install_yaybu()
-        except error.Error as e:
-            print str(e)
-            return e.returncode
-
-        return 0
-
     def do_expand(self, opts, args):
         """
         usage: expand [filename]
@@ -229,24 +133,7 @@ class YaybuCmd(OptionParsingCmd):
         if len(args) != 1:
             self.simple_help("expand")
             return
-        ctx = runcontext.RunContext(args[0],
-                                    ypath=self.ypath,
-                                    verbose=self.verbose,
-                                    )
-
-        try:
-            cfg = ctx.get_config().get()
-        except yay.errors.LanguageError as e:
-            print str(e)
-            if self.verbose >= 2:
-                print yay.errors.get_exception_context()
-            return 1
-
-        if self.verbose <= 2:
-            cfg = dict(resources=cfg.get("resources", []))
-        print yay.dump(cfg)
-
-        return 0
+        return 1
 
     def do_status(self, opts, args):
         """
@@ -255,40 +142,67 @@ class YaybuCmd(OptionParsingCmd):
         If no cluster is specified, all clusters are shown
         """
 
-    def opts_provision(self, parser):
+    def opts_up(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
-        parser.add_option("-D", "--dump", default=False, action="store_true", help="Dump complete, *insecure* dumps of the configurations applied")
+        parser.add_option("-C", "--config", default="Yaybufile", action="store", help="Name of configuration to load")
 
-    def do_provision(self, opts, args):
+    def do_up(self, opts, args):
         """
-        usage: provision <cluster> <filename> <name=value>...
-        Create a new cluster, or update the existing cluster, <cluster>
-        in the cloud provider, using the configuration in <filename>
+        usage: up <name=value>...
+        Create a new cluster, or update an existing cluster,
+        in the cloud provider, using the configuration in Yaybufile
         if the configuration takes arguments these can be provided as
         name=value name=value...
         """
-        if len(args) < 2:
-            self.simple_help("provision")
-            return
+        if os.path.exists("/etc/yaybu"):
+            config = yay.load_uri("/etc/yaybu")
+            opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
 
         from yaybu.core.config import Config
-
         graph = Config()
         graph.simulate = opts.simulate
-        graph.name = args[0]
-        graph.load_uri(args[1])
+        graph.resume = opts.resume
+        graph.no_resume = opts.no_resume
+        graph.user = opts.user
+        if not len(self.ypath):
+            self.ypath.append(os.getcwd())
+        graph.ypath = self.ypath
+        graph.verbose = self.verbose
+        graph.env_passthrough = opts.env_passthrough
+
+        graph.name = "example"
+        graph.load_uri(os.path.realpath(opts.config))
+        if len(args) > 1:
+            graph.set_arguments_from_argv(args[1:])
 
         try:
             cfg = graph.resolve()
+
         except yay.errors.LanguageError as e:
             print str(e)
             if self.verbose >= 2:
                 print yay.errors.get_exception_context()
-            return 1
+            return error.ParseError.returncode
+
+        except error.ExecutionError, e:
+            # this will have been reported by the context manager, so we wish to terminate
+            # but not to raise it further. Other exceptions should be fully reported with
+            # tracebacks etc automatically
+            # graph.changelog.error("Terminated due to execution error in processing")
+            print str(e)
+            return e.returncode
+
+        except error.Error, e:
+            # If its not an Execution error then it won't have been logged by the
+            # Resource.apply() machinery - make sure we log it here.
+            print str(e)
+            # graph.changelog.write(str(e))
+            # graph.changelog.error("Terminated due to error in processing")
+            return e.returncode
 
         return 0
 

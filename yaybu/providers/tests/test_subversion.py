@@ -11,6 +11,7 @@ class SubversionMissingTest(FakeChrootTestCase):
                    scm: subversion
                    name: /dest
                    repository: /source
+                   branch: trunk
            """)
         self.assertEqual(MissingDependency.returncode, rv)
 

@@ -77,7 +77,7 @@ class File(Resource):
     with a digit will be interpreted as a GID, otherwise it will be looked up
     using the python 'grp' module."""
 
-    mode = Octal(default=0644)
+    mode = Octal(default="644")
     """A mode representation as an octal. This can begin with leading zeros if
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work."""
@@ -85,10 +85,6 @@ class File(Resource):
     static = File()
     """A static file to copy into this resource. The file is located on the
     yaybu path, so can be colocated with your recipes."""
-
-    encrypted = File()
-    """A static encrypted file to copy to this resource. The file is located
-    on the yaybu path, so can be colocated with your recipe."""
 
     template = File()
     """A jinja2 template, used to generate the contents of this resource. The
@@ -119,8 +115,7 @@ class FileApplyPolicy(Policy):
     default = True
     signature = (Present("name"),
                  NAND(Present("template"),
-                      Present("static"),
-                      Present("encrypted")),
+                      Present("static")),
                  )
 
 
@@ -137,7 +132,6 @@ class FileRemovePolicy(Policy):
                  Absent("group"),
                  Absent("mode"),
                  Absent("static"),
-                 Absent("encrypted"),
                  Absent("template"),
                  Absent("template_args"),
                  )

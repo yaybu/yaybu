@@ -21,6 +21,7 @@ from yaybu.core import (resource,
                         provider,
                         )
 from yaybu import error
+from yay.ast import bind
 
 from mock import Mock
 
@@ -40,11 +41,11 @@ class H(resource.Resource):
 class TestResource(unittest.TestCase):
 
     def test_init(self):
-        h = H(**{
+        h = H(bind({
             'name': 'test',
             'foo': u'42',
             'bar': u'20100501',
-            })
+            }))
         self.assertEqual(h.foo, 42)
         self.assertEqual(h.bar, datetime.datetime(2010, 05, 01))
 
@@ -52,18 +53,10 @@ class TestResource(unittest.TestCase):
 class TestArgument(unittest.TestCase):
 
     def test_storage(self):
-        f1 = F(name="test")
-        f2 = F(name="test")
-        g1 = G(name="test")
-        g2 = G(name="test")
-        f1.foo = "a"
-        f1.bar = "b"
-        f2.foo = "c"
-        f2.bar = "d"
-        g1.foo = "e"
-        g1.bar = "f"
-        g2.foo = "g"
-        g2.bar = "h"
+        f1 = F(bind(dict(name="test", foo="a", bar="b")))
+        f2 = F(bind(dict(name="test", foo="c", bar="d")))
+        g1 = G(bind(dict(name="test", foo="e", bar="f")))
+        g2 = G(bind(dict(name="test", foo="g", bar="h")))
         self.assertEqual(f1.foo, "a")
         self.assertEqual(f1.bar, "b")
         self.assertEqual(f2.foo, "c")
@@ -74,18 +67,8 @@ class TestArgument(unittest.TestCase):
         self.assertEqual(g2.bar, "h")
 
     def test_default(self):
-        f = F(name="test")
+        f = F(bind(dict(name="test")))
         self.assertEqual(f.foo, "42")
-
-    def test_integer(self):
-        h = H(name="test")
-        h.foo = u"42"
-        self.assertEqual(h.foo, 42)
-
-    def test_datetime(self):
-        h = H(name="test")
-        h.bar = "20100105"
-        self.assertEqual(h.bar, datetime.datetime(2010, 1, 5))
 
 
 class TestArgumentAssertion(unittest.TestCase):
@@ -95,31 +78,25 @@ class TestArgumentAssertion(unittest.TestCase):
             signature = [policy.Present("foo")]
         class Q(policy.Policy):
             signature = [policy.Present("bar")]
-        class R(policy.Policy):
-            signature = [policy.Present("baz")]
-        f = F(name="test")
+        f = F(bind(dict(name="test", foo="bar")))
         self.assertEqual(P.conforms(f), True)
         self.assertEqual(Q.conforms(f), False)
-        self.assertRaises(AttributeError, R.conforms, f)
 
     def test_absent(self):
         class P(policy.Policy):
             signature = [policy.Absent("foo")]
         class Q(policy.Policy):
             signature = [policy.Absent("bar")]
-        class R(policy.Policy):
-            signature = [policy.Absent("baz")]
-        f = F(name="test")
+        f = F(bind(dict(name="test", foo="bar")))
         self.assertEqual(P.conforms(f), False)
         self.assertEqual(Q.conforms(f), True)
-        self.assertRaises(AttributeError, R.conforms, f)
 
     def test_and(self):
         class P(policy.Policy):
             signature = [policy.Present("foo"),
                          policy.Absent("bar"),
                          ]
-        f = F(name="test")
+        f = F(bind(dict(name="test", foo="bar")))
         self.assertEqual(P.conforms(f), True)
 
     def test_xor(self):
@@ -128,14 +105,14 @@ class TestArgumentAssertion(unittest.TestCase):
                               policy.Present("foo"),
                               policy.Present("bar"),
                          )]
-        g = G(name="test")
+        g = G(bind(dict(name="test")))
         self.assertEqual(P.conforms(g), False)
-        g.foo = "yes"
+        g = G(bind(dict(name="test", foo="yes")))
         self.assertEqual(P.conforms(g), True)
-        g.bar = "yes"
+        g = G(bind(dict(name="test", bar="yes")))
+        self.assertEqual(P.conforms(g), True)
+        g = G(bind(dict(name="test", foo="yes", bar="yes")))
         self.assertEqual(P.conforms(g), False)
-        g.foo = None
-        self.assertEqual(P.conforms(g), True)
 
 
 class Ev1(resource.Resource):
@@ -268,13 +245,13 @@ class TestResourceBundle(unittest.TestCase):
         self.assertRaises(error.BindingError, resources.bind)
 
     def test_structure(self):
-        e1 = Ev1(name="e1",
+        e1 = Ev1(bind(dict(name="e1",
                 policy = {
                     'foo': {
                         'when': 'bar',
                         'on': 'e2'},
-                    })
-        e2 = Ev1(name="e2")
+                    })))
+        e2 = Ev1(bind(dict(name="e2")))
         resources = {'e1': e1, 'e2': e2}
         e1.bind(resources)
         e2.bind(resources)
@@ -284,7 +261,7 @@ class TestResourceBundle(unittest.TestCase):
             })
 
     def test_multiple(self):
-        e1 = Ev1(name="e1",
+        e1 = Ev1(bind(dict(name="e1",
                 policy = {
                     'foo': [{
                         'when': 'bar',
@@ -296,9 +273,9 @@ class TestResourceBundle(unittest.TestCase):
                         'when': 'baz',
                         'on': 'e2',
                         }]
-                    })
-        e2 = Ev1(name="e2")
-        e3 = Ev1(name="e3")
+                    })))
+        e2 = Ev1(bind(dict(name="e2")))
+        e3 = Ev1(bind(dict(name="e3")))
         resources = {'e1': e1, 'e2': e2, 'e3': e3}
         e1.bind(resources)
         e2.bind(resources)
@@ -312,12 +289,12 @@ class TestResourceBundle(unittest.TestCase):
             })
 
     def test_missing(self):
-        e1 = Ev1(name="e1",
+        e1 = Ev1(bind(dict(name="e1",
                 policy = {
                     'foo': [{
                         'when': 'bar',
                         'on': 'missing'}],
-                    })
-        e2 = Ev1(name="e2")
+                    })))
+        e2 = Ev1(bind(dict(name="e2")))
         resources = {'e1': e1, 'e2': e2}
         self.assertRaises(error.BindingError, e1.bind, resources)

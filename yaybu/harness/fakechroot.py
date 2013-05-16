@@ -177,7 +177,7 @@ class FakeChrootFixture(Fixture):
         f = tempfile.NamedTemporaryFile(dir=os.path.join(self.chroot_path, 'tmp'), delete=False)
         f.write(contents)
         f.close()
-        return "/tmp/" + os.path.realpath(f.name).split("/")[-1]
+        return f.name, "/tmp/" + os.path.realpath(f.name).split("/")[-1]
 
     def get_env(self):
         env = {}
@@ -248,29 +248,28 @@ class FakeChrootFixture(Fixture):
     def yaybu(self, *args):
         from yaybu.core import event
         event.reset(True)
+       
+        from yaybu.transports import FakechrootTransport
+        FakechrootTransport.env = self.get_env()
+        FakechrootTransport.chroot_path = self.chroot_path
+
+        from yaybu.parts import Provision
+        Provision.Transport = FakechrootTransport
 
         filespath = os.path.join(self.chroot_path, "/tmp", "files")
-        args = [self.chroot_path+arg if arg.startswith("/") else arg for arg in args]
         from yaybu.core.command import YaybuCmd
-        from yaybu.core.runcontext import RunContext
-        from yaybu.transports import FakechrootTransport
         from optparse import OptionParser
-        class T(FakechrootTransport):
-            env = self.get_env()
-            chroot_path = self.chroot_path
-        class Context(RunContext):
-            Transport = T
+
         p = OptionParser()
         y = YaybuCmd(ypath=(filespath, ))
         y.ypath = [filespath]
         y.verbose = 2
         y.debug = True
-        y.opts_push(p)
+        y.opts_up(p)
         try:
-            return y.do_apply(*p.parse_args(args), context=Context)
+            return y.do_up(*p.parse_args(list(args)))
         except SystemError:
             return 0
-        # return self.call(["yaybu", "-v", "-v", "-d", "--ypath", "/tmp/files"] + args)
 
     def simulate(self, *args):
         """ Run yaybu in simulate mode """
@@ -278,12 +277,32 @@ class FakeChrootFixture(Fixture):
         return self.yaybu(*args)
 
     def apply(self, contents, *args):
-        path = self.write_temporary_file(contents)
-        return self.yaybu(path, *args)
+        path = self.write_temporary_file(contents)[0]
+        path2 = self.write_temporary_file(
+            """
+            include "%s"
+            main:
+                create "yaybu.parts:Provision":
+                    server:
+                        fqdn: fakechroot:///
+                    resources: {{ resources }}
+            """ % path)[0]
+
+        return self.yaybu("-C", path2, *args)
 
     def apply_simulate(self, contents):
-        path = self.write_temporary_file(contents)
-        return self.simulate(path)
+        path = self.write_temporary_file(contents)[0]
+        path2 = self.write_temporary_file(
+            """
+            include "%s"
+            main:
+                create "yaybu.parts:Provision":
+                    server:
+                        fqdn: fakechroot:///
+                    resources: {{ resources }}
+            """ % path)[0]
+
+        return self.simulate("-C", path2)
 
     def check_apply(self, contents, *args, **kwargs):
         expect = kwargs.get('expect', 0)

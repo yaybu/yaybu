@@ -19,13 +19,13 @@ class TestUser(FakeChrootTestCase):
             resources:
                 - User:
                     - name: test
-                      disabled-login: True
+                      disabled_login: True
             """)
         rv = self.fixture.apply("""
             resources:
                 - User:
                     - name: test
-                      disabled-login: True
+                      disabled_login: True
             """)
         self.assertEqual(rv, 254)
 

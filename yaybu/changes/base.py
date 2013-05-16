@@ -24,7 +24,7 @@ class ResourceFormatter(logging.Formatter):
     def format(self, record):
         next_resource = getattr(record, "resource", None)
 
-        rv = u""
+        rv = ""
 
         # Is the logging now about a different resource?
         if self.resource != next_resource:
@@ -49,7 +49,7 @@ class ResourceFormatter(logging.Formatter):
         return rv
 
     def render_resource_header(self):
-        header = unicode(self.resource)
+        header = self.resource.decode("utf-8")
 
         rl = len(header)
         if rl < 80:
@@ -60,7 +60,7 @@ class ResourceFormatter(logging.Formatter):
             minuses = 4
             leftover = 0
 
-        return u"/%s %s %s\n" % ("-"*minuses,
+        return "/%s %s %s\n" % ("-"*minuses,
                                  header,
                                  "-"*(minuses + leftover))
 
@@ -124,7 +124,7 @@ class ResourceChange(object):
 
         # We wrap the logger so it always has context information
         logger = logging.getLogger("yaybu.changelog")
-        self.logger = logging.LoggerAdapter(logger, dict(resource=unicode(resource)))
+        self.logger = logging.LoggerAdapter(logger, dict(resource=resource.id))
 
     def info(self, message, *args):
         self.logger.info(message, *args)
