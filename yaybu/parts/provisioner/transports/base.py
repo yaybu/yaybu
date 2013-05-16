@@ -16,7 +16,7 @@ import logging
 import pipes
 import os
 
-from .. import error
+from yaybu import error
 
 class Transport(object):
 

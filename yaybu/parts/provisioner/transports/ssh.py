@@ -21,7 +21,7 @@ import paramiko
 
 from yay import String
 
-from .. import error
+from yaybu import error
 from . import remote, base
 
 

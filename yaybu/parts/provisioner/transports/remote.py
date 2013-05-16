@@ -19,7 +19,7 @@ for example, ssh or fakechroot
 
 import collections
 
-from .. import error
+from yaybu import error
 from . import base
 
 

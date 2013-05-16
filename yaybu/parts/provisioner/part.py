@@ -26,10 +26,12 @@ from yay import ast, errors
 from yay.errors import LanguageError, NotFound, NotModified
 
 from yaybu.core import resource
-from yaybu import error, transports
+from yaybu import error
 from yaybu.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.core.config import Config
 from yaybu.core import event
+
+from . import transports
 
 
 logger = logging.getLogger(__name__)

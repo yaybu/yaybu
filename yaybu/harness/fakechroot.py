@@ -249,7 +249,7 @@ class FakeChrootFixture(Fixture):
         from yaybu.core import event
         event.reset(True)
        
-        from yaybu.transports import FakechrootTransport
+        from yaybu.parts.provisioner.transports import FakechrootTransport
         FakechrootTransport.env = self.get_env()
         FakechrootTransport.chroot_path = self.chroot_path
 
