@@ -18,7 +18,7 @@ import logging
 
 from yaybu import resources
 from yaybu.core import provider, error
-from yaybu.changes import ShellCommand, AttributeChanger
+from yaybu.parts.provisioner.changes import ShellCommand, AttributeChanger
 
 
 class Directory(provider.Provider):

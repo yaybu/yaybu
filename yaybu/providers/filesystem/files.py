@@ -18,7 +18,7 @@ from jinja2 import Environment, BaseLoader, TemplateNotFound
 
 from yaybu import resources
 from yaybu.core import error, provider
-from yaybu.changes import ShellCommand, AttributeChanger, FileContentChanger
+from yaybu.parts.provisioner.changes import ShellCommand, AttributeChanger, FileContentChanger
 
 from yay import String
 

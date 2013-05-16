@@ -18,7 +18,7 @@ import re
 from yaybu.core.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError
 from yaybu import resources
-from yaybu.changes import ShellCommand
+from yaybu.parts.provisioner.changes import ShellCommand
 
 
 log = logging.getLogger("git")

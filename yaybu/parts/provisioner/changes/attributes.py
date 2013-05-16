@@ -14,12 +14,11 @@
 
 import stat
 
-from yaybu import error, resources
-from . import base
+from yaybu import error, resources, changes
 from .execute import ShellCommand
 
 
-class AttributeChanger(base.Change):
+class AttributeChanger(changes.Change):
 
     """ Make the changes required to a file's attributes """
 
@@ -87,5 +86,5 @@ class AttributeChanger(base.Change):
                 self.changed = True
 
 
-class AttributeChangeRenderer(base.TextRenderer):
+class AttributeChangeRenderer(changes.TextRenderer):
     renderer_for = AttributeChanger

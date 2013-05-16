@@ -19,7 +19,7 @@ import logging
 
 from yaybu import resources
 from yaybu.core import provider, error
-from yaybu.changes import ShellCommand
+from yaybu.parts.provisioner.changes import ShellCommand
 
 
 class Link(provider.Provider):

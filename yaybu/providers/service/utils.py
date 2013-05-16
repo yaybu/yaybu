@@ -16,7 +16,7 @@ import os
 
 from yaybu.core import error
 from yaybu import resources
-from yaybu.changes import ShellCommand
+from yaybu.parts.provisioner.changes import ShellCommand
 
 
 # http://upstart.ubuntu.com/getting-started.html

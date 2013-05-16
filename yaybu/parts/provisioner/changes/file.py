@@ -18,8 +18,7 @@ import string
 
 from jinja2 import Environment, BaseLoader, TemplateNotFound
 
-from yaybu import error, resources
-from . import base
+from yaybu import error, resources, changes
 from .execute import ShellCommand
 
 
@@ -34,7 +33,7 @@ def binary_buffers(*buffers):
     return False
 
 
-class FileContentChanger(base.Change):
+class FileContentChanger(changes.Change):
 
     """ Apply a content change to a file in a managed way. Simulation mode is
     catered for. Additionally the minimum changes required to the contents are
@@ -95,7 +94,7 @@ class FileContentChanger(base.Change):
             self.write_file(context)
 
 
-class FileChangeTextRenderer(base.TextRenderer):
+class FileChangeTextRenderer(changes.TextRenderer):
     renderer_for = FileContentChanger
 
     def empty_file(self, filename):

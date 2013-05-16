@@ -13,7 +13,4 @@
 # limitations under the License.
 
 
-from .base import ChangeLog
-from .attributes import AttributeChanger
-from .file import FileContentChanger
-from .execute import ShellCommand
+from .base import *

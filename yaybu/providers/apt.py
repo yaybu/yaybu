@@ -17,7 +17,7 @@ import os
 from yaybu.core import provider
 from yaybu import error
 from yaybu import resources
-from yaybu.changes import ShellCommand
+from yaybu.parts.provisioner.changes import ShellCommand
 
 
 def is_installed(context, resource):

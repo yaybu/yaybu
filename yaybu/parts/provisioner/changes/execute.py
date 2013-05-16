@@ -18,15 +18,15 @@ import shlex
 
 from yay import String
 
-from yaybu import error
-from .import base
+from yaybu import error, changes
+
 
 class Command(String):
     """ Horrible horrible cludge """
     pass
 
 
-class ShellCommand(base.Change):
+class ShellCommand(changes.Change):
 
     """ Execute and log a change """
 
@@ -118,7 +118,7 @@ class ShellCommand(base.Change):
             raise error.SystemError(self.returncode, self.stdout, self.stderr)
 
 
-class ShellTextRenderer(base.TextRenderer):
+class ShellTextRenderer(changes.TextRenderer):
 
     """ Render a ShellCommand on a textual changelog. """
 

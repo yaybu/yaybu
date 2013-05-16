@@ -17,7 +17,7 @@ import os, shlex, glob
 from yaybu.core import provider
 from yaybu.providers.service import utils
 from yaybu import resources
-from yaybu.changes import ShellCommand
+from yaybu.parts.provisioner.changes import ShellCommand
 
 
 class _LsbServiceMixin(utils._ServiceMixin):
