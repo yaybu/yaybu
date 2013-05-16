@@ -65,14 +65,21 @@ class Boolean(Argument):
     """ Represents a boolean. "1", "yes", "on" and "true" are all considered
     to be True boolean values. Anything else is False. """
 
+    default = False
+
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        value = instance.inner.resolve()
+        try:
+            value = instance.inner[self.name].resolve()
+        except errors.NoMatching:
+            return self.default
+
         if type(value) in types.StringTypes:
            if value.lower() in ("1", "yes", "on", "true"):
                 return True
            return False
+
         return bool(value)
 
 
