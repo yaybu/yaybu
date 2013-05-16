@@ -186,7 +186,7 @@ class YaybuCmd(OptionParsingCmd):
             print str(e)
             if self.verbose >= 2:
                 print yay.errors.get_exception_context()
-            return 1
+            return error.ParseError.returncode
 
         except error.ExecutionError, e:
             # this will have been reported by the context manager, so we wish to terminate
