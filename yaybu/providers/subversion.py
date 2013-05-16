@@ -133,5 +133,5 @@ class Svn(Provider):
 
     def svn(self, context, action, *args, **kwargs):
         command = self.get_svn_args(action, *args, **kwargs)
-        sc = context.changelog.apply(ShellCommand(command, user=self.resource.user))
+        sc = context.change(ShellCommand(command, user=self.resource.user))
         return sc.returncode, sc.stdout, sc.stderr

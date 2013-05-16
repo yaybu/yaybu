@@ -61,7 +61,7 @@ class AptInstall(provider.Provider):
         command = ["apt-get", "install", "-q", "-y", self.resource.name]
 
         try:
-            context.changelog.apply(ShellCommand(command, env=env))
+            context.change(ShellCommand(command, env=env))
         except error.SystemError as exc:
             raise error.AptError("%s failed with return code %d" % (self.resource, exc.returncode))
 
@@ -90,7 +90,7 @@ class AptUninstall(provider.Provider):
         command.append(self.resource.name)
 
         try:
-            context.changelog.apply(ShellCommand(command, env=env))
+            context.change(ShellCommand(command, env=env))
         except error.SystemError as exc:
             raise error.AptError("%s failed to uninstall with return code %d" % (self.resource, exc.returncode))
 

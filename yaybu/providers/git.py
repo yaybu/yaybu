@@ -54,7 +54,7 @@ class Git(Provider):
         return rc, stdout, stderr
 
     def action(self, context, action, *args):
-        context.changelog.apply(ShellCommand(
+        context.change(ShellCommand(
             self.get_git_command(action, *args),
             user=self.resource.user,
             cwd=self.resource.name,
@@ -67,7 +67,7 @@ class Git(Provider):
         """
         try:
             cmd = ["/bin/mkdir", self.resource.name]
-            context.changelog.apply(ShellCommand(cmd, user=self.resource.user))
+            context.change(ShellCommand(cmd, user=self.resource.user))
         except SystemError:
             raise CheckoutError("Cannot create the repository directory")
 

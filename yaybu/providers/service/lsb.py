@@ -60,10 +60,10 @@ class _LsbServiceMixin(utils._ServiceMixin):
             return False
 
         for ln in need_deleting:
-            context.changelog.apply(ShellCommand(["rm", ln]))
+            context.change(ShellCommand(["rm", ln]))
 
         for ln in need_creating:
-            context.changelog.apply(ShellCommand(["ln", "-s", "/etc/init.d/%s" % self.resource.name, ln]))
+            context.change(ShellCommand(["ln", "-s", "/etc/init.d/%s" % self.resource.name, ln]))
 
         return True
 

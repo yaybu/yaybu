@@ -181,6 +181,8 @@ class YaybuCmd(OptionParsingCmd):
 
         try:
             cfg = graph.resolve()
+            if not graph.changelog.changed:
+                raise error.NothingChanged("No changes were required")
 
         except yay.errors.LanguageError as e:
             print str(e)

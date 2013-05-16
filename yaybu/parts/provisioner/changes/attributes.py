@@ -55,7 +55,7 @@ class AttributeChanger(changes.Change):
                 owner = None
 
             if not owner or owner.pw_uid != uid:
-                context.changelog.apply(ShellCommand(["/bin/chown", self.user, self.filename]))
+                context.change(ShellCommand(["/bin/chown", self.user, self.filename]))
                 self.changed = True
 
         if self.group is not None:
@@ -68,20 +68,20 @@ class AttributeChanger(changes.Change):
                 group = None
 
             if not group or group.gr_gid != gid:
-                context.changelog.apply(ShellCommand(["/bin/chgrp", self.group, self.filename]))
+                context.change(ShellCommand(["/bin/chgrp", self.group, self.filename]))
                 self.changed = True
 
         if self.mode is not None and mode is not None:
             if mode != self.mode:
-                context.changelog.apply(ShellCommand(["/bin/chmod", "%o" % self.mode, self.filename]))
+                context.change(ShellCommand(["/bin/chmod", "%o" % self.mode, self.filename]))
 
                 # Clear the user and group bits
                 # We don't need to set them as chmod will *set* this bits with an octal
                 # but won't clear them without a symbolic mode
                 if mode & stat.S_ISGID and not self.mode & stat.S_ISGID:
-                    context.changelog.apply(ShellCommand(["/bin/chmod", "g-s", self.filename]))
+                    context.change(ShellCommand(["/bin/chmod", "g-s", self.filename]))
                 if mode & stat.S_ISUID and not self.mode & stat.S_ISUID:
-                    context.changelog.apply(ShellCommand(["/bin/chmod", "u-s", self.filename]))
+                    context.change(ShellCommand(["/bin/chmod", "u-s", self.filename]))
 
                 self.changed = True
 

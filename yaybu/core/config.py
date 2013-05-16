@@ -21,7 +21,7 @@ from yay.config import Config as BaseConfig
 from yaybu.core.error import ParseError, ArgParseError
 from yaybu.core.util import memoized
 from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
-
+from yaybu import changes
 
 
 class YaybuArg:
@@ -122,6 +122,9 @@ class Config(BaseConfig):
         defaults_gpg = os.path.expanduser("~/.yaybu/defaults.yay.gpg")
         if os.path.exists(defaults_gpg):
             self.load_uri(defaults_gpg)
+
+        self.changelog = changes.ChangeLog(self)
+        self.changelog.configure_session_logging()
 
     def setup_openers(self, searchpath):
         self.add({"yaybu": {"searchpath": searchpath or []}})

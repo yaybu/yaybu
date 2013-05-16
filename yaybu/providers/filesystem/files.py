@@ -115,14 +115,14 @@ class File(provider.Provider):
             sensitive = False
 
         fc = FileContentChanger(self.resource.name, self.resource.mode, contents, sensitive)
-        context.changelog.apply(fc)
+        context.change(fc)
 
         ac = AttributeChanger(
                               self.resource.name,
                               self.resource.owner,
                               self.resource.group,
                               self.resource.mode)
-        context.changelog.apply(ac)
+        context.change(ac)
 
         if fc.changed or ac.changed:
             return True
@@ -139,7 +139,7 @@ class RemoveFile(provider.Provider):
         if context.transport.exists(self.resource.name):
             if not context.transport.isfile(self.resource.name):
                 raise error.InvalidProvider("%s exists and is not a file" % self.resource.name)
-            context.changelog.apply(ShellCommand(["rm", self.resource.name]))
+            context.change(ShellCommand(["rm", self.resource.name]))
             changed = True
         else:
             context.changelog.debug("File %s missing already so not removed" % self.resource.name)

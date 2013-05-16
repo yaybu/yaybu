@@ -85,9 +85,9 @@ class Link(provider.Provider):
 
         if not isalink or linkto != to:
             if context.transport.lexists(name):
-                context.changelog.apply(ShellCommand(["/bin/rm", "-rf", name]))
+                context.change(ShellCommand(["/bin/rm", "-rf", name]))
 
-            context.changelog.apply(ShellCommand(["/bin/ln", "-s", self.resource.to, name]))
+            context.change(ShellCommand(["/bin/ln", "-s", self.resource.to, name]))
             changed = True
 
         try:
@@ -103,11 +103,11 @@ class Link(provider.Provider):
             uid, gid, mode = self._stat(context)
 
         if owner is not None and owner != uid:
-            context.changelog.apply(ShellCommand(["/bin/chown", "-h", self.resource.owner, name]))
+            context.change(ShellCommand(["/bin/chown", "-h", self.resource.owner, name]))
             changed = True
 
         if group is not None and group != gid:
-            context.changelog.apply(ShellCommand(["/bin/chgrp", "-h", self.resource.group, name]))
+            context.change(ShellCommand(["/bin/chgrp", "-h", self.resource.group, name]))
             changed = True
 
         return changed
@@ -124,7 +124,7 @@ class RemoveLink(provider.Provider):
         if context.transport.lexists(self.resource.name):
             if not context.transport.islink(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
-            context.changelog.apply(ShellCommand(["/bin/rm", self.resource.name]))
+            context.change(ShellCommand(["/bin/rm", self.resource.name]))
             return True
         return False
 

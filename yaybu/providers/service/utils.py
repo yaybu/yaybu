@@ -53,7 +53,7 @@ class _ServiceMixin(object):
 
     def do(self, context, action):
         try:
-            context.changelog.apply(ShellCommand(self.get_command(action)))
+            context.change(ShellCommand(self.get_command(action)))
         except error.SystemError as exc:
             raise error.CommandError("%s failed with return code %d" % (action, exc.returncode))
 

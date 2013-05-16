@@ -65,7 +65,7 @@ class Execute(provider.Provider):
         commands = [self.resource.command] if self.resource.command else self.resource.commands
         for command in commands:
             try:
-                context.changelog.apply(ShellCommand(command,
+                context.change(ShellCommand(command,
                     cwd=self.resource.cwd or None,
                     env=self.resource.environment or None,
                     user=self.resource.user,
@@ -78,7 +78,7 @@ class Execute(provider.Provider):
                     raise error.CommandError("%s failed with return code %d" % (self.resource, rc))
 
         if self.resource.touch is not None:
-            context.changelog.apply(ShellCommand(["touch", self.resource.touch]))
+            context.change(ShellCommand(["touch", self.resource.touch]))
 
         return True
 

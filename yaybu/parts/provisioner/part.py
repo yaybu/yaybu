@@ -26,7 +26,7 @@ from yay import ast, errors
 from yay.errors import LanguageError, NotFound, NotModified
 
 from yaybu.core import resource
-from yaybu import changes, error, transports
+from yaybu import error, transports
 from yaybu.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.core.config import Config
 from yaybu.core import event
@@ -65,6 +65,7 @@ class Provision(ast.PythonClass):
         self.no_resume = root.no_resume
         self.simulate = root.simulate
         self.verbose = root.verbose
+        self.changelog = root.changelog
 
         self.options = {}
         if os.path.exists("/etc/yaybu"):
@@ -76,9 +77,6 @@ class Provision(ast.PythonClass):
             simulate = root.simulate,
             env_passthrough = root.env_passthrough
             )
-
-        self.changelog = changes.ChangeLog(self)
-        self.changelog.configure_session_logging()
 
         if not self.simulate and not self.transport.exists(self.get_data_path()):
             self.transport.makedirs(self.get_data_path())
@@ -107,17 +105,15 @@ class Provision(ast.PythonClass):
         # Actually apply the configuration
         bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources, verbose_errors=self.verbose>2)
         bundle.bind()
-        changed = bundle.apply(self, None)
+        bundle.apply(self, None)
         
         if not self.simulate and self.transport.exists(event.EventState.save_file):
             self.transport.unlink(event.EventState.save_file)
 
-        if not changed:
-            # nothing changed
-            raise error.NothingChanged("No changes were required")
+        self.changelog.info("'%s' was successfully provisioned." % hostname)
 
-        self.changelog.info("All changes were applied successfully to %s" % hostname)
-        logger.info("Node %r provisioned" % hostname)
+    def change(self, change):
+        return self.changelog.apply(change, self)
 
     def get_file(self, filename, etag=None):
         try:

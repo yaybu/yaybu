@@ -133,7 +133,7 @@ class User(provider.Provider):
 
         if changed:
             try:
-                context.changelog.apply(ShellCommand(command))
+                context.change(ShellCommand(command))
             except error.SystemError as exc:
                 raise error.UserAddError("useradd returned error code %d" % exc.returncode)
         return changed
@@ -157,7 +157,7 @@ class UserRemove(provider.Provider):
         command = ["userdel", self.resource.name]
 
         try:
-            context.changelog.apply(ShellCommand(command))
+            context.change(ShellCommand(command))
         except error.SystemError as exc:
             raise error.UserAddError("Removing user %s failed with return code %d" % (self.resource, exc.returncode))
 

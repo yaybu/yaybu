@@ -152,6 +152,7 @@ class ChangeLog:
     """ Orchestrate writing output to a changelog. """
 
     def __init__(self, context):
+        self.changed = False
         self.current_resource = None
         self.ctx = context
         self.verbose = self.ctx.verbose
@@ -218,11 +219,13 @@ class ChangeLog:
     def resource(self, resource):
         return ResourceChange(self, resource)
 
-    def apply(self, change):
+    def apply(self, change, ctx):
         """ Execute the change, passing it the appropriate renderer to use. """
         renderers = []
         text_class = ChangeRendererType.renderers.get(("text", change.__class__), None)
-        return change.apply(self.ctx, text_class(self, self.verbose))
+        retval = change.apply(ctx, text_class(self, self.verbose))
+        self.changed = self.changed or change.changed
+        return retval
 
     def info(self, message, *args, **kwargs):
         """ Write a textual information message. This is used for both the

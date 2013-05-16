@@ -60,9 +60,9 @@ class Directory(provider.Provider):
             if self.resource.parents:
                 command.append("-p")
             command.append(self.resource.name.decode("utf-8"))
-            context.changelog.apply(ShellCommand(command))
+            context.change(ShellCommand(command))
             changed = True
-        context.changelog.apply(ac)
+        context.change(ac)
         if changed or ac.changed:
             return True
         else:
@@ -81,7 +81,7 @@ class RemoveDirectory(provider.Provider):
         if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if context.transport.exists(self.resource.name):
-            context.changelog.apply(ShellCommand(["/bin/rmdir", self.resource.name]))
+            context.change(ShellCommand(["/bin/rmdir", self.resource.name]))
             changed = True
         else:
             changed = False
@@ -100,7 +100,7 @@ class RemoveDirectoryRecursive(provider.Provider):
         if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if context.transport.exists(self.resource.name):
-            context.changelog.apply(ShellCommand(["/bin/rm", "-rf", self.resource.name]))
+            context.change(ShellCommand(["/bin/rm", "-rf", self.resource.name]))
             changed = True
         else:
             changed = False
