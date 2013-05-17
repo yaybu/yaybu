@@ -282,7 +282,7 @@ class FakeChrootFixture(Fixture):
             """
             include "%s"
             main:
-                create "yaybu.parts:Provision":
+                new Provisioner:
                     server:
                         fqdn: fakechroot:///
                     resources: {{ resources }}
@@ -296,7 +296,7 @@ class FakeChrootFixture(Fixture):
             """
             include "%s"
             main:
-                create "yaybu.parts:Provision":
+                new Provisioner:
                     server:
                         fqdn: fakechroot:///
                     resources: {{ resources }}

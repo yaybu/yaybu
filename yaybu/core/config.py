@@ -17,6 +17,7 @@ import os
 from yay.openers.base import Openers, SearchpathFromGraph
 from yay.errors import Error, NoMatching, get_exception_context
 from yay.config import Config as BaseConfig
+from yay import ast
 
 from yaybu.core.error import ParseError, ArgParseError
 from yaybu.core.util import memoized
@@ -111,6 +112,15 @@ class Config(BaseConfig):
             }
 
         super(Config, self).__init__(searchpath=searchpath, config=config)
+
+        from yaybu import parts
+        self.builtins = {
+            "Compute": ast.PythonClassFactory(parts.Compute),
+            "Provisioner": ast.PythonClassFactory(parts.Provision),
+            "LoadBalancer": ast.PythonClassFactory(parts.LoadBalancer),
+            "Zone": ast.PythonClassFactory(parts.Zone),
+            "Heroku": ast.PythonClassFactory(parts.Heroku),
+            }
 
         if hostname:
             self.set_hostname(hostname)

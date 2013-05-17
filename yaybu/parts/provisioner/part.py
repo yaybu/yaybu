@@ -43,7 +43,7 @@ class Provision(ast.PythonClass):
     Use yaybu to configure a server
 
     appserver:
-        create "yaybu.parts:Provision":
+        new Provisioner:
             server:
                 fqdn: example.com
 
