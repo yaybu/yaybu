@@ -142,9 +142,22 @@ class Ev1Provider(provider.Provider):
 class TestResourceBundle(unittest.TestCase):
 
     def setUp(self):
-        from yaybu.core import event
-        event.reset()
-        event.EventState.transport = Mock()
+        self.overrides = {}
+        def override(resource, policy):
+            self.overrides[resource.id] = policy
+        def overridden_policy(resource):
+            p = self.overrides.get(resource.id, None)
+            if p:
+                return resource.policies[p]
+            return None
+        def clear_override(resource):
+            if resource.id in self.overrides:
+                del self.overrides[resource.id]
+
+        self.context = Mock()
+        self.context.state.override.side_effect = override
+        self.context.state.overridden_policy.side_effect = overridden_policy
+        self.context.state.clear_override.side_effect = clear_override
 
     def test_creation(self):
         resources = resource.ResourceBundle.create_from_list([
@@ -180,14 +193,13 @@ class TestResourceBundle(unittest.TestCase):
                          {'foo': [
                              (True, e2, 'baz')]
                           })
-        shell = Mock()
-        p1 = e1.get_default_policy().get_provider({})
-        p2 = e2.get_default_policy().get_provider({})
+        p1 = e1.get_default_policy(self.context).get_provider({})
+        p2 = e2.get_default_policy(self.context).get_provider({})
         self.assertEqual(p1, Ev1Provider)
         self.assertEqual(p2, provider.NullProvider)
-        e1.apply(shell)
+        e1.apply(self.context)
         self.assertEqual(Ev1Provider.applied, 1)
-        e2.apply(shell)
+        e2.apply(self.context)
         self.assertEqual(Ev1Provider.applied, 2)
 
     def test_not_firing(self):
@@ -214,14 +226,13 @@ class TestResourceBundle(unittest.TestCase):
                          {'baz': [
                              (True, e2, 'baz')]
                           })
-        shell = Mock()
-        p1 = e1.get_default_policy().get_provider({})
-        p2 = e2.get_default_policy().get_provider({})
+        p1 = e1.get_default_policy(self.context).get_provider({})
+        p2 = e2.get_default_policy(self.context).get_provider({})
         self.assertEqual(p1, Ev1Provider)
         self.assertEqual(p2, provider.NullProvider)
-        e1.apply(shell)
+        e1.apply(self.context)
         self.assertEqual(Ev1Provider.applied, 1)
-        e2.apply(shell)
+        e2.apply(self.context)
         self.assertEqual(Ev1Provider.applied, 1)
 
     def test_forwardreference(self):

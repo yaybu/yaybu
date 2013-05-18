@@ -18,7 +18,6 @@ from yaybu.core import policy
 from yaybu import error
 import collections
 from yaybu.core import ordereddict
-from yaybu.core import event
 
 from yay import errors
 from yay.ast import bind, PythonicWrapper
@@ -153,7 +152,7 @@ class Resource(object):
     def register_observer(self, when, resource, policy, immediately):
         self.observers[when].append((immediately, resource, policy))
 
-    def validate(self):
+    def validate(self, context):
         """ Validate that this resource is correctly specified. Will raise
         an exception if it is invalid. Returns True if it is valid.
 
@@ -179,7 +178,7 @@ class Resource(object):
                 raise error.ParseError("'%s' is not a valid option for resource %s" % (key, self))
 
         # Error if doesn't conform to policy
-        this_policy = self.get_default_policy()
+        this_policy = self.get_default_policy(context)
         this_policy.validate(self)
 
         # throws an exception if there is not oneandonlyone provider
@@ -192,25 +191,25 @@ class Resource(object):
         if yay is None:
             yay = {}
         if policy is None:
-            pol = self.get_default_policy()
+            pol = self.get_default_policy(context)
         else:
             pol_class = self.policies[policy]
             pol = pol_class(self)
         prov_class = pol.get_provider(yay)
         prov = prov_class(self)
         changed = prov.apply(context)
-        event.state.clear_override(self)
+        context.state.clear_override(self)
         if changed:
-            self.fire_event(pol.name)
+            self.fire_event(context, pol.name)
         return changed
 
-    def fire_event(self, name):
+    def fire_event(self, context, name):
         """ Apply the appropriate policies on the resources that are observing
         this resource for the firing of a policy. """
         for immediately, resource, policy in  self.observers[name]:
             if immediately is False:
                 raise NotImplementedError
-            event.state.override(resource, policy)
+            context.state.override(resource, policy)
 
     def bind(self, resources):
         """ Bind this resource to all the resources on which it triggers.
@@ -221,9 +220,15 @@ class Resource(object):
                 bound.append(trigger.bind(resources, self))
         return bound
 
-    def get_default_policy(self):
+    def get_default_policy(self, context):
         """ Return an instantiated policy for this resource. """
-        return event.state.policy(self)
+        selected = context.state.overridden_policy(self)
+        if not selected:
+            if self.policy is not None:
+                selected = self.policy.literal_policy(self)
+            else:
+                selected = self.policies.default()
+        return selected(self)
 
     @property
     def id(self):
@@ -318,8 +323,6 @@ class ResourceBundle(ordereddict.OrderedDict):
         if resource.id in self:
             raise error.ParseError("'%s' cannot be defined multiple times" % resource.id)
 
-        resource.validate()
-
         self[resource.id] = resource
 
         # Create implicit File[] nodes for any watched files
@@ -347,8 +350,9 @@ class ResourceBundle(ordereddict.OrderedDict):
         """ Apply the resources to the system, using the provided context and
         overall configuration. """
         for resource in self.values():
-           if hasattr(resource, "_original_hash"):
-               resource._original_hash = resource.hash(ctx)
+            resource.validate(ctx)
+            if hasattr(resource, "_original_hash"):
+                resource._original_hash = resource.hash(ctx)
 
         something_changed = False
         for resource in self.values():

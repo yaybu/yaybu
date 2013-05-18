@@ -1,4 +1,4 @@
-# Copyright 2012 Isotoma Limited
+# Copyright 2012-2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,7 @@
 
 import os
 import logging
-import pickle
-import subprocess
-import StringIO
 import sys
-import logging.handlers
-import getpass
 
 import yay
 from yay import ast, errors
@@ -28,10 +23,8 @@ from yay.errors import LanguageError, NotFound, NotModified
 from yaybu.core import resource
 from yaybu import error
 from yaybu.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
-from yaybu.core.config import Config
-from yaybu.core import event
 
-from . import transports
+from . import event, transports
 
 
 logger = logging.getLogger(__name__)
@@ -85,22 +78,23 @@ class Provision(ast.PythonClass):
 
         # This makes me a little sad inside, but the whole
         # context thing needs a little thought before jumping in
-        event.state.save_file = self.get_data_path("events.saved")
-        event.state.simulate = self.simulate
-        event.state.transport = self.transport
+        self.state = event.EventState()
+        self.state.save_file = self.get_data_path("events.saved")
+        self.state.simulate = self.simulate
+        self.state.transport = self.transport
 
         if not self.simulate:
-            save_parent = os.path.realpath(os.path.join(event.EventState.save_file, os.path.pardir))
+            save_parent = os.path.realpath(os.path.join(self.state.save_file, os.path.pardir))
             if not self.transport.exists(save_parent):
                 self.transport.makedirs(save_parent)
 
-        if self.transport.exists(event.EventState.save_file):
+        if self.transport.exists(self.state.save_file):
             if self.resume:
-                event.state.loaded = False
+                self.state.loaded = False
             elif self.no_resume:
                 if not self.simulate:
-                    self.transport.unlink(event.EventState.save_file)
-                event.state.loaded = True
+                    self.transport.unlink(self.state.save_file)
+                self.state.loaded = True
             else:
                 raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
 
@@ -109,8 +103,8 @@ class Provision(ast.PythonClass):
         bundle.bind()
         bundle.apply(self, None)
         
-        if not self.simulate and self.transport.exists(event.EventState.save_file):
-            self.transport.unlink(event.EventState.save_file)
+        if not self.simulate and self.transport.exists(self.state.save_file):
+            self.transport.unlink(self.state.save_file)
 
         self.changelog.info("'%s' was successfully provisioned." % hostname)
 

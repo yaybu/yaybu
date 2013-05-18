@@ -246,9 +246,6 @@ class FakeChrootFixture(Fixture):
         return p.returncode
 
     def yaybu(self, *args):
-        from yaybu.core import event
-        event.reset(True)
-       
         from yaybu.parts.provisioner.transports import FakechrootTransport
         FakechrootTransport.env = self.get_env()
         FakechrootTransport.chroot_path = self.chroot_path

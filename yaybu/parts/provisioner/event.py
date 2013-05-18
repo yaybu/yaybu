@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-import policy
 import json
 
 class EventState(object):
@@ -54,33 +53,15 @@ class EventState(object):
     def overridden_policy(self, resource):
         """ Return the policy class for this resource, or None if there is not
         an overridden policy. """
+        self.load()
         if resource.id in self.overrides:
             policy_name = self.overrides[resource.id]
             return resource.policies[policy_name]
         else:
             return None
 
-    def policy(self, resource):
-        self.load()
-        selected = self.overridden_policy(resource)
-        if selected is None:
-            if resource.policy is not None:
-                selected = resource.policy.literal_policy(resource)
-            else:
-                selected = resource.policies.default()
-        return selected(resource)
-
     def save(self):
         if not self.simulate:
             data = json.dumps(self.overrides)
             self.transport.put(self.save_file, data)
 
-
-# module level global to preserve event state
-# yes this is ugly
-# alternatives may be uglier
-state = EventState()
-
-def reset(load=False):
-    global state
-    state = EventState(load)
