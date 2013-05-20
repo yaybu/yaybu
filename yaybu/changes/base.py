@@ -1,3 +1,17 @@
+# Copyright 2011-2013 Isotoma Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 """ Classes that handle logging of changes. """
 
@@ -74,7 +88,7 @@ class Change(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def apply(self, renderer):
+    def apply(self, ctx, renderer):
         """ Apply the specified change. The supplied renderer will be
         instantiated as below. """
 
@@ -109,6 +123,16 @@ class ChangeRenderer:
 
     def render(self, logger):
         pass
+
+    def info(self, message, *args):
+        self.logger.info(message, *args)
+
+    def notice(self, message, *args):
+        self.logger.info(message, *args)
+
+    def debug(self, message, *args):
+        self.logger.info(message, *args)
+
 
 class TextRenderer(ChangeRenderer):
     renderer_type = "text"
@@ -219,11 +243,11 @@ class ChangeLog:
     def resource(self, resource):
         return ResourceChange(self, resource)
 
-    def apply(self, change, ctx):
+    def apply(self, change, ctx=None):
         """ Execute the change, passing it the appropriate renderer to use. """
         renderers = []
-        text_class = ChangeRendererType.renderers.get(("text", change.__class__), None)
-        retval = change.apply(ctx, text_class(self, self.verbose))
+        text_class = ChangeRendererType.renderers.get(("text", change.__class__), TextRenderer)
+        retval = change.apply(ctx or self.ctx, text_class(self, self.verbose))
         self.changed = self.changed or change.changed
         return retval
 

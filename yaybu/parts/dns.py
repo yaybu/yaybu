@@ -17,7 +17,8 @@ from __future__ import absolute_import
 
 import logging
 
-from yaybu.core.util import memoized, StateSynchroniser
+from yaybu.changes import MetadataSync
+from yaybu.core.util import memoized
 from yay import ast, errors
 from libcloud.dns.types import Provider as DNSProvider
 from libcloud.dns.providers import get_driver as get_dns_driver
@@ -26,13 +27,122 @@ from libcloud.common.types import LibcloudError
 logger = logging.getLogger(__name__)
 
 
+class ZoneSync(MetadataSync):
+
+    def __init__(self, expression, driver, zone):
+        self.expression = expression
+        self.driver = driver
+        self.zone = zone
+
+    def get_local_records(self):
+        domain = self.expression.domain.as_string().rstrip(".") + "."
+        yield domain, dict(
+            domain = domain,
+            type = self.expression.type.as_string("master"),
+            ttl = self.expression.ttl.as_int(0),
+            extra = self.expression.extra.as_dict({}),
+            )
+
+    def get_remote_records(self):
+        if self.zone:
+            yield self.zone.domain, dict(
+                domain = self.zone.domain,
+                type = self.zone.type,
+                ttl = self.zone.ttl or 0,
+                extra = self.zone.extra,
+                )
+
+    def add(self, record):
+        self.driver.create_zone(
+            domain = record['domain'],
+            type = record['type'],
+            ttl = record['ttl'],
+            extra = record['extra'],
+            )
+
+    def update(self, uid, record):
+        self.driver.update_zone(
+            zone = self.zone,
+            domain = record['domain'],
+            type = record['type'],
+            ttl = record['ttl'],
+            extra = record['extra'],
+            )
+
+    def delete(self, uid, record):
+        self.driver.delete_zone(self.zone)
+
+
+class RecordSync(MetadataSync):
+
+    def __init__(self, expression, driver, zone):
+        self.expression = expression
+        self.driver = driver
+        self.zone = zone
+
+    def get_local_records(self):
+        for rec in self.expression.records:
+            # FIXME: Catch error and raise an error with line number information
+            type_enum = self.driver._string_to_record_type(rec.type.as_string('A'))
+
+            rid = rec['name'].as_string()
+            yield rid, dict(
+                name = rec['name'].as_string(),
+                type = type_enum,
+                data = rec['data'].as_string(),
+                extra = rec['extra'].as_dict({'ttl': 10800}),
+                )
+
+    def get_remote_records(self):
+        if self.zone:
+            for rec in self.zone.list_records():
+                yield rec.id, dict(
+                    name = rec.name,
+                    type = rec.type,
+                    data = rec.data,
+                    extra = rec.extra or {'ttl': 10800},
+                    )
+
+    def match_local_to_remote(self, local, remotes):
+        for rid, remote in remotes.items():
+            if local['name'] != remote['name']:
+                continue
+            if local['type'] != remote['type']:
+                continue
+
+            return rid
+
+    def add(self, record):
+        self.driver.create_record(
+            name = record['name'],
+            zone = self.zone,
+            type = record['type'],
+            data = record['data'],
+            extra = record['extra'],
+            )
+
+    def update(self, uid, record):
+        self.driver.update_record(
+            record = self.driver.get_record(self.zone.id, uid),
+            name = record['name'],
+            type = record['type'],
+            data = record['data'],
+            extra = record['extra'],
+            )
+
+    def delete(self, uid, record):
+        self.driver.update_record(
+            record = self.driver.get_record(zone.id, uid),
+            )
+
+
 class Zone(ast.PythonClass):
 
     """
     This part manages a single DNS zone
 
     mydns:
-        create "yaybu.parts.dns:Zone":
+        new Zone:
             driver:
                 id: AWS
                 key:
@@ -48,81 +158,36 @@ class Zone(ast.PythonClass):
 
     keys = []
 
-    @property
-    @memoized
-    def driver(self):
-        config = self.params['driver'].as_dict()
-        self.driver_name = config['id']
-        del config['id']
-        driver = getattr(DNSProvider, self.driver_name)
-        driver_class = get_dns_driver(driver)
-        return driver_class(**config)
-
     def apply(self):
-        simulate = self.root.simulate
+        config = self.params['driver'].as_dict()
+        driver_name = config['id']
+        del config['id']
 
-        changed = self.synchronise_zone(logger, simulate)
-        changed = changed or self.synchronise_records(logger, simulate)
+        Driver = get_dns_driver(getattr(DNSProvider, driver_name))
+        driver = Driver(**config)
 
-        return changed
+        domain = self.params.domain.as_string().rstrip(".") + "."
+        zones = [z for z in driver.list_zones() if z.domain == domain]
 
-    def synchronise_zone(self, logger, simulate):
-        s = StateSynchroniser(logger, simulate)
+        if len(zones) > 1:
+            raise errors.Error("Found multiple zones that match domain name '%s'" % domain)
+        elif len(zones) == 1:
+            zone = zones[0]
+        else:
+            zone = None
 
-        domain = self.params['domain'].as_string().rstrip(".") + "."
+        zchange = self.root.changelog.apply(
+            ZoneSync(
+                expression = self.params,
+                driver = driver,
+                zone = zone,
+            ))
 
-        s.add_master_record(
-            domain,
-            domain = domain,
-            type = self.params['type'].as_string("master"),
-            ttl = self.params['ttl'].as_int(0),
-            extra = self.params['extra'].as_dict({}),
-            )
+        rchange = self.root.changelog.apply(
+            RecordSync(
+                expression = self.params,
+                driver = driver,
+                zone = zone,
+            ))
 
-        for zone in self.driver.list_zones():
-            if zone.domain == domain:
-                s.add_slave_record(
-                    domain = domain,
-                    type = zone.type,
-                    ttl = zone.ttl,
-                    extra = zone.extra,
-                    )
-
-        return s.synchronise(
-            self.driver.create_zone,
-            self.driver.update_zone,
-            None,
-            )
-
-    def synchronise_records(self, logger, simulate, zone=None):
-        s = StateSynchroniser(logger, simulate)
-
-        # Load the state from the config file into the synchroniser
-        for rec in self.records:
-            # FIXME: Catch error and raise an error with line number information
-            type_enum = self.driver._string_to_record_type(rec.type.as_string('A'))
-
-            s.add_master_record(
-                rid = rec['name'].as_string(),
-                name = rec['name'].as_string(),
-                type = type_enum,
-                data = rec['data'].as_string(),
-                extra = rec['extra'].as_dict(),
-                )
-
-        # Load the state from libcloud into the synchroniser
-        if zone:
-            for rec in zone.list_records():
-                s.add_slave_record(
-                    rid = rec.name,
-                    name = rec.name,
-                    type = rec.type,
-                    data = rec.data,
-                    extra = rec.extra,
-                    )
-
-        return s.synchronise(
-            zone.create_record,
-            zone.update_record,
-            zone.delete_record,
-            )
+        return zchange.changed or rchange.changed

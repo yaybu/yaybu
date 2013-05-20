@@ -1,3 +1,17 @@
+# Copyright 2011-2013 Isotoma Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 from yay import stringbuilder
 import types
@@ -38,57 +52,3 @@ class memoized(object):
         '''Support instance methods.'''
         return functools.partial(self.__call__, obj)
 
-
-class StateSynchroniser(object):
-
-    """
-    I am a helper for synchronising 2 seperate states - by working out the
-    differences and applying them to the slave node.
-    """
-
-    def __init__(self, logger, simulate):
-        self.logger = logger
-        self.simulate = simulate
-        self.master = []
-        self.slave = []
-
-    def add_master_record(self, rid, **record):
-        self.master.append((rid, record))
-
-    def add_slave_record(self, rid, **record):
-        self.slave.append((rid, record))
-
-    def synchronise(self, add, update, delete):
-        changed = False
-
-        slave_records = dict(r for r in self.slave)
-        for rid, record in self.master:
-            if not rid in self.slave:
-                self.logger.info("Adding '%s'" % rid)
-                changed = True
-                if not self.simulate:
-                    add(**record)
-                continue
-
-            if record != slave[rid]:
-                self.logger.info("Updating '%s'" % rid)
-                changed = True
-                if not self.simulate:
-                    update(**record)
-                continue
-
-            self.logger.debug("'%s' not changed" % rid)
-
-        # If delete is not specified then don't bother checking it
-        if not delete:
-            return changed
-
-        master_records = dict(r for r in self.master)
-        for rid, record in self.slave:
-            if not rid in self.master:
-                self.logger.info("Deleting '%s'" % rid)
-                if not self.simulate:
-                    changed = True
-                    delete(**record)
-
-        return changed

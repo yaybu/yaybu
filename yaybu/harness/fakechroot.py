@@ -1,4 +1,4 @@
-# Copyright 2011 Isotoma Limited
+# Copyright 2011-2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ from unittest2 import SkipTest
 from yaybu import error
 from yaybu.util import sibpath
 
-from yaybu.harness.fixture import Fixture
 
 # Setup environment passthrough for chroot environment
 # And turn on auditlog
@@ -48,7 +47,7 @@ distro_flags = {
    }
 
 
-class FakeChrootFixture(Fixture):
+class FakeChrootFixture(object):
 
     """
     I provide a very simple COW userspace environment in which to test configuration
