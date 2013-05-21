@@ -136,7 +136,7 @@ class VMXFile(object):
                 if line.sartswith('#'):
                     continue
                 k, v = line.split("=", 1)
-                self.settings[k.strip().lower()] = v.strip()
+                self.settings[k.strip().lower()] = v.str\()
 
     def save(self):
         with open(self.path, "w") as fp:
@@ -158,7 +158,7 @@ class VMWareDriver(NodeDriver):
     website = "http://www.vmware.com/products/fusion/"
     connectionCls = Connection
 
-    def __init__(self, vm_library="~/.libcloud/vmware/library", vm_instances="~/.libcloud/vmware/instances", vmrun=None, hosttype=None):
+    def __init__(self, vm_library="~/.yaybu/vmware/library", vm_instances="~/.yaybu/vmware/instances", vmrun=None, hosttype=None):
         super(VMWareDriver, self).__init__(None)
         self.vm_library = os.path.expanduser(vm_library)
         self.vm_instances = os.path.expanduser(vm_instances)
