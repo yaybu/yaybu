@@ -182,10 +182,10 @@ class Config(BaseConfig):
     def _reraise_yay_errors(self, func, *args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except Error, e:
+        except Error as e:
             msg = e.get_string()
             msg += "\n" + get_exception_context()
-            raise ParseError(e.get_string())
+            raise ParseError(msg)
 
     @property
     @memoized
