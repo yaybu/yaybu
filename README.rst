@@ -22,7 +22,7 @@ To get a development environment with required dependencies::
 
 Then write a sample config file called ``foo.yay``::
 
-    resources.append:
+    extend resources:
       - File:
           name: /some_empty_file
 
