@@ -1,5 +1,0 @@
-==========
-Overlaying
-==========
-
-.. todo:: overlaying techniques

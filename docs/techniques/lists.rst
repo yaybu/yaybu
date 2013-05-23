@@ -1,5 +1,0 @@
-=====
-Lists
-=====
-
-.. todo:: lists techniques

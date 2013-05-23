@@ -7,11 +7,8 @@ Information for those wishing to write their own providers, or add new classes o
 .. toctree::
    :maxdepth: 2
 
-   roadmap
    ascode
    integration
-   internals
-   errors
    todo
 
 
