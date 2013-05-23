@@ -73,30 +73,37 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         transport = client.get_transport()
 
         channel = transport.open_session()
+
         channel.exec_command(' '.join([pipes.quote(c) for c in command]))
 
         if stdin:
             channel.send(stdin)
             channel.shutdown_write()
 
-        stdout_buffer = ""
+        def recvr(ready, recv, cb, buffer):
+            while ready():
+                data = recv(1024)
+                if data:
+                    if cb:
+                        cb(data)
+                    buffer.append(data)
+
+        stdout_buffer = []
+        stderr_buffer = []
         while not channel.exit_status_ready():
-            rlist, wlist, xlist = select.select([channel], [], [])
+            rlist, wlist, xlist = select.select([channel], [], [], 1)
             if not rlist:
                 continue
-            data = channel.recv(1024)
-            if data:
-                if stdout:
-                    stdout(data)
-                stdout_buffer += data
 
-        while channel.recv_ready():
-            data = channel.recv(1024)
-            if data:
-                if stdout:
-                    stdout(data)
-                stdout_buffer += data
+            recvr(channel.recv_ready, channel.recv, stdout, stdout_buffer)
+            recvr(channel.recv_stderr_ready, channel.recv_stderr, stderr, stderr_buffer)
+
+        recvr(channel.recv_ready, channel.recv, stdout, stdout_buffer)
+        recvr(channel.recv_stderr_ready, channel.recv_stderr, stderr, stderr_buffer)
 
         returncode = channel.recv_exit_status()
-        return returncode, stdout_buffer, ''
+
+        channel.close()
+
+        return returncode, ''.join(stdout_buffer), ''.join(stderr_buffer)
 

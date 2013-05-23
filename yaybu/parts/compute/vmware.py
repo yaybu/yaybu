@@ -226,7 +226,7 @@ class VMWareDriver(NodeDriver):
             if not line.strip():
                 continue
             n = Node(line.strip(), line.strip(), NodeState.UNKNOWN, None, None, self)
-            n.name = self._action("readVariable", n.id, "runtimeConfig", "displayName")
+            n.name = self._action("readVariable", n.id, "runtimeConfig", "displayName").strip()
             ip = self._action("readVariable", n.id, "guestVar", "ip").strip()
             if ip:
                 n.public_ips = [ip]
