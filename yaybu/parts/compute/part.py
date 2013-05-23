@@ -109,7 +109,7 @@ class Compute(ast.PythonClass):
     def _find_node(self, name):
         existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
         if len(existing) > 1:
-            raise KeyError("There are already multiple nodes called '%s'" % name)
+            raise LibcloudError("There are already multiple nodes called '%s'" % name)
         elif len(existing) == 1:
             logger.debug("Node '%s' already running - not creating new node" % (name, ))
             return existing[0]
