@@ -136,7 +136,7 @@ class VMXFile(object):
                 if line.sartswith('#'):
                     continue
                 k, v = line.split("=", 1)
-                self.settings[k.strip().lower()] = v.str\()
+                self.settings[k.strip().lower()] = v.str()
 
     def save(self):
         with open(self.path, "w") as fp:
@@ -234,7 +234,7 @@ class VMWareDriver(NodeDriver):
     def create_node(self, name, size, image):
         source = image.id
         if not os.path.exists(source):
-            raise LibcloudError("Base image is not valid")
+            raise LibcloudError("Base image %s not found" % source)
 
         target_dir = os.path.join(self.vm_instances, str(uuid.uuid4()))
         target = os.path.join(target_dir, "vm.vmx")
