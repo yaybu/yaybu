@@ -25,15 +25,15 @@ You will be able to chain these together and express dependencies through yay::
       loadbalancer:
         class: lb
         members:
-         - ${parts.web1}
-         - ${parts.web2}
+         - {{parts.web1}}
+         - {{parts.web2}}
 
       dns:
         class: compute
         records:
          - name: www
            type: CNAME
-           data: ${parts.loadbalancer.dnsname}
+           data: {{parts.loadbalancer.dnsname}}
 
 The next major release of Yaybu will be marked by the inclusion of a major new
 version of yay, the DSL that underpins it. This will fix many of the edge cases

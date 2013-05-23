@@ -42,7 +42,7 @@ that depends on who has access to it.
 
 To use this in your configuration you would add::
 
-    resources.append:
+    extend resources:
      - File:
          name: /etc/ssl/private/mysecret.key
          encrypted: mysecret.key.gpg
@@ -86,20 +86,18 @@ You should now have a secrets.yay.gpg. You should probably delete secrets.yay.
 
 Now lets write some configuration that uses these secrets. Edit config.yay::
 
-    yay:
-      extends:
-        - secrets.yay.gpg
+    include 'secrets.yay.gpg'
 
-    resources.append:
+    extend resources:
       - Execute:
           name: test
-          command: echo ${secret}
+          command: echo {{secret}}
 
       - File:
           name: /tmp/test
           template: simple.j2
           template_args:
-            secret: ${secret}
+            secret: {{secret}}
 
       - File:
           name: /tmp/control

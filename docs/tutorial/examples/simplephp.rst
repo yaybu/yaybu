@@ -67,12 +67,12 @@ Lets add a new file. In apache_modules.yay add::
 
     modules: []
 
-    resources.append:
-        .foreach module in modules:
+    extend resources:
+        for module in modules:
             Execute:
-              name: enable-${module}
-              command: a2enmod ${module}
-              creates: /etc/apache2/mods-enabled/${module}.load
+              name: enable-{{module}}
+              command: a2enmod {{module}}
+              creates: /etc/apache2/mods-enabled/{{module}}.load
 
 We just created a new list called modules. By default it will be empty. We'll
 be appending to it in `mybox.yay` later. We then append to resources using a
@@ -87,15 +87,13 @@ is a way of making sure our command is only executed once.
 
 Lets use our recipe in `mybox.yay`::
 
-    yay:
-        extends:
-            - apache_modules.yay
+    include 'apache_modules.yay'
 
-    modules.append:
+    extend modules:
         - php5
         - ssl
 
-    resources.append:
+    extend resources:
         - Package:
             - name: openssh-server
             - name: apache2
@@ -120,25 +118,24 @@ Here is the new recipe we'll be adding as apache_vhost.yay::
 
     vhosts: []
 
-    resources.append:
-      .flatten
-        .foreach vhost in vhosts:
+    extend resources:
+        for vhost in vhosts:
           - File:
-              name: /etc/apache2/sites-available/${vhost.name}
+              name: /etc/apache2/sites-available/{{vhost.name}}
               template: package://yaybu.apache/templates/vhost.j2
               template_args:
-                  vhost: ${vhost}
+                  vhost: {{vhost}}
           - Link:
-              name: /etc/apache2/sites-enabled/${vhost.name}
-              to: /etc/apache2/sites-available/${vhost.name}
+              name: /etc/apache2/sites-enabled/{{vhost.name}}
+              to: /etc/apache2/sites-available/{{vhost.name}}
 
-    resources.append:
+    extend resources:
         - Execute:
             command: /usr/sbin/apache2ctl graceful
             policy:
                 execute.foreach vhost in vhosts:
                     when: apply
-                    on: /etc/apache/sites-available/${vhost.name}
+                    on: /etc/apache/sites-available/{{vhost.name}}
 
 Lots of new stuff!
 
@@ -211,43 +208,38 @@ repository name. We are also using the sitename as the destination directory.
 
 So here is lamp.yay::
 
-    yay:
-        extends:
-            - apache_modules.yay
-            - apache_vhosts.yay
+    include 'apache_modules.yay'
+    include 'apache_vhosts.yay'
 
     customers: []
 
-    modules.append:
+    append modules:
         - php5
         - ssl
 
     vhosts:
-        .foreach customer in customers:
-            name: ${customer.sitename}
-            interface: ${host.ip}
-            root: /var/local/sites/${customer.sitename}
+        for customer in customers:
+            name: {{customer.sitename}}
+            interface: {{host.ip}}
+            root: /var/local/sites/{{customer.sitename}}
 
-    resources.append:
+    extend resources:
         - Package:
             - name: openssh-server
             - name: apache2
             - name: libapache2-mod-php5
 
-    resources.append:
-      .flatten:
-        .foreach customer in customers:
+    extend resources:
+        for customer in customers:
             - Checkout:
-                  name: /var/local/sites/${customer.sitename}
-                  repository: http://svn.localhost/${customer.sitename}
-                  branch: /tags/${customer.version}
+                  name: /var/local/sites/{{customer.sitename}}
+                  repository: http://svn.localhost/{{customer.sitename}}
+                  branch: /tags/{{customer.version}}
 
 
 And `mybox.yay` is now::
 
-    yay:
-        extends:
-            - lamp.yay
+    include 'lamp.yay'
 
     host:
         name: mybox

@@ -12,7 +12,7 @@ these files.
 For example, you could do this::
 
 
-    resources.append:
+    extend resources:
       - Checkout:
           name: /tmp/checkout
           repository: http://svn.example.com/test

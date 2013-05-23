@@ -9,7 +9,7 @@ Installing it and setting the root password
 This recipe is specfically for Debian and Ubuntu systems and will use debconf
 to seed various settings for the mysql server. Open up `mysql.yay`::
 
-    resources.append:
+    extend resources:
       - Directory:
           name: /var/cache/yaybu
           mode: 0755
@@ -54,12 +54,12 @@ So still in `mysql.yay`::
 
     databases: []
 
-    resources.append:
-       .foreach db in databases:
+    extend resources:
+       for db in databases:
           Execute:
-            name: create-${db}
-            command: mysql -u root --password='${mysql.root_password}' -e "CREATE DATABASE ${db}"
-            unless: mysql -u root --password='${mysql.root_password}' -e "connect ${db}"
+            name: create-{{db}}
+            command: mysql -u root --password='{{mysql.root_password}}' -e "CREATE DATABASE {{db}}"
+            unless: mysql -u root --password='{{mysql.root_password}}' -e "connect {{db}}"
 
 
 Keeping your root password safe

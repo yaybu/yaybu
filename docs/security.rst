@@ -10,7 +10,7 @@ secrets securely using the encrypted attribute of the File resources.
 
 This looks something like::
 
-    resources.append:
+    extend resources:
       - File:
           name: /etc/somesecret
           encrypted: path/in/cookbook.gpg

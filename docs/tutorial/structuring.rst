@@ -49,7 +49,7 @@ For example, application1.yay might contain::
 
 And then appserver.yay might look like::
 
-    resources.append:
+    extend resources:
         - Checkout:
             name: /opt/app
             repository: ${application.repository}
@@ -59,7 +59,7 @@ And then appserver.yay might look like::
             name: /opt/app/config.py
             template: django_config.j2
             template_args:
-                port: ${application.ports.appserver}
+                port: {{application.ports.appserver}}
                 ...
 
 As you can see, we're able to apply application metadata anywhere we need to.

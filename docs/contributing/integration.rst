@@ -44,7 +44,7 @@ There are many ways to inject configuration. Here we embed some Yay in our
 python::
 
     raw_config = StringIO.StringIO("""
-    resources.append:
+    extend resources:
       - Execute:
           name: hello
           command: echo hello

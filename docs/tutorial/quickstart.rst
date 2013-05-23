@@ -15,7 +15,7 @@ Hello, World!
 
 Create a file called `myconfig.yay`::
 
-    resources.append:
+    extend resources:
         - Package:
             name: hello
 
@@ -97,7 +97,7 @@ will not need to do anything.
 Now, let's add another `Package` resource, to install cowsay, altering myconfig.yay to
 look as follows::
 
-    resources.append:
+    extend resources:
         - Package:
             name: hello
 

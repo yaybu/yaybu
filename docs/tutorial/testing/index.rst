@@ -29,7 +29,7 @@ unittesting techniques.
 
 Let's test something simple. Here is foo.yay::
 
-    resources.append:
+    extend resources:
         - File:
             name: /etc/importantfile
 
@@ -40,9 +40,7 @@ In your test case you can write::
     class TestMyRecipe(FakeChrootTestCase):
         def test_file_deployed(self):
             self.fixture.check_apply("""
-                yay:
-                  extends:
-                    - foo.yay
+                include 'foo.yay'
                 """)
             self.failUnlessExists("/etc/importantfile")
 

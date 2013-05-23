@@ -8,7 +8,7 @@ of its configuration files.
 
 A simple example is::
 
-    resources.append::
+    extend resources::
       - File:
           name: /etc/apache2/sites-enabled/www.example.com
           template: vhost.j2
