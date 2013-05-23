@@ -30,7 +30,9 @@ import subprocess
 from pipes import quote
 
 from libcloud.common.types import LibcloudError
+import logging
 
+logger = logging.getLogger("yaybu.parts.compute.vmware")
 
 class Response(object):
 
@@ -195,6 +197,7 @@ class VMWareDriver(NodeDriver):
     def _action(self, *params, **kwargs):
         capture_output = kwargs.get('capture_output', True)
         command = [self.vmrun, "-T", self.hosttype] + list(params)
+        logger.debug("Executing %r" % (" ".join(command),))
         return self.connection.request(command, capture_output=capture_output).body
 
     def list_images(self, location=None):
@@ -243,6 +246,7 @@ class VMWareDriver(NodeDriver):
         if not os.path.exists(target_parent):
             os.makedirs(target_parent)
 
+        logger.warning("Creating node %r" % (name,))
         # First try to clone the VM with the VMWare commands. We do this in
         # the hope that they know what the fastest and most efficient way to
         # clone an image is. But if that fails we can just copy the entire
@@ -270,17 +274,22 @@ class VMWareDriver(NodeDriver):
         return Node(target, name, NodeState.PENDING, None, None, self)
 
     def reboot_node(self, node):
+        logger.warning("Rebooting node %r" % (node.id,))
         self._action("reset", node.id, "hard")
         node.state = NodeState.REBOOTING
 
     def destroy_node(self, node):
+        logger.warning("Destroying node %r" % (node.id,))
         self._action("stop", node.id, "hard")
         self._action("deleteVM", node.id)
         shutil.rmtree(os.path.dirname(node.id))
 
     def ex_get_runtime_variable(self, node, variable):
-        return self._action("readVariable", node.id, "runtimeConfig", variable)
+        value = self._action("readVariable", node.id, "runtimeConfig", variable)
+        logger.debug("Read variable %r from node %r, value was %r" % (variable, node.id, value))
+        return value
 
     def ex_set_runtime_variable(self, node, variable, value):
+        logger.debug("Setting runtime variable %r on node %r to %r" % (variable, node.id, value))
         self._action("writeVariable", node.id, "runtimeConfig", variable, value)
 
