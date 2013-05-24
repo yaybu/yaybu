@@ -45,6 +45,8 @@ class Svn(Provider):
 
     @property
     def url(self):
+        if self.resource.tag:
+            return self.resource.repository + "/tags/" + self.resource.tag
         return self.resource.repository + "/" + self.resource.branch
 
     def action_checkout(self, context):
