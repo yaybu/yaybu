@@ -45,6 +45,9 @@ class Checkout(Resource):
     branch = String()
     """ The name of a branch to check out, if required. """
 
+    tag = String()
+    """ The name of a tag to check out, if required. """
+
     revision = String()
     """ The revision to check out or move to. """
 
