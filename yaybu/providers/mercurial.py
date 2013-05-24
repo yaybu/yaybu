@@ -18,7 +18,7 @@ import re
 from yaybu.core.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError
 from yaybu import resources
-from yaybu.parts.provisioner.changes import File, ShellCommand, EnsureDirectory
+from yaybu.parts.provisioner.changes import ShellCommand, EnsureFile, EnsureDirectory
 
 
 log = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 hgrc = """
 [paths]
-default = %(remote)s
+default = %(repository)s
 [extensions]
 should = %(path)s/.hg/should.py
 """
@@ -77,32 +77,49 @@ class Mercurial(Provider):
             created = True
 
         try:
-            context.change(FileContentChanger(
+            context.change(EnsureFile(
                 os.path.join(self.resource.name, ".hg", "hgrc"),
-                0600,
                 hgrc % {"repository": self.resource.repository, "path": self.resource.name},
+                self.resource.user,
+                self.resource.group,
+                0600,
                 True))
         except SystemError:
             raise CheckoutError("Could not set the remote repository.")
 
         try:
-            context.change(FileContentChanger(
+            context.change(EnsureFile(
                 os.path.join(self.resource.name, ".hg", "should.py"),
-                0600,
                 open(os.path.join(os.path.dirname(__file__), "mercurial.hgext")).read(),
+                self.resource.user,
+                self.resource.group,
+                0600,
                 True))
         except SystemError:
             raise CheckoutError("Could not setup mercurial idempotence extension")
 
-        if created or self.info(context, "should-pull"):
+        should_args = []
+        if self.resource.branch:
+            should_args.extend(["-b", self.resource.branch])
+        if self.resource.tag:
+            should_args.extend(["-t", self.resource.tag])
+
+        if created or self.info(context, "should-pull", *should_args)[0] != 0:
             try:
                 self.action(context, "pull", "--force")
             except SystemError:
                 raise CheckoutError("Could not fetch changes from remote repository.")
 
-        if created or self.info(context, "should-update"):
+        if created or self.info(context, "should-update", *should_args)[0] != 0:
+            if self.resource.branch:
+                args = [self.resource.branch]
+            elif self.resource.tag:
+                args = [self.resource.tag]
+            else:
+                args = []
+
             try:
-                self.action(context, "update")
+                self.action(context, "update", *args)
             except SystemError:
                 raise CheckoutError("Could not update working copy.")
 

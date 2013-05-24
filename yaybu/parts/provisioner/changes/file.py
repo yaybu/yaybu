@@ -20,7 +20,7 @@ from jinja2 import Environment, BaseLoader, TemplateNotFound
 
 from yaybu import error, resources, changes
 from .execute import ShellCommand
-
+from .attributes import AttributeChanger
 
 def binary_buffers(*buffers):
 
@@ -33,16 +33,18 @@ def binary_buffers(*buffers):
     return False
 
 
-class FileContentChanger(changes.Change):
+class EnsureFile(changes.Change):
 
     """ Apply a content change to a file in a managed way. Simulation mode is
     catered for. Additionally the minimum changes required to the contents are
     applied, and logs of the changes made are recorded. """
 
-    def __init__(self, filename, mode, contents, sensitive):
+    def __init__(self, filename, contents, user, group, mode, sensitive):
         self.filename = filename
         self.current = ""
         self.contents = contents
+        self.user = user
+        self.group = group
         self.mode = mode
         self.changed = False
         self.renderer = None
@@ -93,9 +95,13 @@ class FileContentChanger(changes.Change):
         else:
             self.write_file(context)
 
+        ac = AttributeChanger(self.filename, self.user, self.group, self.mode)
+        context.change(ac)
+        self.changed = self.changed or ac.changed
+
 
 class FileChangeTextRenderer(changes.TextRenderer):
-    renderer_for = FileContentChanger
+    renderer_for = EnsureFile
 
     def empty_file(self, filename):
         self.logger.notice("Emptied file %s", filename)

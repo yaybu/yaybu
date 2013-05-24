@@ -45,9 +45,13 @@ from mercurial import util, hg, node
 def should_pull(ui, repo, **opts):
     default_path = repo.ui.configlist('paths', 'default')[0]
 
-    peer = hg.peer(ui, {}, default_path)
-    remote_branches = peer.branchmap()
+    if not hasattr(hg, "peer"):
+        source, revs, checkout = hg.parseurl(ui.expandpath(default_path), [])
+        peer = hg.repository(ui, source)
+    else:
+        peer = hg.peer(ui, {}, default_path)
 
+    remote_branches = peer.branchmap()
     local_branches = repo.branchmap()
 
     if opts['branch'] not in remote_branches:

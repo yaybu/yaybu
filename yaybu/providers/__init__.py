@@ -16,10 +16,11 @@ from yaybu.providers import (
     apt,
     execute,
     filesystem,
-    group,
-    subversion,
     git,
-    user,
+    group,
+    mercurial,
+    mounted,
     service,
-    mounted
+    subversion,
+    user,
     )

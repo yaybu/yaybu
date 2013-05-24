@@ -18,7 +18,7 @@ from jinja2 import Environment, BaseLoader, TemplateNotFound
 
 from yaybu import resources
 from yaybu.core import error, provider
-from yaybu.parts.provisioner.changes import ShellCommand, AttributeChanger, FileContentChanger
+from yaybu.parts.provisioner.changes import ShellCommand, AttributeChanger, EnsureFile
 
 from yay import String
 
@@ -114,18 +114,10 @@ class File(provider.Provider):
             contents = None
             sensitive = False
 
-        fc = FileContentChanger(self.resource.name, self.resource.mode, contents, sensitive)
+        fc = EnsureFile(self.resource.name, contents, self.resource.owner, self.resource.group, self.resource.mode, sensitive)
         context.change(fc)
 
-        ac = AttributeChanger(
-                              self.resource.name,
-                              self.resource.owner,
-                              self.resource.group,
-                              self.resource.mode)
-        context.change(ac)
-
-        if fc.changed or ac.changed:
-            return True
+        return fc.changed
 
 
 class RemoveFile(provider.Provider):
