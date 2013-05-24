@@ -80,7 +80,7 @@ class GitTest(FakeChrootTestCase):
                     scm: git
                     name: %(clone_dir)s
                     repository: %(repo_url)s
-                    branch: %(tag)s
+                    tag: %(tag)s
             """ % {
                 "clone_dir": CLONED_REPO,
                 "repo_url": self.UPSTREAM_REPO_2,
@@ -110,6 +110,15 @@ class GitTest(FakeChrootTestCase):
             "repo_url": self.UPSTREAM_REPO_2,
             "branch_or_tag": BRANCH,
         }
+
+        framework = """
+            resources:
+                - Checkout:
+                    scm: git
+                    name: %(clone_dir)s
+                    repository: %(repo_url)s
+                    tag: %(branch_or_tag)s
+            """
 
         tag = framework % {
             "clone_dir": CLONED_REPO,

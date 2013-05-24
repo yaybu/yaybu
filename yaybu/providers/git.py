@@ -116,45 +116,44 @@ class Git(Provider):
         else:
             head_sha = '0' * 40
 
+        try:
+            rv, stdout, stderr = context.transport.execute(["git", "ls-remote", self.resource.repository], cwd="/tmp")
+        except SystemError:
+            raise CheckoutError("Could not query the remote repository")
+
+        r = re.compile('([0-9a-f]{40})\t(.*)\n')
+        refs_to_shas = dict([(b,a) for (a,b) in r.findall(stdout)])
+
         # Revision takes precedent over branch
         if self.resource.revision:
             newref = self.resource.revision
             if newref != head_sha:
                 return newref
 
+        elif self.resource.tag:
+            as_tag = "refs/tags/%s" % self.resource.tag
+            if not as_tag in refs_to_shas.keys():
+                raise CheckoutError("Cannot find a tag called '%s'" % self.resource.tag)
+
+            annotated_tag = as_tag + "^{}"
+            if annotated_tag in refs_to_shas.keys():
+                as_tag = annotated_tag
+            newref = self.resource.tag
+            if head_sha != refs_to_shas.get(as_tag):
+                return newref
+
         elif self.resource.branch:
-            try:
-                rv, stdout, stderr = context.transport.execute(["git", "ls-remote", self.resource.repository], cwd="/tmp")
-            except SystemError:
-                raise CheckoutError("Could not query the remote repository")
-
-            r = re.compile('([0-9a-f]{40})\t(.*)\n')
-            refs_to_shas = dict([(b,a) for (a,b) in r.findall(stdout)])
-
-            as_tag = "refs/tags/%s" % self.resource.branch
             as_branch = "refs/heads/%s" % self.resource.branch
-
-            if as_tag in refs_to_shas.keys():
-                annotated_tag = as_tag + "^{}"
-                if annotated_tag in refs_to_shas.keys():
-                    as_tag = annotated_tag
-                newref = self.resource.branch
-                if head_sha != refs_to_shas.get(as_tag):
-                    return newref
-
-            elif as_branch in refs_to_shas.keys():
-                newref = "remotes/%s/%s" % (
-                    self.REMOTE_NAME,
-                    self.resource.branch
-                )
-                if head_sha != refs_to_shas.get(as_branch):
-                    return newref
-
-            else:
-                raise CheckoutError("Cannot find a branch or tag called '%s'" % self.resource.branch)
-
+            if not as_branch in refs_to_shas.keys():
+                raise CheckoutError("Cannot find a branch called '%s'" % self.resource.branch)
+            newref = "remotes/%s/%s" % (
+                self.REMOTE_NAME,
+                self.resource.branch
+            )
+            if head_sha != refs_to_shas.get(as_branch):
+                return newref
         else:
-            raise CheckoutError("You must specify either a revision or a branch")
+            raise CheckoutError("You must specify either a revision, tag or branch")
 
     def action_checkout(self, context, newref):
         try:
