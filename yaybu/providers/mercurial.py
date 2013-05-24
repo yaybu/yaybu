@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, logging
+import os
+import logging
+import urlparse
+import urllib
 import re
 
 from yaybu.core.provider import Provider
@@ -30,6 +33,20 @@ default = %(repository)s
 [extensions]
 should = %(path)s/.hg/should.py
 """
+
+
+def _inject_credentials(url, username=None, password=None):
+    if username and password:
+        p = urlparse.urlparse(url)
+        netloc = '%s:%s@%s' % (
+            urllib.quote(username, ''),
+            urllib.quote(password, ''),
+            p.hostname,
+            )
+        if p.port:
+           netloc += ":" + str(p.port)
+        url = urlparse.urlunparse((p.scheme,netloc,p.path,p.params,p.query,p.fragment))
+    return url
 
 
 class Mercurial(Provider):
@@ -76,10 +93,12 @@ class Mercurial(Provider):
                 raise CheckoutError("Cannot initialise local repository.")
             created = True
 
+        url = _inject_credentials(self.resource.repository, self.resource.scm_username, self.resource.scm_password)
+
         try:
             context.change(EnsureFile(
                 os.path.join(self.resource.name, ".hg", "hgrc"),
-                hgrc % {"repository": self.resource.repository, "path": self.resource.name},
+                hgrc % {"repository": url, "path": self.resource.name},
                 self.resource.user,
                 self.resource.group,
                 0600,
