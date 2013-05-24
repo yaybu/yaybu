@@ -18,7 +18,7 @@ from yaybu.core.provider import Provider
 from yaybu.core.error import MissingDependency
 from yaybu import resources
 from yaybu.parts.provisioner.changes.execute import Command
-from yaybu.parts.provisioner.changes import ShellCommand
+from yaybu.parts.provisioner.changes import ShellCommand, EnsureDirectory
 
 
 import shlex
@@ -52,6 +52,8 @@ class Svn(Provider):
     def action_checkout(self, context):
         if context.transport.exists(self.resource.name):
             return
+
+        context.change(EnsureDirectory(self.resource.name, self.resource.user, self.resource.group, 0755))
 
         log.debug("Checking out %s" % self.resource)
         self.svn(context, "co", self.url, self.resource.name)

@@ -18,7 +18,7 @@ import re
 from yaybu.core.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError
 from yaybu import resources
-from yaybu.parts.provisioner.changes import ShellCommand
+from yaybu.parts.provisioner.changes import ShellCommand, EnsureDirectory
 
 
 log = logging.getLogger("git")
@@ -65,11 +65,7 @@ class Git(Provider):
         typical clone, does not check it out
 
         """
-        try:
-            cmd = ["/bin/mkdir", self.resource.name]
-            context.change(ShellCommand(cmd, user=self.resource.user))
-        except SystemError:
-            raise CheckoutError("Cannot create the repository directory")
+        context.change(EnsureDirectory(self.resource.name, self.resource.user, self.resource.group, 0755))
 
         try:
             self.action(context, "init", self.resource.name)

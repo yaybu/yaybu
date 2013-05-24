@@ -18,7 +18,7 @@ import logging
 
 from yaybu import resources
 from yaybu.core import provider, error
-from yaybu.parts.provisioner.changes import ShellCommand, AttributeChanger
+from yaybu.parts.provisioner.changes import EnsureDirectory, ShellCommand
 
 
 class Directory(provider.Provider):
@@ -50,23 +50,14 @@ class Directory(provider.Provider):
     def apply(self, context):
         changed = False
         self.check_path(context, os.path.dirname(self.resource.name))
-        ac = AttributeChanger(
-                              self.resource.name,
-                              self.resource.owner,
-                              self.resource.group,
-                              self.resource.mode)
-        if not context.transport.exists(self.resource.name):
-            command = ["/bin/mkdir"]
-            if self.resource.parents:
-                command.append("-p")
-            command.append(self.resource.name.decode("utf-8"))
-            context.change(ShellCommand(command))
-            changed = True
-        context.change(ac)
-        if changed or ac.changed:
-            return True
-        else:
-            return False
+
+        return context.change(EnsureDirectory(
+            self.resource.name,
+            self.resource.owner,
+            self.resource.group,
+            self.resource.mode,
+            self.resource.parents,
+            ))
 
 
 class RemoveDirectory(provider.Provider):

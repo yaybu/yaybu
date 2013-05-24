@@ -63,6 +63,14 @@ class Checkout(Resource):
     user = String(default="root")
     """ The user to perform actions as, and who will own the resulting files. """
 
+    group = String(default="root")
+    """ The group to perform actions as. """
+
+    mode = Octal(default="755")
+    """A mode representation as an octal. This can begin with leading zeros if
+    you like, but this is not required. DO NOT use yaml Octal representation
+    (0o666), this will NOT work."""
+
 
 class CheckoutSyncPolicy(Policy):
 

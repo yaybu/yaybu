@@ -18,7 +18,7 @@ import re
 from yaybu.core.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError
 from yaybu import resources
-from yaybu.parts.provisioner.changes import File, ShellCommand
+from yaybu.parts.provisioner.changes import File, ShellCommand, EnsureDirectory
 
 
 log = logging.getLogger(__name__)
@@ -67,18 +67,13 @@ class Mercurial(Provider):
     def apply(self, context):
         created = False
 
-        if not context.transport.exists(os.path.join(self.resource.name, ".hg")):
-            try:
-                cmd = ["/bin/mkdir", self.resource.name]
-                context.change(ShellCommand(cmd, user=self.resource.user))
-            except SystemError:
-                raise CheckoutError("Cannot create the repository directory")
+        context.change(EnsureDirectory(self.resource.name, self.resource.user, self.resource.group, 0755))
 
+        if not context.transport.exists(os.path.join(self.resource.name, ".hg")):
             try:
                 self.action(context, "init")
             except SystemError:
                 raise CheckoutError("Cannot initialise local repository.")
-
             created = True
 
         try:

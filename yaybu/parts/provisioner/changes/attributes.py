@@ -84,3 +84,6 @@ class AttributeChanger(changes.Change):
                     context.change(ShellCommand(["/bin/chmod", "u-s", self.filename]))
 
                 self.changed = True
+
+        return self
+
