@@ -24,3 +24,36 @@ def sibpath(path, sibling):
     """
     return os.path.join(os.path.dirname(os.path.abspath(path)), sibling)
 
+
+_MARKER = object()
+
+def args_from_expression(func, expression):
+    if inspect.isclass(func):
+        func = getattr(func, "__init__")
+    args, vargs, kwargs, defaults = inspect.getspecargs(func)
+
+    defaults = itertools.chain(
+        itertools.repeat(_MARKER, len(args)-len(defaults)),
+        defaults,
+        )
+
+    result = {}
+    for arg, default in zip(args, defaults):
+        try:
+            node = expression.get_key(arg)
+        except KeyError:
+            if default == _MARKER:
+                raise KeyError(arg)
+            result[arg] = default
+        else:
+            if default == _MARKER:
+                result[arg] = node.resolve()
+            elif isinstance(default, int):
+                result[arg] = node.as_integer()
+            elif isinstance(default, basestring):
+                result[arg] = node.as_string()
+            else:
+                result[arg] = node.resolve()
+
+    return result
+

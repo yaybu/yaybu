@@ -34,6 +34,7 @@ from paramiko.dsskey import DSSKey
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
+from yaybu.util import args_from_expression
 
 from yay import ast, errors
 
@@ -69,14 +70,12 @@ class Compute(ast.PythonClass):
     @property
     @memoized
     def driver(self):
-        config = self.params["driver"].as_dict()
-        driver_name = config['id']
-        del config['id']
-        if driver_name.lower() == "vmware":
-            return VMWareDriver(**config)
-        provider = getattr(ComputeProvider, driver_name)
-        driver_class = get_compute_driver(provider)
-        return driver_class(**config)
+        driver_id = self.params.driver.id.as_string()
+        if driver_id.lower() == "vmware":
+            Driver = VMWareDriver
+        else:
+            Driver = get_compute_driver(getattr(ComputeProvider, driver_id))
+        return Driver(**args_from_expression(Driver, self.params.driver))
 
     @property
     def full_name(self):
