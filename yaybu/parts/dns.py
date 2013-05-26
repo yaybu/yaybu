@@ -19,6 +19,7 @@ import logging
 
 from yaybu.changes import MetadataSync
 from yaybu.core.util import memoized
+from yaybu.util import args_from_expression
 from yay import ast, errors
 from libcloud.dns.types import Provider as DNSProvider
 from libcloud.dns.providers import get_driver as get_dns_driver
@@ -159,12 +160,9 @@ class Zone(ast.PythonClass):
     keys = []
 
     def apply(self):
-        config = self.params['driver'].as_dict()
-        driver_name = config['id']
-        del config['id']
-
+        driver_name = self.params.driver.id.as_string()
         Driver = get_dns_driver(getattr(DNSProvider, driver_name))
-        driver = Driver(**config)
+        driver = Driver(**args_from_expression(Driver, self.params.driver))
 
         domain = self.params.domain.as_string().rstrip(".") + "."
         zones = [z for z in driver.list_zones() if z.domain == domain]

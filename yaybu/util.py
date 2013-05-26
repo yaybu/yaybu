@@ -13,6 +13,9 @@
 # limitations under the License.
 
 import os
+import inspect
+import itertools
+from yay import errors
 
 # merci, twisted
 def sibpath(path, sibling):
@@ -30,7 +33,10 @@ _MARKER = object()
 def args_from_expression(func, expression):
     if inspect.isclass(func):
         func = getattr(func, "__init__")
-    args, vargs, kwargs, defaults = inspect.getspecargs(func)
+    args, vargs, kwargs, defaults = inspect.getargspec(func)
+
+    if args[0] == "self":
+        args.pop(0)
 
     defaults = itertools.chain(
         itertools.repeat(_MARKER, len(args)-len(defaults)),
@@ -43,7 +49,7 @@ def args_from_expression(func, expression):
             node = expression.get_key(arg)
         except KeyError:
             if default == _MARKER:
-                raise KeyError(arg)
+                raise errors.NoMatching(arg)
             result[arg] = default
         else:
             if default == _MARKER:
