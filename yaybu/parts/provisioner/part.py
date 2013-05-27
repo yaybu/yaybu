@@ -17,12 +17,13 @@ import logging
 import sys
 
 import yay
-from yay import ast, errors
+from yay import errors
 from yay.errors import LanguageError, NotFound, NotModified
 
 from yaybu.core import resource
 from yaybu import error
 from yaybu.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
+from yaybu.parts import base
 
 from . import event, transports
 
@@ -30,17 +31,16 @@ from . import event, transports
 logger = logging.getLogger(__name__)
 
 
-class Provision(ast.PythonClass):
+class Provision(base.GraphExternalAction):
 
     """
     Use yaybu to configure a server
 
-    appserver:
-        new Provisioner:
-            server:
-                fqdn: example.com
+    new Provisioner as appserver:
+        server:
+            fqdn: example.com
 
-            resources: {{ resources }}
+        resources: {{ resources }}
     """
 
     Transport = transports.SSHTransport
@@ -102,7 +102,7 @@ class Provision(ast.PythonClass):
         bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources, verbose_errors=self.verbose>2)
         bundle.bind()
         bundle.apply(self, None)
-        
+
         if not self.simulate and self.transport.exists(self.state.save_file):
             self.transport.unlink(self.state.save_file)
 

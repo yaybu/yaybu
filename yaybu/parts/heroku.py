@@ -1,7 +1,8 @@
 
 from __future__ import absolute_import
 
-from yay import ast, errors
+from yay import errors
+from yaybu.parts import base
 
 try:
     import heroku
@@ -9,14 +10,14 @@ except ImportError:
     heroku = None
 
 
-class Heroku(ast.PythonClass):
+class Heroku(base.GraphExternalAction):
 
     def __init__(self, params):
         super(Heroku, self).__init__(params)
 
         if not heroku:
             raise errors.TypeError("Dependency 'heroku' is required and not available", anchor=self.anchor)
-        
+
         try:
             self.cloud = heroku.from_key(self.key.as_string())
         except errors.NoMatching:
@@ -77,7 +78,7 @@ class Heroku(ast.PythonClass):
     def apply_domains(self, context, app):
         old_domains = set(d.domain for d in app.domains)
         new_domains = set(self.get('domains', []))
-        
+
         for domain in (new_domains - old_domains):
             self.action("Adding domain name '%s'" % domain)
             if not context.simulate:
@@ -125,7 +126,7 @@ class Heroku(ast.PythonClass):
             addon = new_addons_by_type[addon_type]
             self.action("Adding new add-on '%s'" % addon)
             if not context.simulate:
-                app.addons.add(addon)           
+                app.addons.add(addon)
 
         # Remove old addons
         for addon_type in (old_state-new_state):

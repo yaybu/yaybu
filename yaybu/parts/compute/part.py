@@ -35,18 +35,18 @@ from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
 from yaybu.util import args_from_expression
+from yaybu.parts import base
 
-from yay import ast, errors
+from yay import errors
 
 logger = logging.getLogger(__name__)
 
 
-class Compute(ast.PythonClass):
+class Compute(base.GraphExternalAction):
     """
     This creates a physical node based on our node record.
 
-    mycompute:
-        create "yaybu.parts.compute:Compute":
+        new Compute as mycompute:
             driver:
                 id: AWS
                 key: your-amazon-key
@@ -61,11 +61,6 @@ class Compute(ast.PythonClass):
         super(Compute, self).__init__(node)
         self.libcloud_node = None
         self.their_name = None
-
-    @property
-    @memoized
-    def state(self):
-        return PartState(self.root.state, self.params.name.as_string())
 
     @property
     @memoized

@@ -20,6 +20,7 @@ import logging
 from yaybu.changes import MetadataSync
 from yaybu.core.util import memoized
 from yaybu.util import args_from_expression
+from yaybu.parts import base
 from yay import ast, errors
 from libcloud.dns.types import Provider as DNSProvider
 from libcloud.dns.providers import get_driver as get_dns_driver
@@ -137,24 +138,23 @@ class RecordSync(MetadataSync):
             )
 
 
-class Zone(ast.PythonClass):
+class Zone(base.GraphExternalAction):
 
     """
     This part manages a single DNS zone
 
-    mydns:
-        new Zone:
-            driver:
-                id: AWS
-                key:
-                secret:
-            domain: example.com
-            type: master
-            ttl: 60
-            records:
-              - name: www
-                type: A
-                data: 192.168.1.1
+    new Zone as myzone:
+        driver:
+            id: AWS
+            key:
+            secret:
+        domain: example.com
+        type: master
+        ttl: 60
+        records:
+          - name: www
+            type: A
+            data: 192.168.1.1
     """
 
     keys = []

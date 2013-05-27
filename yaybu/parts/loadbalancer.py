@@ -18,7 +18,8 @@ from __future__ import absolute_import
 import logging
 
 from yaybu.core.util import memoized
-from yay import ast, errors
+from yaybu.parts import base
+from yay import errors
 from libcloud.loadbalancer.base import Member, Algorithm
 from libcloud.loadbalancer.types import Provider, State
 from libcloud.loadbalancer.providers import get_driver
@@ -27,26 +28,25 @@ from libcloud.common.types import LibcloudError
 logger = logging.getLogger(__name__)
 
 
-class LoadBalancer(ast.PythonClass):
+class LoadBalancer(base.GraphExternalAction):
 
     """
     This part manages a libcloud load balancer
 
-        mylb:
-            create "yaybu.parts.loadbalancer:LoadBalancer":
-                driver:
-                    id: AWS
-                    key:
-                    secret:
+        new LoadBalancer as mylb:
+            driver:
+                id: AWS
+                key:
+                secret:
 
-                port: 80
-                protocol: http
-                algorithm: round-robin
+            port: 80
+            protocol: http
+            algorithm: round-robin
 
-                members:
-                  - id: {{webnode.id}}
-                    ip: {{webnode.public_ip}}
-                    port: 8080
+            members:
+              - id: {{webnode.id}}
+                ip: {{webnode.public_ip}}
+                port: 8080
 
     Algorithm must be one of:
         random
