@@ -137,7 +137,6 @@ class YaybuCmd(OptionParsingCmd):
 
     def opts_up(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
-        parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
@@ -160,7 +159,6 @@ class YaybuCmd(OptionParsingCmd):
         graph.simulate = opts.simulate
         graph.resume = opts.resume
         graph.no_resume = opts.no_resume
-        graph.user = opts.user
         if not len(self.ypath):
             self.ypath.append(os.getcwd())
         graph.ypath = self.ypath
