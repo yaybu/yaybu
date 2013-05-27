@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.providers.service import (
+from . import (
     lsb,
     upstart,
     simple,

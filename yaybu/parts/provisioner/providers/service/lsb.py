@@ -15,7 +15,7 @@
 import os, shlex, glob
 
 from yaybu.core import provider
-from yaybu.providers.service import utils
+from . import utils
 from yaybu import resources
 from yaybu.parts.provisioner.changes import ShellCommand
 

@@ -37,7 +37,7 @@ setup(name='Yaybu',
       [yaybu.resources]
       resources = yaybu.resources
       [yaybu.providers]
-      providers = yaybu.providers
+      providers = yaybu.parts.provisioner.providers
       [yaybu.parts]
       providers = yaybu.parts
       """

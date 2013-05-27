@@ -16,7 +16,7 @@ import os
 from collections import namedtuple
 
 from yaybu.core import provider, error
-from yaybu.providers.service import utils
+from . import utils
 from yaybu import resources
 
 UpstartInfo = namedtuple('UpstartInfo', ['name', 'goal', 'status'])
@@ -50,7 +50,7 @@ class _UpstartServiceMixin(utils._ServiceMixin):
     def _parse_status_output(self, statusblob):
         """
         Yields status information from the output of /sbin/status
-        
+
         Can cope with multiple instances of a job like this::
 
             network-interface-security (network-manager) start/running

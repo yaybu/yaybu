@@ -16,7 +16,7 @@ import os
 import shlex
 
 from yaybu.core import provider
-from yaybu.providers.service import utils
+from . import utils
 
 
 class _SimulatedServiceMixin(utils._ServiceMixin):
