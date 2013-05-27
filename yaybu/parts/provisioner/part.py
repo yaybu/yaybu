@@ -73,7 +73,6 @@ class Provision(base.GraphExternalAction):
             context=self,
             verbose = root.verbose,
             simulate = root.simulate,
-            env_passthrough = root.env_passthrough
             )
 
         if not self.simulate and not self.transport.exists(self.get_data_path()):

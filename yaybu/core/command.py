@@ -202,7 +202,7 @@ class YaybuCmd(OptionParsingCmd):
         name=value name=value...
         """
         graph = self._get_graph(opts, args)
-        returncode, resolved = self._resolve_graph(graph)
+        returncode, resolved = self._resolve_graph(graph, expect_changes=True)
         return returncode
 
     def do_ssh(self, opts, args):

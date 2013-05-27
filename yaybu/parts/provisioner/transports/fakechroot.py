@@ -17,6 +17,17 @@ import os
 
 class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExecute):
 
+    env_passthrought = [
+        "COWDANCER_ILISTFILE",
+        "FAKECHROOT",
+        "FAKECHROOT_VERSION",
+        "FAKECHROOT_BASE",
+        "FAKED_MODE",
+        "FAKEROOTKEY",
+        "LD_PRELOAD",
+        "LD_LIBRARY_PATH",
+        ]
+
     def whoami(self):
         return "root"
 

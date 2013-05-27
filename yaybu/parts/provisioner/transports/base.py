@@ -24,15 +24,12 @@ class Transport(object):
     switched into "simulate" mode it can just print what would be done. """
 
     env = None
+    env_passthrough = []
 
-    def __init__(self, context, verbose=0, simulate=False, env_passthrough=None):
+    def __init__(self, context, verbose=0, simulate=False):
         self.simulate = context.simulate
         self.verbose = context.verbose
         self.context = context
-
-        self.env_passthrough = ["SSH_AUTH_SOCK"]
-        if env_passthrough:
-            self.env_passthrough.extend(env_passthrough)
 
     def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
         # No need to change user if we are already the right one

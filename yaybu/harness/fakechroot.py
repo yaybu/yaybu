@@ -17,23 +17,6 @@ from unittest2 import SkipTest
 from yaybu import error
 from yaybu.util import sibpath
 
-
-# Setup environment passthrough for chroot environment
-# And turn on auditlog
-yaybu_cfg = """
-env-passthrough:
- - COWDANCER_ILISTFILE
- - FAKECHROOT
- - FAKECHROOT_VERSION
- - FAKECHROOT_BASE
- - FAKED_MODE
- - FAKEROOTKEY
- - LD_PRELOAD
- - LD_LIBRARY_PATH
-auditlog:
-   mode: file
-"""
-
 distro_flags = {
     "Ubuntu 10.04": dict(
         name="lucid",
@@ -114,9 +97,6 @@ class FakeChrootFixture(object):
             os.mkdir(os.path.join(self.chroot_path, "etc"))
         if not os.path.exists(os.path.join(self.chroot_path, "tmp")):
             os.mkdir(os.path.join(self.chroot_path, "tmp"))
-
-        with self.open("/etc/yaybu", "w") as fp:
-            fp.write(yaybu_cfg)
 
     def cleanUp(self):
         self.cleanup_session()

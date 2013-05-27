@@ -73,6 +73,11 @@ class Compute(base.GraphExternalAction):
         return Driver(**args_from_expression(Driver, self.params.driver))
 
     @property
+    @memoized
+    def state(self):
+        return PartState(self.root.state, self.params.name.as_string())
+
+    @property
     def full_name(self):
         return "%s/%s" % ("example1", str(self.params.name))
 

@@ -100,6 +100,9 @@ class Config(BaseConfig):
     policies like looking in ``~/.yaybu/`` for certain things.
     """
 
+    readonly = False
+    simulate = False
+
     def __init__(self, context=None, hostname=None, searchpath=None):
         self.context = context
 

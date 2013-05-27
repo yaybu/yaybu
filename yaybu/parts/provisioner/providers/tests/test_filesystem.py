@@ -15,7 +15,7 @@
 
 import unittest
 from yay import String
-from yaybu.providers.filesystem import files
+from yaybu.parts.provisioner.providers.filesystem import files
 
 class TestSecretTemplateArgs(unittest.TestCase):
 

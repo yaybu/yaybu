@@ -19,9 +19,5 @@ from yay import ast
 
 class GraphExternalAction(ast.PythonClass):
 
-    @property
-    @memoized
-    def state(self):
-        return PartState(self.root.state, self.params.name.as_string())
-
+    pass
 
