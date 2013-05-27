@@ -135,13 +135,6 @@ class YaybuCmd(OptionParsingCmd):
             return
         return 1
 
-    def do_status(self, opts, args):
-        """
-        usage: status [cluster]
-        Describe the status of the cluster in the specified cloud.
-        If no cluster is specified, all clusters are shown
-        """
-
     def opts_up(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("-u", "--user", default="root", action="store", help="User to attempt to run as")
@@ -221,17 +214,56 @@ class YaybuCmd(OptionParsingCmd):
         # do some stuff
         raise NotImplementedError
 
-    def do_info(self, opts, args):
+    def opts_status(self, parser):
+        parser.add_option("-C", "--config", default="Yaybufile", action="store", help="Name of configuration to load")
+
+    def do_status(self, opts, args):
         """
-        usage: info <cluster> <filename>
-        Provide information on the specified cluster
+        usage: status
+        Provide information on the cluster
         """
-        if len(args) != 2:
-            self.do_help((),("rmcluster",))
-            return
-        cluster_name, filename = args
-        cluster = Cluster(cluster_name, filename)
-        print "Not implemented yet"
+        from yaybu.core.config import Config
+        graph = Config()
+        graph.readonly = True
+        graph.simulate = False
+        graph.resume = False
+        graph.no_resume = False
+        if not len(self.ypath):
+            self.ypath.append(os.getcwd())
+        graph.ypath = self.ypath
+        graph.verbose = self.verbose
+
+        graph.name = "example"
+        graph.load_uri(os.path.realpath(opts.config))
+        if len(args) > 1:
+            graph.set_arguments_from_argv(args[1:])
+
+        try:
+            cfg = graph.resolve()
+
+        except yay.errors.LanguageError as e:
+            print str(e)
+            if self.verbose >= 2:
+                print yay.errors.get_exception_context()
+            return error.ParseError.returncode
+
+        except error.ExecutionError, e:
+            # this will have been reported by the context manager, so we wish to terminate
+            # but not to raise it further. Other exceptions should be fully reported with
+            # tracebacks etc automatically
+            # graph.changelog.error("Terminated due to execution error in processing")
+            print str(e)
+            return e.returncode
+
+        except error.Error, e:
+            # If its not an Execution error then it won't have been logged by the
+            # Resource.apply() machinery - make sure we log it here.
+            print str(e)
+            # graph.changelog.write(str(e))
+            # graph.changelog.error("Terminated due to error in processing")
+            return e.returncode
+
+        return 0
 
     def do_destroy(self, opts, args):
         """

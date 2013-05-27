@@ -183,6 +183,9 @@ class Compute(base.GraphExternalAction):
             self._update_node_info()
             return
 
+        if self.root.readonly:
+            return
+
         logger.debug("Node will be %r" % self.full_name)
 
         for tries in range(10):

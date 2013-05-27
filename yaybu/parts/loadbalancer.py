@@ -70,4 +70,6 @@ class LoadBalancer(base.GraphExternalAction):
         return driver_class(**config)
 
     def apply(self):
-        pass
+        if self.root.readonly:
+            return
+

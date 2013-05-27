@@ -46,6 +46,9 @@ class Provision(base.GraphExternalAction):
     Transport = transports.SSHTransport
 
     def apply(self):
+        if self.root.readonly:
+            return
+
         hostname = self.params.server.fqdn.as_string()
 
         logger.info("Updating node %r" % hostname)

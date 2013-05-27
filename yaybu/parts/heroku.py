@@ -32,6 +32,9 @@ class Heroku(base.GraphExternalAction):
         print msg
 
     def apply(self):
+        if self.root.readonly:
+            return
+
         app_id = self.application_id.as_string()
         if not app_id in cloud.apps:
             self.action("Creating new app named '%s'" % app_id)

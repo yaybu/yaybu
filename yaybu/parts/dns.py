@@ -160,6 +160,9 @@ class Zone(base.GraphExternalAction):
     keys = []
 
     def apply(self):
+        if self.root.readonly:
+            return
+
         driver_name = self.params.driver.id.as_string()
         Driver = get_dns_driver(getattr(DNSProvider, driver_name))
         driver = Driver(**args_from_expression(Driver, self.params.driver))
