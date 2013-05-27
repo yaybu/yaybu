@@ -244,7 +244,7 @@ class FakeChrootFixture(object):
         print stdout
         return p.returncode
 
-    def yaybu(self, *args):
+    def yaybu(self, configfile, *args):
         from yaybu.parts.provisioner.transports import FakechrootTransport
         FakechrootTransport.env = self.get_env()
         FakechrootTransport.chroot_path = self.chroot_path
@@ -257,8 +257,7 @@ class FakeChrootFixture(object):
         from optparse import OptionParser
 
         p = OptionParser()
-        y = YaybuCmd(ypath=(filespath, ))
-        y.ypath = [filespath]
+        y = YaybuCmd(configfile, ypath=(filespath, ))
         y.verbose = 2
         y.debug = True
         y.opts_up(p)
@@ -267,10 +266,10 @@ class FakeChrootFixture(object):
         except SystemError:
             return 0
 
-    def simulate(self, *args):
+    def simulate(self, configfile, *args):
         """ Run yaybu in simulate mode """
         args = ["--simulate"] + list(args)
-        return self.yaybu(*args)
+        return self.yaybu(configfile, *args)
 
     def apply(self, contents, *args):
         path = self.write_temporary_file(contents)[0]
@@ -284,7 +283,7 @@ class FakeChrootFixture(object):
                     resources: {{ resources }}
             """ % path)[0]
 
-        return self.yaybu("-C", path2, *args)
+        return self.yaybu(path2, *args)
 
     def apply_simulate(self, contents):
         path = self.write_temporary_file(contents)[0]
@@ -298,7 +297,7 @@ class FakeChrootFixture(object):
                     resources: {{ resources }}
             """ % path)[0]
 
-        return self.simulate("-C", path2)
+        return self.simulate(path2)
 
     def check_apply(self, contents, *args, **kwargs):
         expect = kwargs.get('expect', 0)

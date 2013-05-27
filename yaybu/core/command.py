@@ -6,6 +6,7 @@ import cmd
 import optparse
 import copy
 import logging
+import pprint
 from functools import partial
 
 import yay
@@ -114,10 +115,11 @@ class YaybuCmd(OptionParsingCmd):
 
     prompt = "yaybu> "
 
-    def __init__(self, ypath=(), verbose=2, logfile=None):
+    def __init__(self, config="Yaybufile", ypath=(), verbose=2, logfile=None):
         """ Global options are provided on the command line, before the
         command """
         cmd.Cmd.__init__(self)
+        self.config = config
         self.ypath = ypath
         self.verbose = verbose
         self.logfile = logfile
@@ -125,22 +127,71 @@ class YaybuCmd(OptionParsingCmd):
     def preloop(self):
         print util.version()
 
+    def _get_graph(self, opts, args):
+        from yaybu.core.config import Config
+        graph = Config()
+        graph.simulate = getattr(opts, "simulate", True)
+        graph.resume = getattr(opts, "resume", False)
+        graph.no_resume = getattr(opts, "no_resume", False)
+        if not len(self.ypath):
+            self.ypath.append(os.getcwd())
+        graph.ypath = self.ypath
+        graph.verbose = self.verbose
+
+        graph.name = "example"
+        graph.load_uri(os.path.realpath(self.config))
+        if len(args) > 1:
+            graph.set_arguments_from_argv(args[1:])
+
+        return graph
+
+    def _resolve_graph(self, graph, expect_changes=False):
+        try:
+            cfg = graph.resolve()
+
+            if expect_changes and not graph.changelog.changed:
+                raise error.NothingChanged("No changes were required")
+
+        except yay.errors.LanguageError as e:
+            print str(e)
+            if self.verbose >= 2:
+                print yay.errors.get_exception_context()
+            return error.ParseError.returncode, {}
+
+        except error.ExecutionError, e:
+            # this will have been reported by the context manager, so we wish to terminate
+            # but not to raise it further. Other exceptions should be fully reported with
+            # tracebacks etc automatically
+            # graph.changelog.error("Terminated due to execution error in processing")
+            print str(e)
+            return e.returncode, {}
+
+        except error.Error, e:
+            # If its not an Execution error then it won't have been logged by the
+            # Resource.apply() machinery - make sure we log it here.
+            print str(e)
+            # graph.changelog.write(str(e))
+            # graph.changelog.error("Terminated due to error in processing")
+            return e.returncode, {}
+
+        return 0, cfg
+
     def do_expand(self, opts, args):
         """
-        usage: expand [filename]
+        usage: expand
         Prints the expanded YAML for the specified file.
         """
-        if len(args) != 1:
-            self.simple_help("expand")
-            return
-        return 1
+        graph = self._get_graph(opts, args)
+        graph.readonly = True
+        returncode, resolved = self._resolve_graph(graph)
+        print pprint.pprint(resolved)
+        return returncode
 
     def opts_up(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
         parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
-        parser.add_option("-C", "--config", default="Yaybufile", action="store", help="Name of configuration to load")
 
     def do_up(self, opts, args):
         """
@@ -150,67 +201,22 @@ class YaybuCmd(OptionParsingCmd):
         if the configuration takes arguments these can be provided as
         name=value name=value...
         """
-        if os.path.exists("/etc/yaybu"):
-            config = yay.load_uri("/etc/yaybu")
-            opts.env_passthrough = config.get("env-passthrough", opts.env_passthrough)
-
-        from yaybu.core.config import Config
-        graph = Config()
-        graph.simulate = opts.simulate
-        graph.resume = opts.resume
-        graph.no_resume = opts.no_resume
-        if not len(self.ypath):
-            self.ypath.append(os.getcwd())
-        graph.ypath = self.ypath
-        graph.verbose = self.verbose
-        graph.env_passthrough = opts.env_passthrough
-
-        graph.name = "example"
-        graph.load_uri(os.path.realpath(opts.config))
-        if len(args) > 1:
-            graph.set_arguments_from_argv(args[1:])
-
-        try:
-            cfg = graph.resolve()
-            if not graph.changelog.changed:
-                raise error.NothingChanged("No changes were required")
-
-        except yay.errors.LanguageError as e:
-            print str(e)
-            if self.verbose >= 2:
-                print yay.errors.get_exception_context()
-            return error.ParseError.returncode
-
-        except error.ExecutionError, e:
-            # this will have been reported by the context manager, so we wish to terminate
-            # but not to raise it further. Other exceptions should be fully reported with
-            # tracebacks etc automatically
-            # graph.changelog.error("Terminated due to execution error in processing")
-            print str(e)
-            return e.returncode
-
-        except error.Error, e:
-            # If its not an Execution error then it won't have been logged by the
-            # Resource.apply() machinery - make sure we log it here.
-            print str(e)
-            # graph.changelog.write(str(e))
-            # graph.changelog.error("Terminated due to error in processing")
-            return e.returncode
-
-        return 0
+        graph = self._get_graph(opts, args)
+        returncode, resolved = self._resolve_graph(graph)
+        return returncode
 
     def do_ssh(self, opts, args):
         """
-        usage: ssh <cluster> <name>
+        usage: ssh <name>
         SSH to the node specified (with foo/bar/0 notation)
         """
-        if len(args) != 2:
+        if len(args) < 1:
             self.do_help((),("ssh",))
             return
-        cluster_name, filename = args
-        cluster = self.get_cluster(cluster_name, filename)
-        # do some stuff
-        raise NotImplementedError
+
+        graph = self._get_graph(opts, args)
+        graph.readonly = True
+        raise NotImplementedError("I don't know how to find compute nodes in the graph yet")
 
     def opts_status(self, parser):
         parser.add_option("-C", "--config", default="Yaybufile", action="store", help="Name of configuration to load")
@@ -220,61 +226,16 @@ class YaybuCmd(OptionParsingCmd):
         usage: status
         Provide information on the cluster
         """
-        from yaybu.core.config import Config
-        graph = Config()
+        graph = self._get_graph(opts, args)
         graph.readonly = True
-        graph.simulate = False
-        graph.resume = False
-        graph.no_resume = False
-        if not len(self.ypath):
-            self.ypath.append(os.getcwd())
-        graph.ypath = self.ypath
-        graph.verbose = self.verbose
-
-        graph.name = "example"
-        graph.load_uri(os.path.realpath(opts.config))
-        if len(args) > 1:
-            graph.set_arguments_from_argv(args[1:])
-
-        try:
-            cfg = graph.resolve()
-
-        except yay.errors.LanguageError as e:
-            print str(e)
-            if self.verbose >= 2:
-                print yay.errors.get_exception_context()
-            return error.ParseError.returncode
-
-        except error.ExecutionError, e:
-            # this will have been reported by the context manager, so we wish to terminate
-            # but not to raise it further. Other exceptions should be fully reported with
-            # tracebacks etc automatically
-            # graph.changelog.error("Terminated due to execution error in processing")
-            print str(e)
-            return e.returncode
-
-        except error.Error, e:
-            # If its not an Execution error then it won't have been logged by the
-            # Resource.apply() machinery - make sure we log it here.
-            print str(e)
-            # graph.changelog.write(str(e))
-            # graph.changelog.error("Terminated due to error in processing")
-            return e.returncode
-
-        return 0
+        raise NotImplementedError("I don't know how to find nodes in the graph yet")
 
     def do_destroy(self, opts, args):
         """
         usage: destroy <cluster> <filename>
         Delete the specified cluster completely
         """
-        if len(args) != 2:
-            self.do_help((),("rmcluster",))
-            return
-        cluster_name, filename = args
-        logger.info("Deleting cluster")
-        cluster = Cluster(cluster_name, filename)
-        cluster.destroy()
+        graph = self._get_graph(opts, args)
 
     def do_quit(self, opts=None, args=None):
         """ Exit yaybu """
