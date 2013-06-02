@@ -104,6 +104,8 @@ class Config(BaseConfig):
     simulate = False
 
     def __init__(self, context=None, hostname=None, searchpath=None):
+        self.actors = []
+
         self.context = context
 
         config = {

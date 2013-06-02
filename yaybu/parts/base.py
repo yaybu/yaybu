@@ -19,5 +19,14 @@ from yay import ast
 
 class GraphExternalAction(ast.PythonClass):
 
-    pass
+    def test(self):
+        pass
+
+    def resolve(self):
+	#FIXME: There is a nicer way to do this without resolve, but more yay
+        # refactoring required
+        root = self.root
+        if not self in root.actors:
+            root.actors.append(self)
+        return super(GraphExternalAction, self).resolve()
 

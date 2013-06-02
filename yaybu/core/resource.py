@@ -178,12 +178,21 @@ class Resource(object):
                 raise error.ParseError("'%s' is not a valid option for resource %s" % (key, self))
 
         # Error if doesn't conform to policy
-        this_policy = self.get_default_policy(context)
-        this_policy.validate(self)
+        for p in self.get_potential_policies():
+            p.validate(self)
 
-        # throws an exception if there is not oneandonlyone provider
-        provider = this_policy.get_provider(context)
+            # throws an exception if there is not oneandonlyone provider
+            Provider = p.get_provider(context)
+
         return True
+
+    def test(self, context):
+        """ Apply the provider for the selected policy, and then fire any
+        events that are being observed. """
+        for policy in self.get_potential_policies():
+            Provider = policy.get_provider(context)
+            p = Provider(self)
+            p.test(context)
 
     def apply(self, context, yay=None, policy=None):
         """ Apply the provider for the selected policy, and then fire any
@@ -219,6 +228,12 @@ class Resource(object):
             for trigger in self.policy.triggers:
                 bound.append(trigger.bind(resources, self))
         return bound
+
+    def get_potential_policies(self):
+        if self.policy is not None:
+            return [P(self) for P in self.policy.all_potential_policies(self)]
+        else:
+            return [self.policies.default()(self)]
 
     def get_default_policy(self, context):
         """ Return an instantiated policy for this resource. """
@@ -345,6 +360,11 @@ class ResourceBundle(ordereddict.OrderedDict):
                 j = self.values().index(bound)
                 if j > i:
                     raise error.BindingError("Attempt to bind forwards on %r" % resource)
+
+    def test(self, ctx):
+        for resource in self.values():
+            resource.validate(ctx)
+            resource.test(ctx)
 
     def apply(self, ctx, config):
         """ Apply the resources to the system, using the provided context and

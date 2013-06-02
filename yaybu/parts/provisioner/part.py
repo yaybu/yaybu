@@ -110,6 +110,11 @@ class Provision(base.GraphExternalAction):
 
         self.changelog.info("'%s' was successfully provisioned." % hostname)
 
+    def test(self):
+        bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources)
+        bundle.bind()
+        bundle.test(self)
+
     def change(self, change):
         return self.changelog.apply(change, self)
 

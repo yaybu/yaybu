@@ -253,6 +253,13 @@ class PolicyCollection:
             import policy
             return policy.NullPolicy
 
+    def all_potential_policies(self, resource):
+        if self.literal:
+            yield resource.policies[self.literal.policy_name]
+        else:
+            for pol in set(t.policy for t in self.triggers):
+                yield resource.policies[pol]
+
 
 class PolicyArgument(Argument):
 

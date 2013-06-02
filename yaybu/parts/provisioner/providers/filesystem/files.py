@@ -89,11 +89,7 @@ class File(provider.Provider):
                 return val
         return _(self.resource.template_args)
 
-    def apply(self, context):
-        name = self.resource.name
-
-        self.check_path(context, os.path.dirname(name), context.simulate)
-
+    def get_file_contents(self, context):
         if self.resource.template:
             # set a special line ending
             # this strips the \n from the template line meaning no blank line,
@@ -113,6 +109,24 @@ class File(provider.Provider):
         else:
             contents = None
             sensitive = False
+
+        return contents, sensitive
+
+    def test(self, context):
+        # Validate that the file exists and any template values can be filled in
+        if self.resource.template:
+            print "Testing '%s' exists and is a valid Jinja2 template" % self.resource.template
+            self.get_file_contents(context)
+        elif self.resource.static:
+            print "Testing '%s' exists" % self.resource.static
+            self.get_file_contents(context)
+
+    def apply(self, context):
+        name = self.resource.name
+
+        self.check_path(context, os.path.dirname(name), context.simulate)
+
+        contents, sensitive = self.get_file_contents(context)
 
         fc = EnsureFile(self.resource.name, contents, self.resource.owner, self.resource.group, self.resource.mode, sensitive)
         context.change(fc)

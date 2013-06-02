@@ -50,6 +50,10 @@ class Provider(object):
         only one of those providers may return True from this method. """
         return True
 
+    def test(self, context):
+	""" Checks as much as possible is valid - allowing the config to fail
+        early """
+
     @abstractmethod
     def apply(self, shell):
         """ Execute this provider using the supplied shell object. This base

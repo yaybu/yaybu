@@ -187,6 +187,19 @@ class YaybuCmd(OptionParsingCmd):
         print pprint.pprint(resolved)
         return returncode
 
+    def do_test(self, opts, args):
+        """
+        usage: test
+        Test configuration is as valid as possible before deploying it
+        """
+        graph = self._get_graph(opts, args)
+        graph.readonly = True
+        returncode, resolved = self._resolve_graph(graph)
+
+        for actor in graph.actors:
+            print type(actor), id(actor)
+            actor.test()
+
     def opts_up(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
