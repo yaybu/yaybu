@@ -23,14 +23,14 @@ from yaybu.parts.provisioner.changes import ShellCommand
 class _LsbServiceMixin(utils._ServiceMixin):
 
     @classmethod
-    def isvalid(cls, policy, resource, yay):
-        if not super(_LsbServiceMixin, cls).isvalid(policy, resource, yay):
+    def isvalid(cls, policy, resource, context):
+        if not super(_LsbServiceMixin, cls).isvalid(policy, resource, context):
             return False
         if getattr(resource, policy.name):
             return False
-        if os.path.exists("/sbin/start") and os.path.exists("/etc/init/%s.conf" % resource.name):
+        if context.transport.exists("/sbin/start") and context.transport.exists("/etc/init/%s.conf" % resource.name):
             return False
-        return os.path.exists("/etc/init.d/%s" % resource.name)
+        return context.transport.exists("/etc/init.d/%s" % resource.name)
 
     def get_command(self, action):
         return ["/etc/init.d/%s" % self.resource.name, action]

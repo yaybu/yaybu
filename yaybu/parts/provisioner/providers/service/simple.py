@@ -24,8 +24,8 @@ class _SimpleServiceMixin(utils._ServiceMixin):
     features = ["restart", ]
 
     @classmethod
-    def isvalid(cls, policy, resource, yay):
-        if not super(_SimpleServiceMixin, cls).isvalid(policy, resource, yay):
+    def isvalid(cls, policy, resource, context):
+        if not super(_SimpleServiceMixin, cls).isvalid(policy, resource, context):
             return False
         if not getattr(resource, policy.name):
             return False

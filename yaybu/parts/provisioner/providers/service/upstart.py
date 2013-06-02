@@ -87,12 +87,12 @@ class _UpstartServiceMixin(utils._ServiceMixin):
             raise error.CommandError("The job has an unexpected goal of '%s'" % statuses[0].goal)
 
     @classmethod
-    def isvalid(cls, policy, resource, yay):
-        if not super(_UpstartServiceMixin, cls).isvalid(policy, resource, yay):
+    def isvalid(cls, policy, resource, context):
+        if not super(_UpstartServiceMixin, cls).isvalid(policy, resource, context):
             return False
         if getattr(resource, policy.name):
             return False
-        return os.path.exists("/sbin/start") and os.path.exists("/etc/init/%s.conf" % resource.name)
+        return context.transport.exists("/sbin/start") and context.transport.exists("/etc/init/%s.conf" % resource.name)
 
     def get_command(self, action):
         return ["/sbin/" + action, self.resource.name]

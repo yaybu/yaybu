@@ -24,14 +24,14 @@ class _SimulatedServiceMixin(utils._ServiceMixin):
     features = ["restart", ]
 
     @classmethod
-    def isvalid(cls, policy, resource, yay):
-        if not super(_SimulatedServiceMixin, cls).isvalid(policy, resource, yay):
+    def isvalid(cls, policy, resource, context):
+        if not super(_SimulatedServiceMixin, cls).isvalid(policy, resource, context):
             return False
         if getattr(resource, policy.name):
             return False
-        if os.path.exists("/sbin/start") and os.path.exists("/etc/init/%s.conf" % resource.name):
+        if context.transport.exists("/sbin/start") and context.transport.exists("/etc/init/%s.conf" % resource.name):
             return False
-        if os.path.exists("/etc/init.d/%s" % resource.name):
+        if context.transport.exists("/etc/init.d/%s" % resource.name):
             return False
         return True
 

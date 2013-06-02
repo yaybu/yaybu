@@ -182,7 +182,7 @@ class Resource(object):
         this_policy.validate(self)
 
         # throws an exception if there is not oneandonlyone provider
-        provider = this_policy.get_provider(self)
+        provider = this_policy.get_provider(context)
         return True
 
     def apply(self, context, yay=None, policy=None):
@@ -195,7 +195,7 @@ class Resource(object):
         else:
             pol_class = self.policies[policy]
             pol = pol_class(self)
-        prov_class = pol.get_provider(yay)
+        prov_class = pol.get_provider(context)
         prov = prov_class(self)
         changed = prov.apply(context)
         context.state.clear_override(self)

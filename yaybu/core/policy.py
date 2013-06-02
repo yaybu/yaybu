@@ -70,10 +70,10 @@ class Policy(object):
         msg.extend(a.describe(resource))
         raise error.NonConformingPolicy("\n".join(msg))
 
-    def get_provider(self, yay):
+    def get_provider(self, context):
         """ Get the one and only one provider that is valid for this resource,
         policy and overall context """
-        valid = [p.isvalid(self, self.resource, yay) for p in self.providers]
+        valid = [p.isvalid(self, self.resource, context) for p in self.providers]
         if valid.count(True) > 1:
             raise error.TooManyProviders()
         if valid.count(True) == 0:
