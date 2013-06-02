@@ -55,7 +55,7 @@ def args_from_expression(func, expression):
             if default == _MARKER:
                 result[arg] = node.resolve()
             elif isinstance(default, int):
-                result[arg] = node.as_integer()
+                result[arg] = node.as_int()
             elif isinstance(default, basestring):
                 result[arg] = node.as_string()
             else:
