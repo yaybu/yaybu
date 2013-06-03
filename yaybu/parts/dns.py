@@ -159,13 +159,23 @@ class Zone(base.GraphExternalAction):
 
     keys = []
 
+    @property
+    @memoized
+    def driver(self):
+        driver_name = self.params.driver.id.as_string()
+        Driver = get_dns_driver(getattr(DNSProvider, driver_name))
+        driver = Driver(**args_from_expression(Driver, self.params.driver))
+        return driver
+
+    def test(self):
+        print "Testing DNS credentials/connectivity"
+        self.driver.list_zones()   
+
     def apply(self):
         if self.root.readonly:
             return
 
-        driver_name = self.params.driver.id.as_string()
-        Driver = get_dns_driver(getattr(DNSProvider, driver_name))
-        driver = Driver(**args_from_expression(Driver, self.params.driver))
+        driver = self.driver
 
         domain = self.params.domain.as_string().rstrip(".") + "."
         zones = [z for z in driver.list_zones() if z.domain == domain]

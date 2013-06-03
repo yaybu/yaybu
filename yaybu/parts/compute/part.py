@@ -171,6 +171,10 @@ class Compute(base.GraphExternalAction):
 
         self.metadata['interfaces'] = list(interfaces())
 
+    def test(self):
+        print "Testing compute credentials/connectivity"
+        self.driver.list_nodes()     
+
     def apply(self):
         if self.libcloud_node:
             return
