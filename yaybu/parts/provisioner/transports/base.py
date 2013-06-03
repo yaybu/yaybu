@@ -15,6 +15,7 @@
 import logging
 import pipes
 import os
+from subprocess import list2cmdline
 
 from yaybu import error
 
@@ -49,7 +50,7 @@ class Transport(object):
             full_command.append("--")
 
         if isinstance(command, list):
-            command = " ".join([pipes.quote(c) for c in command])
+            command = list2cmdline(command)
 
         parts = []
 
