@@ -21,6 +21,7 @@ from yaybu.resources import (
     group,
     checkout,
     package,
+    patch,
     user,
     prompt,
     service

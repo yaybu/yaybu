@@ -22,5 +22,6 @@ from . import (
     mounted,
     service,
     subversion,
+    patch,
     user,
     )
