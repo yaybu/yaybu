@@ -98,6 +98,7 @@ class EnsureFile(changes.Change):
         ac = AttributeChanger(self.filename, self.user, self.group, self.mode)
         context.change(ac)
         self.changed = self.changed or ac.changed
+        return self
 
 
 class FileChangeTextRenderer(changes.TextRenderer):

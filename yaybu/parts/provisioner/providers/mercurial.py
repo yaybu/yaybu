@@ -83,6 +83,7 @@ class Mercurial(Provider):
 
     def apply(self, context):
         created = False
+        changed = False
 
         context.change(EnsureDirectory(self.resource.name, self.resource.user, self.resource.group, 0755))
 
@@ -96,24 +97,26 @@ class Mercurial(Provider):
         url = _inject_credentials(self.resource.repository, self.resource.scm_username, self.resource.scm_password)
 
         try:
-            context.change(EnsureFile(
+            f = context.change(EnsureFile(
                 os.path.join(self.resource.name, ".hg", "hgrc"),
                 hgrc % {"repository": url, "path": self.resource.name},
                 self.resource.user,
                 self.resource.group,
                 0600,
                 True))
+            changed = changed or f.changed
         except SystemError:
             raise CheckoutError("Could not set the remote repository.")
 
         try:
-            context.change(EnsureFile(
+            f = context.change(EnsureFile(
                 os.path.join(self.resource.name, ".hg", "should.py"),
                 open(os.path.join(os.path.dirname(__file__), "mercurial.hgext")).read(),
                 self.resource.user,
                 self.resource.group,
                 0600,
                 True))
+            changed = changed or f.changed
         except SystemError:
             raise CheckoutError("Could not setup mercurial idempotence extension")
 
@@ -126,6 +129,7 @@ class Mercurial(Provider):
         if created or self.info(context, "should-pull", *should_args)[0] != 0:
             try:
                 self.action(context, "pull", "--force")
+                changed = True
             except SystemError:
                 raise CheckoutError("Could not fetch changes from remote repository.")
 
@@ -139,8 +143,9 @@ class Mercurial(Provider):
 
             try:
                 self.action(context, "update", *args)
+                changed = True
             except SystemError:
                 raise CheckoutError("Could not update working copy.")
 
-        return True
+        return created or changed
 
