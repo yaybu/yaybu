@@ -80,7 +80,7 @@ class DirectoryRemovedPolicy(Policy):
     """ If a directory described by this resource exists then remove it.
 
     This isn't recursive, if you want to remove a directory and all its contents
-    use `removed-recursive`.
+    use `remove-recursive`.
 
     You should only provide the path to the directory when using this policy.
     Other fields are not needed.

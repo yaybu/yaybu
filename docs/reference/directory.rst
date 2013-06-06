@@ -23,7 +23,7 @@ Policies
 
 .. autoclass:: DirectoryRemovedPolicy()
 
-`removed-recursive`
+`remove-recursive`
 -------------------
 
 .. autoclass:: DirectoryRemovedRecursivePolicy()
