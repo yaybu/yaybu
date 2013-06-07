@@ -26,7 +26,10 @@ distro_flags = {
         ),
     "Ubuntu 12.10": dict(
         name="quantal",
-    )
+        ),
+    "Ubuntu 13.04": dict(
+        name="raring",
+        ),
    }
 
 
