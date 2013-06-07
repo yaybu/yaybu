@@ -20,20 +20,27 @@ To get a development environment with required dependencies::
     python bootstrap.py
     bin/buildout
 
-Then write a sample config file called ``foo.yay``::
+Then write a configuration file called ``Yaybufile``::
 
-    extend resources:
-      - File:
-          name: /some_empty_file
+    new Provisioner as provisioner:
 
-      - Execute:
-          name: hello_world
-          command: touch /hello_world
-          creates: /hello_world
+        resources:
+
+            - File:
+                name: /some_empty_file
+
+            - Execute:
+                name: hello_world
+                command: touch /hello_world
+                creates: /hello_world
+
+        server:
+            fqdn: localhost
+            user: alex
 
 And run it with::
 
-    ./bin/yaybu foo.yay
+    ./bin/yaybu up
 
 
 Running the tests
@@ -43,7 +50,11 @@ NOTE: Currently the testrunner will try and run a set of integration tests
 against an ubuntu chroot. Because of that we are a bit ubuntu-specific.
 We'll be fixing that asap!
 
-To run the tests::
+To run the tests you'll need to have ``fakechroot``, ``fakeroot``,
+``debootstrap``, and ``cowdancer`` installed::
 
-    ./bin/test discover
+    sudo apt-get install fakechroot fakeroot debootstrap cowdancer
 
+Then when you've built the development environment as detailed above, run::
+
+    ./bin/test
