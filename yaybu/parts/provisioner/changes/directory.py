@@ -33,7 +33,8 @@ class EnsureDirectory(changes.Change):
             if self.recursive:
                 command.append("-p")
             command.append(self.path.decode("utf-8"))
-            self.changed = self.changed or context.change(ShellCommand(command))
+            context.change(ShellCommand(command))
+            self.changed = True
 
         ac = context.change(AttributeChanger(
             self.path,
