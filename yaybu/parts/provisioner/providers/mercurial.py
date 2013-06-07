@@ -20,7 +20,7 @@ import re
 
 from yaybu.core.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError
-from yaybu import resources
+from yaybu.parts.provisioner import resources
 from yaybu.parts.provisioner.changes import ShellCommand, EnsureFile, EnsureDirectory
 
 

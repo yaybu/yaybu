@@ -15,7 +15,7 @@
 import os
 
 from yaybu.core.provider import Provider
-from yaybu import resources
+from yaybu.parts.provisioner import resources
 
 
 class Mounted(Provider):

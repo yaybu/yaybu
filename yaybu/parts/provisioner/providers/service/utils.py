@@ -14,8 +14,8 @@
 
 import os
 
-from yaybu.core import error
-from yaybu import resources
+from yaybu import error
+from yaybu.parts.provisioner import resources
 from yaybu.parts.provisioner.changes import ShellCommand
 
 
@@ -32,7 +32,7 @@ class _ServiceMixin(object):
             if rc == 0:
                 return "running"
             else:
-                return "not-running"            
+                return "not-running"
 
         if not self.resource.pidfile:
             return "unknown"

@@ -16,7 +16,7 @@ import os
 
 from yaybu.core import provider
 from yaybu.core import error
-from yaybu import resources
+from yaybu.parts.provisioner import resources
 from yaybu.parts.provisioner.changes import ShellCommand
 
 

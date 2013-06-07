@@ -15,8 +15,8 @@
 import os, logging
 
 from yaybu.core.provider import Provider
-from yaybu.core.error import MissingDependency
-from yaybu import resources
+from yaybu.error import MissingDependency
+from yaybu.parts.provisioner import resources
 from yaybu.parts.provisioner.changes.execute import Command
 from yaybu.parts.provisioner.changes import ShellCommand, EnsureDirectory
 

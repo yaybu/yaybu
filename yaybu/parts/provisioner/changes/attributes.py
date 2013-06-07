@@ -14,7 +14,7 @@
 
 import stat
 
-from yaybu import error, resources, changes
+from yaybu import error, changes
 from .execute import ShellCommand
 
 

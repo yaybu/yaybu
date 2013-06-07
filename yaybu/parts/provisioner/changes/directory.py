@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu import error, resources, changes
+from yaybu import error, changes
 from .execute import ShellCommand
 from .attributes import AttributeChanger
 

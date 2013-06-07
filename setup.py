@@ -35,7 +35,7 @@ setup(name='Yaybu',
       [console_scripts]
       yaybu = yaybu.core.main:main
       [yaybu.resources]
-      resources = yaybu.resources
+      resources = yaybu.parts.provisioner.resources
       [yaybu.providers]
       providers = yaybu.parts.provisioner.providers
       [yaybu.parts]
