@@ -17,9 +17,8 @@ import unittest
 import datetime
 from yaybu.core import (argument,
                         policy,
-                        provider,
                         )
-from yaybu.parts.provisioner import resource
+from yaybu.parts.provisioner import resource, provider
 
 from yaybu import error
 from yay.ast import bind

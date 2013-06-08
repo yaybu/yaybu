@@ -15,7 +15,8 @@
 import os
 from collections import namedtuple
 
-from yaybu.core import provider, error
+from yaybu import error
+from yaybu.parts.provisioner import provider
 from . import utils
 from yaybu.parts.provisioner import resources
 

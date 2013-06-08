@@ -15,7 +15,7 @@
 import os
 import shlex
 
-from yaybu.core import provider
+from yaybu.parts.provisioner import provider
 from . import utils
 
 

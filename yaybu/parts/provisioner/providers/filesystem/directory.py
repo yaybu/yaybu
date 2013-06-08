@@ -18,7 +18,7 @@ import logging
 
 from yaybu import error
 from yaybu.parts.provisioner import resources
-from yaybu.core import provider
+from yaybu.parts.provisioner import provider
 from yaybu.parts.provisioner.changes import EnsureDirectory, ShellCommand
 
 

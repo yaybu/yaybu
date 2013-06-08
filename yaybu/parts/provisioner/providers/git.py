@@ -15,7 +15,7 @@
 import os, logging
 import re
 
-from yaybu.core.provider import Provider
+from yaybu.parts.provisioner.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError
 from yaybu.parts.provisioner import resources
 from yaybu.parts.provisioner.changes import ShellCommand, EnsureDirectory

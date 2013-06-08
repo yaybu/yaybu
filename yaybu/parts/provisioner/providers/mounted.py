@@ -14,7 +14,7 @@
 
 import os
 
-from yaybu.core.provider import Provider
+from yaybu.parts.provisioner.provider import Provider
 from yaybu.parts.provisioner import resources
 
 
