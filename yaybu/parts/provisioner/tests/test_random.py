@@ -1,5 +1,5 @@
 
-from yaybu.harness import FakeChrootTestCase
+from yaybu.parts.provisioner.tests.harness import FakeChrootTestCase
 
 from yaybu.parts.provisioner import resource
 from yaybu.core import argument

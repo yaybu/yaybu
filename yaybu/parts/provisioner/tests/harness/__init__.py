@@ -12,13 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.harness.fakechroot import FakeChrootFixture
-from yaybu.harness.testcase import TestCase
-
-
-class FakeChrootTestCase(TestCase):
-
-    def setUp(self):
-        super(FakeChrootTestCase, self).setUp()
-        self.useFixture(FakeChrootFixture())
+from yaybu.parts.provisioner.tests.harness.testcase import TestCase
+from yaybu.parts.provisioner.tests.harness.fakechroot import FakeChrootFixture
+from yaybu.parts.provisioner.tests.harness.fakechroot_testcase import FakeChrootTestCase
 

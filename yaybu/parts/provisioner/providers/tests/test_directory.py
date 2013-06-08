@@ -4,7 +4,7 @@ import os
 import pwd
 import grp
 import stat
-from yaybu.harness import FakeChrootTestCase
+from yaybu.parts.provisioner.tests.harness import FakeChrootTestCase
 
 
 def sibpath(filename):

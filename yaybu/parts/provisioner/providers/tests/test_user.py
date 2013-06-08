@@ -1,6 +1,6 @@
 import os, shutil
 
-from yaybu.harness import FakeChrootTestCase
+from yaybu.parts.provisioner.tests.harness import FakeChrootTestCase
 from yaybu.util import sibpath
 from yaybu.core import error
 

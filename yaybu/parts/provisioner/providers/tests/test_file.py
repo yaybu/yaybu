@@ -1,4 +1,4 @@
-from yaybu.harness import FakeChrootTestCase
+from yaybu.parts.provisioner.tests.harness import FakeChrootTestCase
 from yaybu.core import error
 import pwd
 import grp
