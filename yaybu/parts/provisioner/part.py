@@ -20,7 +20,7 @@ import yay
 from yay import errors
 from yay.errors import LanguageError, NotFound, NotModified
 
-from yaybu.core import resource
+from yaybu.parts.provisioner import resource
 from yaybu import error
 from yaybu.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
 from yaybu.parts import base
