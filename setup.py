@@ -17,7 +17,6 @@ setup(name='Yaybu',
           "License :: OSI Approved :: Apache Software License",
       ],
       packages=find_packages(exclude=['ez_setup']),
-      namespace_packages = ['yaybu'],
       include_package_data=True,
       zip_safe=False,
       install_requires=[
@@ -38,7 +37,5 @@ setup(name='Yaybu',
       resources = yaybu.parts.provisioner.resources
       [yaybu.providers]
       providers = yaybu.parts.provisioner.providers
-      [yaybu.parts]
-      providers = yaybu.parts
       """
       )
