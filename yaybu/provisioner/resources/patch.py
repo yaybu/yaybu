@@ -14,7 +14,7 @@
 
 import os, hashlib
 
-from yaybu.parts.provisioner.resource import Resource
+from yaybu.provisioner.resource import Resource
 from yaybu.core.policy import (Policy,
                                Absent,
                                Present,

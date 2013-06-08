@@ -4,7 +4,7 @@ import tempfile
 import mock
 
 from yaybu.core.command import YaybuCmd
-from yaybu.parts.loadbalancer import LoadBalancer
+from yaybu.loadbalancer import LoadBalancer
 
 
 class TestDNSProvision(unittest2.TestCase):

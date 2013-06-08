@@ -228,11 +228,11 @@ class FakeChrootFixture(object):
         return p.returncode
 
     def yaybu(self, configfile, *args):
-        from yaybu.parts.provisioner.transports import FakechrootTransport
+        from yaybu.provisioner.transports import FakechrootTransport
         FakechrootTransport.env = self.get_env()
         FakechrootTransport.chroot_path = self.chroot_path
 
-        from yaybu.parts import Provision
+        from yaybu import Provision
         Provision.Transport = FakechrootTransport
 
         filespath = os.path.join(self.chroot_path, "/tmp", "files")

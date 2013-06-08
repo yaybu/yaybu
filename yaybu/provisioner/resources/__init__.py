@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.parts.provisioner.resources import (
+from yaybu.provisioner.resources import (
     execute,
     file,
     directory,

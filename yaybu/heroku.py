@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 from yay import errors
-from yaybu.parts import base
+from yaybu import base
 
 try:
     import heroku

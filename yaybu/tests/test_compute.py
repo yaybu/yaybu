@@ -7,7 +7,7 @@ from mock import MagicMock as Mock
 from libcloud.common.types import LibcloudError
 
 from yaybu.core.command import YaybuCmd
-from yaybu.parts.compute import Compute
+from yaybu.compute import Compute
 
 
 class ComputeTester(Compute):

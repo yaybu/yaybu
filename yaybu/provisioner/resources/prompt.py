@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.parts.provisioner.resource import Resource
+from yaybu.provisioner.resource import Resource
 from yaybu.core.policy import (
     Policy,
     Absent,

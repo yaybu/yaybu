@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.parts.provisioner.tests.harness.testcase import TestCase
-from yaybu.parts.provisioner.tests.harness.fakechroot import FakeChrootFixture
-from yaybu.parts.provisioner.tests.harness.fakechroot_testcase import FakeChrootTestCase
+from yaybu.provisioner.tests.harness.testcase import TestCase
+from yaybu.provisioner.tests.harness.fakechroot import FakeChrootFixture
+from yaybu.provisioner.tests.harness.fakechroot_testcase import FakeChrootTestCase
 

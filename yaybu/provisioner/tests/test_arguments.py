@@ -3,7 +3,7 @@
 import unittest
 import datetime
 from yaybu.core import argument
-from yaybu.parts.provisioner import resource
+from yaybu.provisioner import resource
 from yay.ast import bind
 
 

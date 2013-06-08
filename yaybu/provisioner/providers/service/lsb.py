@@ -14,10 +14,10 @@
 
 import os, shlex, glob
 
-from yaybu.parts.provisioner import provider
+from yaybu.provisioner import provider
 from . import utils
-from yaybu.parts.provisioner import resources
-from yaybu.parts.provisioner.changes import ShellCommand
+from yaybu.provisioner import resources
+from yaybu.provisioner.changes import ShellCommand
 
 
 class _LsbServiceMixin(utils._ServiceMixin):

@@ -118,13 +118,13 @@ class Config(BaseConfig):
 
         super(Config, self).__init__(searchpath=searchpath, config=config)
 
-        from yaybu import parts
+        import yaybu
         self.builtins = {
-            "Compute": ast.PythonClassFactory(parts.Compute),
-            "Provisioner": ast.PythonClassFactory(parts.Provision),
-            "LoadBalancer": ast.PythonClassFactory(parts.LoadBalancer),
-            "Zone": ast.PythonClassFactory(parts.Zone),
-            "Heroku": ast.PythonClassFactory(parts.Heroku),
+            "Compute": ast.PythonClassFactory(yaybu.Compute),
+            "Provisioner": ast.PythonClassFactory(yaybu.Provision),
+            "LoadBalancer": ast.PythonClassFactory(yaybu.LoadBalancer),
+            "Zone": ast.PythonClassFactory(yaybu.Zone),
+            "Heroku": ast.PythonClassFactory(yaybu.Heroku),
             }
 
         if hostname:

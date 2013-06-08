@@ -4,7 +4,7 @@ import tempfile
 import mock
 
 from yaybu.core.command import YaybuCmd
-from yaybu.parts.dns import Zone
+from yaybu.dns import Zone
 
 class ZoneTester(Zone):
     pass

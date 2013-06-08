@@ -18,9 +18,9 @@ import stat
 import logging
 
 from yaybu import error
-from yaybu.parts.provisioner import resources
-from yaybu.parts.provisioner import provider
-from yaybu.parts.provisioner.changes import ShellCommand
+from yaybu.provisioner import resources
+from yaybu.provisioner import provider
+from yaybu.provisioner.changes import ShellCommand
 
 
 class Link(provider.Provider):

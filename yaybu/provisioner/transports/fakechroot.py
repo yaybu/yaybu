@@ -32,7 +32,7 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
         return "root"
 
     def _execute(self, command, stdin=None, stdout=None, stderr=None):
-        paths = [os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "testing"))]
+        paths = [os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "testing"))]
         if self.env and "PATH" in self.env:
             paths.extend(os.path.join(self.env["FAKECHROOT_BASE"], p.lstrip("/")) for p in self.env["PATH"].split(":"))
         for p in paths:

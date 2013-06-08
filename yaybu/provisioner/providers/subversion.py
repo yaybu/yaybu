@@ -14,11 +14,11 @@
 
 import os, logging
 
-from yaybu.parts.provisioner.provider import Provider
+from yaybu.provisioner.provider import Provider
 from yaybu.error import MissingDependency
-from yaybu.parts.provisioner import resources
-from yaybu.parts.provisioner.changes.execute import Command
-from yaybu.parts.provisioner.changes import ShellCommand, EnsureDirectory
+from yaybu.provisioner import resources
+from yaybu.provisioner.changes.execute import Command
+from yaybu.provisioner.changes import ShellCommand, EnsureDirectory
 
 
 import shlex

@@ -35,7 +35,7 @@ from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
 from yaybu.util import args_from_expression
-from yaybu.parts import base
+from yaybu import base
 
 from yay import errors
 

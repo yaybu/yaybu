@@ -1,7 +1,7 @@
 
-from yaybu.parts.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.harness import FakeChrootTestCase
 
-from yaybu.parts.provisioner import resource
+from yaybu.provisioner import resource
 from yaybu.core import argument
 from yaybu.core import error
 

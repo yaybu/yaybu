@@ -1,6 +1,6 @@
 import os, shutil, grp, signal
 
-from yaybu.parts.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.harness import FakeChrootTestCase
 from yaybu.util import sibpath
 
 simpleservice = """

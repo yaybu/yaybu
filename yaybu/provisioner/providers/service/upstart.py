@@ -16,9 +16,9 @@ import os
 from collections import namedtuple
 
 from yaybu import error
-from yaybu.parts.provisioner import provider
+from yaybu.provisioner import provider
 from . import utils
-from yaybu.parts.provisioner import resources
+from yaybu.provisioner import resources
 
 UpstartInfo = namedtuple('UpstartInfo', ['name', 'goal', 'status'])
 

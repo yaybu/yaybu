@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import logging
 
 from yaybu.core.util import memoized
-from yaybu.parts import base
+from yaybu import base
 from yay import errors
 from libcloud.loadbalancer.base import Member, Algorithm
 from libcloud.loadbalancer.types import Provider, State

@@ -15,10 +15,10 @@
 import os, logging
 import re
 
-from yaybu.parts.provisioner.provider import Provider
+from yaybu.provisioner.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError
-from yaybu.parts.provisioner import resources
-from yaybu.parts.provisioner.changes import ShellCommand, EnsureDirectory
+from yaybu.provisioner import resources
+from yaybu.provisioner.changes import ShellCommand, EnsureDirectory
 
 
 log = logging.getLogger("git")

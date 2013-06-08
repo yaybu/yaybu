@@ -1,6 +1,6 @@
 import os
 import sys
-from yaybu.parts.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.harness import FakeChrootTestCase
 from yaybu.core import error
 
 class TestEvents(FakeChrootTestCase):

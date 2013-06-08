@@ -1,4 +1,4 @@
-from yaybu.parts.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.harness import FakeChrootTestCase
 import subprocess
 import time
 import os

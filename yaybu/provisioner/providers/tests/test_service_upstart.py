@@ -1,7 +1,7 @@
 # coding=utf-8
 
 import unittest
-from yaybu.parts.provisioner.providers.service.upstart import _UpstartServiceMixin
+from yaybu.provisioner.providers.service.upstart import _UpstartServiceMixin
 
 class TestUpstartParser(unittest.TestCase):
 
