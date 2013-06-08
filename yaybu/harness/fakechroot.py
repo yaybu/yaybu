@@ -75,8 +75,11 @@ class FakeChrootFixture(object):
         self.clone()
 
     def clone(self):
-        self.chroot_path = os.path.realpath("tmp")
-        self.ilist_path = self.chroot_path + ".ilist"
+        self.tmp_path = tempfile.mkdtemp(dir=os.getcwd())
+        self.chroot_path = os.path.join(self.tmp_path, "tmp")
+        self.ilist_path = os.path.join(self.tmp_path, "ilist")
+
+        print self.chroot_path
 
         subprocess.check_call(["cp", "-al", self.testbase, self.chroot_path])
 
@@ -106,10 +109,7 @@ class FakeChrootFixture(object):
         if os.path.exists(self.ilist_path):
             os.unlink(self.ilist_path)
         subprocess.check_call(["rm", "-rf", self.chroot_path])
-
-    def reset(self):
-        self.cleanUp()
-        self.clone()
+        subprocess.check_call(["rm", "-rf", self.tmp_path])
 
     def distro(self):
         return distro_flags[self.sundayname]['name']
@@ -164,7 +164,7 @@ class FakeChrootFixture(object):
     def get_env(self):
         env = {}
 
-        path = os.path.realpath(os.path.join(self.chroot_path, ".."))
+        path = os.path.realpath(os.path.join(self.chroot_path, "..", ".."))
 
         env['FAKECHROOT'] = 'true'
         env['FAKECHROOT_EXCLUDE_PATH'] = ":".join([
