@@ -6,7 +6,7 @@ from yaybu.core import error
 class TestArgumentParser(TestCase):
 
     def test_invalid_param(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - Execute:
                     name: test_invalid_param
@@ -16,7 +16,7 @@ class TestArgumentParser(TestCase):
         self.failUnlessEqual(rv, error.ParseError.returncode)
 
     def test_missing_arg(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - Execute:
                     name: test_missing_arg
@@ -26,7 +26,7 @@ class TestArgumentParser(TestCase):
         self.failUnlessEqual(rv, error.ParseError.returncode)
 
     def test_incorrect_policy(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - Execute:
                     name: test_incorrect_policy
@@ -37,7 +37,7 @@ class TestArgumentParser(TestCase):
         self.failUnlessEqual(rv, error.ParseError.returncode)
 
     def test_incorrect_policy_collection(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - File:
                     name: /tmp/wibble
@@ -54,7 +54,7 @@ class TestArgumentParser(TestCase):
         self.failUnlessEqual(rv, error.ParseError.returncode)
 
     def test_incorrect_policy_collection_type(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - File:
                     name: /tmp/wibble
@@ -71,7 +71,7 @@ class TestArgumentParser(TestCase):
         self.failUnlessEqual(rv, error.ParseError.returncode)
 
     def test_incorrect_policy_collection_bind(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - File:
                     name: /tmp/wibble

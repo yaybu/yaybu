@@ -5,7 +5,7 @@ from yaybu.core.error import MissingDependency
 class SubversionMissingTest(TestCase):
 
     def test_missing_svn(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
            resources:
                - Checkout:
                    scm: subversion

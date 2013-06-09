@@ -40,11 +40,11 @@ class TestSimpleService(TestCase):
     def setUp(self):
         super(TestSimpleService, self).setUp()
 
-        with self.fixture.open("/bin/simple_daemon", "w") as fp:
+        with self.chroot.open("/bin/simple_daemon", "w") as fp:
             fp.write(simpleservice)
 
     def test_start(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Service:
                     name: test
@@ -53,15 +53,15 @@ class TestSimpleService(TestCase):
                     pidfile: /simple_daemon.pid
             """)
 
-        with self.fixture.open("/simple_daemon.pid") as fp:
+        with self.chroot.open("/simple_daemon.pid") as fp:
             pid = int(fp.read())
 
         os.kill(pid, signal.SIGTERM)
 
     def test_stop(self):
-        self.fixture.call(["python", "/bin/simple_daemon"])
+        self.chroot.call(["python", "/bin/simple_daemon"])
 
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Service:
                     name: test
@@ -71,7 +71,7 @@ class TestSimpleService(TestCase):
             """)
 
     def test_restart(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - Service:
                     name: test
@@ -85,7 +85,7 @@ class TestSimpleService(TestCase):
         self.failUnlessExists("/foo")
 
     def test_running_true(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - Service:
                     name: test
@@ -96,7 +96,7 @@ class TestSimpleService(TestCase):
         self.failUnlessEqual(rv, 254)
 
     def test_running_false(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - Service:
                     name: test

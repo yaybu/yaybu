@@ -7,7 +7,7 @@ from yaybu.core import error
 class TestWatched(TestCase):
 
     def test_execute(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             hello: world
 
             resources:

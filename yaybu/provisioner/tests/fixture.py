@@ -33,6 +33,7 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         from yaybu.provisioner.transports import FakechrootTransport
         FakechrootTransport.env = self.get_env()
         FakechrootTransport.chroot_path = self.chroot_path
+        FakechrootTransport.overlay_dir = self.overlay_dir
 
         from yaybu import Provision
         Provision.Transport = FakechrootTransport
@@ -40,6 +41,11 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         filespath = os.path.join(self.chroot_path, "/tmp", "files")
         from yaybu.core.command import YaybuCmd
         from optparse import OptionParser
+
+        # import logging
+        # logging.basicConfig(format="%(asctime)s %(name)s %(levelname)s %(message)s")
+        # root = logging.getLogger()
+        # root.setLevel(logging.DEBUG)
 
         p = OptionParser()
         y = YaybuCmd(configfile, ypath=(filespath, ))

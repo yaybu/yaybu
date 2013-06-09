@@ -4,7 +4,7 @@ from time import sleep
 class TestPackageInstallation(TestCase):
 
     def test_already_installed(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
               - Package:
                   name: python
@@ -12,7 +12,7 @@ class TestPackageInstallation(TestCase):
         self.assertEqual(rv, 254)
 
     def test_installation(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
               - Package:
                   name: hello
@@ -20,7 +20,7 @@ class TestPackageInstallation(TestCase):
 
     def test_nonexistent_package(self):
         """ Try to install a package that does not exist. """
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
               - Package:
                   name: zzzz
@@ -42,21 +42,21 @@ class TestPackageInstallation(TestCase):
                   policy: uninstall
             """
 
-        self.fixture.check_apply(hello_install)
-        self.fixture.check_apply(hello_remove)
-        self.fixture.check_apply(hello_install)
+        self.chroot.check_apply(hello_install)
+        self.chroot.check_apply(hello_remove)
+        self.chroot.check_apply(hello_install)
 
 
 class TestPackageRemoval(TestCase):
 
     def test_installed(self):
         """ Try removing a package that is installed. """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
               - Package:
                   name: zip
             """)
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
               - Package:
                   name: zip

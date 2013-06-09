@@ -7,30 +7,30 @@ from yaybu.util import sibpath
 class TestGroup(TestCase):
 
     def test_simple_group(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Group:
                     name: test
             """)
 
-        self.failUnless(self.fixture.get_group("test"))
+        self.failUnless(self.chroot.get_group("test"))
 
     def test_group_with_gid(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Group:
                     name: test
                     gid: 1111
             """)
 
-        self.failUnless(self.fixture.get_group("test"))
+        self.failUnless(self.chroot.get_group("test"))
 
     def test_existing_group(self):
         """ Test creating a group whose name already exists. """
 
-        self.failUnless(self.fixture.get_group("users"))
+        self.failUnless(self.chroot.get_group("users"))
 
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - Group:
                     name: users
@@ -38,11 +38,11 @@ class TestGroup(TestCase):
 
         self.failUnlessEqual(rv, 254)
 
-        self.failUnless(self.fixture.get_group("users"))
+        self.failUnless(self.chroot.get_group("users"))
 
     def test_existing_gid(self):
         """ Test creating a group whose specified gid already exists. """
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - Group:
                     name: test
@@ -50,10 +50,10 @@ class TestGroup(TestCase):
             """)
 
         self.failUnlessEqual(rv, 140)
-        self.failUnlessRaises(KeyError, self.fixture.get_group, "test")
+        self.failUnlessRaises(KeyError, self.chroot.get_group, "test")
 
     def test_add_group_and_use_it(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Group:
                     name: test
@@ -66,27 +66,27 @@ class TestGroup(TestCase):
                     creates: /etc/test2
                     group: test
             """)
-        self.failUnlessEqual(self.fixture.open("/etc/test2").read(), "test")
+        self.failUnlessEqual(self.chroot.open("/etc/test2").read(), "test")
 
 
 class TestGroupRemove(TestCase):
 
     def test_remove_existing(self):
-        self.failUnless(self.fixture.get_group("users"))
+        self.failUnless(self.chroot.get_group("users"))
 
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Group:
                     name: users
                     policy: remove
             """)
 
-        self.failUnlessRaises(KeyError, self.fixture.get_group, "users")
+        self.failUnlessRaises(KeyError, self.chroot.get_group, "users")
 
     def test_remove_non_existing(self):
-        self.failUnlessRaises(KeyError, self.fixture.get_group, "zzidontexistzz")
+        self.failUnlessRaises(KeyError, self.chroot.get_group, "zzidontexistzz")
 
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
                 - Group:
                     name: zzidontexistzz
@@ -95,6 +95,6 @@ class TestGroupRemove(TestCase):
 
         self.failUnlessEqual(rv, 254)
 
-        self.failUnlessRaises(KeyError, self.fixture.get_group, "zzidontexistzz")
+        self.failUnlessRaises(KeyError, self.chroot.get_group, "zzidontexistzz")
 
 

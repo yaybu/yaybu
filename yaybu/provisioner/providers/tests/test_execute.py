@@ -18,11 +18,11 @@ touch /etc/test_execute_touches
 class TestExecute(TestCase):
 
     def test_execute_on_path(self):
-        with self.fixture.open("/usr/bin/test_execute_on_path.sh", "w") as fp:
+        with self.chroot.open("/usr/bin/test_execute_on_path.sh", "w") as fp:
             fp.write(test_execute_on_path)
-        self.fixture.chmod("/usr/bin/test_execute_on_path.sh", 0755)
+        self.chroot.chmod("/usr/bin/test_execute_on_path.sh", 0755)
 
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -32,11 +32,11 @@ class TestExecute(TestCase):
 
     def test_execute_touches(self):
         """ test that command works as expected """
-        with self.fixture.open("/usr/bin/test_touches.sh", "w") as fp:
+        with self.chroot.open("/usr/bin/test_touches.sh", "w") as fp:
             fp.write(test_touches)
-        self.fixture.chmod("/usr/bin/test_touches.sh", 0755)
+        self.chroot.chmod("/usr/bin/test_touches.sh", 0755)
 
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -47,7 +47,7 @@ class TestExecute(TestCase):
 
     def test_command(self):
         """ test that commands works as expected """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -57,7 +57,7 @@ class TestExecute(TestCase):
         self.failUnlessExists("/etc/foo")
 
     def test_commands(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -71,7 +71,7 @@ class TestExecute(TestCase):
 
     def test_cwd(self):
         """ test that cwd works as expected. """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -83,7 +83,7 @@ class TestExecute(TestCase):
 
     def test_environment(self):
         """ test that the environment is passed as expected. """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test
@@ -95,7 +95,7 @@ class TestExecute(TestCase):
         self.failUnlessExists("/etc/foo")
 
     def test_environment_protected(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             secreted_string: /etc/foo_secret
 
             resources:
@@ -110,7 +110,7 @@ class TestExecute(TestCase):
 
     def test_returncode(self):
         """ test that the returncode is interpreted as expected. """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test-execute-returncode-true
@@ -125,7 +125,7 @@ class TestExecute(TestCase):
 
     def test_user(self):
         """ test that the user has been correctly set. """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test_user_change
@@ -134,14 +134,14 @@ class TestExecute(TestCase):
                     creates: /foo
             """)
 
-        with self.fixture.open("/foo") as fp:
+        with self.chroot.open("/foo") as fp:
             check_file = fp.read().split()
 
         self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_group(self):
         """ test that the group has been correctly set. """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test_group_change
@@ -150,13 +150,13 @@ class TestExecute(TestCase):
                     creates: /foo
         """)
 
-        with self.fixture.open("/foo") as fp:
+        with self.chroot.open("/foo") as fp:
             check_file = fp.read().split()
         self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_user_and_group(self):
         """ test that both user and group can be set together. """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
                 - Execute:
                     name: test_group_change
@@ -166,15 +166,15 @@ class TestExecute(TestCase):
                     creates: /foo
         """)
 
-        with self.fixture.open("/foo") as fp:
+        with self.chroot.open("/foo") as fp:
             check_file = fp.read().split()
         self.failUnlessEqual(["65534"] * 4, check_file)
 
     def test_creates(self):
         """ test that the execute will not happen if the creates parameter
         specifies an existing file. """
-        self.fixture.touch("/existing-file")
-        self.fixture.check_apply("""
+        self.chroot.touch("/existing-file")
+        self.chroot.check_apply("""
             resources:
               - Execute:
                   name: test_creates
@@ -184,7 +184,7 @@ class TestExecute(TestCase):
 
     def test_touch(self):
         """ test that touch does touch a file. """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
              - Execute:
                  name: test_touch
@@ -195,8 +195,8 @@ class TestExecute(TestCase):
 
     def test_touch_present(self):
         """ test that we do not execute if the touched file exists. """
-        self.fixture.touch("/touched-file")
-        self.fixture.check_apply("""
+        self.chroot.touch("/touched-file")
+        self.chroot.check_apply("""
             resources:
              - Execute:
                  name: test_touch_present
@@ -208,7 +208,7 @@ class TestExecute(TestCase):
 
     def test_touch_not_present(self):
         """ test that we do execute if the touched file does not exist. """
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
              - Execute:
                  name: test_touch_not_present
@@ -223,7 +223,7 @@ class TestExecute(TestCase):
         """ test that an Execute wont execute if the unless expression
         is true """
 
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
               - Execute:
                   name: test
@@ -237,7 +237,7 @@ class TestExecute(TestCase):
         """ test that an Execute will execute when the unless expression
         is false """
 
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
               - Execute:
                   name: test
@@ -249,7 +249,7 @@ class TestExecute(TestCase):
         self.failUnlessExists("/test_unless_false")
 
     def test_umask_022(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
               - Execute:
                   name: touch
@@ -259,11 +259,11 @@ class TestExecute(TestCase):
             """)
         self.failUnlessExists("/test_umask_022")
 
-        mode = stat.S_IMODE(self.fixture.stat("/test_umask_022").st_mode)
+        mode = stat.S_IMODE(self.chroot.stat("/test_umask_022").st_mode)
         self.failUnlessEqual(mode, 0644)
 
     def test_umask_002(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
               - Execute:
                   name: touch
@@ -273,11 +273,11 @@ class TestExecute(TestCase):
             """)
         self.failUnlessExists("/test_umask_002")
 
-        mode = stat.S_IMODE(self.fixture.stat("/test_umask_002").st_mode)
+        mode = stat.S_IMODE(self.chroot.stat("/test_umask_002").st_mode)
         self.failUnlessEqual(mode, 0664)
 
     def test_missing_binary(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
               - Execute:
                   name: test_missing_binary
@@ -287,7 +287,7 @@ class TestExecute(TestCase):
         self.failUnlessEqual(rv, error.BinaryMissing.returncode)
 
     def test_missing_binary_absolute(self):
-        rv = self.fixture.apply("""
+        rv = self.chroot.apply("""
             resources:
               - Execute:
                   name: test_missing_binary_absolute
@@ -297,7 +297,7 @@ class TestExecute(TestCase):
         self.failUnlessEqual(rv, error.BinaryMissing.returncode)
 
     def test_missing_user_and_group(self):
-        self.fixture.check_apply("""
+        self.chroot.check_apply("""
             resources:
               - Group:
                   name: test
