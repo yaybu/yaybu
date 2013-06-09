@@ -28,7 +28,7 @@ setup(name='Yaybu',
           'paramiko >= 1.8.0',
       ],
       extras_require = {
-          'test': ['unittest2', 'discover', 'mock'],
+          'test': ['unittest2', 'discover', 'mock', 'fakechroot'],
           },
       entry_points = """
       [console_scripts]

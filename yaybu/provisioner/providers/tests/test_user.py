@@ -1,11 +1,11 @@
 import os, shutil
 
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 from yaybu.util import sibpath
 from yaybu.core import error
 
 
-class TestUser(FakeChrootTestCase):
+class TestUser(TestCase):
 
     def test_simple_user(self):
         self.fixture.check_apply("""
@@ -109,7 +109,7 @@ class TestUser(FakeChrootTestCase):
             """)
 
 
-class TestUserRemove(FakeChrootTestCase):
+class TestUserRemove(TestCase):
 
     def test_remove_existing(self):
         self.failUnless(self.fixture.get_user("nobody"))

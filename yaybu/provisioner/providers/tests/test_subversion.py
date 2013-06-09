@@ -1,8 +1,8 @@
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 from yaybu.core.error import MissingDependency
 
 
-class SubversionMissingTest(FakeChrootTestCase):
+class SubversionMissingTest(TestCase):
 
     def test_missing_svn(self):
         rv = self.fixture.apply("""

@@ -1,4 +1,4 @@
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 from yaybu.core import error
 import pwd
 import grp
@@ -9,7 +9,7 @@ import errno
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
-class TestFileApply(FakeChrootTestCase):
+class TestFileApply(TestCase):
 
     def test_create_missing_component(self):
         rv = self.fixture.apply("""
@@ -193,7 +193,7 @@ class TestFileApply(FakeChrootTestCase):
         self.failUnlessEqual(rv, error.MissingAsset.returncode)
 
 
-class TestFileRemove(FakeChrootTestCase):
+class TestFileRemove(TestCase):
 
     def test_remove(self):
         """ Test removing a file that exists. """

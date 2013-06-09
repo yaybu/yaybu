@@ -1,9 +1,9 @@
 import os
 import sys
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 from yaybu.core import error
 
-class TestArgumentParser(FakeChrootTestCase):
+class TestArgumentParser(TestCase):
 
     def test_invalid_param(self):
         rv = self.fixture.apply("""

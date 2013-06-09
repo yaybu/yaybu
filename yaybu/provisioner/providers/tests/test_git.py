@@ -1,9 +1,9 @@
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 import subprocess
 import time
 import os
 
-class GitTest(FakeChrootTestCase):
+class GitTest(TestCase):
     """
     Test the git checkout provider.
 

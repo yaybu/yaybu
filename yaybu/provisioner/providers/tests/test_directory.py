@@ -4,14 +4,14 @@ import os
 import pwd
 import grp
 import stat
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 
 
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
 
-class TestDirectory(FakeChrootTestCase):
+class TestDirectory(TestCase):
 
     def test_create_directory(self):
         self.fixture.check_apply("""

@@ -1,9 +1,9 @@
 import os
 import sys
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 from yaybu.core import error
 
-class TestEvents(FakeChrootTestCase):
+class TestEvents(TestCase):
 
     def test_nochange(self):
         self.fixture.check_apply("""

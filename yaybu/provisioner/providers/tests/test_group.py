@@ -1,10 +1,10 @@
 import os, shutil, grp
 
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 from yaybu.util import sibpath
 
 
-class TestGroup(FakeChrootTestCase):
+class TestGroup(TestCase):
 
     def test_simple_group(self):
         self.fixture.check_apply("""
@@ -69,7 +69,7 @@ class TestGroup(FakeChrootTestCase):
         self.failUnlessEqual(self.fixture.open("/etc/test2").read(), "test")
 
 
-class TestGroupRemove(FakeChrootTestCase):
+class TestGroupRemove(TestCase):
 
     def test_remove_existing(self):
         self.failUnless(self.fixture.get_group("users"))

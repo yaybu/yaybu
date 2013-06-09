@@ -1,10 +1,10 @@
 import os
 import sys
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 from yaybu.core import error
 
 
-class TestWatched(FakeChrootTestCase):
+class TestWatched(TestCase):
 
     def test_execute(self):
         self.fixture.check_apply("""

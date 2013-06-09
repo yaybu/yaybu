@@ -1,5 +1,5 @@
 
-from yaybu.provisioner.tests.harness import FakeChrootTestCase
+from yaybu.provisioner.tests.fixture import TestCase
 
 from yaybu.provisioner import resource
 from yaybu.core import argument
@@ -8,7 +8,7 @@ from yaybu.core import error
 import mock
 
 """
-class Test_Random(FakeChrootTestCase):
+class Test_Random(TestCase):
 
     # needs more work, particularly the File argument
 
