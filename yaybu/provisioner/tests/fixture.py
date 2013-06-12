@@ -19,6 +19,10 @@ from yaybu import error
 from fakechroot import unittest2
 
 
+class CalledProcessError(Exception):
+    pass
+
+
 class YaybuFakeChroot(unittest2.FakeChroot):
 
     """
@@ -97,12 +101,12 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         sim_args = list(args) + ["-s"]
         rv = self.apply(contents, *sim_args)
         if rv != expect:
-            raise subprocess.CalledProcessError(rv, "Simulation failed: got rv %s" % rv)
+            raise CalledProcessError("Simulation failed: got rv %s" % rv)
 
         # Apply the change for real
         rv = self.apply(contents, *args)
         if rv != expect:
-            raise subprocess.CalledProcessError(rv, "Apply failed: got rv %s" % rv)
+            raise CalledProcessError("Apply failed: got rv %s" % rv)
 
         # If 'expect' isnt 0 then theres no point doing a no-changes check
         if expect != 0:
@@ -111,12 +115,12 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         # If we apply the change again nothing should be changed
         rv = self.apply(contents, *args)
         if rv != error.NothingChanged.returncode:
-            raise subprocess.CalledProcessError(rv, "Change still outstanding")
+            raise CalledProcessError("Change still outstanding")
 
     def check_apply_simulate(self, contents):
         rv = self.apply_simulate(contents)
         if rv != 0:
-            raise subprocess.CalledProcessError(rv, "Simulate failed rv %s" % rv)
+            raise CalledProcessError("Simulate failed rv %s" % rv)
 
 
 class TestCase(unittest2.TestCase):
