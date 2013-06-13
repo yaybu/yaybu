@@ -144,7 +144,7 @@ class YaybuCmd(OptionParsingCmd):
         graph.resume = getattr(opts, "resume", False)
         graph.no_resume = getattr(opts, "no_resume", False)
         if not len(self.ypath):
-            self.ypath.append(os.getcwd())
+            self.ypath = [os.getcwd()]
         graph.ypath = self.ypath
         graph.verbose = self.verbose
 

@@ -38,10 +38,11 @@ def args_from_expression(func, expression):
     if args[0] == "self":
         args.pop(0)
 
-    defaults = itertools.chain(
-        itertools.repeat(_MARKER, len(args)-len(defaults)),
-        defaults,
-        )
+    len_args = len(args)
+    len_defaults = len(defaults) if defaults else 0
+    padding = len_args - len_defaults
+
+    defaults = itertools.chain(itertools.repeat(_MARKER, padding), defaults)
 
     result = {}
     for arg, default in zip(args, defaults):
