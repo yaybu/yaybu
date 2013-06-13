@@ -204,8 +204,15 @@ class YaybuCmd(OptionParsingCmd):
         name=value name=value...
         """
         graph = self._get_graph(opts, args)
-
+        graph.readonly = True
         graph.resolve()
+
+        for actor in graph.actors:
+            actor.test()
+
+        graph = self._get_graph(opts, args)
+        graph.resolve()
+
         if not graph.changelog.changed:
             raise error.NothingChanged("No changes were required")
 
