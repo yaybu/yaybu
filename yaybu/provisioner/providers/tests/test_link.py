@@ -33,13 +33,12 @@ class TestLink(TestCase):
 
     def test_already_exists(self):
         self.chroot.symlink("/", "/etc/existing")
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
               - Link:
                   name: /etc/existing
                   to: /
         """)
-        self.assertEqual(rv, 254)
         self.failUnlessEqual(self.chroot.readlink("/etc/existing"), "/")
 
     def test_already_exists_notalink(self):
@@ -72,13 +71,12 @@ class TestLink(TestCase):
         self.failUnlessEqual(self.chroot.readlink("/bar_elsewhere"), "/foo")
 
     def test_dangling(self):
-        rv = self.chroot.apply("""
+        self.assertRaises(error.DanglingSymlink, self.chroot.apply, """
         resources:
              - Link:
                  name: /etc/test_dangling
                  to: /etc/not_there
         """)
-        self.assertEqual(rv, error.DanglingSymlink.returncode)
 
     def test_unicode(self):
         self.chroot.check_apply(open(sibpath("link_unicode1.yay")).read())

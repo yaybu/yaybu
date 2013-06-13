@@ -2,6 +2,7 @@ import os, shutil, grp
 
 from yaybu.provisioner.tests.fixture import TestCase
 from yaybu.util import sibpath
+from yaybu import error
 
 
 class TestGroup(TestCase):
@@ -30,26 +31,22 @@ class TestGroup(TestCase):
 
         self.failUnless(self.chroot.get_group("users"))
 
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
                 - Group:
                     name: users
             """)
 
-        self.failUnlessEqual(rv, 254)
-
         self.failUnless(self.chroot.get_group("users"))
 
     def test_existing_gid(self):
         """ Test creating a group whose specified gid already exists. """
-        rv = self.chroot.apply("""
+        self.assertRaises(error.InvalidGroup, self.chroot.apply, """
             resources:
                 - Group:
                     name: test
                     gid: 100
             """)
-
-        self.failUnlessEqual(rv, 140)
         self.failUnlessRaises(KeyError, self.chroot.get_group, "test")
 
     def test_add_group_and_use_it(self):
@@ -86,14 +83,12 @@ class TestGroupRemove(TestCase):
     def test_remove_non_existing(self):
         self.failUnlessRaises(KeyError, self.chroot.get_group, "zzidontexistzz")
 
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
                 - Group:
                     name: zzidontexistzz
                     policy: remove
             """)
-
-        self.failUnlessEqual(rv, 254)
 
         self.failUnlessRaises(KeyError, self.chroot.get_group, "zzidontexistzz")
 

@@ -21,13 +21,12 @@ class TestUser(TestCase):
                     - name: test
                       disabled_login: True
             """)
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
                 - User:
                     - name: test
                       disabled_login: True
             """)
-        self.assertEqual(rv, 254)
 
     def test_user_with_home(self):
         self.chroot.check_apply("""
@@ -38,13 +37,12 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_impossible_home(self):
-        rv = self.chroot.apply("""
+        self.assertRaises(error.UserAddError, self.chroot.apply, """
             resources:
                 - User:
                     name: test
                     home: /does/not/exist
             """)
-        self.assertEqual(rv, error.UserAddError.returncode)
 
     def test_user_with_uid(self):
         self.chroot.check_apply("""
@@ -126,14 +124,12 @@ class TestUserRemove(TestCase):
     def test_remove_non_existing(self):
         self.failUnlessRaises(KeyError, self.chroot.get_user, "zzidontexistzz")
 
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
                 - User:
                     name: zzidontexistzz
                     policy: remove
             """)
-
-        self.failUnlessEqual(rv, 254)
 
         self.failUnlessRaises(KeyError, self.chroot.get_user, "zzidontexistzz")
 

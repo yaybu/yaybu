@@ -211,6 +211,9 @@ class Config(BaseConfig):
 
         return state
 
+    def resolve(self):
+        return self._reraise_yay_errors(super(Config, self).resolve)
+
     def load_uri(self, *args, **kwargs):
         return self._reraise_yay_errors(super(Config, self).load_uri, *args, **kwargs)
 

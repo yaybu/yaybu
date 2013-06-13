@@ -12,7 +12,7 @@ class TestEvents(TestCase):
                   name: /etc/wibble
             """)
 
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
               - Directory:
                   name: /etc/wibble
@@ -24,10 +24,9 @@ class TestEvents(TestCase):
                          when: apply
                          on: Directory[/etc/wibble]
             """)
-        self.assertEqual(rv, error.NothingChanged.returncode)
 
     def test_recover(self):
-        rv = self.chroot.apply("""
+        self.assertRaises(error.PathComponentMissing, self.chroot.apply, """
             resources:
               - Directory:
                   name: /etc/somedir
@@ -42,7 +41,6 @@ class TestEvents(TestCase):
                          when: apply
                          on: Directory[/etc/somedir]
             """)
-        self.assertEqual(rv, error.PathComponentMissing.returncode)
 
         self.chroot.check_apply("""
             resources:

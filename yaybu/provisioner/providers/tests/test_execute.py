@@ -174,13 +174,13 @@ class TestExecute(TestCase):
         """ test that the execute will not happen if the creates parameter
         specifies an existing file. """
         self.chroot.touch("/existing-file")
-        self.chroot.check_apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
               - Execute:
                   name: test_creates
                   command: touch /existing-file
                   creates: /existing-file
-            """, expect=error.NothingChanged.returncode)
+            """)
 
     def test_touch(self):
         """ test that touch does touch a file. """
@@ -196,15 +196,13 @@ class TestExecute(TestCase):
     def test_touch_present(self):
         """ test that we do not execute if the touched file exists. """
         self.chroot.touch("/touched-file")
-        self.chroot.check_apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
              - Execute:
                  name: test_touch_present
                  command: touch /checkpoint
                  touch: /touched-file
-            """, expect=254)
-
-        self.failIfExists("/checkpoint")
+            """)
 
     def test_touch_not_present(self):
         """ test that we do execute if the touched file does not exist. """
@@ -223,15 +221,13 @@ class TestExecute(TestCase):
         """ test that an Execute wont execute if the unless expression
         is true """
 
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
               - Execute:
                   name: test
                   command: touch /test_unless_true
                   unless: /bin/true
             """)
-
-        self.failUnlessEqual(rv, 254)
 
     def test_unless_false(self):
         """ test that an Execute will execute when the unless expression
@@ -277,24 +273,20 @@ class TestExecute(TestCase):
         self.failUnlessEqual(mode, 0664)
 
     def test_missing_binary(self):
-        rv = self.chroot.apply("""
+        self.assertRaises(error.BinaryMissing, self.chroot.apply, """
             resources:
               - Execute:
                   name: test_missing_binary
                   command: this_binary_definitely_doesnt_exist
             """)
 
-        self.failUnlessEqual(rv, error.BinaryMissing.returncode)
-
     def test_missing_binary_absolute(self):
-        rv = self.chroot.apply("""
+        self.assertRaises(error.BinaryMissing, self.chroot.apply, """
             resources:
               - Execute:
                   name: test_missing_binary_absolute
                   command: /this_binary_definitely_doesnt_exist
             """)
-
-        self.failUnlessEqual(rv, error.BinaryMissing.returncode)
 
     def test_missing_user_and_group(self):
         self.chroot.check_apply("""

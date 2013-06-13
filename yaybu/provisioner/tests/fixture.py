@@ -56,10 +56,8 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         y.verbose = 2
         y.debug = True
         y.opts_up(p)
-        try:
-            return y.do_up(*p.parse_args(list(args)))
-        except SystemError:
-            return 0
+
+        return y.do_up(*p.parse_args(list(args)))
 
     def simulate(self, configfile, *args):
         """ Run yaybu in simulate mode """
@@ -95,32 +93,24 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         return self.simulate(path2)
 
     def check_apply(self, contents, *args, **kwargs):
-        expect = kwargs.get('expect', 0)
-
         # Apply the change in simulate mode
         sim_args = list(args) + ["-s"]
-        rv = self.apply(contents, *sim_args)
-        if rv != expect:
-            raise CalledProcessError("Simulation failed: got rv %s" % rv)
+        self.apply(contents, *sim_args)
 
         # Apply the change for real
-        rv = self.apply(contents, *args)
-        if rv != expect:
-            raise CalledProcessError("Apply failed: got rv %s" % rv)
-
-        # If 'expect' isnt 0 then theres no point doing a no-changes check
-        if expect != 0:
-            return
+        self.apply(contents, *args)
 
         # If we apply the change again nothing should be changed
-        rv = self.apply(contents, *args)
-        if rv != error.NothingChanged.returncode:
-            raise CalledProcessError("Change still outstanding")
+        
+        try:
+            self.apply(contents, *args)
+        except error.NothingChanged:
+            return
 
-    def check_apply_simulate(self, contents):
-        rv = self.apply_simulate(contents)
-        if rv != 0:
-            raise CalledProcessError("Simulate failed rv %s" % rv)
+        raise CalledProcessError("Change still outstanding")
+
+    #deprecated
+    check_apply_simulate = apply_simulate
 
 
 class TestCase(unittest2.TestCase):

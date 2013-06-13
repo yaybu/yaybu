@@ -22,7 +22,7 @@ class TestDNSProvision(unittest2.TestCase):
 
     def _provision(self, clustername, config):
         cmd = YaybuCmd()
-        return cmd.onecmd("provision %s %s" % (clustername, self._config(config)))
+        return cmd.onecmd("apply %s %s" % (clustername, self._config(config)))
 
     def test_empty_records_list(self):
         self._provision("test", """

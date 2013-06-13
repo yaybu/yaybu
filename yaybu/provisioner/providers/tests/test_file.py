@@ -12,24 +12,22 @@ def sibpath(filename):
 class TestFileApply(TestCase):
 
     def test_create_missing_component(self):
-        rv = self.chroot.apply("""
+        self.assertRaises(error.PathComponentMissing, self.chroot.apply, """
             resources:
               - File:
                   name: /etc/missing/filename
             """)
-        self.assertEqual(rv, error.PathComponentMissing.returncode)
 
     def test_create_missing_component_simulate(self):
         """
         Right now we treat missing directories as a warning in simulate mode, as other outside processes might have created them.
         Later on we might not generate warnings for resources we can see will be created
         """
-        rv = self.chroot.apply_simulate("""
+        self.chroot.apply_simulate("""
             resources:
               - File:
                   name: /etc/missing/filename
             """)
-        self.assertEqual(rv, 0)
 
     def test_create_file(self):
         self.chroot.check_apply("""
@@ -132,13 +130,11 @@ class TestFileApply(TestCase):
             fp.write("")
         os.chmod(self.chroot._enpathinate("/etc/foo"), 0644)
 
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
                 - File:
                     name: /etc/foo
             """)
-        self.assertEqual(rv, 254)
-
 
     def test_carriage_returns(self):
         """ a template that does not end in \n will still result in a file ending in \n """
@@ -146,15 +142,12 @@ class TestFileApply(TestCase):
             fp.write("foo\n")
         os.chmod(self.chroot._enpathinate("/etc/test_carriage_returns"), 0644)
 
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
                 - File:
                     name: /etc/test_carriage_returns
                     template: {{ "package://yaybu.provisioner.providers.tests/test_carriage_returns.j2" }}
                     """)
-        with self.chroot.open("/etc/test_carriage_returns") as fp:
-            print ">>>"+fp.read()+"<<<"
-        self.assertEqual(rv, 254) # nothing changed
 
     def test_carriage_returns2(self):
         """ a template that does end in \n will not gain an extra \n in the resulting file"""
@@ -162,13 +155,12 @@ class TestFileApply(TestCase):
             fp.write("foo\n")
         os.chmod(self.chroot._enpathinate("/etc/test_carriage_returns2"), 0644)
 
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
                 - File:
                     name: /etc/test_carriage_returns2
                     template: {{ "package://yaybu.provisioner.providers.tests/test_carriage_returns2.j2" }}
             """)
-        self.assertEqual(rv, 254) # nothing changed
 
     def test_unicode(self):
         self.chroot.check_apply(open(sibpath("unicode1.yay")).read())
@@ -184,13 +176,12 @@ class TestFileApply(TestCase):
 
     def test_missing(self):
         """ Test trying to use a file that isn't in the yaybu path """
-        rv = self.chroot.apply("""
+        self.assertRaises(error.MissingAsset, self.chroot.apply, """
             resources:
                 - File:
                     name: /etc/foo
                     static: this-doesnt-exist
             """)
-        self.failUnlessEqual(rv, error.MissingAsset.returncode)
 
 
 class TestFileRemove(TestCase):
@@ -210,22 +201,20 @@ class TestFileRemove(TestCase):
     def test_remove_missing(self):
         """ Test removing a file that does not exist. """
         self.failIfExists("/etc/baz")
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
                 - File:
                     name: /etc/baz
                     policy: remove
             """)
-        self.failUnlessEqual(rv, 254)
 
     def test_remove_notafile(self):
         """ Test removing something that is not a file. """
         self.chroot.mkdir("/etc/qux")
-        rv = self.chroot.apply("""
+        self.assertRaises(error.InvalidProvider, self.chroot.apply, """
             resources:
                 - File:
                     name: /etc/qux
                     policy: remove
             """)
-        self.failUnlessEqual(rv, 139)
 

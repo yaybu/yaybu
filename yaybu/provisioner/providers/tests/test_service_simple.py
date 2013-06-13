@@ -2,6 +2,8 @@ import os, shutil, grp, signal
 
 from yaybu.provisioner.tests.fixture import TestCase
 from yaybu.util import sibpath
+from yaybu import error
+
 
 simpleservice = """
 #! /usr/bin/env python
@@ -71,7 +73,7 @@ class TestSimpleService(TestCase):
             """)
 
     def test_restart(self):
-        rv = self.chroot.apply("""
+        self.chroot.apply("""
             resources:
                 - Service:
                     name: test
@@ -81,11 +83,10 @@ class TestSimpleService(TestCase):
 
         # We restart every time config is applied - so check_apply would fail the
         # automatic idempotentcy check
-        self.failUnlessEqual(rv, 0)
         self.failUnlessExists("/foo")
 
     def test_running_true(self):
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
                 - Service:
                     name: test
@@ -93,10 +94,8 @@ class TestSimpleService(TestCase):
                     running: /bin/sh -c "true"
             """)
 
-        self.failUnlessEqual(rv, 254)
-
     def test_running_false(self):
-        rv = self.chroot.apply("""
+        self.chroot.apply("""
             resources:
                 - Service:
                     name: test
@@ -104,6 +103,5 @@ class TestSimpleService(TestCase):
                     running: /bin/sh -c "false"
             """)
 
-        self.failUnlessEqual(rv, 0)
         self.failUnlessExists("/test_running_false")
 

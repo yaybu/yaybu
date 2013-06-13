@@ -52,7 +52,17 @@ class OptionParsingCmd(cmd.Cmd):
             optparse_func = getattr(self, 'opts_' + cmd, lambda x: x)
             optparse_func(parser)
             opts, args = parser.parse_args(arg.split())
-            return func(opts, args)
+
+            try:
+                return func(opts, args)
+
+            except error.ExecutionError, e:
+                print str(e)
+                return e.returncode
+
+            except error.Error, e:
+                print str(e)
+                return e.returncode
 
     def aligned_docstring(self, arg):
         """ Return a docstring for a function, aligned properly to the left """
@@ -146,33 +156,10 @@ class YaybuCmd(OptionParsingCmd):
         return graph
 
     def _resolve_graph(self, graph, expect_changes=False):
-        try:
-            cfg = graph.resolve()
+        cfg = graph.resolve()
 
-            if expect_changes and not graph.changelog.changed:
-                raise error.NothingChanged("No changes were required")
-
-        except yay.errors.LanguageError as e:
-            print str(e)
-            if self.verbose >= 2:
-                print yay.errors.get_exception_context()
-            return error.ParseError.returncode, {}
-
-        except error.ExecutionError, e:
-            # this will have been reported by the context manager, so we wish to terminate
-            # but not to raise it further. Other exceptions should be fully reported with
-            # tracebacks etc automatically
-            # graph.changelog.error("Terminated due to execution error in processing")
-            print str(e)
-            return e.returncode, {}
-
-        except error.Error, e:
-            # If its not an Execution error then it won't have been logged by the
-            # Resource.apply() machinery - make sure we log it here.
-            print str(e)
-            # graph.changelog.write(str(e))
-            # graph.changelog.error("Terminated due to error in processing")
-            return e.returncode, {}
+        if expect_changes and not graph.changelog.changed:
+            raise error.NothingChanged("No changes were required")
 
         return 0, cfg
 
@@ -183,9 +170,9 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
-        returncode, resolved = self._resolve_graph(graph)
+        resolved = graph.resolve()
         print pprint.pprint(resolved)
-        return returncode
+        return 0
 
     def do_test(self, opts, args):
         """
@@ -194,11 +181,13 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
-        returncode, resolved = self._resolve_graph(graph)
+        graph.resolve()
 
         for actor in graph.actors:
             print type(actor), id(actor)
             actor.test()
+
+        return 0
 
     def opts_up(self, parser):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
@@ -215,8 +204,12 @@ class YaybuCmd(OptionParsingCmd):
         name=value name=value...
         """
         graph = self._get_graph(opts, args)
-        returncode, resolved = self._resolve_graph(graph, expect_changes=True)
-        return returncode
+
+        graph.resolve()
+        if not graph.changelog.changed:
+            raise error.NothingChanged("No changes were required")
+
+        return 0
 
     def do_ssh(self, opts, args):
         """

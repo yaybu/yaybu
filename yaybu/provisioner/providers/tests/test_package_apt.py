@@ -1,15 +1,14 @@
 from yaybu.provisioner.tests.fixture import TestCase
-from time import sleep
+from yaybu import error
 
 class TestPackageInstallation(TestCase):
 
     def test_already_installed(self):
-        rv = self.chroot.apply("""
+        self.assertRaises(error.NothingChanged, self.chroot.apply, """
             resources:
               - Package:
                   name: python
             """)
-        self.assertEqual(rv, 254)
 
     def test_installation(self):
         self.chroot.check_apply("""
@@ -20,12 +19,11 @@ class TestPackageInstallation(TestCase):
 
     def test_nonexistent_package(self):
         """ Try to install a package that does not exist. """
-        rv = self.chroot.apply("""
+        self.assertRaises(error.AptError, self.chroot.apply, """
             resources:
               - Package:
                   name: zzzz
             """)
-        self.assertEqual(rv, 132)
 
     def test_package_reinstallation(self):
         """ Try reinstalling a previously-removed package """
