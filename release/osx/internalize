@@ -1,0 +1,18 @@
+
+
+import os
+import subprocess
+
+def find_binaries(dir):
+    for root, dirs, files in os.walk("."):
+        for f in files:
+            path = os.path.join(root, f)
+
+            p = subprocess.Popen(["otool", "-D", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            stdout, stderr= p.communicate()
+            if "is not an object file" in stdout:
+                continue
+
+            yield path
+
+

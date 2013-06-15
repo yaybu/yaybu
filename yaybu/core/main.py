@@ -16,14 +16,14 @@ import os
 import sys
 import optparse
 import logging, atexit
-from util import version
 
 try:
     import wingdbstub
 except ImportError:
     pass
 
-from . import command
+from yaybu.core.util import version
+from yaybu.core import command
 
 usage = """usage: %prog [options] [command]
 when run without any commands yaybu drops to a command prompt.
@@ -75,4 +75,8 @@ def main():
         sys.exit(com.onecmd(" ".join(args)) or 0)
     else:
         com.cmdloop()
+
+
+if __name__ == "__main__":
+    main()
 
