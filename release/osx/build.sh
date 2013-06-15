@@ -16,14 +16,16 @@ rm -rf $TARGET
 mkdir -p $MACOS $RESOURCES
 
 
-FRAMEWORK_PATH=$(python -c "print __import__('sys').exec_prefix[:sys.exec_prefix.find('Python.framework')+len('Python.framework')]")
+FRAMEWORK_PATH=$(python -c "print __import__('sys').exec_prefix[:__import__('sys').exec_prefix.find('Python.framework')+len('Python.framework')]")
 FRAMEWORK_VERSION=$(python -c "print __import__('sys').version[:3]")
 FRAMEWORK_SRC=$FRAMEWORK_PATH/Versions/$FRAMEWORK_VERSION
 FRAMEWORK_DST=$CONTENTS/Frameworks/Python.framework/Versions/$FRAMEWORK_VERSION
 
+echo "Python.framework found at: $FRAMEWORK_PATH"
+echo "Python.framework version is: $FRAMEWORK_VERSION"
+
 mkdir -p $FRAMEWORK_DST/Resources
 cp $FRAMEWORK_SRC/Python $FRAMEWORK_DST/Python
-cp $FRAMEWORK_SRC/Resources/English.lproj $FRAMEWORK_DST/Resources/English.lproj
 cp $FRAMEWORK_SRC/Resources/Info.plist $FRAMEWORK_DST/Resources/Info.plist
 cp $FRAMEWORK_SRC/Resources/version.plist $FRAMEWORK_DST/version.plist
 
@@ -73,6 +75,8 @@ clear
 $DIR/../Resources/bin/python -m yaybu.core.main
 EOF
 chmod 0755 $MACOS/main
+
+./internalize $TARGET
 
 ./pkg-dmg \
     --idme \

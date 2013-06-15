@@ -1,18 +1,180 @@
+#! /usr/bin/env python
 
-
+import sys
 import os
 import subprocess
+import re
 
-def find_binaries(dir):
-    for root, dirs, files in os.walk("."):
-        for f in files:
-            path = os.path.join(root, f)
 
-            p = subprocess.Popen(["otool", "-D", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            stdout, stderr= p.communicate()
-            if "is not an object file" in stdout:
+FRAMEWORK_PATH = sys.exec_prefix[:sys.exec_prefix.find('Python.framework')+len('Python.framework')]
+
+
+class Binary(object):
+
+    def __init__(self, bundle, path):
+        self.bundle = bundle
+        self.path = path
+
+    def get_internal_name(self):
+        p = subprocess.Popen(
+            ["otool", "-X", "-D", self.path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+            )
+        stdout, stderr = p.communicate()
+        return stdout.split("\n")[0].strip()
+
+    def get_relative_path(self):
+        return self.bundle.get_relative_path(self.path)
+
+    def get_dependencies(self):
+        p = subprocess.Popen(
+            ["otool", "-L", self.path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+            )
+        stdout, stderr = p.communicate()
+
+        for line in stdout.split("\n"):
+            match = re.search('(?P<path>.*) \(compatibility version', line)
+            if not match:
+                continue
+            yield Binary(self.bundle, match.groupdict()['path'].strip())
+
+    def is_system_lib(self):
+        if self.path.startswith(FRAMEWORK_PATH):
+            return False
+        return self.path.startswith("/System") or self.path.startswith("/usr/lib")
+
+    def rename(self):
+        if not self.get_internal_name():
+            return
+
+        new_name = self.get_relative_path()
+        print "Updating internal name of '%s' to '%s'" % (self.path, new_name)
+        p = subprocess.Popen(
+            ["install_name_tool", "-id", new_name, self.path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+            )
+        p.communicate()
+
+    def fix_dependencies(self):
+        print "Fixing dependencies for '%s'" % self.path
+        for dep in self.get_dependencies():
+
+            if dep.is_system_lib():
+                print "    Skipping system dependency '%s'" % dep.path
                 continue
 
-            yield path
+            if dep.path.startswith("@"):
+                print "    '%s' is already relative" % dep.path
+                continue
 
+            try:
+                dep = self.bundle.get_path(dep.path)
+            except KeyError:
+                print "    Could not find bundled version of '%s'" % dep.path
+                continue
+
+            new_name = dep.get_relative_path()
+
+            print "    Changing from '%s' to '%s'" % (dep.path, new_name)
+            print "install_name_tool -change %s %s %s" % (dep.path, new_name, self.path)
+            p = subprocess.Popen(
+                ["install_name_tool", "-change", dep.path, new_name, self.path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+                )
+            p.communicate()
+
+    def strip(self):
+        print "Stripping '%s'" % self.path
+        p = subprocess.Popen(
+            ["/usr/bin/strip", "-x", "-S", "-", self.path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+            )
+        p.communicate()
+
+
+class Bundle(object):
+
+    def __init__(self, path):
+        self.path = path
+
+    def get_relative_path(self, path):
+        rel = os.path.relpath(path, os.path.join(self.path, "Contents", "Resources", "bin"))
+        return os.path.join("@executable_path", rel)
+
+    def get_path(self, path):
+        deps = self.binaries[path]
+        for d in deps:
+            if "Python.framework" in d.path:
+                return d
+        return deps[0]
+
+    def find_binaries(self):
+        for root, dirs, files in os.walk(self.path):
+            for f in files:
+                path = os.path.join(root, f)
+
+                if os.path.islink(path):
+                    continue
+
+                p = subprocess.Popen(["otool", "-D", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                stdout, stderr = p.communicate()
+                if "is not an object file" in stdout:
+                    continue
+
+                print path
+
+                yield Binary(self, path)
+
+    def internalize_python_symlink(self):
+        dot_python = os.path.join(self.path, "Contents", "Resources", ".Python")
+        new_target = os.path.join(self.path, "Contents", "Frameworks", "Python.framework", "Versions", "2.7", "Python")
+        new_target = os.path.relpath(new_target, os.path.dirname(dot_python))
+
+        if os.path.lexists(dot_python):
+            if os.path.islink(dot_python):
+                if os.readlink(dot_python) == new_target:
+                    return
+            os.unlink(dot_python)
+        print "Updating symlink at '%s' to '%s'" % (dot_python, new_target)
+        os.symlink(new_target, dot_python)
+
+    def internalize_python_code(self):
+        import compileall
+        for root, dirs, files in os.walk(self.path):
+            for f in files:
+                if not f.endswith(".py"):
+                    continue
+
+                path = os.path.join(root, f)
+                ddir = os.path.relpath(os.path.dirname(path), self.path)
+
+                print "Forcing compile of '%s'" % path
+                compileall.compile_file(path, ddir, 1)
+                os.unlink(path)
+
+    def internalize(self):
+        self.internalize_python_symlink()
+        self.internalize_python_code()
+
+        self.binaries = {}
+        binaries = []
+        for b in self.find_binaries():
+            binaries.append(b)
+            name = b.get_internal_name()
+            if name:
+                self.binaries.setdefault(name, []).append(b)
+
+        [b.rename() for b in binaries]
+        [b.fix_dependencies() for b in binaries]
+        [b.strip() for b in binaries]
+
+
+if __name__ == "__main__":
+    Bundle(os.path.realpath(sys.argv[1])).internalize()
 
