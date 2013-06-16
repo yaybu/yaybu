@@ -32,8 +32,8 @@ cp $FRAMEWORK_SRC/Resources/version.plist $FRAMEWORK_DST/version.plist
 
 #virtualenv -p /usr/local/Cellar/python/2.7.5/bin/python $RESOURCES
 virtualenv $RESOURCES
-$RESOURCES/bin/pip install --download-cache $CACHE_DIR -e ../../src/yay
-$RESOURCES/bin/pip install --download-cache $CACHE_DIR -e ../..
+$RESOURCES/bin/pip install --download-cache $CACHE_DIR ../../src/yay
+$RESOURCES/bin/pip install --download-cache $CACHE_DIR ../..
 virtualenv --relocatable $RESOURCES
 
 cp Yaybu.icns $RESOURCES/Yaybu.icns

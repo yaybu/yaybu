@@ -2,6 +2,7 @@
 """ Provides command-driven input to yaybu, using cmd.Cmd """
 
 import os
+import sys
 import cmd
 import optparse
 import copy
@@ -121,7 +122,7 @@ class OptionParsingCmd(cmd.Cmd):
         self.do_help((),(command,))
 
 
-class YaybuCmd(OptionParsingCmd):
+class BaseYaybuCmd(OptionParsingCmd):
 
     prompt = "yaybu> "
 
@@ -136,6 +137,7 @@ class YaybuCmd(OptionParsingCmd):
 
     def preloop(self):
         print util.version()
+        print ""
 
     def _get_graph(self, opts, args):
         from yaybu.core.config import Config
@@ -258,4 +260,38 @@ class YaybuCmd(OptionParsingCmd):
         """ Exit yaybu """
         print
         self.do_quit()
+
+
+class BundledDarwinYaybuCmd(BaseYaybuCmd):
+
+    def preloop(self):
+        BaseYaybuCmd.preloop(self)
+        if not self.is_on_path():
+            print "Run 'link' in this window to be able to run 'yaybu' from an ordinary terminal."
+            print ""
+
+    def is_on_path(self):
+        for path in os.environ.get("PATH", "").split(":"):
+                bin = os.path.join(path, "yaybu")
+                if os.path.exists(bin):
+                    return True
+        return False
+
+    def do_link(self, opts, args):
+        if self.is_on_path():
+            print "Already on path!"
+            return 1
+
+        prefix = sys.argv[0]
+        bundle = prefix[:prefix.find("Yaybu.app")+len("Yaybu.app")]
+
+        f = os.path.join(bundle, "Contents", "Resources", "bin", "yaybu")
+        t = "/usr/local/bin/yaybu"
+        os.system("osascript -e 'do shell script \"ln -s %s %s\" with administrator privileges'" % (f, t))
+
+
+if sys.platform == "darwin" and "Yaybu.app" in sys.argv[0]:
+    YaybuCmd = BundledDarwinYaybuCmd
+else:
+    YaybuCmd = BaseYaybuCmd
 
