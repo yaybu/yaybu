@@ -16,12 +16,14 @@ import os
 import sys
 import optparse
 import logging, atexit
+import signal
 
 try:
     import wingdbstub
 except ImportError:
     pass
 
+from yaybu import util
 from yaybu.core.util import version
 from yaybu.core import command
 
@@ -40,7 +42,6 @@ def main():
     parser.add_option("-d", "--debug", default=False, action="store_true", help="switch all logging to maximum, and write out to the console")
     parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
     parser.add_option("-v", "--verbose", default=2, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
-    parser.add_option("--ssh-auth-sock", default=None, action="store", help="Path to SSH Agent socket")
     parser.add_option("-C", "--config", default=None, action="store", help="Path to main yay config file")
     opts, args = parser.parse_args()
 
@@ -52,9 +53,6 @@ def main():
         opts.logfile = "-"
         opts.verbose = 2
 
-    if opts.ssh_auth_sock:
-        os.environ["SSH_AUTH_SOCK"] = opts.ssh_auth_sock
-
     if sys.platform == "darwin":
         # CA certs on darwin are in the system keyring - they can be readily accessed with commands like:
         #   security export -k /System/Library/Keychains/SystemCACertificates.keychain -t certs
@@ -65,16 +63,33 @@ def main():
         libcloud.security.VERIFY_SSL_CERT_STRICT = False
 
 
-    logging.getLogger("ssh.transport").setLevel(logging.CRITICAL)
     logging.getLogger("paramiko.transport").setLevel(logging.CRITICAL)
 
     atexit.register(logging.shutdown)
 
     com = command.YaybuCmd(config=opts.config, verbose=opts.verbose, ypath=opts.ypath, logfile=opts.logfile)
-    if args:
-        sys.exit(com.onecmd(" ".join(args)) or 0)
-    else:
-        com.cmdloop()
+
+    pid = None
+    if util.is_mac_bundle() and not "GPG_AGENT_INFO" in os.environ:
+        path = util.get_bundle_path("Resources/bin/gpg-agent")
+        pinentry = util.get_bundle_path("Resources/libexec/pinentry-mac.app/Contents/MacOS/pinentry-mac")
+
+        import subprocess
+        p = subprocess.Popen([path, "--daemon", "--sh", "--pinentry-program", pinentry], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        os.environ["GPG_AGENT_INFO"] = GPG_AGENT_INFO = stdout.strip().rsplit(";", 1)[0].split("=", 1)[1]
+        sock, pid, umm = GPG_AGENT_INFO.split(":")
+        pid = int(pid)
+
+    try:
+        if args:
+            sys.exit(com.onecmd(" ".join(args)) or 0)
+        else:
+            com.cmdloop()
+    finally:
+        if not pid is None:
+            os.kill(pid, signal.SIGKILL)
+            del os.environ["GPG_AGENT_INFO"]
 
 
 if __name__ == "__main__":

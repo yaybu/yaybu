@@ -13,6 +13,7 @@ from functools import partial
 import yay
 import yay.errors
 from yaybu.core import error, util
+from yaybu.util import is_mac_bundle
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -130,12 +131,16 @@ class BaseYaybuCmd(OptionParsingCmd):
         """ Global options are provided on the command line, before the
         command """
         cmd.Cmd.__init__(self)
-        self.config = config or self.find_yaybufile()
+        self.config = config
         self.ypath = ypath
         self.verbose = verbose
         self.logfile = logfile
 
-    def find_yaybufile(self):
+    @property
+    def yaybufile(self):
+        if self.config:
+            return self.config
+
         directory = os.getcwd()
         while directory != "/":
             path = os.path.join(directory, "Yaybufile")
@@ -165,7 +170,7 @@ class BaseYaybuCmd(OptionParsingCmd):
         graph.verbose = self.verbose
 
         graph.name = "example"
-        graph.load_uri(os.path.realpath(self.config))
+        graph.load_uri(os.path.realpath(self.yaybufile))
         if len(args) > 1:
             graph.set_arguments_from_argv(args[1:])
 
@@ -301,7 +306,7 @@ class BundledDarwinYaybuCmd(BaseYaybuCmd):
         os.system("osascript -e 'do shell script \"ln -s %s %s\" with administrator privileges'" % (f, t))
 
 
-if sys.platform == "darwin" and "Yaybu.app" in sys.argv[0]:
+if is_mac_bundle():
     YaybuCmd = BundledDarwinYaybuCmd
 else:
     YaybuCmd = BaseYaybuCmd
