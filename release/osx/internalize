@@ -156,6 +156,10 @@ class Bundle(object):
 
                 print "Forcing compile of '%s'" % path
                 compileall.compile_file(path, ddir, 1)
+
+                if "activate_this" in path:
+                    continue
+
                 os.unlink(path)
 
     def internalize(self):
