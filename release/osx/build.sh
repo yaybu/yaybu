@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This is extracted from a GPGTools build
+MACGPGDIR=/Users/john/Projects/MacGPG2
+
 APPNAME=Yaybu
 VERSION=0.3.0
 
@@ -29,13 +32,20 @@ cp $FRAMEWORK_SRC/Python $FRAMEWORK_DST/Python
 cp $FRAMEWORK_SRC/Resources/Info.plist $FRAMEWORK_DST/Resources/Info.plist
 cp $FRAMEWORK_SRC/Resources/version.plist $FRAMEWORK_DST/version.plist
 
-
 #virtualenv -p /usr/local/Cellar/python/2.7.5/bin/python $RESOURCES
 virtualenv $RESOURCES
 $RESOURCES/bin/pip install --download-cache $CACHE_DIR ../../src/yay
 $RESOURCES/bin/pip install --download-cache $CACHE_DIR ../..
 virtualenv --relocatable $RESOURCES
 
+echo "Bundling GPG..."
+cp -r $MACGPGDIR/bin/* $RESOURCES/bin/
+cp -r $MACGPGDIR/lib/* $RESOURCES/lib/
+cp -r $MACGPGDIR/libexec $RESOURCES/libexec
+rm -rf $RESOURCES/libexec/MacGPG2_Updater.app
+cp -r $MACGPGDIR/share $RESOURCES/share
+
+echo "Setting icons..."
 cp Yaybu.icns $RESOURCES/Yaybu.icns
 
 cat > $CONTENTS/Info.plist <<'EOF'
