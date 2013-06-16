@@ -126,14 +126,28 @@ class BaseYaybuCmd(OptionParsingCmd):
 
     prompt = "yaybu> "
 
-    def __init__(self, config="Yaybufile", ypath=(), verbose=2, logfile=None):
+    def __init__(self, config=None, ypath=(), verbose=2, logfile=None):
         """ Global options are provided on the command line, before the
         command """
         cmd.Cmd.__init__(self)
-        self.config = config
+        self.config = config or self.find_yaybufile()
         self.ypath = ypath
         self.verbose = verbose
         self.logfile = logfile
+
+    def find_yaybufile(self):
+        directory = os.getcwd()
+        while directory != "/":
+            path = os.path.join(directory, "Yaybufile")
+            if os.path.exists(path):
+                return path
+            directory = os.path.dirname(directory)
+
+        # Ew. I might just refuse to support this.
+        if os.path.exists("/Yaybufile"):
+            return "/Yaybufile"
+
+        raise error.MissingAsset("Could not find Yaybufile in '%s' or any of its parents" % os.getcwd())
 
     def preloop(self):
         print util.version()
@@ -232,9 +246,6 @@ class BaseYaybuCmd(OptionParsingCmd):
         graph = self._get_graph(opts, args)
         graph.readonly = True
         raise NotImplementedError("I don't know how to find compute nodes in the graph yet")
-
-    def opts_status(self, parser):
-        parser.add_option("-C", "--config", default="Yaybufile", action="store", help="Name of configuration to load")
 
     def do_status(self, opts, args):
         """

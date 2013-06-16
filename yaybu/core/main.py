@@ -41,7 +41,7 @@ def main():
     parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
     parser.add_option("-v", "--verbose", default=2, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
     parser.add_option("--ssh-auth-sock", default=None, action="store", help="Path to SSH Agent socket")
-    parser.add_option("-C", "--config", default="Yaybufile", action="store", help="Path to main yay config file")
+    parser.add_option("-C", "--config", default=None, action="store", help="Path to main yay config file")
     opts, args = parser.parse_args()
 
     # we need to revisit how logging is handled
@@ -70,7 +70,7 @@ def main():
 
     atexit.register(logging.shutdown)
 
-    com = command.YaybuCmd(verbose=opts.verbose, ypath=opts.ypath, logfile=opts.logfile)
+    com = command.YaybuCmd(config=opts.config, verbose=opts.verbose, ypath=opts.ypath, logfile=opts.logfile)
     if args:
         sys.exit(com.onecmd(" ".join(args)) or 0)
     else:
