@@ -19,6 +19,7 @@ import collections
 import socket
 import paramiko
 import StringIO
+import time
 
 from yay import String
 
@@ -78,12 +79,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         channel.exec_command(' '.join([pipes.quote(c) for c in command]))
 
         if stdin:
-            fp = StringIO.StringIO(stdin)
-            while True:
-                data = fp.read(32768)
-                if len(data) == 0:
-                    break
-                channel.send(data)
+            channel.sendall(stdin)
             channel.shutdown_write()
 
         def recvr(ready, recv, cb, buffer):
