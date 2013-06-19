@@ -15,6 +15,7 @@
 import os
 
 from jinja2 import Environment, BaseLoader, TemplateNotFound
+from jinja2.exceptions import UndefinedError
 
 from yaybu import error
 from yaybu.provisioner import resources
@@ -95,9 +96,13 @@ class File(provider.Provider):
             # set a special line ending
             # this strips the \n from the template line meaning no blank line,
             # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
-            env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
-            template = env.get_template(self.resource.template)
-            contents = template.render(self.get_template_args()) + "\n" # yuk
+            try:
+                env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
+                template = env.get_template(self.resource.template)
+                contents = template.render(self.get_template_args()) + "\n" # yuk
+            except UndefinedError as e:
+                raise error.ParseError(str(e))
+
             sensitive = self.has_protected_strings()
 
         elif self.resource.static:
