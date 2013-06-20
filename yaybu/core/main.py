@@ -74,6 +74,15 @@ def main():
         path = util.get_bundle_path("Resources/bin/gpg-agent")
         pinentry = util.get_bundle_path("Resources/libexec/pinentry-mac.app/Contents/MacOS/pinentry-mac")
 
+        # Starting gpg-agent on a fresh computer causes us to hang!
+        # Precreating .gnupg seems to 'fix' it...
+        def ensure_directory(path, mode):
+            if not os.path.exists(path):
+                os.makedirs(path)
+                os.chown(path, 0700)
+        ensure_directory(os.path.expanduser("~/.gnupg))
+        ensure_directory(os.path.expanduser("~/.gnupg/private-keys-v1.d"))
+
         import subprocess
         p = subprocess.Popen([path, "--daemon", "--sh", "--pinentry-program", pinentry], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
