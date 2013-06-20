@@ -19,7 +19,6 @@ import collections
 import socket
 import paramiko
 import StringIO
-import time
 
 from yay import String
 
@@ -101,7 +100,8 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
             recvr(channel.recv_stderr_ready, channel.recv_stderr, stderr, stderr_buffer)
 
         while not channel.eof_received:
-            time.sleep(0.1)
+            recvr(channel.recv_ready, channel.recv, stdout, stdout_buffer)
+            recvr(channel.recv_stderr_ready, channel.recv_stderr, stderr, stderr_buffer)
 
         recvr(channel.recv_ready, channel.recv, stdout, stdout_buffer)
         recvr(channel.recv_stderr_ready, channel.recv_stderr, stderr, stderr_buffer)
