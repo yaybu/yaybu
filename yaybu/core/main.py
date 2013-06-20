@@ -76,11 +76,11 @@ def main():
 
         # Starting gpg-agent on a fresh computer causes us to hang!
         # Precreating .gnupg seems to 'fix' it...
-        def ensure_directory(path, mode):
+        def ensure_directory(path, mode=0700):
             if not os.path.exists(path):
                 os.makedirs(path)
-                os.chown(path, 0700)
-        ensure_directory(os.path.expanduser("~/.gnupg))
+                os.chown(path, mode)
+        ensure_directory(os.path.expanduser("~/.gnupg"))
         ensure_directory(os.path.expanduser("~/.gnupg/private-keys-v1.d"))
 
         import subprocess
