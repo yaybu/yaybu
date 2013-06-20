@@ -218,7 +218,6 @@ class BaseYaybuCmd(OptionParsingCmd):
         parser.add_option("-s", "--simulate", default=False, action="store_true")
         parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
         parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
-        parser.add_option("--env-passthrough", default=[], action="append", help="Preserve an environment variable in any processes Yaybu spawns")
 
     def do_up(self, opts, args):
         """
@@ -243,6 +242,24 @@ class BaseYaybuCmd(OptionParsingCmd):
 
         return 0
 
+    def opts_destroy(self, parser):
+        parser.add_option("-s", "--simulate", default=False, action="store_true")
+        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
+        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
+
+    def do_destroy(self, opts, args):
+        """
+        usage: destroy
+        """
+        graph = self._get_graph(opts, args)
+        graph.readonly = True
+        graph.resolve()
+
+        for actor in graph.actors:
+            actor.destroy()
+
+        return 0
+
     def do_ssh(self, opts, args):
         """
         usage: ssh <name>
@@ -264,13 +281,6 @@ class BaseYaybuCmd(OptionParsingCmd):
         graph = self._get_graph(opts, args)
         graph.readonly = True
         raise NotImplementedError("I don't know how to find nodes in the graph yet")
-
-    def do_destroy(self, opts, args):
-        """
-        usage: destroy <cluster> <filename>
-        Delete the specified cluster completely
-        """
-        graph = self._get_graph(opts, args)
 
     def do_quit(self, opts=None, args=None):
         """ Exit yaybu """

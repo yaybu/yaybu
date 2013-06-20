@@ -173,7 +173,7 @@ class Compute(base.GraphExternalAction):
 
     def test(self):
         print "Testing compute credentials/connectivity"
-        self.driver.list_nodes()     
+        self.driver.list_nodes()
 
     def apply(self):
         if self.libcloud_node:
@@ -229,4 +229,16 @@ class Compute(base.GraphExternalAction):
 
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
+
+    def destroy(self):
+        if not self.libcloud_node:
+            self.state.refresh()
+            if "their_name" in self.state:
+                self.libcloud_node = self._find_node(self.state.their_name)
+            if not self.libcloud_node:
+                self.libcloud_node = self._find_node(self.full_name)
+            if not self.libcloud_node:
+                return
+
+        self.libcloud_node.destroy()
 

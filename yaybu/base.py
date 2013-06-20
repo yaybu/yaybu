@@ -22,8 +22,11 @@ class GraphExternalAction(ast.PythonClass):
     def test(self):
         pass
 
+    def destroy(self):
+        pass
+
     def resolve(self):
-	#FIXME: There is a nicer way to do this without resolve, but more yay
+        #FIXME: There is a nicer way to do this without resolve, but more yay
         # refactoring required
         root = self.root
         if not self in root.actors:
