@@ -20,7 +20,7 @@ from yay import errors
 
 def get_argv0():
     #FIXME: This can be memoized
-    argv0 = os.path.realpath(sys.argv[0])
+    argv0 = os.path.realpath(sys.exec_prefix)
     while os.path.islink(argv0):
         argv0 = os.readlink(argv0)
     return argv0

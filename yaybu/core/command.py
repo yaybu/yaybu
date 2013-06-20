@@ -9,6 +9,7 @@ import copy
 import logging
 import pprint
 from functools import partial
+import subprocess
 
 import yay
 import yay.errors
@@ -315,6 +316,8 @@ class BundledDarwinYaybuCmd(BaseYaybuCmd):
         if not self.is_on_path():
             print "Run 'link' in this window to be able to run 'yaybu' from an ordinary terminal."
             print ""
+        print "Run 'open' to choose a Yaybufile"
+        print ""
 
     def is_on_path(self):
         for path in os.environ.get("PATH", "").split(":"):
@@ -334,6 +337,22 @@ class BundledDarwinYaybuCmd(BaseYaybuCmd):
         f = os.path.join(bundle, "Contents", "Resources", "bin", "yaybu")
         t = "/usr/local/bin/yaybu"
         os.system("osascript -e 'do shell script \"test ! -d /usr/local/bin && mkdir -p /usr/local/bin; ln -s %s %s\" with administrator privileges'" % (f, t))
+
+    def do_open(self, opts, args):
+        p = subprocess.Popen(["osascript"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate("""
+            tell application "Finder"
+                activate
+                set af to choose file with prompt "Choose Yaybufile"
+            end tell
+            set pf to POSIX path of af
+            """)
+        if p.returncode:
+            print stdout
+            print stderr
+            return 1
+        path = stdout.strip()
+        self.config = path
 
 
 if is_mac_bundle():
