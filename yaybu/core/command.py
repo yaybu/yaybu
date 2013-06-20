@@ -303,7 +303,7 @@ class BundledDarwinYaybuCmd(BaseYaybuCmd):
 
         f = os.path.join(bundle, "Contents", "Resources", "bin", "yaybu")
         t = "/usr/local/bin/yaybu"
-        os.system("osascript -e 'do shell script \"ln -s %s %s\" with administrator privileges'" % (f, t))
+        os.system("osascript -e 'do shell script \"test ! -d /usr/local/bin && mkdir -p /usr/local/bin; ln -s %s %s\" with administrator privileges'" % (f, t))
 
 
 if is_mac_bundle():
