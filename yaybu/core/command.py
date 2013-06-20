@@ -192,7 +192,11 @@ class BaseYaybuCmd(OptionParsingCmd):
         graph = self._get_graph(opts, args)
         graph.readonly = True
         resolved = graph.resolve()
-        print pprint.pprint(resolved)
+        try:
+            import yaml
+            print yaml.safe_dump(resolved, default_flow_style=False)
+        except ImportError:
+            pprint.pprint(resolved)
         return 0
 
     def do_test(self, opts, args):
