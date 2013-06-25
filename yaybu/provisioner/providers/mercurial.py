@@ -134,10 +134,10 @@ class Mercurial(Provider):
                 raise CheckoutError("Could not fetch changes from remote repository.")
 
         if created or self.info(context, "should-update", *should_args)[0] != 0:
-            if self.resource.branch:
-                args = [self.resource.branch]
-            elif self.resource.tag:
+            if self.resource.tag:
                 args = [self.resource.tag]
+            elif self.resource.branch:
+                args = [self.resource.branch]
             else:
                 args = []
 
