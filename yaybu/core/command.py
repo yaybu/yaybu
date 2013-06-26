@@ -171,8 +171,7 @@ class BaseYaybuCmd(OptionParsingCmd):
 
         graph.name = "example"
         graph.load_uri(os.path.realpath(self.yaybufile))
-        if len(args) > 1:
-            graph.set_arguments_from_argv(args[1:])
+        graph.set_arguments_from_argv(args)
 
         return graph
 
