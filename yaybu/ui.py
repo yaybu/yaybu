@@ -12,43 +12,155 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function
 import sys
+
+
+class Section(object):
+
+    def __init__(self, ui, name):
+        self.ui = ui
+        self.name = name
+
+    def __enter__(self):
+        header = self.name.decode("utf-8")
+
+        rl = len(header)
+        if rl < self.ui.columns:
+            total_minuses = (self.ui.columns - 3) - rl
+            minuses = total_minuses/2
+            leftover = total_minuses % 2
+        else:
+            minuses = 4
+            leftover = 0
+
+        self.ui.print("/%s %s %s" % (
+            "-" * minuses,
+            header,
+            "-" * (minuses + leftover)
+            ))
+
+        return self
+
+    def print(self, msg):
+        self.ui.print("| %s" % msg)
+
+    def __exit__(self, a, b, c):
+        self.ui.print("\\" + "-" * (self.ui.columns-1))
 
 
 class Progress(object):
 
-    bar_size = 75
-
-    def __init__(self, upperbound):
+    def __init__(self, ui, upperbound):
+        self.ui = ui
         self.upperbound = upperbound
-        self.scale = float(self.bar_size) / upperbound
-        self.pos = -1
+        self.pos = 0
+
+    def __enter__(self):
+        self.ui._progress = self
+        return self
 
     def progress(self, progress):
-        pos = int(min(progress * self.scale, self.bar_size))
+        scale = float(self.ui.columns - 2) / self.upperbound
+        pos = int(min(progress * scale, self.ui.columns-2))
         if pos != self.pos:
             self.pos = pos
             self.draw()
 
     def draw(self):
-        sys.stdout.write("[%s%s]\r" % ("=" * self.pos, " " * (self.bar_size-self.pos)))
-        sys.stdout.flush()
+        self.ui._clear()
+        self.ui.stdout.write("[%s%s]" % ("=" * self.pos, " " * ((self.ui.columns-2)-self.pos)))
+        self.ui.stdout.flush()
 
-    def finish(self):
-        self.progress(self.upperbound)
+    def __exit__(self, a, b, c):
+        #self.progress(self.upperbound)
+        self.ui._progress = None
+        self.ui.print("")
 
-        sys.stdout.write("\n")
-        sys.stdout.flush()
+
+class Throbber(object):
+
+    glyphs = {
+        0: "\\",
+        1: "-",
+        2: "/",
+        }
+
+    def __init__(self, ui, message):
+        self.ui = ui
+        self.message = message
+        self.state = 0
+
+    def __enter__(self):
+        self.ui._progress = self
+        return self
+
+    def print(self, msg):
+        self.ui.print(msg)
+        self.throb()
+
+    def throb(self):
+        self.state = (self.state + 1) % len(self.glyphs)
+        self.draw()
+
+    def draw(self):
+        self.ui._clear()
+        self.ui.stdout.write("[%s] %s" % (self.glyphs[self.state], self.message))
+        self.ui.stdout.flush()
+
+    def __exit__(self, a, b, c):
+        self.ui._progress = None
+        self.ui.print("")
 
 
-if __name__ == "__main__":
+class TextFactory(object):
+
+    _progress = None
+
+    def __init__(self, stdout=sys.stdout):
+        self.stdout = stdout
+
+    @property
+    def columns(self):
+        #FIXME: Be cleverer
+        return 80
+
+    def section(self, name):
+        return Section(self, name)
+
+    def progress(self, upper):
+        return Progress(self, upper)
+
+    def throbber(self, message):
+        return Throbber(self, message)
+
+    def print(self, name):
+        self._clear()
+        self.stdout.write(name + "\n")
+        self.stdout.flush()
+        if self._progress:
+            self._progress.draw()
+
+    def _clear(self):
+        if self._progress:
+            self.stdout.write('\r' + ' ' * self.columns + '\r')
+
+
+
+if __name__ = "__main__":
+    t = TextFactory()
+
     import time
-    p = Progress(50)
-    i = 0
-    while i <= 50:
-        p.progress(i)
-        time.sleep(1)
-        i = i+2
-    p.finish()
 
+    # with t.progress(100) as pg:
+    with t.throbber("Deploying to cloud...") as throbber:
+        i = 0
+        while True:
+            i += 1
+            with t.section("hello") as sec:
+                for j in range(5):
+                    sec.print(i * j)
+                    time.sleep(1)
+                    throbber.throb()
+            # pg.progress(i % 100)
 
