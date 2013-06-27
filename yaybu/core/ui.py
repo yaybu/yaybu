@@ -45,7 +45,7 @@ class Section(object):
     def print(self, msg):
         self.ui.print("| %s" % msg)
 
-    def __exit__(self, a, b, c):
+    def __exit__(self, type_, value, tb):
         self.ui.print("\\" + "-" * (self.ui.columns-1))
 
 
@@ -72,7 +72,7 @@ class Progress(object):
         self.ui.stdout.write("[%s%s]" % ("=" * self.pos, " " * ((self.ui.columns-2)-self.pos)))
         self.ui.stdout.flush()
 
-    def __exit__(self, a, b, c):
+    def __exit__(self, type_, value, tb):
         #self.progress(self.upperbound)
         self.ui._progress = None
         self.ui.print("")
@@ -89,10 +89,11 @@ class Throbber(object):
     def __init__(self, ui, message):
         self.ui = ui
         self.message = message
-        self.state = 0
+        self.state = -1
 
     def __enter__(self):
         self.ui._progress = self
+        self.draw()
         return self
 
     def print(self, msg):
@@ -105,12 +106,16 @@ class Throbber(object):
 
     def draw(self):
         self.ui._clear()
-        self.ui.stdout.write("[%s] %s" % (self.glyphs[self.state], self.message))
+        self.ui.stdout.write("[%s] %s" % (self.glyphs.get(self.state, " "), self.message))
         self.ui.stdout.flush()
 
-    def __exit__(self, a, b, c):
+    def __exit__(self, type_, value, tb):
         self.ui._progress = None
-        self.ui.print("")
+        if tb:
+            char = " "
+        else:
+            char = "*"
+        self.ui.print("[%s] %s" % (char, self.message))
 
 
 class TextFactory(object):
@@ -142,12 +147,11 @@ class TextFactory(object):
             self._progress.draw()
 
     def _clear(self):
-        if self._progress:
-            self.stdout.write('\r' + ' ' * self.columns + '\r')
+        self.stdout.write('\r' + ' ' * self.columns + '\r')
 
 
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     t = TextFactory()
 
     import time

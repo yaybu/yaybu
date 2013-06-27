@@ -168,8 +168,8 @@ class Zone(base.GraphExternalAction):
         return driver
 
     def test(self):
-        print "Testing DNS credentials/connectivity"
-        self.driver.list_zones()   
+        with self.root.ui.throbber("Testing DNS credentials/connectivity") as throbber:
+            self.driver.list_zones()
 
     def apply(self):
         if self.root.readonly:

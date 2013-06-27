@@ -86,7 +86,7 @@ class MetadataSync(Change):
                     self.update(rid, record)
                 continue
 
-            renderer.debug("'%s' not changed" % rid)
+            # renderer.debug("'%s' not changed" % rid)
 
         """
         if self.purge_remote:

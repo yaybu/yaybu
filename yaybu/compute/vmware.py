@@ -246,7 +246,7 @@ class VMWareDriver(NodeDriver):
         if not os.path.exists(target_parent):
             os.makedirs(target_parent)
 
-        logger.warning("Creating node %r" % (name,))
+        logger.debug("Creating node %r" % (name,))
         # First try to clone the VM with the VMWare commands. We do this in
         # the hope that they know what the fastest and most efficient way to
         # clone an image is. But if that fails we can just copy the entire
@@ -274,12 +274,12 @@ class VMWareDriver(NodeDriver):
         return Node(target, name, NodeState.PENDING, None, None, self)
 
     def reboot_node(self, node):
-        logger.warning("Rebooting node %r" % (node.id,))
+        logger.debug("Rebooting node %r" % (node.id,))
         self._action("reset", node.id, "hard")
         node.state = NodeState.REBOOTING
 
     def destroy_node(self, node):
-        logger.warning("Destroying node %r" % (node.id,))
+        logger.debug("Destroying node %r" % (node.id,))
         self._action("stop", node.id, "hard")
         self._action("deleteVM", node.id)
         shutil.rmtree(os.path.dirname(node.id))

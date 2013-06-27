@@ -22,6 +22,7 @@ from yay import ast
 from yaybu.core.error import ParseError, ArgParseError
 from yaybu.core.util import memoized
 from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
+from yaybu.core.ui import TextFactory
 from yaybu import changes
 
 
@@ -103,7 +104,11 @@ class Config(BaseConfig):
     readonly = False
     simulate = False
 
-    def __init__(self, context=None, hostname=None, searchpath=None):
+    def __init__(self, context=None, hostname=None, searchpath=None, ui=None):
+        if not ui:
+            ui = TextFactory()
+        self.ui = ui
+
         self.actors = []
 
         self.context = context

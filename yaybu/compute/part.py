@@ -172,8 +172,8 @@ class Compute(base.GraphExternalAction):
         self.metadata['interfaces'] = list(interfaces())
 
     def test(self):
-        print "Testing compute credentials/connectivity"
-        self.driver.list_nodes()
+        with self.root.ui.throbber("Testing compute credentials/connectivity"):
+            self.driver.list_nodes()
 
     def apply(self):
         if self.libcloud_node:
@@ -200,17 +200,29 @@ class Compute(base.GraphExternalAction):
         for tries in range(10):
             logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
 
-            node = self.driver.create_node(
-                name=self.full_name,
-                image=self._get_image(),
-                size=self._get_size(),
-                #ex_keyname=self.args['ex_keyname'],
-                )
+            with self.root.ui.throbber("Creating node '%r'..." % (self.full_name, )) as throbber:
+                node = self.driver.create_node(
+                    name=self.full_name,
+                    image=self._get_image(),
+                    size=self._get_size(),
+                    #ex_keyname=self.args['ex_keyname'],
+                    )
 
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
 
             try:
-                self.libcloud_node, self.ip_addresses = self.driver.wait_until_running([node], timeout=600)[0]
+                with self.root.ui.throbber("Waiting for node '%r' to start..."% self.full_name) as throbber:
+                    try:
+                        import time
+                        old_sleep = time.sleep
+                        def sleep(amt):
+                            throbber.throb()
+                            old_sleep(amt)
+                        time.sleep = sleep
+                        self.libcloud_node, self.ip_addresses = self.driver.wait_until_running([node], wait_period=1, timeout=600)[0]
+                    finally:
+                        time.sleep = old_sleep
+
                 logger.debug("Node %r running" % (self.full_name, ))
                 # self.their_name = self.libcloud_node.name
                 self._update_node_info()
@@ -240,5 +252,6 @@ class Compute(base.GraphExternalAction):
             if not self.libcloud_node:
                 return
 
-        self.libcloud_node.destroy()
+        with self.root.ui.throbber("Destroying node '%r'" % self.full_name) as throbber:
+            self.libcloud_node.destroy()
 
