@@ -162,7 +162,7 @@ class Git(Provider):
         except SystemError:
             raise CheckoutError("Could not check out '%s'" % newref)
 
-    def apply(self, context):
+    def apply(self, context, output):
         # If necessary, clone the repository
         if not context.transport.exists(os.path.join(self.resource.name, ".git")):
             self.action_clone(context)

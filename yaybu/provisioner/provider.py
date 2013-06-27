@@ -65,5 +65,5 @@ class Provider(object):
 class NullProvider(Provider):
     policies = [policy.NullPolicy]
 
-    def apply(self, shell):
+    def apply(self, context, output):
         pass

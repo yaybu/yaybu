@@ -135,7 +135,7 @@ class Ev1Provider(provider.Provider):
 
     applied = 0
 
-    def apply(self, shell):
+    def apply(self, shell, output):
         Ev1Provider.applied += 1
         return True
 

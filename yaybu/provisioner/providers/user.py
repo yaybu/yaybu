@@ -62,7 +62,7 @@ class User(provider.Provider):
 
         return info
 
-    def apply(self, context):
+    def apply(self, context, output):
         info = self.get_user_info(context)
 
         if info['exists']:
@@ -147,7 +147,7 @@ class UserRemove(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(UserRemove, self).isvalid(*args, **kwargs)
 
-    def apply(self, context):
+    def apply(self, context, output):
         try:
             existing = context.transport.getpwnam(self.resource.name.encode("utf-8"))
         except KeyError:

@@ -29,7 +29,7 @@ class Execute(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(Execute, self).isvalid(*args, **kwargs)
 
-    def apply(self, context):
+    def apply(self, context, output):
         if self.resource.creates is not None \
            and context.transport.exists(self.resource.creates):
             #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))

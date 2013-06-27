@@ -31,6 +31,9 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
     def whoami(self):
         return "root"
 
+    def connect(self):
+        pass
+
     def _execute(self, command, stdin=None, stdout=None, stderr=None):
         paths = [self.overlay_dir]
         if self.env and "PATH" in self.env:

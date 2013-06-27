@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os, subprocess
+import sys
 from unittest2 import SkipTest
 from yaybu import error
 
@@ -45,11 +46,6 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         filespath = os.path.join(self.chroot_path, "/tmp", "files")
         from yaybu.core.command import YaybuCmd
         from optparse import OptionParser
-
-        # import logging
-        # logging.basicConfig(format="%(asctime)s %(name)s %(levelname)s %(message)s")
-        # root = logging.getLogger()
-        # root.setLevel(logging.DEBUG)
 
         p = OptionParser()
         y = YaybuCmd(configfile, ypath=(filespath, ))
@@ -101,7 +97,7 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         self.apply(contents, *args)
 
         # If we apply the change again nothing should be changed
-        
+
         try:
             self.apply(contents, *args)
         except error.NothingChanged:

@@ -59,7 +59,7 @@ class Svn(Provider):
         self.svn(context, "co", self.url, self.resource.name)
         return True
 
-    def apply(self, context):
+    def apply(self, context, output):
         if not context.transport.exists("/usr/bin/svn"):
             error_string = "'/usr/bin/svn' is not available; update your configuration to install subversion?"
             if not context.simulate:

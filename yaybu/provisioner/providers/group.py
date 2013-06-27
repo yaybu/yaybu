@@ -48,7 +48,7 @@ class Group(provider.Provider):
 
         return info
 
-    def apply(self, context):
+    def apply(self, context, output):
         changed = False
         info = self.get_group_info(context)
 
@@ -81,7 +81,7 @@ class GroupRemove(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(GroupRemove, self).isvalid(*args, **kwargs)
 
-    def apply(self, context):
+    def apply(self, context, output):
         try:
             existing = context.transport.getgrnam(self.resource.name.encode("utf-8"))
         except KeyError:

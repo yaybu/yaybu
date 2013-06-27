@@ -26,7 +26,7 @@ class Mounted(Provider):
     def isvalid(self, policy, resource, yay):
         return resource.scm in ("dummy", "mounted", "mount")
 
-    def apply(self, context):
+    def apply(self, context, output):
         for w in self.resource.watch:
             if context.transport.exists(w):
                 os.utime(w, None)

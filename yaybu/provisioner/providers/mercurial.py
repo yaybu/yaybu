@@ -81,7 +81,7 @@ class Mercurial(Provider):
             cwd=self.resource.name,
             ))
 
-    def apply(self, context):
+    def apply(self, context, output):
         created = False
         changed = False
 

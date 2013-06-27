@@ -21,8 +21,15 @@ class Section(object):
     def __init__(self, ui, name):
         self.ui = ui
         self.name = name
+        self.has_output = False
 
     def __enter__(self):
+        return self
+
+    def _maybe_print_header(self):
+        if self.has_output:
+            return
+
         header = self.name.decode("utf-8")
 
         rl = len(header)
@@ -40,13 +47,27 @@ class Section(object):
             "-" * (minuses + leftover)
             ))
 
-        return self
+        self.has_output = True
 
     def print(self, msg):
+        self._maybe_print_header()
         self.ui.print("| %s" % msg)
 
+    def info(self, msg, *args):
+        self.print(msg)
+
+    def notice(self, msg, *args):
+        self.print(msg)
+
+    def debug(self, msg, *args):
+        self.print(msg)
+
+    def error(self, msg, *args):
+        self.print(msg)
+
     def __exit__(self, type_, value, tb):
-        self.ui.print("\\" + "-" * (self.ui.columns-1))
+        if self.has_output:
+            self.ui.print("\\" + "-" * (self.ui.columns-1))
 
 
 class Progress(object):
@@ -122,8 +143,8 @@ class TextFactory(object):
 
     _progress = None
 
-    def __init__(self, stdout=sys.stdout):
-        self.stdout = stdout
+    def __init__(self, stdout=None):
+        self.stdout = stdout or sys.stdout
 
     @property
     def columns(self):
@@ -145,6 +166,18 @@ class TextFactory(object):
         self.stdout.flush()
         if self._progress:
             self._progress.draw()
+
+    def info(self, msg, *args):
+        self.print(msg)
+
+    def notice(self, msg, *args):
+        self.print(msg)
+
+    def debug(self, msg, *args):
+        self.print(msg)
+
+    def error(self, msg, *args):
+        self.print(msg)
 
     def _clear(self):
         self.stdout.write('\r' + ' ' * self.columns + '\r')

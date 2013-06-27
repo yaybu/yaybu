@@ -75,6 +75,9 @@ class Provision(base.GraphExternalAction):
             simulate = root.simulate,
             )
 
+        with root.ui.throbber("Connecting to '%s'" % hostname) as throbber:
+            self.transport.connect()
+
         if not self.simulate and not self.transport.exists(self.get_data_path()):
             self.transport.makedirs(self.get_data_path())
 
@@ -103,12 +106,11 @@ class Provision(base.GraphExternalAction):
         # Actually apply the configuration
         bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources, verbose_errors=self.verbose>2)
         bundle.bind()
-        bundle.apply(self, None)
 
-        if not self.simulate and self.transport.exists(self.state.save_file):
-            self.transport.unlink(self.state.save_file)
-
-        self.changelog.info("'%s' was successfully provisioned." % hostname)
+        with root.ui.throbber("Applying configuration to '%s'" % hostname) as throbber:
+            bundle.apply(self, None)
+            if not self.simulate and self.transport.exists(self.state.save_file):
+                self.transport.unlink(self.state.save_file)
 
     def test(self):
         bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources)

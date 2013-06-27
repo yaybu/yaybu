@@ -127,7 +127,7 @@ class File(provider.Provider):
             with context.root.ui.throbber("Testing '%s' exists..." % self.resource.static):
                 self.get_file_contents(context)
 
-    def apply(self, context):
+    def apply(self, context, output):
         name = self.resource.name
 
         self.check_path(context, os.path.dirname(name), context.simulate)
@@ -147,7 +147,7 @@ class RemoveFile(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(RemoveFile, self).isvalid(*args, **kwargs)
 
-    def apply(self, context):
+    def apply(self, context, output):
         if context.transport.exists(self.resource.name):
             if not context.transport.isfile(self.resource.name):
                 raise error.InvalidProvider("%s exists and is not a file" % self.resource.name)
@@ -166,7 +166,7 @@ class WatchFile(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(WatchFile, self).isvalid(*args, **kwargs)
 
-    def apply(self, context):
+    def apply(self, context, output):
         """ Watched files don't have any policy applied to them """
         return self.resource.hash(context) != self.resource._original_hash
 

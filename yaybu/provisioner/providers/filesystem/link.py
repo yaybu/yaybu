@@ -60,7 +60,7 @@ class Link(provider.Provider):
         mode = stat.S_IMODE(st.st_mode)
         return uid, gid, mode
 
-    def apply(self, context):
+    def apply(self, context, output):
         changed = False
         name = self.resource.name
         to = self.resource.to
@@ -121,7 +121,7 @@ class RemoveLink(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(RemoveLink, self).isvalid(*args, **kwargs)
 
-    def apply(self, context):
+    def apply(self, context, output):
         if context.transport.lexists(self.resource.name):
             if not context.transport.islink(self.resource.name):
                 raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))

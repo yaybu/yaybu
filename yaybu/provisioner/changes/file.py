@@ -121,6 +121,6 @@ class FileChangeTextRenderer(changes.TextRenderer):
         if not binary_buffers(previous, replacement):
             diff = "".join(difflib.unified_diff(previous.splitlines(1), replacement.splitlines(1)))
             for l in diff.splitlines():
-                self.logger.info("    %s", l)
+                self.logger.info("    %s" % l)
         else:
             self.logger.notice("Binary contents; not showing delta")

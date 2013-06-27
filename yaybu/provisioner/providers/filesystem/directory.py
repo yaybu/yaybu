@@ -48,7 +48,7 @@ class Directory(provider.Provider):
             if not transport.isdir(path):
                 raise error.PathComponentNotDirectory(path)
 
-    def apply(self, context):
+    def apply(self, context, output):
         changed = False
         self.check_path(context, os.path.dirname(self.resource.name))
 
@@ -69,7 +69,7 @@ class RemoveDirectory(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(RemoveDirectory, self).isvalid(*args, **kwargs)
 
-    def apply(self, context):
+    def apply(self, context, output):
         if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if context.transport.exists(self.resource.name):
@@ -88,7 +88,7 @@ class RemoveDirectoryRecursive(provider.Provider):
     def isvalid(self, *args, **kwargs):
         return super(RemoveDirectoryRecursive, self).isvalid(*args, **kwargs)
 
-    def apply(self, context):
+    def apply(self, context, output):
         if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
             raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
         if context.transport.exists(self.resource.name):

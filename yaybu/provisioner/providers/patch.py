@@ -103,7 +103,7 @@ class Patch(provider.Provider):
 
         return stdout
 
-    def apply(self, context):
+    def apply(self, context, output):
         name = self.resource.name
         self.check_path(context, os.path.dirname(name), context.simulate)
 

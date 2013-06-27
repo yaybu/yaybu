@@ -144,7 +144,6 @@ class Config(BaseConfig):
             self.load_uri(defaults_gpg)
 
         self.changelog = changes.ChangeLog(self)
-        self.changelog.configure_session_logging()
 
     def setup_openers(self, searchpath):
         self.add({"yaybu": {"searchpath": searchpath or []}})

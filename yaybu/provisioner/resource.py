@@ -33,8 +33,8 @@ class ResourceType(type):
     def __new__(meta, class_name, bases, new_attrs):
         cls = type.__new__(meta, class_name, bases, {})
 
-	# Ultimately do this like Django and have a contribute_to_class, i
-	# think
+        # Ultimately do this like Django and have a contribute_to_class, i
+        # think
         for k, v in new_attrs.items():
             if isinstance(v, Argument):
                 v.name = k #.replace("_", "-")
@@ -194,11 +194,9 @@ class Resource(object):
             p = Provider(self)
             p.test(context)
 
-    def apply(self, context, yay=None, policy=None):
+    def apply(self, context, output=None, policy=None):
         """ Apply the provider for the selected policy, and then fire any
         events that are being observed. """
-        if yay is None:
-            yay = {}
         if policy is None:
             pol = self.get_default_policy(context)
         else:
@@ -206,7 +204,7 @@ class Resource(object):
             pol = pol_class(self)
         prov_class = pol.get_provider(context)
         prov = prov_class(self)
-        changed = prov.apply(context)
+        changed = prov.apply(context, output)
         context.state.clear_override(self)
         if changed:
             self.fire_event(context, pol.name)
@@ -376,7 +374,9 @@ class ResourceBundle(ordereddict.OrderedDict):
 
         something_changed = False
         for resource in self.values():
-            with ctx.changelog.resource(resource):
-                if resource.apply(ctx, config):
+            with ctx.changelog.resource(resource) as output:
+                if resource.apply(ctx, output):
                     something_changed = True
+
         return something_changed
+

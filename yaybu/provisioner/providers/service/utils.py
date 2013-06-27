@@ -68,7 +68,7 @@ class _Start(object):
 
     policies = (resources.service.ServiceStartPolicy,)
 
-    def apply(self, context):
+    def apply(self, context, output):
         changed = self.ensure_enabled(context)
 
         if self.status(context) == "running":
@@ -83,7 +83,7 @@ class _Stop(object):
 
     policies = (resources.service.ServiceStopPolicy,)
 
-    def apply(self, context):
+    def apply(self, context, output):
         changed = self.ensure_disabled(context)
 
         if self.status(context) == "not-running":
@@ -98,7 +98,7 @@ class _Restart(object):
 
     policies = (resources.service.ServiceRestartPolicy,)
 
-    def apply(self, context):
+    def apply(self, context, output):
         changed = self.ensure_enabled(context)
 
         if self.status(context) == "not-running":

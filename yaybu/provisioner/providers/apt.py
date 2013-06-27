@@ -49,7 +49,7 @@ class AptInstall(provider.Provider):
             return False
         return super(AptInstall, self).isvalid(policy, resource, yay)
 
-    def apply(self, context):
+    def apply(self, context, output):
         if is_installed(context, self.resource):
             return False
 
@@ -76,7 +76,7 @@ class AptUninstall(provider.Provider):
     def isvalid(self, policy, resource, yay):
         return super(AptUninstall, self).isvalid(policy, resource, yay)
 
-    def apply(self, context):
+    def apply(self, context, output):
         if not is_installed(context, self.resource):
             return False
 
