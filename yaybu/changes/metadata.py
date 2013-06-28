@@ -72,19 +72,18 @@ class MetadataSync(Change):
             rid = uid or rid
 
             if not rid in remote_lookup:
-                renderer.info("Adding '%s'" % rid)
-                self.changed = True
-                if not ctx.simulate:
-                    self.add(record)
-                continue
+                with ctx.root.ui.throbber("Adding '%s'" % rid) as throbber:
+                    self.changed = True
+                    if not ctx.simulate:
+                        self.add(record)
+                    continue
 
             if record != remote_lookup[rid]:
-                print record, remote_lookup[rid]
-                renderer.info("Updating '%s'" % rid)
-                self.changed = True
-                if not ctx.simulate:
-                    self.update(rid, record)
-                continue
+                with ctx.root.ui.throbber("Updating '%s'" % rid) as throbber:
+                    self.changed = True
+                    if not ctx.simulate:
+                        self.update(rid, record)
+                    continue
 
             # renderer.debug("'%s' not changed" % rid)
 

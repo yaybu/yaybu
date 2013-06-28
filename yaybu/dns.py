@@ -171,6 +171,14 @@ class Zone(base.GraphExternalAction):
         with self.root.ui.throbber("Testing DNS credentials/connectivity") as throbber:
             self.driver.list_zones()
 
+    def _get_zone_by_domain(self, domain):
+        zones = [z for z in self.driver.list_zones() if z.domain == domain]
+
+        if len(zones) > 1:
+            raise errors.Error("Found multiple zones that match domain name '%s'" % domain)
+        elif len(zones) == 1:
+            return zones[0]
+
     def apply(self):
         if self.root.readonly:
             return
@@ -178,14 +186,7 @@ class Zone(base.GraphExternalAction):
         driver = self.driver
 
         domain = self.params.domain.as_string().rstrip(".") + "."
-        zones = [z for z in driver.list_zones() if z.domain == domain]
-
-        if len(zones) > 1:
-            raise errors.Error("Found multiple zones that match domain name '%s'" % domain)
-        elif len(zones) == 1:
-            zone = zones[0]
-        else:
-            zone = None
+        zone = self._get_zone_by_domain(domain)
 
         zchange = self.root.changelog.apply(
             ZoneSync(
@@ -193,6 +194,12 @@ class Zone(base.GraphExternalAction):
                 driver = driver,
                 zone = zone,
             ))
+
+        if not zone:
+            zone = self._get_zone_by_domain(domain)
+
+        if not zone:
+            raise errors.Error("Failed to create new zone")
 
         rchange = self.root.changelog.apply(
             RecordSync(

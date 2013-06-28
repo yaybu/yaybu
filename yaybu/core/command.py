@@ -208,7 +208,6 @@ class BaseYaybuCmd(OptionParsingCmd):
         graph.resolve()
 
         for actor in graph.actors:
-            print type(actor), id(actor)
             actor.test()
 
         return 0
