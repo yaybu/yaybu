@@ -176,14 +176,6 @@ class BaseYaybuCmd(OptionParsingCmd):
 
         return graph
 
-    def _resolve_graph(self, graph, expect_changes=False):
-        cfg = graph.resolve()
-
-        if expect_changes and not graph.changelog.changed:
-            raise error.NothingChanged("No changes were required")
-
-        return 0, cfg
-
     def do_expand(self, opts, args):
         """
         usage: expand
