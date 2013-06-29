@@ -58,13 +58,13 @@ class OptionParsingCmd(cmd.Cmd):
             try:
                 return func(opts, args)
 
-            except error.ExecutionError, e:
-                print str(e)
-                return e.returncode
-
             except error.Error, e:
                 print str(e)
                 return e.returncode
+
+    def postcmd(self, stop, line):
+        """Hook method executed just after a command dispatch is finished."""
+        return False
 
     def aligned_docstring(self, arg):
         """ Return a docstring for a function, aligned properly to the left """
@@ -298,7 +298,7 @@ class BaseYaybuCmd(OptionParsingCmd):
         graph.readonly = True
         raise NotImplementedError("I don't know how to find nodes in the graph yet")
 
-    def do_quit(self, opts=None, args=None):
+    def do_exit(self, opts=None, args=None):
         """ Exit yaybu """
         raise SystemExit
 
