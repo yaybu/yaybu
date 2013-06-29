@@ -51,7 +51,7 @@ def sibpath(path, sibling):
 
 _MARKER = object()
 
-def args_from_expression(func, expression):
+def args_from_expression(func, expression, ignore=()):
     if inspect.isclass(func):
         func = getattr(func, "__init__")
     args, vargs, kwargs, defaults = inspect.getargspec(func)
@@ -67,6 +67,8 @@ def args_from_expression(func, expression):
 
     result = {}
     for arg, default in zip(args, defaults):
+        if arg in ignore:
+            continue
         try:
             node = expression.get_key(arg)
         except KeyError:
