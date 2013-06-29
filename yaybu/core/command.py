@@ -126,6 +126,7 @@ class OptionParsingCmd(cmd.Cmd):
 class BaseYaybuCmd(OptionParsingCmd):
 
     prompt = "yaybu> "
+    interactive_shell = True
 
     def __init__(self, config=None, ypath=(), verbose=2, logfile=None):
         """ Global options are provided on the command line, before the
@@ -267,9 +268,34 @@ class BaseYaybuCmd(OptionParsingCmd):
             self.do_help((),("ssh",))
             return
 
-        graph = self._get_graph(opts, args)
+        graph = self._get_graph(opts, args[1:])
         graph.readonly = True
-        raise NotImplementedError("I don't know how to find compute nodes in the graph yet")
+
+        node = graph.parse_expression(args[0])
+
+        try:
+            hostname = node.fqdn.as_string()
+        except yay.errors.NoMatching as e:
+            node = node.server
+            hostname = node.fqdn.as_string()
+
+        username = node.port.as_string(default="ubuntu")
+        port = node.port.as_string(default="22")
+
+        cmd = [
+            "/usr/bin/ssh",
+            "-p", port,
+            "-o", "StrictHostKeyChecking=no",
+            "-o", "UserKnownHostsFile=/dev/null",
+            "%s@%s" % (username, hostname),
+            ]
+
+        if self.interactive_shell:
+            import subprocess
+            p = subprocess.Popen(cmd)
+            p.wait()
+        else:
+            os.execvp(cmd[0], cmd)
 
     def do_status(self, opts, args):
         """

@@ -92,6 +92,7 @@ def main():
 
     try:
         if args:
+            com.interactive_shell = False
             sys.exit(com.onecmd(" ".join(args)) or 0)
         else:
             com.cmdloop()
