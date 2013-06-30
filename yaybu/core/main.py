@@ -25,7 +25,7 @@ except ImportError:
 
 from yaybu import util
 from yaybu.core.util import version
-from yaybu.core import command
+from yaybu.core import command, gpgagent
 
 usage = """usage: %prog [options] [command]
 when run without any commands yaybu drops to a command prompt.
@@ -69,27 +69,7 @@ def main():
 
     com = command.YaybuCmd(config=opts.config, verbose=opts.verbose, ypath=opts.ypath, logfile=opts.logfile)
 
-    pid = None
-    if util.is_mac_bundle() and not "GPG_AGENT_INFO" in os.environ:
-        path = util.get_bundle_path("Resources/bin/gpg-agent")
-        pinentry = util.get_bundle_path("Resources/libexec/pinentry-mac.app/Contents/MacOS/pinentry-mac")
-
-        # Starting gpg-agent on a fresh computer causes us to hang!
-        # Precreating .gnupg seems to 'fix' it...
-        def ensure_directory(path, mode=0700):
-            if not os.path.exists(path):
-                os.makedirs(path)
-                os.chown(path, mode)
-        ensure_directory(os.path.expanduser("~/.gnupg"))
-        ensure_directory(os.path.expanduser("~/.gnupg/private-keys-v1.d"))
-
-        import subprocess
-        p = subprocess.Popen([path, "--daemon", "--sh", "--pinentry-program", pinentry], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        os.environ["GPG_AGENT_INFO"] = GPG_AGENT_INFO = stdout.strip().rsplit(";", 1)[0].split("=", 1)[1]
-        sock, pid, umm = GPG_AGENT_INFO.split(":")
-        pid = int(pid)
-
+    gpgagent.setup_gpg_agent()
     try:
         if args:
             com.interactive_shell = False
@@ -97,9 +77,7 @@ def main():
         else:
             com.cmdloop()
     finally:
-        if not pid is None:
-            os.kill(pid, signal.SIGKILL)
-            del os.environ["GPG_AGENT_INFO"]
+        gpgagent.teardown_gpg_agent()
 
 
 if __name__ == "__main__":

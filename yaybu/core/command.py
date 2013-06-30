@@ -321,9 +321,11 @@ class BundledDarwinYaybuCmd(BaseYaybuCmd):
 
     def is_on_path(self):
         for path in os.environ.get("PATH", "").split(":"):
-                bin = os.path.join(path, "yaybu")
-                if os.path.exists(bin):
-                    return True
+            bin = os.path.join(path, "yaybu")
+            if "Yaybu.app" in path:
+                continue
+            if os.path.exists(bin):
+                return True
         return False
 
     def do_link(self, opts, args):
@@ -347,12 +349,39 @@ class BundledDarwinYaybuCmd(BaseYaybuCmd):
             end tell
             set pf to POSIX path of af
             """)
+
         if p.returncode:
-            print stdout
-            print stderr
-            return 1
-        path = stdout.strip()
+            print "Yaybufile not changed"
+            return 0
+
+        path = os.path.abspath(stdout.strip())
+        if not os.path.exists(path):
+            print "'%s' doesn not exist. Yaybufile not changed"
+            return 0
+
         self.config = path
+        self.ypath = [os.path.dirname(path)]
+        print self.ypath
+
+    def do_update(self):
+        from Foundation import NSBundle
+        import objc
+        import plistlib
+
+        from yaybu.util import get_bundle_path
+
+        bundle = NSBundle.mainBundle()
+
+        d =  NSBundle.mainBundle().infoDictionary()
+        p = plistlib.Plist.fromFile(get_bundle_path("Info.plist"))
+        d.update(p)
+
+        objc.loadBundle('Sparkle', globals(), bundle_path=get_bundle_path('Frameworks/Sparkle.framework'))
+        s = SUUpdater.sharedUpdater()
+        s.checkForUpdatesInBackground()
+
+        from PyObjCTools import AppHelper
+        AppHelper.runConsoleEventLoop(installInterrupt=True)
 
 
 if is_mac_bundle():
