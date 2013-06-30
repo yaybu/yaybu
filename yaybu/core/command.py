@@ -306,7 +306,7 @@ class BaseYaybuCmd(OptionParsingCmd):
     def do_EOF(self, opts, args):
         """ Exit yaybu """
         print
-        self.do_quit()
+        self.do_exit()
 
 
 class BundledDarwinYaybuCmd(BaseYaybuCmd):
