@@ -15,6 +15,7 @@
 import os
 import logging
 import sys
+import getpass
 
 import yay
 from yay import errors
@@ -54,7 +55,7 @@ class Provision(base.GraphExternalAction):
         logger.info("Updating node %r" % hostname)
 
         self.host = hostname
-        self.user = self.params.server.user.as_string(default='ubuntu')
+        self.user = self.params.server.user.as_string(default=getpass.getuser())
         self.port = self.params.server.port.as_string(default=22)
 
         root = self.root
