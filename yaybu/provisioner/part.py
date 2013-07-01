@@ -107,10 +107,9 @@ class Provision(base.GraphExternalAction):
         bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources, verbose_errors=self.verbose>2)
         bundle.bind()
 
-        with root.ui.throbber("Applying configuration to '%s'" % hostname) as throbber:
-            bundle.apply(self, None)
-            if not self.simulate and self.transport.exists(self.state.save_file):
-                self.transport.unlink(self.state.save_file)
+        bundle.apply(self, None)
+        if not self.simulate and self.transport.exists(self.state.save_file):
+            self.transport.unlink(self.state.save_file)
 
     def test(self):
         bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources)

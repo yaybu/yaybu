@@ -372,11 +372,14 @@ class ResourceBundle(ordereddict.OrderedDict):
             if hasattr(resource, "_original_hash"):
                 resource._original_hash = resource.hash(ctx)
 
-        something_changed = False
-        for resource in self.values():
-            with ctx.changelog.resource(resource) as output:
-                if resource.apply(ctx, output):
-                    something_changed = True
+        with ctx.root.ui.throbber("Applying configuration...") as throbber:
+            something_changed = False
+            for i, resource in enumerate(self.values(), start=1):
+                with ctx.changelog.resource(resource) as output:
+                    if resource.apply(ctx, output):
+                        something_changed = True
+                throbber.message = "Applying configuration... (%s/%s)" % (i, len(self.values()))
+                throbber.throb()
 
         return something_changed
 
