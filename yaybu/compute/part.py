@@ -150,10 +150,8 @@ class Compute(base.GraphExternalAction):
 
         self.state.update(their_name = n.name)
 
-        #FIXME: GAH, AWS+libcloud...
-        #self.metadata['mapped_as'] = n.public_ips[0]
-        #self.metadata['address'] = n.private_ips[0]
-        self.metadata['address'] = n.public_ips[0]
+        self.metadata['public_ips'] = n.public_ips
+        self.metadata['private_ips'] = n.private_ips
 
         self.metadata['fqdn'] = n.public_ips[0]
 
@@ -170,6 +168,11 @@ class Compute(base.GraphExternalAction):
                        'mapped_as': pub}
 
         self.metadata['interfaces'] = list(interfaces())
+
+    def _fake_node_info(self):
+        self.metadata['public_ips'] = ['0.0.0.0']
+        self.metadata['private_ips'] = ['0.0.0.0']
+        self.metadata['fqdn'] = 'missing-host'
 
     def test(self):
         with self.root.ui.throbber("Testing compute credentials/connectivity"):
@@ -193,6 +196,7 @@ class Compute(base.GraphExternalAction):
             return
 
         if self.root.readonly:
+            self._fake_node_info()
             return
 
         logger.debug("Node will be %r" % self.full_name)
