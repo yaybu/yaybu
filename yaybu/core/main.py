@@ -18,11 +18,6 @@ import optparse
 import logging, atexit
 import signal
 
-try:
-    import wingdbstub
-except ImportError:
-    pass
-
 from yaybu import util
 from yaybu.core.util import version
 from yaybu.core import command, gpgagent
