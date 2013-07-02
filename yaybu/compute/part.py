@@ -27,10 +27,6 @@ from libcloud.common.types import LibcloudError
 from libcloud.compute.types import NodeState
 from libcloud.compute.base import NodeImage, NodeSize
 
-from paramiko.ssh_exception import SSHException
-from paramiko.rsakey import RSAKey
-from paramiko.dsskey import DSSKey
-
 from .vmware import VMWareDriver
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
@@ -90,20 +86,6 @@ class Compute(base.GraphExternalAction):
     @memoized
     def sizes(self):
         return dict((s.id, s) for s in self.driver.list_sizes())
-
-    @property
-    @memoized
-    def key(self):
-        """ Load the key specified by name. """
-        openers = self.root.openers
-        saved_exception = None
-        for pkey_class in (RSAKey, DSSKey):
-            try:
-                fp = openers.open(str(self.params.key))
-                return pkey_class.from_private_key(fp)
-            except SSHException, e:
-                saved_exception = e
-        raise saved_exception
 
     def _find_node(self, name):
         existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]

@@ -59,7 +59,7 @@ class Argument(object):
         except errors.NoMatching:
             return self.default
 
- 
+
 class Boolean(Argument):
 
     """ Represents a boolean. "1", "yes", "on" and "true" are all considered
