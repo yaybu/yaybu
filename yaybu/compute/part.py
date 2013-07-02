@@ -191,7 +191,7 @@ class Compute(base.GraphExternalAction):
                     name=self.full_name,
                     image=self._get_image(),
                     size=self._get_size(),
-                    **args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"))
+                    **args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
                     )
 
             logger.debug("Waiting for node %r to start" % (self.full_name, ))

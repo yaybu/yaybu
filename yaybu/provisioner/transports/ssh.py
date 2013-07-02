@@ -17,6 +17,7 @@ import pipes
 import select
 import collections
 import socket
+import time
 import paramiko
 from paramiko.ssh_exception import SSHException
 from paramiko.rsakey import RSAKey
@@ -36,7 +37,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
     _client = None
 
     def get_private_key(self, data):
-        for KeyClass in (RSAKey, DSAKey):
+        for KeyClass in (RSAKey, DSSKey):
             try:
                 fp = StringIO.StringIO(data)
                 return KeyClass.from_private_key(fp)
@@ -52,18 +53,18 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         client.set_missing_host_key_policy(self.missing_host_key_policy)
         for tries in range(self.connection_attempts):
             try:
-                if self.context.private_key is not None:
-                    private_key = context.openers.open(self.context.private_key).read()
+                if self.context.private_key:
+                    private_key = self.context.root.openers.open(self.context.private_key).read()
 
                     client.connect(hostname=self.context.host,
-                                   username=self.context.user or "ubuntu",
-                                   port=self.context.port or 22,
+                                   username=self.context.user,
+                                   port=self.context.port,
                                    pkey=self.get_private_key(private_key),
                                    look_for_keys=False)
                 else:
                     client.connect(hostname=self.context.host,
-                                   username=self.context.user or "ubuntu",
-                                   port=self.context.port or 22,
+                                   username=self.context.user,
+                                   port=self.context.port,
                                    look_for_keys=True)
                 break
 

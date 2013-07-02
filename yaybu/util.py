@@ -50,11 +50,12 @@ def sibpath(path, sibling):
 
 
 _MARKER = object()
+_MARKER2 = object()
 
-def args_from_expression(func, expression, ignore=()):
+def args_from_expression(func, expression, ignore=(), kwargs=()):
     if inspect.isclass(func):
         func = getattr(func, "__init__")
-    args, vargs, kwargs, defaults = inspect.getargspec(func)
+    args, varg_name, kwarg_name, defaults = inspect.getargspec(func)
 
     if args[0] == "self":
         args.pop(0)
@@ -66,7 +67,7 @@ def args_from_expression(func, expression, ignore=()):
     defaults = itertools.chain(itertools.repeat(_MARKER, padding), defaults)
 
     result = {}
-    for arg, default in zip(args, defaults):
+    for arg, default in itertools.chain(zip(args, defaults), zip(kwargs, itertools.repeat(_MARKER2, len(kwargs)))):
         if arg in ignore:
             continue
         try:
@@ -74,6 +75,8 @@ def args_from_expression(func, expression, ignore=()):
         except KeyError:
             if default == _MARKER:
                 raise errors.NoMatching(arg)
+            elif default == _MARKER2:
+                continue
             result[arg] = default
         else:
             if default == _MARKER:
