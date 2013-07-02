@@ -90,7 +90,7 @@ class Execute(Resource):
     """ The user to execute the command as.
     """
 
-    group = String(default="root")
+    group = String()
     """ The group to execute the command as.
     """
 

@@ -69,7 +69,7 @@ class Execute(provider.Provider):
                     cwd=self.resource.cwd or None,
                     env=self.resource.environment or None,
                     user=self.resource.user,
-                    group=self.resource.group,
+                    group=self.resource.group or None,
                     umask=self.resource.umask
                     ))
             except error.SystemError as exc:
