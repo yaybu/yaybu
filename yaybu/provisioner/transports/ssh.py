@@ -18,6 +18,9 @@ import select
 import collections
 import socket
 import paramiko
+from paramiko.ssh_exception import SSHException
+from paramiko.rsakey import RSAKey
+from paramiko.dsskey import DSSKey
 import StringIO
 
 from yay import String
@@ -30,8 +33,16 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
 
     connection_attempts = 10
     missing_host_key_policy = paramiko.AutoAddPolicy()
-    key = None
     _client = None
+
+    def get_private_key(self, data):
+        for KeyClass in (RSAKey, DSAKey):
+            try:
+                fp = StringIO.StringIO(data)
+                return KeyClass.from_private_key(fp)
+            except SSHException as e:
+                pass
+        raise RuntimeError("Invalid private_key")
 
     def connect(self):
         if self._client:
@@ -41,11 +52,13 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         client.set_missing_host_key_policy(self.missing_host_key_policy)
         for tries in range(self.connection_attempts):
             try:
-                if self.key is not None:
+                if self.context.private_key is not None:
+                    private_key = context.openers.open(self.context.private_key).read()
+
                     client.connect(hostname=self.context.host,
                                    username=self.context.user or "ubuntu",
                                    port=self.context.port or 22,
-                                   pkey=self.key,
+                                   pkey=self.get_private_key(private_key),
                                    look_for_keys=False)
                 else:
                     client.connect(hostname=self.context.host,

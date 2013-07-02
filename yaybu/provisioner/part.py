@@ -57,6 +57,7 @@ class Provision(base.GraphExternalAction):
         self.host = hostname
         self.user = self.params.server.user.as_string(default=getpass.getuser())
         self.port = self.params.server.port.as_string(default=22)
+        self.private_key = self.params.server.private_key.as_string(default=None)
 
         root = self.root
         self.ypath = root.ypath
