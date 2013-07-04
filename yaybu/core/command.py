@@ -69,6 +69,12 @@ class OptionParsingCmd(cmd.Cmd):
         """Hook method executed just after a command dispatch is finished."""
         return False
 
+    def cmdloop(self):
+        try:
+            return cmd.Cmd.cmdloop(self)
+        except KeyboardInterrupt:
+            print "\n%sexit" % self.prompt
+
     def aligned_docstring(self, arg):
         """ Return a docstring for a function, aligned properly to the left """
         try:
