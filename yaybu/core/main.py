@@ -1,4 +1,4 @@
-# Copyright 2011 Isotoma Limited
+# Copyright 2011-2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,23 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import sys
-import optparse
-import logging, atexit
-import signal
-
-from yaybu import util
-from yaybu.core.util import version
-from yaybu.core import command, gpgagent
-
 usage = """usage: %prog [options] [command]
 when run without any commands yaybu drops to a command prompt.
 for more information on a command:
     %prog [command] -h
 """
 
-def main():
+def _main():
+    # We do the imports here so that Ctrl+C doesn't show any ugly traceback
+    import os
+    import sys
+    import optparse
+    import logging, atexit
+    import signal
+
+    from yaybu import util
+    from yaybu.core.util import version
+    from yaybu.core import command, gpgagent
+
     parser = optparse.OptionParser(version=version(), usage=usage)
     parser.disable_interspersed_args()
     parser.add_option("-p", "--ypath", default=[], action="append")
@@ -73,6 +74,13 @@ def main():
             com.cmdloop()
     finally:
         gpgagent.teardown_gpg_agent()
+
+
+def main():
+    try:
+        _main()
+    except KeyboardInterrupt:
+        print ""
 
 
 if __name__ == "__main__":

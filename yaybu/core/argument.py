@@ -26,11 +26,12 @@ import yay
 from yay import errors
 
 
-unicode_glyphs = ''.join(
-    unichr(char)
-    for char in xrange(sys.maxunicode+1)
-    if unicodedata.category(unichr(char))[0] in ('LMNPSZ')
-    )
+def get_unicode_glyphs():
+    return ''.join(
+        unichr(char)
+        for char in xrange(sys.maxunicode+1)
+        if unicodedata.category(unichr(char))[0] in ('LMNPSZ')
+        )
 
 
 # we abuse urlparse for our parsing needs
@@ -96,7 +97,7 @@ class String(Argument):
     def _generate_valid(self):
         l = []
         for i in range(random.randint(0, 1024)):
-            l.append(random.choice(unicode_glyphs))
+            l.append(random.choice(get_unicode_glyphs()))
         return "".join(l)
 
 
@@ -118,7 +119,7 @@ class FullPath(Argument):
         # TODO: needs work
         l = []
         for i in range(random.randint(0, 1024)):
-            l.append(random.choice(unicode_glyphs))
+            l.append(random.choice(get_unicode_glyphs()))
         return "/" + "".join(l)
 
 

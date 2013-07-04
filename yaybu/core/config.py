@@ -25,6 +25,12 @@ from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
 from yaybu.core.ui import TextFactory
 from yaybu import changes
 
+from yaybu.compute import Compute
+from yaybu.provisioner import Provision
+from yaybu.loadbalancer import LoadBalancer
+from yaybu.dns import Zone
+from yaybu.heroku import Heroku
+
 
 class YaybuArg:
 
@@ -125,11 +131,11 @@ class Config(BaseConfig):
 
         import yaybu
         self.builtins = {
-            "Compute": ast.PythonClassFactory(yaybu.Compute),
-            "Provisioner": ast.PythonClassFactory(yaybu.Provision),
-            "LoadBalancer": ast.PythonClassFactory(yaybu.LoadBalancer),
-            "Zone": ast.PythonClassFactory(yaybu.Zone),
-            "Heroku": ast.PythonClassFactory(yaybu.Heroku),
+            "Compute": ast.PythonClassFactory(Compute),
+            "Provisioner": ast.PythonClassFactory(Provision),
+            "LoadBalancer": ast.PythonClassFactory(LoadBalancer),
+            "Zone": ast.PythonClassFactory(Zone),
+            "Heroku": ast.PythonClassFactory(Heroku),
             }
 
         if hostname:
