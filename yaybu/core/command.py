@@ -59,9 +59,11 @@ class OptionParsingCmd(cmd.Cmd):
             try:
                 return func(opts, args)
 
-            except error.Error, e:
+            except error.Error as e:
                 print str(e)
                 return e.returncode
+            except KeyboardInterrupt:
+                print "^C"
 
     def postcmd(self, stop, line):
         """Hook method executed just after a command dispatch is finished."""
