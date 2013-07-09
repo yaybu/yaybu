@@ -185,6 +185,37 @@ class BaseYaybuCmd(OptionParsingCmd):
 
         return graph
 
+    def opts_vm(self, parser):
+        parser.add_option("-d", "--vmdir", help="directory vmware stores images", default="~/vmware")
+        parser.add_option("-i", "--image", help="url of base image", default="https://s3-eu-west-1.amazonaws.com/yaybu/yaybubase.tar.bz2")
+        parser.add_option("-c", "--filecache", help="location of copy of image file", default="~/vmware/yaybubase.tar.bz2")
+        parser.add_option("-k", "--pubkey", help="path to your public key", default="~/.ssh/id_rsa.pub")
+        parser.add_option("-n", "--vmname", help="the name of the vm within vmware", default="yaybubase")
+        parser.add_option("-u", "--vmuser", help="The username of the user account in the vm", default="ubuntu")
+        parser.add_option("-p", "--vmpass", help="The password for the vm user account", default="password")
+
+
+    def help_vm(self):
+        print "Usage: yaybu vm [options] command"
+        print
+        print "Commands:"
+        print "  list         List available virtual machine templates for download"
+        print "  install      Install a remote machine image as a new template"
+        print "  install-key  Copy your SSH key to a locally installed template vm"
+        print
+
+    def do_vm(self, opts, args):
+        """
+        usage: vm
+        Manipulate virtual machines on this host.
+        """
+        from . import vmware
+        if len(args) != 1:
+            self.do_help((), ("vm",))
+            return
+        v = vmware.VMSetup(opts)
+        v.run(args[0])
+
     def do_expand(self, opts, args):
         """
         usage: expand
