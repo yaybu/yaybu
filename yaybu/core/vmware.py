@@ -160,5 +160,5 @@ class VMSetup:
         self.vmrun("copyFileFromHostToGuest", os.path.expanduser(self.args.pubkey), "/home/ubuntu/.ssh/authorized_keys")
         self.vmrun("runProgramInGuest", "/bin/chmod", "0700", "/home/ubuntu/.ssh")
         self.vmrun("runProgramInGuest", "/bin/chmod", "0600", "/home/ubuntu/.ssh/authorized_keys")
-        self.vmrun("stop")
+        self.vmrun("runProgramInGuest", "/usr/bin/sudo", "/sbin/shutdown", "-h", "now")
 
