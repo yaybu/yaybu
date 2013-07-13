@@ -32,7 +32,7 @@ from yaybu.core.util import memoized
 from yaybu.core.state import PartState
 from yaybu.util import args_from_expression
 from yaybu import base
-
+from yaybu.i18n import _
 from yay import errors
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,7 @@ class Compute(base.GraphExternalAction):
     def _find_node(self, name):
         existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
         if len(existing) > 1:
-            raise LibcloudError("There are already multiple nodes called '%s'" % name)
+            raise LibcloudError(_("There are already multiple nodes called '%s'") % name)
         elif len(existing) == 1:
             logger.debug("Node '%s' already running - not creating new node" % (name, ))
             return existing[0]
@@ -157,7 +157,7 @@ class Compute(base.GraphExternalAction):
         self.metadata['fqdn'] = 'missing-host'
 
     def test(self):
-        with self.root.ui.throbber("Testing compute credentials/connectivity"):
+        with self.root.ui.throbber(_("Testing compute credentials/connectivity")):
             self.driver.list_nodes()
 
     def apply(self):
@@ -186,7 +186,7 @@ class Compute(base.GraphExternalAction):
         for tries in range(10):
             logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
 
-            with self.root.ui.throbber("Creating node '%r'..." % (self.full_name, )) as throbber:
+            with self.root.ui.throbber(_("Creating node '%r'...") % (self.full_name, )) as throbber:
                 node = self.driver.create_node(
                     name=self.full_name,
                     image=self._get_image(),
@@ -197,7 +197,7 @@ class Compute(base.GraphExternalAction):
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
 
             try:
-                with self.root.ui.throbber("Waiting for node '%r' to start..."% self.full_name) as throbber:
+                with self.root.ui.throbber(_("Waiting for node '%r' to start...") % self.full_name) as throbber:
                     try:
                         import time
                         old_sleep = time.sleep
@@ -238,6 +238,6 @@ class Compute(base.GraphExternalAction):
             if not self.libcloud_node:
                 return
 
-        with self.root.ui.throbber("Destroying node '%r'" % self.full_name) as throbber:
+        with self.root.ui.throbber(_("Destroying node '%r'") % self.full_name) as throbber:
             self.libcloud_node.destroy()
 
