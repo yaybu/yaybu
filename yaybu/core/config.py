@@ -30,6 +30,8 @@ from yaybu.provisioner import Provision
 from yaybu.loadbalancer import LoadBalancer
 from yaybu.dns import Zone
 from yaybu.heroku import Heroku
+from yaybu.changesource import GitChangeSource, GitHubChangeSource
+from yaybu.printer import Printer
 
 
 class YaybuArg:
@@ -136,6 +138,9 @@ class Config(BaseConfig):
             "LoadBalancer": ast.PythonClassFactory(LoadBalancer),
             "Zone": ast.PythonClassFactory(Zone),
             "Heroku": ast.PythonClassFactory(Heroku),
+            "GitChangeSource": ast.PythonClassFactory(GitChangeSource),
+            "GitHubChangeSource": ast.PythonClassFactory(GitHubChangeSource),
+            "Printer": ast.PythonClassFactory(Printer),
             }
 
         if hostname:

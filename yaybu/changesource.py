@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 import logging
+import subprocess
 
 from yaybu.changes import MetadataSync
 from yaybu.core.util import memoized
@@ -60,10 +61,10 @@ class GitChangeSource(base.GraphExternalAction):
     """
 
     def poll_loop(self):
+        import gevent
         while True: # self.running:
             self.update_remotes()
-            gevent.sleep(self.params["polling-interval"].as_integer(default=60))
-            self.changed()
+            gevent.sleep(self.params["polling-interval"].as_int(default=60))
 
     def start_listening(self):
         import gevent
@@ -78,6 +79,8 @@ class GitChangeSource(base.GraphExternalAction):
         tags = []
 
         for line in stdout.split("\n"):
+            if not line.strip():
+                continue
             sha, ref = line.split()
 
             if ref.startswith("refs/heads/"):
@@ -140,8 +143,8 @@ class GitHubChangeSource(base.GraphExternalAction):
     def apply(self):
         # To list all branches and tags:
         # http://developer.github.com/v3/git/refs/
-        # Webhook pushes:
+        # Webhook pushes:
         # https://help.github.com/articles/post-receive-hooks
-        # Do we get push events for tags???
+        # Do we get push events for tags???
         return False
 

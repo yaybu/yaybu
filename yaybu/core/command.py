@@ -347,6 +347,7 @@ class BaseYaybuCmd(OptionParsingCmd):
         graph.start_listening()
         #FIXME: This API doesn't exist - we'll need to collect any greenlets if
         # we want to block on them with gevent.joinall..
+        import gevent
         gevent.run()
 
     def do_exit(self, opts=None, args=None):
