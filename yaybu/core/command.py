@@ -338,6 +338,17 @@ class BaseYaybuCmd(OptionParsingCmd):
         graph.readonly = True
         raise NotImplementedError("I don't know how to find nodes in the graph yet")
 
+    def do_run(self, opts, args):
+        """
+        usage: run
+        Automatically update resources declared in Yaybufile as external events occur
+        """
+        graph = self._get_graph(opts, args)
+        graph.start_listening()
+        #FIXME: This API doesn't exist - we'll need to collect any greenlets if
+        # we want to block on them with gevent.joinall..
+        gevent.run()
+
     def do_exit(self, opts=None, args=None):
         """ Exit yaybu """
         raise SystemExit
