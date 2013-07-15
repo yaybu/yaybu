@@ -20,9 +20,6 @@ from yay import ast, errors
 
 class Printer(base.GraphExternalAction):
 
-    def start_listening(self):
-        self.params.message.subscribe(self.changed)
-
     def test(self):
         pass
 

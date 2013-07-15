@@ -67,6 +67,7 @@ class GitChangeSource(base.GraphExternalAction):
             gevent.sleep(self.params["polling-interval"].as_int(default=60))
 
     def start_listening(self):
+        super(GitChangeSource, self).start_listening()
         import gevent
         gevent.spawn(self.poll_loop)
 
@@ -90,13 +91,9 @@ class GitChangeSource(base.GraphExternalAction):
                      continue
                 tags.append(ref[10:])
 
-        if self.metadata.get("branches", {}) != branches:
-            self.metadata["branches"] = branches
-            self.changed()
-
-        if self.metadata.get("tags", []) != tags:
-            self.metadata["tags"] = tags
-            self.changed()
+        # self.members.set("branches", branches)
+        # self.members.set("tags", tags)
+        self.members.set("master", branches["master"])
 
         #FIXME: In both of the above cases we are quite broad with our change
         # notification. It is raised by the container, which means more
