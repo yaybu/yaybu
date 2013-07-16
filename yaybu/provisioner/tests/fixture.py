@@ -40,7 +40,7 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         FakechrootTransport.chroot_path = self.chroot_path
         FakechrootTransport.overlay_dir = self.overlay_dir
 
-        from yaybu import Provision
+        from yaybu.provisioner import Provision
         Provision.Transport = FakechrootTransport
 
         filespath = os.path.join(self.chroot_path, "/tmp", "files")
