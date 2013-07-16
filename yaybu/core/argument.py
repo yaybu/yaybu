@@ -60,6 +60,9 @@ class Argument(object):
         except errors.NoMatching:
             return self.default
 
+    def __get_censored__(self, instance, owner):
+        return self.__get__(instance, owner)
+
 
 class Boolean(Argument):
 

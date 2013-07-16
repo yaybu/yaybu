@@ -383,3 +383,17 @@ class ResourceBundle(ordereddict.OrderedDict):
 
         return something_changed
 
+
+class Censored(object):
+    def __init__(self, resource):
+        self.resource = resource
+        self.klass = resource.__class__
+
+    def __getattr__(self, key):
+        attr = getattr(self.klass, key, None)
+        if not attr:
+            raise AttributeError(key)
+        if isinstance(attr, Argument):
+            return attr.__get_censored__(self.resource)
+        return getattr(self,resource, key)
+
