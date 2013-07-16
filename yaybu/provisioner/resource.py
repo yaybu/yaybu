@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import sys, os, hashlib
-from yaybu.core.argument import Argument, List, PolicyArgument, String
+from yaybu.core.argument import Property, Argument, List, PolicyArgument, String
 from yaybu.core import policy
 from yaybu import error
 import collections
@@ -31,14 +31,7 @@ class ResourceType(type):
     resources = {}
 
     def __new__(meta, class_name, bases, new_attrs):
-        cls = type.__new__(meta, class_name, bases, {})
-
-        # Ultimately do this like Django and have a contribute_to_class, i
-        # think
-        for k, v in new_attrs.items():
-            if isinstance(v, Argument):
-                v.name = k #.replace("_", "-")
-            setattr(cls, k, v)
+        cls = type.__new__(meta, class_name, bases, new_attrs)
 
         cls.policies = AvailableResourcePolicies()
 
@@ -97,14 +90,14 @@ class Resource(object):
 
     """
 
-    policy = PolicyArgument()
+    policy = Property(PolicyArgument)
     """ The list of policies provided by configuration. This is an argument
     like any other, but has a complex representation that holds the conditions
     and options for the policies as specified in the input file. """
 
-    name = String()
+    name = Property(String)
 
-    watch = List(default=[])
+    watch = Property(List, default=[])
     """ A list of files to monitor while this resource is applied
 
     The file will be hashed before and after a resource is applied.
@@ -133,12 +126,18 @@ class Resource(object):
         self.inner = PythonicWrapper(inner)
         self.observers = collections.defaultdict(list)
 
+        for k in dir(self):
+            prop = getattr(self, k)
+            if isinstance(prop, Property):
+                print prop.klass, prop.kwargs
+                setattr(self, k, prop.klass(self, getattr(self.inner, k), **prop.kwargs))
+
     @classmethod
     def get_argument_names(klass):
         for k in dir(klass):
             attr = getattr(klass, k)
-            if isinstance(attr, Argument):
-                yield attr.name
+            if isinstance(attr, Property):
+                yield k
 
     def get_argument_values(self):
         """ Return all argument names and values in a dictionary. If an
@@ -149,8 +148,8 @@ class Resource(object):
         for key in self.get_argument_names():
             retval[key] = getattr(self, key, None)
 
-    def register_observer(self, when, resource, policy, immediately):
-        self.observers[when].append((immediately, resource, policy))
+    def register_observer(self, when, resource, policy):
+        self.observers[when].append((resource, policy))
 
     def validate(self, context):
         """ Validate that this resource is correctly specified. Will raise
@@ -213,23 +212,22 @@ class Resource(object):
     def fire_event(self, context, name):
         """ Apply the appropriate policies on the resources that are observing
         this resource for the firing of a policy. """
-        for immediately, resource, policy in  self.observers[name]:
-            if immediately is False:
-                raise NotImplementedError
+        for resource, policy in  self.observers[name]:
             context.state.override(resource, policy)
 
     def bind(self, resources):
         """ Bind this resource to all the resources on which it triggers.
         Returns a list of the resources to which we are bound. """
         bound = []
-        if self.policy is not None:
+        if self.policy.resolve() is not None:
             for trigger in self.policy.triggers:
                 bound.append(trigger.bind(resources, self))
         return bound
 
     def get_potential_policies(self):
-        if self.policy is not None:
-            return [P(self) for P in self.policy.all_potential_policies(self)]
+        policy = self.policy.resolve()
+        if policy:
+            return [P(self) for P in policy.all_potential_policies(self)]
         else:
             return [self.policies.default()(self)]
 
@@ -237,8 +235,9 @@ class Resource(object):
         """ Return an instantiated policy for this resource. """
         selected = context.state.overridden_policy(self)
         if not selected:
-            if self.policy is not None:
-                selected = self.policy.literal_policy(self)
+            policy = self.policy.resolve()
+            if policy:
+                selected = policy.literal_policy(self)
             else:
                 selected = self.policies.default()
         return selected(self)
@@ -275,6 +274,7 @@ class ResourceBundle(ordereddict.OrderedDict):
                 bundle.add_from_node(node)
 
         except LanguageError as exc:
+            raise
             p = error.ParseError()
             p.msg = str(exc)
             if verbose_errors:
@@ -286,6 +286,7 @@ class ResourceBundle(ordereddict.OrderedDict):
             raise p
 
         except error.ParseError as exc:
+            raise
             if getattr(node, "anchor", None):
                 exc.msg += "\nFile %s, line %d, column %s" % (node.anchor.source, node.anchor.lineno, "unknown")
                 exc.file = node.anchor.source
@@ -339,12 +340,15 @@ class ResourceBundle(ordereddict.OrderedDict):
         self[resource.id] = resource
 
         # Create implicit File[] nodes for any watched files
-        for watched in resource.watch:
-            w = self.add("File", bind({
-                "name": watched,
-                "policy": "watched",
-            }))
-            w._original_hash = None
+        try:
+            for watched in resource.watch:
+                w = self.add("File", bind({
+                    "name": watched,
+                    "policy": "watched",
+                }))
+                w._original_hash = None
+        except errors.NoMatching:
+            pass
 
         return resource
 

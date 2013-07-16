@@ -22,6 +22,7 @@ from yaybu.core.policy import (Policy,
                                NAND)
 
 from yaybu.core.argument import (
+    Property,
     FullPath,
     String,
     Integer,
@@ -45,34 +46,34 @@ class Patch(Resource):
  
     """
 
-    name = FullPath()
+    name = Property(FullPath)
     """The full path to the file this resource represents."""
 
-    source = FullPath()
+    source = Property(FullPath)
     """ The full path to a file to copy to target and patch """
 
-    patch = File()
+    patch = Property(File)
 
-    strip = Integer(default=0)
+    strip = Property(Integer, default=0)
     """ Strip the smallest prefix containing ``strip`` leading slashes from
     each file name found in the patch. """
 
-    owner = String(default="root")
+    owner = Property(String, default="root")
     """A unix username or UID who will own created objects. An owner that
     begins with a digit will be interpreted as a UID, otherwise it will be
     looked up using the python 'pwd' module."""
 
-    group = String(default="root")
+    group = Property(String, default="root")
     """A unix group or GID who will own created objects. A group that begins
     with a digit will be interpreted as a GID, otherwise it will be looked up
     using the python 'grp' module."""
 
-    mode = Octal(default="644")
+    mode = Property(Octal, default="644")
     """A mode representation as an octal. This can begin with leading zeros if
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work."""
 
-    template_args = Dict(default={})
+    template_args = Property(Dict, default={})
     """The arguments passed to the template."""
 
 

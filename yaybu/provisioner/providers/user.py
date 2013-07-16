@@ -35,8 +35,10 @@ class User(provider.Provider):
     def get_user_info(self, context):
         fields = ("name", "passwd", "uid", "gid", "gecos", "dir", "shell")
 
+        username = self.resource.name.as_string()
+
         try:
-            info_tuple = context.transport.getpwnam(self.resource.name)
+            info_tuple = context.transport.getpwnam(username)
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False
@@ -52,7 +54,7 @@ class User(provider.Provider):
             info[field] = info_tuple[i]
 
         try:
-            shadow = context.transport.getspnam(self.resource.name)
+            shadow = context.transport.getspnam(username)
             info['passwd'] = shadow.sp_pwd
             if shadow.sp_pwd == "!":
                 info['disabled-login'] = True

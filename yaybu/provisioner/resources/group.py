@@ -19,6 +19,7 @@ from yaybu.core.policy import (
     Present,
     )
 from yaybu.core.argument import (
+    Property,
     String,
     Integer,
     Boolean,
@@ -37,17 +38,17 @@ class Group(Resource):
             system: true
     """
 
-    name = String()
+    name = Property(String)
     """ The name of the unix group. """
 
-    gid = Integer()
+    gid = Property(Integer)
     """ The group ID associated with the group. If this is not specified one will be chosen. """
 
-    system = Boolean(default=False)
+    system = Property(Boolean, default=False)
     """ Whether or not this is a system group - i.e. the new group id will be
     taken from the system group id list. """
 
-    password = String()
+    password = Property(String)
     """ The password for the group, if required """
 
 

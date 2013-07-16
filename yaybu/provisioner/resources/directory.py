@@ -22,6 +22,7 @@ from yaybu.core.policy import (Policy,
                                NAND)
 
 from yaybu.core.argument import (
+    Property,
     FullPath,
     String,
     Integer,
@@ -46,19 +47,19 @@ class Directory(Resource):
 
     """
 
-    name = FullPath()
+    name = Property(FullPath)
     """ The full path to the directory on disk """
 
-    owner = String(default="root")
+    owner = Property(String, default="root")
     """ The unix username who should own this directory, by default this is 'root' """
 
-    group = String(default="root")
+    group = Property(String, default="root")
     """ The unix group who should own this directory, by default this is 'root' """
 
-    mode = Octal(default="755")
+    mode = Property(Octal, default="755")
     """ The octal mode that represents this directory's permissions, by default this is '755'. """
 
-    parents = Boolean(default=False)
+    parents = Property(Boolean, default=False)
     """ Create parent directories as needed, using the same ownership and
     permissions, this is False by default. """
 

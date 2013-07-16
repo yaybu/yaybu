@@ -19,6 +19,7 @@ from yaybu.core.policy import (
     Present,
     )
 from yaybu.core.argument import (
+    Property,
     String,
     File,
     Boolean,
@@ -38,17 +39,18 @@ class Package(Resource):
 
     """
 
-    name = String()
+    name = Property(String)
     """ The name of the package. This can be a single package or a list can be
     supplied. """
 
-    version = String()
+    version = Property(String)
     """ The version of the package, if only a single package is specified and
     the appropriate provider supports it (the Apt provider does not support
     it). """
 
-    purge = Boolean(default=False)
+    purge = Property(Boolean, default=False)
     """ When removing a package, whether to purge it or not. """
+
 
 class PackageInstallPolicy(Policy):
 
@@ -64,6 +66,7 @@ class PackageInstallPolicy(Policy):
         Present("name"),
         Absent("purge"),
         )
+
 
 class PackageUninstallPolicy(Policy):
 
