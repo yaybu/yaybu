@@ -21,6 +21,7 @@ from yaybu.core.policy import (
     NAND)
 
 from yaybu.core.argument import (
+    Property,
     FullPath,
     String,
     Integer,
@@ -56,20 +57,20 @@ class Execute(Resource):
 
     """
 
-    name = String()
+    name = Property(String)
     """ The name of this resource. This should be unique and descriptive, and
     is used so that resources can reference each other. """
 
-    command = String()
+    command = Property(String)
     """ If you wish to run a single command, then this is the command. """
 
-    commands = List()
+    commands = Property(List)
     """ If you wish to run multiple commands, provide a list """
 
-    cwd = FullPath(default='/')
+    cwd = Property(FullPath, default='/')
     """ The current working directory in which to execute the command. """
 
-    environment = Dict()
+    environment = Property(Dict)
     """
 
     The environment to provide to the command, for example::
@@ -81,35 +82,36 @@ class Execute(Resource):
                 FOO: bar
     """
 
-    returncode = Integer(default=0)
+    returncode = Property(Integer, default=0)
     """ The expected return code from the command, defaulting to 0. If the
     command does not return this return code then the resource is considered
     to be in error. """
 
-    user = String(default="root")
+    user = Property(String, default="root")
     """ The user to execute the command as.
     """
 
-    group = String()
+    group = Property(String)
     """ The group to execute the command as.
     """
 
-    umask = Octal(default='022')
+    umask = Property(Octal, default='022')
     """ The umask to use when executing this command """
 
-    unless = String(default="")
+    unless = Property(String, default="")
     """ A command to run to determine is this execute should be actioned
     """
 
-    creates = FullPath()
+    creates = Property(FullPath)
     """ The full path to a file that execution of this command creates. This
     is used like a "touch test" in a Makefile. If this file exists then the
     execute command will NOT be executed. """
 
-    touch = FullPath()
+    touch = Property(FullPath)
     """ The full path to a file that yaybu will touch once this command has
     completed successfully. This is used like a "touch test" in a Makefile. If
     this file exists then the execute command will NOT be executed. """
+
 
 class ExecutePolicy(Policy):
 

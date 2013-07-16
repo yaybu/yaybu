@@ -23,7 +23,6 @@ from yaybu.provisioner.resources import (
     package,
     patch,
     user,
-    prompt,
     service
     )
 

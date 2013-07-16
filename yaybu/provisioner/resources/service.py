@@ -21,6 +21,7 @@ from yaybu.core.policy import (
     NAND)
 
 from yaybu.core.argument import (
+    Property,
     FullPath,
     String,
     Boolean,
@@ -32,33 +33,33 @@ class Service(Resource):
 
     """ This represents service startup and shutdown via an init daemon. """
 
-    name = String()
+    name = Property(String)
     """ A unique name representing an initd service.
 
     This would normally match the name as it appears in /etc/init.d.
     """
 
-    priority = Integer(default=99)
+    priority = Property(Integer, default=99)
     """ Priority of the service within the boot order.
 
     This attribute will have no effect when using a dependency or event based
     init.d subsystem like upstart or systemd. """
 
-    start = String()
+    start = Property(String)
     """ A command that when executed will start the service.
 
     If not provided, the provider will use the default service start invocation
     for the init.d system in use.
     """
 
-    stop = String()
+    stop = Property(String)
     """ A command that when executed will start the service.
 
     If not provided, the provider will use the default service stop invocation
     for the init.d system in use.
     """
 
-    restart = String()
+    restart = Property(String)
     """ A command that when executed will restart the service.
 
     If not provided, the provider will use the default service restart invocation
@@ -66,14 +67,14 @@ class Service(Resource):
     if the restart script is avilable the service will be stopped and started instead.
     """
 
-    reconfig = String()
+    reconfig = Property(String)
     """ A command that when executed will make the service reload its
     configuration file. """
 
-    running = String()
+    running = Property(String)
     """ A comamnd to execute to determine if a service is running. Should have an exit code of 0 for success. """
 
-    pidfile = FullPath()
+    pidfile = Property(FullPath)
     """ Where the service creates its pid file.
 
     This can be provided instead of a status command as an alternative way of checking if

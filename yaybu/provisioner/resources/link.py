@@ -22,6 +22,7 @@ from yaybu.core.policy import (Policy,
                                NAND)
 
 from yaybu.core.argument import (
+    Property,
     FullPath,
     String,
     Integer,
@@ -47,22 +48,23 @@ class Link(Resource):
 
     """
 
-    name = FullPath()
+    name = Property(FullPath)
     """The name of the file this resource represents."""
 
-    owner = String(default="root")
+    owner = Property(String, default="root")
     """A unix username or UID who will own created objects. An owner that
     begins with a digit will be interpreted as a UID, otherwise it will be
     looked up using the python 'pwd' module."""
 
-    group = String(default="root")
+    group = Property(String, default="root")
     """A unix group or GID who will own created objects. A group that begins
     with a digit will be interpreted as a GID, otherwise it will be looked up
     using the python 'grp' module."""
 
-    to = FullPath()
+    to = Property(FullPath)
     """ The pathname to which to link the symlink. Dangling symlinks ARE
     considered errors in Yaybu. """
+
 
 class LinkAppliedPolicy(Policy):
     resource = Link

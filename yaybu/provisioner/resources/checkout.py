@@ -19,6 +19,7 @@ from yaybu.core.policy import (
     Present,
     )
 from yaybu.core.argument import (
+    Property,
     FullPath,
     String,
     Octal,
@@ -35,38 +36,38 @@ class Checkout(Resource):
     commands (such as `svn switch`) to take the resource to the desired state.
     """
 
-    name = FullPath()
+    name = Property(FullPath)
     """ The full path to the working copy on disk. """
 
-    repository = String()
+    repository = Property(String)
     """ The identifier for the repository - this could be an http url for
     subversion or a git url for git, for example. """
 
-    branch = String()
+    branch = Property(String)
     """ The name of a branch to check out, if required. """
 
-    tag = String()
+    tag = Property(String)
     """ The name of a tag to check out, if required. """
 
-    revision = String()
+    revision = Property(String)
     """ The revision to check out or move to. """
 
-    scm = String()
+    scm = Property(String)
     """ The source control management system to use, e.g. subversion, git. """
 
-    scm_username = String()
+    scm_username = Property(String)
     """ The username for the remote repository """
 
-    scm_password = String()
+    scm_password = Property(String)
     """ The password for the remote repository. """
 
-    user = String(default="root")
+    user = Property(String, default="root")
     """ The user to perform actions as, and who will own the resulting files. """
 
-    group = String(default="root")
+    group = Property(String, default="root")
     """ The group to perform actions as. """
 
-    mode = Octal(default="755")
+    mode = Property(Octal, default="755")
     """A mode representation as an octal. This can begin with leading zeros if
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work."""

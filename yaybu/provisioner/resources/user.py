@@ -15,6 +15,7 @@
 from yaybu.provisioner.resource import Resource
 from yaybu.core.policy import Policy, Present, NAND
 from yaybu.core.argument import (
+    Property,
     String,
     FullPath,
     Integer,
@@ -43,49 +44,49 @@ class User(Resource):
 
     """
 
-    name = String()
+    name = Property(String)
     """ The username this resource represents. """
 
-    password = String()
+    password = Property(String)
     """ The encrypted password, as returned by crypt(3). You should make sure
     this password respects the system's password policy. """
 
-    fullname = String()
+    fullname = Property(String)
     """ The comment field for the password file - generally used for the user's full name. """
 
-    home = FullPath()
+    home = Property(FullPath)
     """ The full path to the user's home directory. """
 
-    uid = Integer()
+    uid = Property(Integer)
     """ The user identifier for the user. This must be a non-negative integer. """
 
-    gid = Integer()
+    gid = Property(Integer)
     """ The group identifier for the user. This must be a non-negative integer. """
 
-    group = String()
+    group = Property(String)
     """ The primary group for the user, if you wish to specify it by name. """
 
-    groups = List()
+    groups = Property(List)
     """ A list of supplementary groups that the user should be a member of. """
 
-    append = Boolean(default=True)
+    append = Property(Boolean, default=True)
     """ A boolean that sets how to apply the groups a user is in. If true then yaybu will
     add the user to groups as needed but will not remove a user from a group. If false then yaybu will replace
     all groups the user is a member of. Thus if a process outside of yaybu adds you to a group,
     the next deployment would remove you again. """
 
-    system = Boolean(default=True) # has no effect on modification, only creation
+    system = Property(Boolean, default=True) # has no effect on modification, only creation
     """ A boolean representing whether this user is a system user or not. This only takes effect on
     creation - a user cannot be changed into a system user once created
     without deleting and recreating the user. """
 
-    shell = FullPath(default="/bin/bash")
+    shell = Property(FullPath, default="/bin/bash")
     """ The full path to the shell to use. """
 
-    disabled_password = Boolean(default=False)
+    disabled_password = Property(Boolean, default=False)
     """ A boolean for whether the password is locked for this account. """
 
-    disabled_login = Boolean(default=False)
+    disabled_login = Property(Boolean, default=False)
     """ A boolean for whether this entire account is locked or not. """
 
 
