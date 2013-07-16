@@ -132,29 +132,20 @@ class Compute(base.GraphExternalAction):
 
         self.state.update(their_name = n.name)
 
-        self.metadata['public_ips'] = n.public_ips
-        self.metadata['private_ips'] = n.private_ips
+        self.members.set('public_ip', n.public_ips[0])
+        self.members.set('private_ip', n.private_ips[0])
 
-        self.metadata['fqdn'] = n.public_ips[0]
+        self.members.set('fqdn', n.public_ips[0])
 
         if 'dns_name' in n.extra:
-            self.metadata['hostname'] = n.extra['dns_name'].split(".")[0]
-            self.metadata['fqdn'] = n.extra['dns_name']
-            self.metadata['domain'] = n.extra['dns_name'].split(".",1)[1]
-
-        def interfaces():
-            # FIXME: This is almost certainly AWS-specific...
-            for i, (pub, priv) in enumerate(zip(n.public_ips, n.private_ips)):
-                yield {'name': 'eth%d' % i,
-                       'address': priv,
-                       'mapped_as': pub}
-
-        self.metadata['interfaces'] = list(interfaces())
+            self.members.set('hostname', n.extra['dns_name'].split(".")[0])
+            self.members.set('fqdn', n.extra['dns_name'])
+            self.members.set('domain', n.extra['dns_name'].split(".",1)[1])
 
     def _fake_node_info(self):
-        self.metadata['public_ips'] = ['0.0.0.0']
-        self.metadata['private_ips'] = ['0.0.0.0']
-        self.metadata['fqdn'] = 'missing-host'
+        self.members.set('public_ips', '0.0.0.0')
+        self.members.set('private_ips', '0.0.0.0')
+        self.members.set('fqdn', 'missing-host')
 
     def test(self):
         with self.root.ui.throbber(_("Testing compute credentials/connectivity")):
