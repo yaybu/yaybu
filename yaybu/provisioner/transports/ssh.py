@@ -32,7 +32,7 @@ from . import remote, base
 
 class SSHTransport(base.Transport, remote.RemoteTransport):
 
-    connection_attempts = 10
+    connection_attempts = 20
     missing_host_key_policy = paramiko.AutoAddPolicy()
     _client = None
 
@@ -53,7 +53,14 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         client.set_missing_host_key_policy(self.missing_host_key_policy)
         for tries in range(self.connection_attempts):
             try:
-                if self.context.private_key:
+                if self.context.password:
+                    client.connect(hostname=self.context.host,
+                                   username=self.context.user,
+                                   port = self.context.port,
+                                   password = self.context.password,
+                                   look_for_keys = False)
+
+                elif self.context.private_key:
                     private_key = self.context.root.openers.open(self.context.private_key).read()
 
                     client.connect(hostname=self.context.host,

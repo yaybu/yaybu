@@ -25,9 +25,11 @@ from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
 from libcloud.common.types import LibcloudError
 from libcloud.compute.types import NodeState
-from libcloud.compute.base import NodeImage, NodeSize
+from libcloud.compute.base import NodeImage, NodeSize, NodeAuthPassword, NodeAuthSSHKey
 
 from .vmware import VMWareDriver
+from .bigv import BigVNodeDriver
+
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
 from yaybu.util import args_from_expression
@@ -64,6 +66,8 @@ class Compute(base.GraphExternalAction):
         driver_id = self.params.driver.id.as_string()
         if driver_id.lower() == "vmware":
             Driver = VMWareDriver
+        if driver_id.lower() == "bigv":
+            Driver = BigVNodeDriver
         else:
             Driver = get_compute_driver(getattr(ComputeProvider, driver_id))
         return Driver(**args_from_expression(Driver, self.params.driver))
@@ -75,7 +79,7 @@ class Compute(base.GraphExternalAction):
 
     @property
     def full_name(self):
-        return "%s/%s" % ("example1", str(self.params.name))
+        return "%s" % str(self.params.name)
 
     @property
     @memoized
@@ -112,6 +116,8 @@ class Compute(base.GraphExternalAction):
     def _get_size(self):
         try:
             size = self.params.size.as_dict()
+        except errors.NoMatching:
+            return self.sizes.get('default', None)
         except errors.TypeError:
             return self.sizes.get(self.params.size.as_string(), None)
 
@@ -126,14 +132,23 @@ class Compute(base.GraphExternalAction):
             driver = self.driver,
             )
 
+    def _get_auth(self):
+        if 'password' in self.driver.features['create_node']:
+            return NodeAuthPassword(self.params.password.as_string())
+        elif 'ssh_key' in self.driver.features['create_node']:
+            fp = self.root.openers.open(self.params.public_key.as_string())
+            return NodeAuthSSHKey(fp.read())
+
     def _update_node_info(self):
         """ Return a dictionary of information about this node """
         n = self.libcloud_node
 
         self.state.update(their_name = n.name)
 
-        self.members.set('public_ip', n.public_ips[0])
-        self.members.set('private_ip', n.private_ips[0])
+        if n.public_ips:
+            self.members.set('public_ip', n.public_ips[0])
+        if n.private_ips:
+            self.members.set('private_ip', n.private_ips[0])
 
         self.members.set('fqdn', n.public_ips[0])
 
@@ -182,6 +197,7 @@ class Compute(base.GraphExternalAction):
                     name=self.full_name,
                     image=self._get_image(),
                     size=self._get_size(),
+                    auth=self._get_auth(),
                     **args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
                     )
 
