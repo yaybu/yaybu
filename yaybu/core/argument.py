@@ -61,7 +61,12 @@ class Argument(object):
             return self.default
 
     def __get_censored__(self, instance, owner):
-        return self.__get__(instance, owner)
+        if instance is None:
+             return self
+        try:
+            return instance.inner[self.name].as_safe_string()
+        except errors.NoMatching:
+            return self.default
 
 
 class Boolean(Argument):
