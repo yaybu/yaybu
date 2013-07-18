@@ -419,6 +419,24 @@ you can. In your ``Yaybufile``::
         allow_pings: false
 
 
+Keeping secrets secret
+======================
+
+You can reference encrypted yay files in your ``Yaybufile``::
+
+    include "mysecrets.yay.gpg"
+
+Any include of a ``.gpg`` file is automatically decrypted, using your
+``gpg-agent`` to prompt for any passphrases that are required.
+
+Additionally the file ``~/.yaybu/defaults.yay.gpg`` is automatically loaded
+when Yaybu starts. This is useful for storing your credentials/tokens outside
+of your code repository and easily injected them into multiple projects.
+
+For vim users, `vim-gnupg <https://github.com/jamessan/vim-gnupg>`_ is a gret
+way to transparently edit your GPG armored configuration files.
+
+
 Hacking on yaybu
 ================
 
