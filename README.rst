@@ -366,7 +366,7 @@ are first class citizens of the language.
 
 In this section we'll skim through some of the important bits.
 
-If you like it, it is packaged as a seperate library and can be used in your
+If you like it, it is packaged as a separate library and can be used in your
 own python applications.
 
 
