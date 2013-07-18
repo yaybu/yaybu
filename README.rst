@@ -7,13 +7,8 @@ goal of helping you tame your servers. You describe your infrastructure in a
 simple and flexible YAML-like language and Yaybu works out what needs to happen
 to deploy your updates.
 
-We are on OFTC IRC (``irc://irc.oftc.net/yaybu``).
-
 Here are some quick and simple Yaybu examples to show you what you can do right
 now and we are working on.
-
-The following examples go in a ``Yaybufile`` and can be executed by running
-``yaybu up``.
 
 
 Installing yaybu
@@ -52,6 +47,10 @@ You can do ``yaybu help COMMAND`` to learn more about each of these.
 Some example configurations
 ===========================
 
+The following examples go in a ``Yaybufile`` and can be executed by running
+``yaybu up`` (unless otherwise specified).
+
+
 Deploy to an existing server or VM
 ----------------------------------
 
@@ -74,6 +73,9 @@ To deploy to your current computer by SSH you can use a ``Yaybufile`` like this:
             username: root
             password: penguin55
             private_key: path/to/key
+
+Here we are setting up a provisioner 'part'. We use the ``Yaybufile`` to plumb
+together a series of parts and these parts then do the orchestration work.
 
 ``fqdn`` is a fully qualified domain name (though IP addresses are also
 accepted). If ``username`` isn't provided, it will use the username you are
@@ -107,9 +109,14 @@ You'll need something like this in your ``Yaybufile``::
             ex_keyname: mykey
             private_key: mykey.pem
 
-    resources:
-      - Package:
-          name: git-core
+        resources:
+          - Package:
+              name: git-core
+
+Now we are using a Compute part as well. We have replaced the static connection
+details with a part that provides them on demand. Because ``Yaybufile`` is
+lazyily evaluated the AWS instance isn't started until the Provisioner needs
+it.
 
 ``ex_keyname`` is the name of the SSH key pair in the amazon console.
 ``private_key`` is the corresponding private key.
@@ -131,6 +138,8 @@ Your ``Yaybufile`` looks like this::
 
     new Provisioner as vm1:
         new Compute as server:
+            name: test123456
+
             driver:
                 id: BIGV
                 key: yourusername
@@ -138,7 +147,6 @@ Your ``Yaybufile`` looks like this::
                 account: youraccountname
 
             image: precise
-            name: test123456
 
             user: root
             password: aez5Eep4
@@ -147,9 +155,18 @@ Your ``Yaybufile`` looks like this::
           - Package:
               name: git-core
 
-This will create a new vm called ``test123456``. You will be able to log in as
-root using the password ``aez5Eep4`` (though you should use pwgen to come up
-with something better).
+This example will create a new vm called ``test123456``. You will be able to
+log in as root using the password ``aez5Eep4`` (though you should use pwgen to
+come up with something better).
+
+This is very similar to the AWS example. The two main differences are:
+
+ * Different credentials are needed to access your account (key + secret for
+   AWS, where as bigv uses your username/password and an 'account').
+
+ * Different ways of setting the credentials used by the VM. AWS expects you to
+   inject an SSH key via the ``ex_keyname`` field. BigV allows you to set the
+   root password when you create the VM.
 
 
 Provisioning a VMWare instance
@@ -168,9 +185,11 @@ Now your ``Yaybufile`` looks like this::
 
     new Provisioner as vm1:
         new Compute as server:
+            name: mytest vm
+
             driver:
                 id: VMWARE
-            name: mytest vm
+
             image:
                 id: ~/vmware/ubuntu/ubuntu.vmx
 
@@ -188,9 +207,9 @@ Now your ``Yaybufile`` is a bit longer and looks like this::
 
     new Provisioner as vm1:
         new Compute as server:
+            name: mytestvm1
             driver:
                 id: VMWARE
-            name: mytest vm
             image:
                 id: /home/john/vmware/ubuntu/ubuntu.vmx
             user: ubuntu
@@ -204,9 +223,9 @@ Now your ``Yaybufile`` is a bit longer and looks like this::
 
     new Provisioner as vm2:
         new Compute as server:
+            name: mytestvm2
             driver:
                 id: VMWARE
-            name: mytestvm
             image:
                 id: /home/john/vmware/ubuntu/ubuntu.vmx
             user: ubuntu
@@ -259,7 +278,24 @@ DNS Zone for that VM::
           - name: www
             data: {{ vm1.server.public_ip }}
 
-Obviously you can use the DNS part on its own and manually specify DNS entries.
+Obviously you can use the DNS part on its own and manually specify DNS
+entries::
+
+    new Zone as dns:
+        driver:
+            id: GANDI
+            key: yourgandikey
+
+        domain: example.com
+
+        records:
+          - name: mail
+            data: 173.194.41.86
+            type: A
+
+          - name: www
+            data: www.example.org
+            type: CNAME
 
 
 EXPERIMENTAL: Provisioning on commit
@@ -320,8 +356,73 @@ If your Yaybufile contained another ``Provisioner`` that didn't have such a
 *not* to deploy to it on commit.
 
 
+The yay language
+================
+
+The language used in your ``Yaybufile`` is called ``yay``. It is YAML-like, but
+has templates and pythonic expressions. Some other tools just use a templated
+form of YAML, which is powerful. But not as powerful as when these new features
+are first class citizens of the language.
+
+In this section we'll skim through some of the important bits.
+
+If you like it, it is packaged as a seperate library and can be used in your
+own python applications.
+
+
+Variables
+---------
+
+You can refer to any structure through the variable syntax::
+
+    me:
+      name: John
+      nick: Jc2k
+
+    message: Hello, {{ me.nick }}!
+
+
+Lazy evaluation
+---------------
+
+Yay is a non-strict, lazyily evaluated language. This means that expressions are
+calculated when they are required not when they are declared::
+
+    var1: 50
+    var2: {{ var1 + 5 }}
+    var1: 0
+
+In an imperative language ``var2`` would be ``55``. But it is actually ``5``.
+Stated like this it seems weird and counterintuitive. So lets see how it is
+useful. Imagine you have a firewall recipe saved as ``firewall.yay``::
+
+    firewall:
+       allow_pings: true
+       open:
+         - range: 1.1.1.1/32
+
+    resources:
+      - File:
+          name: /etc/iptables.conf
+          template: iptables.conf.j2
+          template_args:
+              rules: {{ firewall }}
+
+Now for a contrived reason approved in a secret court your new projects server
+can't be pingable. You can't just use your existing ``firewall.yay``... Wait,
+you can. In your ``Yaybufile``::
+
+    include "firewall.yay"
+
+    firewall:
+        allow_pings: false
+
+
 Hacking on yaybu
 ================
+
+If you are going to hack on Yaybu please stop by IRC and say hi! We are on OFTC
+in ``#yaybu``.
 
 To get a development environment with required dependencies::
 
