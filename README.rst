@@ -115,7 +115,7 @@ You'll need something like this in your ``Yaybufile``::
 
 Now we are using a Compute part as well. We have replaced the static connection
 details with a part that provides them on demand. Because ``Yaybufile`` is
-lazyily evaluated the AWS instance isn't started until the Provisioner needs
+lazily evaluated the AWS instance isn't started until the Provisioner needs
 it.
 
 ``ex_keyname`` is the name of the SSH key pair in the amazon console.
@@ -129,10 +129,11 @@ This will create a new instance at AWS and install ``git`` on it. Running
 Deploy to BigV
 --------------
 
-Our BigV support is implemented via the libcloud library but is currently
-residing in the Yaybu codebase. As you can set the password for an instance
-when it is created there is no preparation to do to create a bigv instance,
-other than creating a bigv account.
+Our `BigV <http://www.bigv.io/>`_ support is implemented via `the libcloud 
+library <https://github.com/apache/libcloud>`_ but is currently residing in
+the Yaybu codebase. As you can set the password for an instance when it is
+created there is no preparation to do to create a bigv instance, other than
+creating a bigv account.
 
 Your ``Yaybufile`` looks like this::
 
@@ -156,17 +157,17 @@ Your ``Yaybufile`` looks like this::
               name: git-core
 
 This example will create a new vm called ``test123456``. You will be able to
-log in as root using the password ``aez5Eep4`` (though you should use pwgen to
-come up with something better).
+log in as root using the password ``aez5Eep4`` (though you should use ``pwgen``
+to come up with something better).
 
 This is very similar to the AWS example. The two main differences are:
 
- * Different credentials are needed to access your account (key + secret for
-   AWS, where as bigv uses your username/password and an 'account').
+* Different credentials are needed to access your account (key + secret for
+  AWS, where as bigv uses your username/password and an 'account').
 
- * Different ways of setting the credentials used by the VM. AWS expects you to
-   inject an SSH key via the ``ex_keyname`` field. BigV allows you to set the
-   root password when you create the VM.
+* Different ways of setting the credentials used by the VM. AWS expects you to
+  inject an SSH key via the ``ex_keyname`` field. BigV allows you to set the
+  root password when you create the VM.
 
 
 Provisioning a VMWare instance
@@ -175,9 +176,9 @@ Provisioning a VMWare instance
 You'll need a copy of VMWare Workstation, VMWare Fusion or VMWare Player.
 You'll need a base image to use. My checklist when creating mine is:
 
- * Is ``openssh-server`` installed?
- * Is there a user with passphraseless sudo access to root?
- * Have I deleted the /etc/udev/rules.d/70-persistent-net.rules?
+* Is ``openssh-server`` installed?
+* Is there a user with passphraseless sudo access to root?
+* Have I deleted the /etc/udev/rules.d/70-persistent-net.rules?
 
 When you are done, shut down the VM and get the path to its VMX file.
 
@@ -240,14 +241,14 @@ Now your ``Yaybufile`` is a bit longer and looks like this::
 This configuration is interesting because vm2 references the ip address of vm1
 in its configuration file and vice versa. Lazy evaluation means that
 dependencies are resolved just in time, so these kinds of cyclic references
-arent a show stopper.
+aren't a show stopper.
 
 
 Setting up a DNS zone on Gandi
 ------------------------------
 
-This example creates a VM on bigv, installs git on it and then sets up a Gandi
-DNS Zone for that VM::
+This example creates a VM on bigv, installs git on it and then sets up a `Gandi
+<https://www.gandi.net/>`_ DNS Zone for that VM::
 
     new Provisioner as vm1:
         new Compute as server:
