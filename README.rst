@@ -2,10 +2,10 @@
 Yaybu
 =====
 
-Yaybu is a configuration management tool written in Python with the goal of
-helping you tame your servers. You describe your infrastructure in a simple and
-flexible YAML-like language and Yaybu works out what needs to happen to deploy
-your updates.
+Yaybu is a push based configuration management tool written in Python with the
+goal of helping you tame your servers. You describe your infrastructure in a
+simple and flexible YAML-like language and Yaybu works out what needs to happen
+to deploy your updates.
 
 We are on OFTC IRC (``irc://irc.oftc.net/yaybu``).
 
@@ -16,8 +16,44 @@ The following examples go in a ``Yaybufile`` and can be executed by running
 ``yaybu up``.
 
 
-Deploying to an existing machine
-================================
+Installing yaybu
+================
+
+An unstable 'nightly' PPA is available for lucid and precise. You can use it
+like this::
+
+    sudo add-apt-repository ppa:yaybu-team/nightly
+    sudo apt-get update
+    sudo apt-get install python-yaybu
+
+(FIXME: Add details about OSX and stable debs when available).
+
+
+Yaybu commands
+==============
+
+Currently the following commands are available:
+
+up
+    Apply the configuration specified in your Yaybufile
+destroy
+    If your configuration creates external resources like virtual machines,
+    then this command will destroy it.
+expand
+    Print out a YAML dump of your configuration after all variables have been
+    expanded and any ifs/fors/etc have been applied.
+ssh
+    SSH into a server using the connection details specified in your
+    configuration file.
+
+You can do ``yaybu help COMMAND`` to learn more about each of these.
+
+
+Some example configurations
+===========================
+
+Deploy to an existing server or VM
+----------------------------------
 
 To deploy to your current computer by SSH you can use a ``Yaybufile`` like this::
 
@@ -45,9 +81,10 @@ currently logged in as. If neither ``password`` or ``private_key``, Yaybu will
 consult your ssh-agent.
 
 
-Provisioning an AWS instance
-============================
+Deploy to AWS compute instances
+-------------------------------
 
+Provisioning of AWS instances is supported out of the box using libcloud.
 You will need to have set up an SSH key in the Amazon control panel and either
 have the path to the private part of that key or have added it to your
 ssh-agent.
@@ -82,12 +119,13 @@ This will create a new instance at AWS and install ``git`` on it. Running
 (as yaybu is checking the existing instance for changes).
 
 
-Provisioning a BigV instance
-============================
+Deploy to BigV
+--------------
 
-As you can set the password for an instance when it is created there is no
-preparation to do to create a bigv instance, other than creating a bigv
-account.
+Our BigV support is implemented via the libcloud library but is currently
+residing in the Yaybu codebase. As you can set the password for an instance
+when it is created there is no preparation to do to create a bigv instance,
+other than creating a bigv account.
 
 Your ``Yaybufile`` looks like this::
 
@@ -106,10 +144,6 @@ Your ``Yaybufile`` looks like this::
             password: aez5Eep4
 
         resources:
-          - Execute:
-              name: ifconfig
-              command: /sbin/ifconfig
-
           - Package:
               name: git-core
 
@@ -119,14 +153,16 @@ with something better).
 
 
 Provisioning a VMWare instance
-==============================
+------------------------------
 
-You'll need a copy of VMWare Workstation, VMWare Fusion or VMWare Player. You'll need a base image to use. My checklist when creating mine is:
+You'll need a copy of VMWare Workstation, VMWare Fusion or VMWare Player.
+You'll need a base image to use. My checklist when creating mine is:
 
  * Is ``openssh-server`` installed?
  * Is there a user with passphraseless sudo access to root?
  * Have I deleted the /etc/udev/rules.d/70-persistent-net.rules?
 
+When you are done, shut down the VM and get the path to its VMX file.
 
 Now your ``Yaybufile`` looks like this::
 
@@ -146,7 +182,7 @@ Now your ``Yaybufile`` looks like this::
 
 
 Provisioning multiple instances
-===============================
+-------------------------------
 
 Now your ``Yaybufile`` is a bit longer and looks like this::
 
@@ -189,7 +225,7 @@ arent a show stopper.
 
 
 Setting up a DNS zone on Gandi
-==============================
+------------------------------
 
 This example creates a VM on bigv, installs git on it and then sets up a Gandi
 DNS Zone for that VM::
@@ -227,7 +263,7 @@ Obviously you can use the DNS part on its own and manually specify DNS entries.
 
 
 EXPERIMENTAL: Provisioning on commit
-====================================
+------------------------------------
 
 This uses a new command, ``yaybu run``. This puts yaybu into a mode where it
 continues to run, rather than deploying then exiting. Parts can set up
@@ -303,14 +339,12 @@ Running the tests
 -----------------
 
 NOTE: Currently the testrunner will try and run a set of integration tests
-against an ubuntu chroot. Because of that we are a bit ubuntu-specific.
-We'll be fixing that asap!
-
-To run the tests you'll need to have ``fakechroot``, ``fakeroot``,
-``debootstrap``, and ``cowdancer`` installed::
+against an ubuntu chroot. These tests are only run on ubuntu systems with the
+following packages installed::
 
     sudo apt-get install fakechroot fakeroot debootstrap cowdancer
 
-Then when you've built the development environment as detailed above, run::
+To run the tests you can then::
 
     ./bin/test
+
