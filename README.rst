@@ -531,16 +531,16 @@ For example::
 
 The available parameters are:
 
-name
+``name``
     The full path to the directory on disk
-owner
+``owner``
     The unix username who should own this directory, by default this is 'root'
-group
+``group``
     The unix group who should own this directory, by default this is 'root'
-mode
+``mode``
     The octal mode that represents this directory's permissions, by default
     this is '755'.
-parents
+``parents``
     Create parent directories as needed, using the same ownership and
     permissions, this is False by default.
 
@@ -563,18 +563,17 @@ For example::
 
 The available parameters are:
 
-name
+``name``
     The name of the file this resource represents.
-owner
+``owner``
     A unix username or UID who will own created objects. An owner that
     begins with a digit will be interpreted as a UID, otherwise it will be
     looked up using the python 'pwd' module.
-group
+``group``
     A unix group or GID who will own created objects. A group that begins
     with a digit will be interpreted as a GID, otherwise it will be looked up
     using the python 'grp' module.
-
-to
+``to``
     The pathname to which to link the symlink. Dangling symlinks ARE
     considered errors in Yaybu.
 
@@ -608,40 +607,42 @@ synchronises::
 
 The available parameters are:
 
-name
+``name``
     The name of this resource. This should be unique and descriptive, and
     is used so that resources can reference each other.
-command
+``command``
     If you wish to run a single command, then this is the command.
-commands
+``commands``
     If you wish to run multiple commands, provide a list
-cwd
+``cwd``
     The current working directory in which to execute the command.
-environment
+``environment``
     The environment to provide to the command, for example::
+
         extend resources:
           - Execute:
               name: example
               command: echo $FOO
               environment:
                   FOO: bar
-returncode
+
+``returncode``
     The expected return code from the command, defaulting to 0. If the
     command does not return this return code then the resource is considered
     to be in error.
-user
+``user``
     The user to execute the command as.
-group
+``group``
     The group to execute the command as.
-umask
+``umask``
     The umask to use when executing this command
-unless
+``unless``
     A command to run to determine is this execute should be actioned
-creates
+``creates``
     The full path to a file that execution of this command creates. This
     is used like a "touch test" in a Makefile. If this file exists then the
     execute command will NOT be executed.
-touch
+``touch``
     The full path to a file that yaybu will touch once this command has
     completed successfully. This is used like a "touch test" in a Makefile. If
     this file exists then the execute command will NOT be executed.
@@ -669,30 +670,30 @@ For example::
 
 The available parameters are:
 
-name
+``name``
     The full path to the working copy on disk.
-repository
+``repository``
     The identifier for the repository - this could be an http url for
     subversion or a git url for git, for example.
-branch
+``branch``
     The name of a branch to check out, if required.
-tag
+``tag``
     The name of a tag to check out, if required.
-revision
+``revision``
     The revision to check out or move to.
-scm
+``scm``
     The source control management system to use, e.g. subversion, git.
-scm_username
+``scm_username``
     The username for the remote repository
-scm_password
+``scm_password``
     The password for the remote repository.
-user
+``user``
     The user to perform actions as, and who will own the resulting files.
     The default is root.
-group
+``group``
     The group to perform actions as. The default is to use the primary group of
     ``user``.
-mode
+``mode``
     A mode representation as an octal. This can begin with leading zeros if
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work.
@@ -711,14 +712,14 @@ are installed::
 
 The available parameters are:
 
-name
+``name``
     The name of the package. This can be a single package or a list can be
     supplied.
-version
+``version``
     The version of the package, if only a single package is specified and
     the appropriate provider supports it (the Apt provider does not support
     it).
-purge
+``purge``
     When removing a package, whether to purge it or not.
 
 
@@ -743,39 +744,39 @@ For example::
 
 The available parameters are:
 
-name
+``name``
     The username this resource represents.
-password
+``password``
     The encrypted password, as returned by crypt(3). You should make sure
     this password respects the system's password policy.
-fullname
+``fullname``
     The comment field for the password file - generally used for the user's
     full name.
-home
+``home``
     The full path to the user's home directory.
-uid
+``uid``
     The user identifier for the user. This must be a non-negative integer.
-gid
+``gid``
     The group identifier for the user. This must be a non-negative integer.
-group
+``group``
     The primary group for the user, if you wish to specify it by name.
-groups
+``groups``
     A list of supplementary groups that the user should be a member of.
-append
+``append``
     A boolean that sets how to apply the groups a user is in. If true then
     yaybu will add the user to groups as needed but will not remove a user from
     a group. If false then yaybu will replace all groups the user is a member
     of. Thus if a process outside of yaybu adds you to a group, the next
     deployment would remove you again.
-system
+``system``
     A boolean representing whether this user is a system user or not. This only
     takes effect on creation - a user cannot be changed into a system user once
     created without deleting and recreating the user.
-shell
+``shell``
     The full path to the shell to use.
-disabled_password
+``disabled_password``
     A boolean for whether the password is locked for this account.
-disabled_login
+``disabled_login``
     A boolean for whether this entire account is locked or not.
 
 
@@ -794,15 +795,15 @@ For example::
 
 The available parameters are:
 
-name
+``name``
     The name of the unix group.
-gid
+``gid``
     The group ID associated with the group. If this is not specified one will
     be chosen.
-system
+``system``
     Whether or not this is a system group - i.e. the new group id will be
     taken from the system group id list.
-password
+``password``
     The password for the group, if required
 
 
@@ -813,42 +814,35 @@ This represents service startup and shutdown via an init daemon.
 
 The available parameters are:
 
-name
-    A unique name representing an initd service.
-
-    This would normally match the name as it appears in /etc/init.d.
-priority
-    Priority of the service within the boot order.
-
-    This attribute will have no effect when using a dependency or event based
-    init.d subsystem like upstart or systemd.
-start
-    A command that when executed will start the service.
-
-    If not provided, the provider will use the default service start invocation
-    for the init.d system in use.
-stop
-    A command that when executed will start the service.
-
-    If not provided, the provider will use the default service stop invocation
-    for the init.d system in use.
-restart
-    A command that when executed will restart the service.
-
-    If not provided, the provider will use the default service restart
-    invocation for the init.d system in use. If it is not possible to
-    automatically determine if the restart script is avilable the service will
-    be stopped and started instead.
-reconfig
+``name``
+    A unique name representing an initd service. This would normally match the
+    name as it appears in /etc/init.d.
+``priority``
+    Priority of the service within the boot order. This attribute will have no
+    effect when using a dependency or event based init.d subsystem like upstart
+    or systemd.
+``start``
+    A command that when executed will start the service. If not provided, the
+    provider will use the default service start invocation for the init.d
+    system in use.
+``stop``
+    A command that when executed will start the service. If not provided, the
+    provider will use the default service stop invocation for the init.d system
+    in use.
+``restart``
+    A command that when executed will restart the service. If not provided, the
+    provider will use the default service restart invocation for the init.d
+    system in use. If it is not possible to automatically determine if the restart
+    script is avilable the service will be stopped and started instead.
+``reconfig``
     A command that when executed will make the service reload its
     configuration file.
-running
+``running``
     A comamnd to execute to determine if a service is running. Should have an
     exit code of 0 for success.
-pidfile
-    Where the service creates its pid file.
-    This can be provided instead of ``running``  as an alternative way of
-    checking if a service is running or not.
+``pidfile``
+    Where the service creates its pid file. This can be provided instead of
+    ``running``  as an alternative way of checking if a service is running or not.
 
 
 Zone
