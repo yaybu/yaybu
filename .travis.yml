@@ -1,12 +1,8 @@
 language: python
 
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install -y -q fakeroot fakechroot cowdancer python-dateutil
-
 install:
   - python bootstrap.py
   - ./bin/buildout
 
-script: ./bin/test -v
+script: ./bin/test
 
