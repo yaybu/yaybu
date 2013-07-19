@@ -32,7 +32,7 @@ setup(name='Yaybu',
           'https://gevent.googlecode.com/files/gevent-1.0rc2.tar.gz#egg=gevent-1.0rc2',
           ],
       extras_require = {
-          'test': ['unittest2', 'discover', 'mock', 'fakechroot'],
+          'test': ['unittest2', 'mock', 'fakechroot'],
           },
       entry_points = """
       [console_scripts]
