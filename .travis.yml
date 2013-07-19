@@ -12,3 +12,6 @@ script: nose2
 
 notifications:
     irc: "irc.oftc.net#yaybu"
+    on_success: change
+    on_failure: always
+
