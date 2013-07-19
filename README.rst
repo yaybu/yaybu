@@ -489,28 +489,28 @@ old version of the file if necessary::
 
 The available parameters are:
 
-name
+``name``
     The full path to the file this resource represents.
-owner
+``owner``
     A unix username or UID who will own created objects. An owner that
     begins with a digit will be interpreted as a UID, otherwise it will be
     looked up using the python 'pwd' module.
-group
+``group``
     A unix group or GID who will own created objects. A group that begins
     with a digit will be interpreted as a GID, otherwise it will be looked up
     using the python 'grp' module.
-mode
+``mode``
     A mode representation as an octal. This can begin with leading zeros if
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work.
-static
+``static``
     A static file to copy into this resource. The file is located on the
     yaybu path, so can be colocated with your recipes.
-template
+``template``
     A jinja2 template, used to generate the contents of this resource. The
     template is located on the yaybu path, so can be colocated with your
     recipes
-template_args
+``template_args``
     The arguments passed to the template.
 
 
