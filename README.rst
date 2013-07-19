@@ -29,15 +29,15 @@ Yaybu commands
 
 Currently the following commands are available:
 
-up
+``yaybu up``
     Apply the configuration specified in your Yaybufile
-destroy
+``yaybu destroy``
     If your configuration creates external resources like virtual machines,
     then this command will destroy it.
-expand
+``yaybu expand``
     Print out a YAML dump of your configuration after all variables have been
     expanded and any ifs/fors/etc have been applied.
-ssh
+``yaybu ssh``
     SSH into a server using the connection details specified in your
     configuration file.
 
