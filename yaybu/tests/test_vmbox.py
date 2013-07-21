@@ -5,9 +5,9 @@ import mock
 import json
 import datetime
 import shutil
-from mock import MagicMock as Mock
+from mock import MagicMock as Mock, call
 
-from yaybu.compute.vmware import VMBoxCache, VMBoxCollection
+from yaybu.compute.vmware import VMBoxCache, VMBoxCollection, image_download
 
 cachedata = [
     {'id': '001',
@@ -20,6 +20,19 @@ cachedata = [
      'url': "http://yaybu.com/image/debian/squeeze-i386",
      },
 ]
+
+class TestImageDownload(unittest2.TestCase):
+
+    def test_image_download(self):
+        progress = Mock()
+        d = tempfile.mkdtemp()
+        src = os.path.join(d, "src")
+        dst = os.path.join(d, "dst")
+        open(src, "w").write("foo"*10000)
+        image_download("file://" + src, dst, progress)
+        self.assertEqual(open(dst).read(), "foo"*10000)
+        progress.assert_has_calls([call(27), call(54), call(81), call(100)])
+
 
 class TestVMBoxCache(unittest2.TestCase):
 
@@ -54,9 +67,4 @@ class TestVMBoxCache(unittest2.TestCase):
     def test_stray_dir(self):
         os.mkdir(os.path.join(self.cachedir, "foo"))
         self.test_scan()
-
-
-
-
-
 

@@ -332,6 +332,21 @@ class VMBoxCollection:
         and an extension mechanism. """
 
 
+def image_download(src, dst, progress, batch_size=8192):
+    downloaded = 0
+    percent = 0
+    fout = open(dst, "w")
+    fin = urllib2.urlopen(src)
+    content_length = int(fin.headers['content-length'])
+    while True:
+        data = fin.read(batch_size)
+        if not data: break
+        fout.write(data)
+        downloaded += len(data)
+        percent = int(float(downloaded) / content_length * 100)
+        progress(percent)
+    fin.close()
+    fout.close()
 
 class VMBoxCache:
 
@@ -358,8 +373,14 @@ class VMBoxCache:
                     md = json.load(open(mp))
                     self.items[md['name']] = item
 
-    def insert(self, location):
-        """ Insert an item into the cache from a specified location. """
+    def insert(self, location, context):
+        """ Insert an item into the cache from a specified location.
+
+        Args:
+            location: A url to the compressed box
+            context: A context object used for progress reporting
+
+        """
         name = uuid.uuid4()
         path = os.path.join(self.cachedir, name)
         metadata = {
@@ -368,6 +389,7 @@ class VMBoxCache:
         }
         mp = os.path.join(path, "metadata")
         json.dump(metadata, open(mp, "w"))
-        image = urllib2.urlopen(location)
+        with context.ui.progress(100) as p:
+            image_download(location, path, p.progress)
 
 
