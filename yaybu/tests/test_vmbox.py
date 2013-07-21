@@ -48,10 +48,13 @@ class TestVMBoxCache(unittest2.TestCase):
              })
 
     def test_stray_file(self):
-        pass
+        open(os.path.join(self.cachedir, "foo"), "w").write("bar")
+        self.test_scan()
 
     def test_stray_dir(self):
-        pass
+        os.mkdir(os.path.join(self.cachedir, "foo"))
+        self.test_scan()
+
 
 
 
