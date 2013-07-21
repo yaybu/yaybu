@@ -34,6 +34,7 @@ import logging
 import json
 import urllib2
 import uuid
+import datetime
 
 logger = logging.getLogger("yaybu.parts.compute.vmware")
 
@@ -381,15 +382,17 @@ class VMBoxCache:
             context: A context object used for progress reporting
 
         """
-        name = uuid.uuid4()
+        name = str(uuid.uuid4())
         path = os.path.join(self.cachedir, name)
+        os.mkdir(path)
         metadata = {
             'name': location,
             'created': str(datetime.datetime.now())
         }
         mp = os.path.join(path, "metadata")
+        ip = os.path.join(path, "image")
         json.dump(metadata, open(mp, "w"))
         with context.ui.progress(100) as p:
-            image_download(location, path, p.progress)
+            image_download(location, ip, p.progress)
 
 
