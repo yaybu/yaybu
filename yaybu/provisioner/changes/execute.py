@@ -70,14 +70,14 @@ class ShellCommand(changes.Change):
             logas = []
             for c in self.command:
                 if isinstance(c, AST):
-                    logas.append(c.as_string()) #safe_string())
+                    logas.append(c.as_safe_string())
                 else:
                     logas.append(c)
         elif isinstance(self.command, basestring):
             logas = command = shlex.split(self.command.encode("UTF-8"))
         elif isinstance(self.command, AST):
             command = shlex.split(self.command.as_string().encode("UTF-8"))
-            logas = shlex.split(self.command.as_string()) #as_safe_string().encode("UTF-8"))
+            logas = shlex.split(self.command.as_safe_string().encode("UTF-8"))
 
         command = self._tounicode(command)
         logas = self._tounicode(logas)

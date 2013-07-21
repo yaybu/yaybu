@@ -29,10 +29,12 @@ class YaybuTemplateLoader(BaseLoader):
 
     def __init__(self, ctx):
         self.ctx = ctx
+        self.secret = False
 
     def get_source(self, environment, template):
         f = self.ctx.get_file(template)
         source = f.read()
+        self.secret = self.secret or "secret" in f.labels
         return source, template, lambda: False
 
 
@@ -81,10 +83,11 @@ class Patch(provider.Provider):
 
         template_args = self.resource.template_args.resolve()
         if template_args:
-            env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
+            loader = YaybuTemplateLoader(context)
+            env = Environment(loader=loader, line_statement_prefix='%')
             template = env.from_string(contents)
             contents = template.render(template_args)
-            sensitive = "secret" in self.resource.template_args.get_labels()
+            sensitive = loader.secret or "secret" in self.resource.template_args.get_labels()
 
         fc = EnsureFile(name, contents, self.resource.owner, self.resource.group, self.resource.mode, sensitive)
         context.change(fc)

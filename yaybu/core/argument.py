@@ -69,6 +69,12 @@ class Argument(ast.Pythonic, ast.Scalarish, ast.AST):
         except errors.NoMatching:
             return self.default
 
+    def get_labels(self):
+        return self.node.get_labels()
+
+    def get_local_labels(self):
+        return self.node.get_local_labels()
+
     def __get_censored__(self, instance, owner):
         if instance is None:
              return self
