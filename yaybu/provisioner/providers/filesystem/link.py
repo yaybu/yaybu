@@ -27,34 +27,29 @@ class Link(provider.Provider):
 
     policies = (resources.link.LinkAppliedPolicy,)
 
-    @classmethod
-    def isvalid(self, *args, **kwargs):
-        # TODO: validation could provide warnings based on things
-        # that are not the correct state at the point of invocation
-        # but that will be modified by the yaybu script
-        return super(Link, self).isvalid(*args, **kwargs)
-
     def _get_owner(self, context):
         """ Return the uid for the resource owner, or None if no owner is
         specified. """
-        if self.resource.owner is not None:
+        owner = self.resource.as_string()
+        if owner:
             try:
-                return context.transport.getpwnam(self.resource.owner).pw_uid
+                return context.transport.getpwnam(owner).pw_uid
             except KeyError:
                 raise error.InvalidUser()
 
     def _get_group(self, context):
         """ Return the gid for the resource group, or None if no group is
         specified. """
-        if self.resource.group is not None:
+        group = self.resource.as_string()
+        if group:
             try:
-                return context.transport.getgrnam(self.resource.group).gr_gid
+                return context.transport.getgrnam(group).gr_gid
             except KeyError:
                 raise error.InvalidGroup()
 
     def _stat(self, context):
         """ Extract stat information for the resource. """
-        st = context.transport.lstat(self.resource.name)
+        st = context.transport.lstat(self.resource.name.as_string())
         uid = st.st_uid
         gid = st.st_gid
         mode = stat.S_IMODE(st.st_mode)
@@ -62,8 +57,8 @@ class Link(provider.Provider):
 
     def apply(self, context, output):
         changed = False
-        name = self.resource.name
-        to = self.resource.to
+        name = self.resource.name.as_string()
+        to = self.resource.to.as_string()
         exists = False
         uid = None
         gid = None
@@ -86,9 +81,9 @@ class Link(provider.Provider):
 
         if not isalink or linkto != to:
             if context.transport.lexists(name):
-                context.change(ShellCommand(["/bin/rm", "-rf", name]))
+                context.change(ShellCommand(["/bin/rm", "-rf", self.resource.name]))
 
-            context.change(ShellCommand(["/bin/ln", "-s", self.resource.to, name]))
+            context.change(ShellCommand(["/bin/ln", "-s", self.resource.to, self.resource.name]))
             changed = True
 
         try:
@@ -104,14 +99,15 @@ class Link(provider.Provider):
             uid, gid, mode = self._stat(context)
 
         if owner is not None and owner != uid:
-            context.change(ShellCommand(["/bin/chown", "-h", self.resource.owner, name]))
+            context.change(ShellCommand(["/bin/chown", "-h", self.resource.owner, self.resource.name]))
             changed = True
 
         if group is not None and group != gid:
-            context.change(ShellCommand(["/bin/chgrp", "-h", self.resource.group, name]))
+            context.change(ShellCommand(["/bin/chgrp", "-h", self.resource.group, self.resource.name]))
             changed = True
 
         return changed
+
 
 class RemoveLink(provider.Provider):
 
@@ -122,9 +118,11 @@ class RemoveLink(provider.Provider):
         return super(RemoveLink, self).isvalid(*args, **kwargs)
 
     def apply(self, context, output):
-        if context.transport.lexists(self.resource.name):
-            if not context.transport.islink(self.resource.name):
-                raise error.InvalidProvider("%r: %s exists and is not a link" % (self, self.resource.name))
+        name = self.resource.name.as_string()
+
+        if context.transport.lexists(name):
+            if not context.transport.islink(name):
+                raise error.InvalidProvider("%r: %s exists and is not a link" % (self, name))
             context.change(ShellCommand(["/bin/rm", self.resource.name]))
             return True
         return False

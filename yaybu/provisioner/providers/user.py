@@ -74,60 +74,76 @@ class User(provider.Provider):
             command = ['useradd', '-N']
             changed = True # we definitely make a change
 
-        if self.resource.fullname and info["gecos"] != self.resource.fullname:
+        name = self.resource.name.as_string()
+
+        fullname = self.resource.fullname.as_string(default='')
+        if fullname and info["gecos"] != fullname:
             command.extend(["--comment", self.resource.fullname])
             changed = True
 
-        if self.resource.password and not info["exists"]:
+        password = self.resource.password.as_string(default='')
+        if password and not info["exists"]:
             command.extend(["--password", self.resource.password])
             changed = True
 
-        if self.resource.home and info["dir"] != self.resource.home:
+        home = self.resource.home.as_string(default='')
+        if home and info["dir"] != home:
             command.extend(["--home", self.resource.home])
             changed = True
 
-        if self.resource.uid and info["uid"] != self.resource.uid:
-            command.extend(["--uid", str(self.resource.uid)])
+        uid = self.resource.uid.as_string(default='')
+        if int(uid) and info["uid"] != uid:
+            command.extend(["--uid", self.resource.uid])
             changed = True
 
-        if self.resource.gid or self.resource.group:
-            if self.resource.gid:
-                gid = self.resource.gid
+        gid = self.resource.gid.as_string(default='')
+        group = self.resource.group.as_string(default='')
+        if gid or group:
+            if gid:
+                gid = int(gid)
+                if gid != info["gid"]:
+                    command.extend(["--gid", self.resource.gid])
+                    changed = True
             else:
                 try:
-                    gid = context.transport.getgrnam(self.resource.group).gr_gid
+                    gid = context.transport.getgrnam(group).gr_gid
                 except KeyError:
                     if not context.simulate:
-                        raise error.InvalidGroup("Group '%s' is not valid" % self.resource.group)
-                    context.changelog.info("Group '%s' doesn't exist; assuming recipe already created it" % self.resource.group)
+                        raise error.InvalidGroup("Group '%s' is not valid" % group)
+                    context.changelog.info("Group '%s' doesn't exist; assuming recipe already created it" % group)
                     gid = "GID_CURRENTLY_UNASSIGNED"
 
-            if gid != info["gid"]:
-                command.extend(["--gid", str(gid)])
-                changed = True
+                if gid != info["gid"]:
+                    command.extend(["--gid", str(gid)])
+                    changed = True
 
-        if self.resource.groups:
-            desired_groups = set(self.resource.groups)
-            current_groups = set(g.gr_name for g in context.transport.getgrall() if self.resource.name in g.gr_mem)
+        groups = self.resource.groups.as_list(default=[])
+        if groups:
+            desired_groups = set(groups)
+            current_groups = set(g.gr_name for g in context.transport.getgrall() if name in g.gr_mem)
 
-            if self.resource.append and len(desired_groups - current_groups) > 0:
+            append = self.resource.append.resolve()
+            if append and len(desired_groups - current_groups) > 0:
                 if info["exists"]:
                     command.append("-a")
                 command.extend(["-G", ",".join(desired_groups - current_groups)])
                 changed = True
-            elif not self.resource.append and desired_groups != current_groups:
+            elif not append and desired_groups != current_groups:
                 command.extend(["-G", ",".join(desired_groups)])
                 changed = True
 
-        if self.resource.shell != info["shell"]:
+        shell = self.resource.shell.as_string(default='')
+        if shell and shell != info["shell"]:
             command.extend(["--shell", str(self.resource.shell)])
             changed = True
 
-        if self.resource.disabled_login and not info["disabled-login"]:
+        disabled_login = self.resource.disable_login.resolve()
+        if disabled_login and not info["disabled-login"]:
             command.extend(["--password", "!"])
             changed = True
 
-        if info["exists"] is False and self.resource.system:
+        system = self.resource.system.resolve()
+        if info["exists"] == False and system:
             command.extend(["--system"])
             changed = True
 
@@ -151,7 +167,7 @@ class UserRemove(provider.Provider):
 
     def apply(self, context, output):
         try:
-            existing = context.transport.getpwnam(self.resource.name.encode("utf-8"))
+            existing = context.transport.getpwnam(self.resource.name.as_string().encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such user. This is good.
             return False

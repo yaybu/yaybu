@@ -20,23 +20,15 @@ from yaybu.provisioner import resources
 from yaybu.provisioner.changes import ShellCommand
 
 
-import logging
-
-logger = logging.getLogger("provider")
-
 class Group(provider.Provider):
 
     policies = (resources.group.GroupApplyPolicy,)
-
-    @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(Group, self).isvalid(*args, **kwargs)
 
     def get_group_info(self, context):
         fields = ("name", "passwd", "gid", "members",)
 
         try:
-            info_tuple = context.transport.getgrnam(self.resource.name.encode("utf-8"))
+            info_tuple = context.transport.getgrnam(self.resource.name.as_string().encode("utf-8"))
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False
@@ -58,8 +50,9 @@ class Group(provider.Provider):
             command = ["groupadd"]
             changed = True
 
-        if self.resource.gid and info["gid"] != self.resource.gid:
-            command.extend(["--gid", str(self.resource.gid)])
+        gid = self.resource.gid.resolve()
+        if gid and info["gid"] != gid:
+            command.extend(["--gid", self.resource.gid])
 
         command.extend([self.resource.name])
 
@@ -73,17 +66,14 @@ class Group(provider.Provider):
 
         return True
 
+
 class GroupRemove(provider.Provider):
 
     policies = (resources.group.GroupRemovePolicy,)
 
-    @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(GroupRemove, self).isvalid(*args, **kwargs)
-
     def apply(self, context, output):
         try:
-            existing = context.transport.getgrnam(self.resource.name.encode("utf-8"))
+            existing = context.transport.getgrnam(self.resource.name.as_string().encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such group. This is good.
             return False
@@ -96,4 +86,3 @@ class GroupRemove(provider.Provider):
             raise error.InvalidGroup("groupdel on %s failed with return code %d" % (self.resource, exc.returncode))
 
         return True
-

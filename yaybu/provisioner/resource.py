@@ -219,8 +219,9 @@ class Resource(object):
         """ Bind this resource to all the resources on which it triggers.
         Returns a list of the resources to which we are bound. """
         bound = []
-        if self.policy.resolve() is not None:
-            for trigger in self.policy.triggers:
+        policy = self.policy.resolve()
+        if policy:
+            for trigger in policy.triggers:
                 bound.append(trigger.bind(resources, self))
         return bound
 
