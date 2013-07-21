@@ -7,8 +7,7 @@ import datetime
 import shutil
 from mock import MagicMock as Mock, call
 
-from yaybu.compute.vmware import VMBoxCache, VMBoxCollection, image_download
-
+from yaybu.compute.vmware import VMBoxCache, VMBoxCollection, RemoteVMBox
 cachedata = [
     {'id': '001',
      'url': "http://yaybu.com/image/ubuntu/12.04.2-server-amd64",
@@ -29,11 +28,11 @@ class TestImageDownload(unittest2.TestCase):
         src = os.path.join(d, "src")
         dst = os.path.join(d, "dst")
         open(src, "w").write("foo"*10000)
-        image_download("file://" + src, dst, progress)
+        r = RemoteVMBox("file://" + src)
+        r.download(dst, progress)
         self.assertEqual(open(dst).read(), "foo"*10000)
         progress.assert_has_calls([call(27), call(54), call(81), call(100)])
         shutil.rmtree(d)
-
 
 class TestVMBoxCache(unittest2.TestCase):
 

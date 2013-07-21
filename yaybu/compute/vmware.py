@@ -297,6 +297,13 @@ class VMWareDriver(NodeDriver):
         logger.debug("Setting runtime variable %r on node %r to %r" % (variable, node.id, value))
         self._action("writeVariable", node.id, "runtimeConfig", variable, value)
 
+class VMBoxImage:
+
+    def __init__(self, path):
+        self.path = path
+
+    def install(self, destdir, name):
+        pass
 
 class VMBoxCollection:
 
@@ -305,6 +312,8 @@ class VMBoxCollection:
     for use. """
 
     ## TODO: What about file and directory modes? Rely on umask?
+
+    ImageClass = VMBoxImage
 
     def __init__(self, root="~/.yaybu"):
         self.root = os.path.expanduser(root)
@@ -320,6 +329,7 @@ class VMBoxCollection:
         self.instancedir = os.path.join(self.root, "vmware", "instances")
 
         self.setupdirs()
+        self.cache = VMBoxCache(self.cachedir)
 
     def setupdirs(self):
         """ Create directories if required """
@@ -327,27 +337,38 @@ class VMBoxCollection:
             if not os.path.exists(d):
                 os.makedirs(d)
 
-    def fetch(self, uri):
+    def install(self, uri, name):
         """ Fetches the specified uri into the cache. Right now this only
         supports a full URL, but we expect to have some canonical locations
         and an extension mechanism. """
+        self.cache.insert(uri)
+        vmi = self.ImageClass(self.cache.image(uri))
+        vmi.install(self.instancedir, name)
 
 
-def image_download(src, dst, progress, batch_size=8192):
-    downloaded = 0
-    percent = 0
-    fout = open(dst, "w")
-    fin = urllib2.urlopen(src)
-    content_length = int(fin.headers['content-length'])
-    while True:
-        data = fin.read(batch_size)
-        if not data: break
-        fout.write(data)
-        downloaded += len(data)
-        percent = int(float(downloaded) / content_length * 100)
-        progress(percent)
-    fin.close()
-    fout.close()
+class RemoteVMBox:
+
+    def __init__(self, location):
+        self.location = location
+
+    def hash(self):
+        """ Fetch the hash from the remote image """
+
+    def download(self, dst, progress, batch_size=8192):
+        downloaded = 0
+        percent = 0
+        fout = open(dst, "w")
+        fin = urllib2.urlopen(self.location)
+        content_length = int(fin.headers['content-length'])
+        while True:
+            data = fin.read(batch_size)
+            if not data: break
+            fout.write(data)
+            downloaded += len(data)
+            percent = int(float(downloaded) / content_length * 100)
+            progress(percent)
+        fin.close()
+        fout.close()
 
 class VMBoxCache:
 
@@ -392,7 +413,11 @@ class VMBoxCache:
         mp = os.path.join(path, "metadata")
         ip = os.path.join(path, "image")
         json.dump(metadata, open(mp, "w"))
+        r = RemoteVMBox(location)
         with context.ui.progress(100) as p:
-            image_download(location, ip, p.progress)
+            r.download(ip, p.progress)
+        return name
 
+    def image(self, location):
+        return os.path.join(self.item[location], "image")
 
