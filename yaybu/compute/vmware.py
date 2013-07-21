@@ -117,6 +117,7 @@ import glob
 import logging
 import shutil
 import uuid
+import hashlib
 
 from libcloud.common.types import LibcloudError
 from libcloud.compute.base import NodeDriver, Node, NodeSize, NodeImage
@@ -350,11 +351,18 @@ class RemoteVMBox:
 
     def __init__(self, location):
         self.location = location
+        self.get_hash()
 
-    def hash(self):
+    def get_hash(self):
         """ Fetch the hash from the remote image """
+        md5_location = self.location + ".md5"
+        try:
+            self.hash = urllib2.urlopen(md5_location).read()
+        except urllib2.URLError:
+            self.hash = None
 
     def download(self, dst, progress, batch_size=8192):
+        h = hashlib.md5()
         downloaded = 0
         percent = 0
         fout = open(dst, "w")
@@ -363,12 +371,16 @@ class RemoteVMBox:
         while True:
             data = fin.read(batch_size)
             if not data: break
+            h.update(data)
             fout.write(data)
             downloaded += len(data)
             percent = int(float(downloaded) / content_length * 100)
             progress(percent)
         fin.close()
         fout.close()
+        if self.hash != None:
+            if h.hexdigest() != self.hash:
+                raise ValueError("Wrong hash")
 
 class VMBoxCache:
 
@@ -403,17 +415,18 @@ class VMBoxCache:
             context: A context object used for progress reporting
 
         """
+        r = RemoteVMBox(location)
         name = str(uuid.uuid4())
         path = os.path.join(self.cachedir, name)
         os.mkdir(path)
         metadata = {
             'name': location,
-            'created': str(datetime.datetime.now())
+            'created': str(datetime.datetime.now()),
+            'hash': r.hash
         }
         mp = os.path.join(path, "metadata")
         ip = os.path.join(path, "image")
         json.dump(metadata, open(mp, "w"))
-        r = RemoteVMBox(location)
         with context.ui.progress(100) as p:
             r.download(ip, p.progress)
         return name

@@ -1,6 +1,7 @@
 import unittest2
 import os
 import tempfile
+import hashlib
 import mock
 import json
 import datetime
@@ -44,7 +45,8 @@ class TestVMBoxCache(unittest2.TestCase):
             mp = os.path.join(cd, "metadata")
             metadata = {
                 'name': c['url'],
-                'created': str(datetime.datetime.now())
+                'created': str(datetime.datetime.now()),
+                'hash': None
             }
             json.dump(metadata, open(mp, "w"))
         self.cache = VMBoxCache(self.cachedir)
@@ -72,6 +74,9 @@ class TestVMBoxCache(unittest2.TestCase):
         f = tempfile.NamedTemporaryFile(delete=False)
         f.write("foo"*10000)
         f.close()
+        h = hashlib.md5()
+        h.update("foo"*10000)
+        open(f.name + ".md5", "w").write(h.hexdigest())
         context = Mock()
         self.cache.insert("file://" + f.name, context)
         dirs = os.listdir(self.cachedir)
@@ -83,6 +88,7 @@ class TestVMBoxCache(unittest2.TestCase):
         d = dirs[0]
         metadata = json.load(open(os.path.join(self.cachedir, d, "metadata")))
         self.assertEqual(metadata['name'], "file://" + f.name)
+        self.assertEqual(metadata['hash'], h.hexdigest())
 
 
 
