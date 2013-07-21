@@ -55,70 +55,38 @@ class Patch(provider.Provider):
             elif not ctx.transport.isdir(path):
                 raise error.PathComponentNotDirectory(path)
 
-    def has_protected_strings(self):
-        def iter(val):
-            if isinstance(val, dict):
-                for v in val.values():
-                    if iter(v):
-                        return True
-                return False
-
-            elif isinstance(val, list):
-                for v in val:
-                    if iter(v):
-                        return True
-                return False
-
-            else:
-                return isinstance(val, String)
-
-        return iter(self.resource.template_args)
-
-    def get_template_args(self):
-        """ I return a copy of the template_args that contains only basic types (i.e. no protected strings) """
-        def _(val):
-            if isinstance(val, dict):
-                return dict((k,_(v)) for (k,v) in val.items())
-            elif isinstance(val, list):
-                return list(_(v) for v in val)
-            elif isinstance(val, String):
-                return val.unprotected
-            else:
-                return val
-        return _(self.resource.template_args)
-
     def get_patch(self, context):
-        patch = context.get_file(self.resource.patch).read()
-
+        patch = context.get_file(self.resource.patch.as_string())
+        data = patch.read()
         #FIXME: Would be good to validate the patch here a bit
-
-        return patch
+        return data, "secret" in patch.labels()
 
     def apply_patch(self, context):
-        cmd = 'patch --dry-run -p%d -N --silent -r - -o - %s -' % (self.resource.strip, self.resource.source)
-        returncode, stdout, stderr = context.transport.execute(cmd, stdin=self.get_patch(context))
+        patch, sensitive = self.get_patch(context)
+
+        cmd = 'patch --dry-run -N --silent -r - -o - %s -' % self.resource.source.as_string()
+        returncode, stdout, stderr = context.transport.execute(cmd, stdin=patch)
 
         if returncode != 0:
             raise error.CommandError("Unable to apply patch\n" + stderr)
 
-        return stdout
+        return stdout, sensitive
 
     def apply(self, context, output):
-        name = self.resource.name
+        name = self.resource.name.as_string()
+
         self.check_path(context, os.path.dirname(name), context.simulate)
 
-        contents = self.apply_patch(context)
+        contents, sensitive = self.apply_patch(context)
 
-        sensitive = False
-
-        if self.resource.template_args:
+        template_args = self.resource.template_args.resolve()
+        if template_args:
             env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
             template = env.from_string(contents)
-            contents = template.render(self.get_template_args()) #+ "\n" # yuk
-            sensitive = self.has_protected_strings()
+            contents = template.render(template_args)
+            sensitive = "secret" in self.resource.template_args.get_labels()
 
         fc = EnsureFile(name, contents, self.resource.owner, self.resource.group, self.resource.mode, sensitive)
         context.change(fc)
 
         return fc.changed
-

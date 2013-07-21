@@ -87,7 +87,7 @@ class AptUninstall(provider.Provider):
         command = ["apt-get", "remove", "-q", "-y"]
         if self.resource.purge.as_bool():
             command.append("--purge")
-        command.append(self.resource.name)
+        command.append(self.resource.name.as_string())
 
         try:
             context.change(ShellCommand(command, env=env))

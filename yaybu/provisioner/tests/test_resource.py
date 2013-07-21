@@ -26,17 +26,17 @@ from yay.ast import bind
 from mock import Mock
 
 class F(resource.Resource):
-    foo = argument.String(default="42")
-    bar = argument.String()
+    foo = argument.Property(argument.String, default="42")
+    bar = argument.Property(argument.String)
 
 class G(resource.Resource):
-    foo = argument.String()
-    bar = argument.String()
+    foo = argument.Property(argument.String)
+    bar = argument.Property(argument.String)
 
 class H(resource.Resource):
-    foo = argument.Integer()
-    bar = argument.DateTime()
-    baz = argument.File()
+    foo = argument.Property(argument.Integer)
+    bar = argument.Property(argument.DateTime)
+    baz = argument.Property(argument.File)
 
 class TestResource(unittest.TestCase):
 
@@ -46,8 +46,8 @@ class TestResource(unittest.TestCase):
             'foo': u'42',
             'bar': u'20100501',
             }))
-        self.assertEqual(h.foo, 42)
-        self.assertEqual(h.bar, datetime.datetime(2010, 05, 01))
+        self.assertEqual(h.foo.as_int(), 42)
+        self.assertEqual(h.bar.resolve(), datetime.datetime(2010, 05, 01))
 
 
 class TestArgument(unittest.TestCase):
@@ -57,18 +57,18 @@ class TestArgument(unittest.TestCase):
         f2 = F(bind(dict(name="test", foo="c", bar="d")))
         g1 = G(bind(dict(name="test", foo="e", bar="f")))
         g2 = G(bind(dict(name="test", foo="g", bar="h")))
-        self.assertEqual(f1.foo, "a")
-        self.assertEqual(f1.bar, "b")
-        self.assertEqual(f2.foo, "c")
-        self.assertEqual(f2.bar, "d")
-        self.assertEqual(g1.foo, "e")
-        self.assertEqual(g1.bar, "f")
-        self.assertEqual(g2.foo, "g")
-        self.assertEqual(g2.bar, "h")
+        self.assertEqual(f1.foo.as_string(), "a")
+        self.assertEqual(f1.bar.as_string(), "b")
+        self.assertEqual(f2.foo.as_string(), "c")
+        self.assertEqual(f2.bar.as_string(), "d")
+        self.assertEqual(g1.foo.as_string(), "e")
+        self.assertEqual(g1.bar.as_string(), "f")
+        self.assertEqual(g2.foo.as_string(), "g")
+        self.assertEqual(g2.bar.as_string(), "h")
 
     def test_default(self):
         f = F(bind(dict(name="test")))
-        self.assertEqual(f.foo, "42")
+        self.assertEqual(f.foo.as_string(), "42")
 
 
 class TestArgumentAssertion(unittest.TestCase):
@@ -166,7 +166,7 @@ class TestResourceBundle(unittest.TestCase):
                 "mode": "666",
                 }]
              }])
-        self.assertEqual(resources["File[/etc/foo]"].mode, 438)
+        self.assertEqual(resources["File[/etc/foo]"].mode.as_int(), 438)
 
     def test_firing(self):
         Ev1Provider.applied = 0
@@ -191,7 +191,7 @@ class TestResourceBundle(unittest.TestCase):
         self.assertEqual(dict(e2.observers), {})
         self.assertEqual(dict(e1.observers),
                          {'foo': [
-                             (True, e2, 'baz')]
+                             (e2, 'baz')]
                           })
         p1 = e1.get_default_policy(self.context).get_provider({})
         p2 = e2.get_default_policy(self.context).get_provider({})
@@ -224,7 +224,7 @@ class TestResourceBundle(unittest.TestCase):
         self.assertEqual(dict(e2.observers), {})
         self.assertEqual(dict(e1.observers),
                          {'baz': [
-                             (True, e2, 'baz')]
+                             (e2, 'baz')]
                           })
         p1 = e1.get_default_policy(self.context).get_provider({})
         p2 = e2.get_default_policy(self.context).get_provider({})
@@ -268,7 +268,7 @@ class TestResourceBundle(unittest.TestCase):
         e2.bind(resources)
         self.assertEqual(len(e1.observers), 0)
         self.assertEqual(dict(e2.observers), {
-            'bar': [(True, e1, 'foo')]
+            'bar': [(e1, 'foo')]
             })
 
     def test_multiple(self):
@@ -292,11 +292,11 @@ class TestResourceBundle(unittest.TestCase):
         e2.bind(resources)
         self.assertEqual(dict(e1.observers), {})
         self.assertEqual(dict(e2.observers), {
-            'bar': [(True, e1, 'foo')],
-            'baz': [(True, e1, 'baz')],
+            'bar': [(e1, 'foo')],
+            'baz': [(e1, 'baz')],
             })
         self.assertEqual(dict(e3.observers), {
-            'foo': [(True, e1, 'bar')],
+            'foo': [(e1, 'bar')],
             })
 
     def test_missing(self):

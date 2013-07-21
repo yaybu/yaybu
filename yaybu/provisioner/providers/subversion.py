@@ -37,25 +37,23 @@ class Svn(Provider):
             'subversion',
         ]
 
-        if resource.scm:
-            return resource.scm.lower() in identities
-
-        # TODO: ensure that this should be made default provider
-        return True
+        return resource.scm.as_string(default='').lower() in identities
 
     @property
     def url(self):
-        if self.resource.tag:
-            return self.resource.repository + "/tags/" + self.resource.tag
-        return self.resource.repository + "/" + self.resource.branch
+        repository = self.resource.repository.as_string()
+        tag = self.resource.tag.as_string(default='')
+        if tag:
+            return repository + "/tags/" + tag
+        return repository + "/" + self.resource.branch.as_string()
 
     def action_checkout(self, context):
-        if context.transport.exists(self.resource.name):
-            return
+        name = self.resource.name.as_string()
+        user = self.resource.user.as_string()
+        group = self.resource.group.as_string()
 
-        context.change(EnsureDirectory(self.resource.name, self.resource.user, self.resource.group, 0755))
+        context.change(EnsureDirectory(name, user, group, 0755))
 
-        log.debug("Checking out %s" % self.resource)
         self.svn(context, "co", self.url, self.resource.name)
         return True
 
@@ -67,10 +65,10 @@ class Svn(Provider):
             log.info(error_string)
             log.info("This error was ignored in simulate mode")
 
-        if not context.transport.exists(self.resource.name):
-            return self.action_checkout(context)
+        name = self.resource.as_string()
 
-        log.debug("Syncing %s" % self.resource)
+        if not context.transport.exists(name):
+            return self.action_checkout(context)
 
         changed = False
 
@@ -105,28 +103,29 @@ class Svn(Provider):
         return changed
 
     def action_export(self, context):
-        if context.transport.exists(self.resource.name):
+        if context.transport.exists(self.resource.name.as_string()):
             return
-        log.debug("Exporting %s" % self.resource)
         self.svn(context, "export", self.url, self.resource.name)
 
     def get_svn_args(self, action, *args, **kwargs):
-        command = Command(["svn"])
+        command = ["svn"]
 
         if kwargs.get("quiet", False):
-            command.add("--quiet")
+            command.append("--quiet")
 
         command.extend([action, "--non-interactive"])
 
-        if self.resource.scm_username:
-            command.add(Command(["--username", self.resource.scm_username]))
-        if self.resource.scm_password:
-            command.add(Command(["--password", self.resource.scm_password]))
-        if self.resource.scm_username or self.resource.scm_password:
-            command.add("--no-auth-cache")
+        scm_username = self.resource.scm_username.as_string(default='')
+        scm_password = self.resource.scm_password.as_string(default='')
+        if scm_username:
+            command.extend(["--username", self.resource.scm_username])
+        if scm_password:
+            command.extend(["--password", self.resource.scm_password])
+        if scm_username or scm_password:
+            command.append("--no-auth-cache")
 
         for arg in args:
-            command.add(arg)
+            command.append(arg)
 
         return command
 
@@ -137,5 +136,5 @@ class Svn(Provider):
 
     def svn(self, context, action, *args, **kwargs):
         command = self.get_svn_args(action, *args, **kwargs)
-        sc = context.change(ShellCommand(command, user=self.resource.user))
+        sc = context.change(ShellCommand(command, user=self.resource.user.as_string()))
         return sc.returncode, sc.stdout, sc.stderr
