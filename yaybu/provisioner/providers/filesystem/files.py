@@ -66,11 +66,12 @@ class File(provider.Provider):
             try:
                 env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
                 template = env.get_template(template)
-                contents = template.render(self.resource.template_args.as_dict()) + "\n" # yuk
+                contents = template.render(self.resource.template_args.resolve()) + "\n" # yuk
             except UndefinedError as e:
                 raise error.ParseError(str(e))
 
-            sensitive = "secret" in self.resource.template_args.get_labels()
+            #sensitive = "secret" in self.resource.template_args.get_labels()
+            sensitive = False
 
         elif static:
             s = None
@@ -106,7 +107,7 @@ class File(provider.Provider):
             contents,
             self.resource.owner.as_string(),
             self.resource.group.as_string(),
-            self.resource.mode.as_string(),
+            self.resource.mode.resolve(),
             sensitive)
         context.change(fc)
 

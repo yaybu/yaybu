@@ -67,13 +67,13 @@ class Execute(provider.Provider):
         if command:
             commands = [self.resource.command]
         else:
-            commands = list(self.resource.as_iterable())
+            commands = list(self.resource.commands.get_iterable())
 
         for command in commands:
             try:
                 context.change(ShellCommand(command,
                     cwd=self.resource.cwd.as_string() or None,
-                    env=self.resource.environment.as_string() or None,
+                    env=self.resource.environment.resolve() or None,
                     user=self.resource.user.as_string(),
                     group=self.resource.group.as_string() or None,
                     umask=self.resource.umask.as_int(),

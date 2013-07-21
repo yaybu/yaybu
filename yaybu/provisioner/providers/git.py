@@ -31,7 +31,8 @@ class Git(Provider):
 
     @classmethod
     def isvalid(self, policy, resource, yay):
-        return resource.scm and resource.scm.lower() == "git"
+        scm = resource.scm.as_string(default='')
+        return scm and scm.lower() == "git"
 
     def get_git_command(self, action, *args):
         command = [
@@ -48,16 +49,16 @@ class Git(Provider):
     def info(self, context, action, *args):
         rc, stdout, stderr = context.transport.execute(
             self.get_git_command(action, *args),
-            user=self.resource.user,
-            cwd=self.resource.name,
+            user=self.resource.user.as_string(),
+            cwd=self.resource.name.as_string(),
             )
         return rc, stdout, stderr
 
     def action(self, context, action, *args):
         context.change(ShellCommand(
             self.get_git_command(action, *args),
-            user=self.resource.user,
-            cwd=self.resource.name,
+            user=self.resource.user.as_string(),
+            cwd=self.resource.name.as_string(),
             ))
 
     def action_clone(self, context):
@@ -65,10 +66,10 @@ class Git(Provider):
         typical clone, does not check it out
 
         """
-        context.change(EnsureDirectory(self.resource.name, self.resource.user, self.resource.group, 0755))
+        context.change(EnsureDirectory(self.resource.name.as_string(), self.resource.user.as_string(), self.resource.group.as_string(), 0755))
 
         try:
-            self.action(context, "init", self.resource.name)
+            self.action(context, "init", self.resource.name.as_string())
         except SystemError:
             raise CheckoutError("Cannot initialise local repository.")
 
@@ -76,7 +77,7 @@ class Git(Provider):
 
     def action_set_remote(self, context):
         try:
-            self.action(context, "remote", "add", self.REMOTE_NAME, self.resource.repository)
+            self.action(context, "remote", "add", self.REMOTE_NAME, self.resource.repository.as_string())
         except SystemError:
             raise CheckoutError("Could not set the remote repository.")
 
@@ -86,7 +87,7 @@ class Git(Provider):
         rv, stdout, stderr = self.info(context, "remote", "-v")
         remote = remote_re.search(stdout)
         if remote:
-            if not self.resource.repository == remote.group(1):
+            if not self.resource.repository.as_string() == remote.group(1):
                 log.info("The remote repository has changed.")
                 try:
                     self.action(context, "remote", "rm", self.REMOTE_NAME)
@@ -101,7 +102,7 @@ class Git(Provider):
 
     def checkout_needed(self, context):
         # Determine which SHA is currently checked out.
-        if context.transport.exists(os.path.join(self.resource.name, ".git")):
+        if context.transport.exists(os.path.join(self.resource.name.as_string(), ".git")):
             try:
                 rv, stdout, stderr = self.info(context, "rev-parse", "--verify", "HEAD")
             except SystemError:
@@ -113,7 +114,7 @@ class Git(Provider):
             head_sha = '0' * 40
 
         try:
-            rv, stdout, stderr = context.transport.execute(["git", "ls-remote", self.resource.repository], cwd="/tmp")
+            rv, stdout, stderr = context.transport.execute(["git", "ls-remote", self.resource.repository.as_string()], cwd="/tmp")
         except SystemError:
             raise CheckoutError("Could not query the remote repository")
 
@@ -121,30 +122,35 @@ class Git(Provider):
         refs_to_shas = dict([(b,a) for (a,b) in r.findall(stdout)])
 
         # Revision takes precedent over branch
-        if self.resource.revision:
-            newref = self.resource.revision
+
+        revision = self.resource.revision.as_string()
+        tag = self.resource.tag.as_string()
+        branch = self.resource.branch.as_string()
+
+        if revision:
+            newref = revision
             if newref != head_sha:
                 return newref
 
-        elif self.resource.tag:
-            as_tag = "refs/tags/%s" % self.resource.tag
+        elif tag:
+            as_tag = "refs/tags/%s" % tag
             if not as_tag in refs_to_shas.keys():
-                raise CheckoutError("Cannot find a tag called '%s'" % self.resource.tag)
+                raise CheckoutError("Cannot find a tag called '%s'" % tag)
 
             annotated_tag = as_tag + "^{}"
             if annotated_tag in refs_to_shas.keys():
                 as_tag = annotated_tag
-            newref = self.resource.tag
+            newref = tag
             if head_sha != refs_to_shas.get(as_tag):
                 return newref
 
-        elif self.resource.branch:
-            as_branch = "refs/heads/%s" % self.resource.branch
+        elif branch:
+            as_branch = "refs/heads/%s" % branch
             if not as_branch in refs_to_shas.keys():
-                raise CheckoutError("Cannot find a branch called '%s'" % self.resource.branch)
+                raise CheckoutError("Cannot find a branch called '%s'" % branch)
             newref = "remotes/%s/%s" % (
                 self.REMOTE_NAME,
-                self.resource.branch
+                branch
             )
             if head_sha != refs_to_shas.get(as_branch):
                 return newref
@@ -155,7 +161,7 @@ class Git(Provider):
         try:
             self.action(context, "fetch", self.REMOTE_NAME)
         except SystemError:
-            raise CheckoutError("Could not fetch '%s'" % self.resource.repository)
+            raise CheckoutError("Could not fetch '%s'" % self.resource.repository.as_string())
 
         try:
             self.action(context, "checkout", newref)
@@ -164,7 +170,7 @@ class Git(Provider):
 
     def apply(self, context, output):
         # If necessary, clone the repository
-        if not context.transport.exists(os.path.join(self.resource.name, ".git")):
+        if not context.transport.exists(os.path.join(self.resource.name.as_string(), ".git")):
             self.action_clone(context)
             changed = True
         else:

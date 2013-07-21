@@ -33,17 +33,17 @@ class _LsbServiceMixin(utils._ServiceMixin):
         return context.transport.exists("/etc/init.d/%s" % resource.name)
 
     def get_command(self, action):
-        return ["/etc/init.d/%s" % self.resource.name, action]
+        return ["/etc/init.d/%s" % self.resource.name.as_string(), action]
 
     def _enabled_links(self):
         for x in (2, 3, 4, 5):
-            yield "/etc/rc%s.d/S%02d%s" % (x, self.resource.priority, self.resource.name)
+            yield "/etc/rc%s.d/S%02d%s" % (x, self.resource.priority.as_int(), self.resource.name.as_string())
         for x in (0, 1, 6):
-            yield "/etc/rc%s.d/K%02d%s" % (x, 100-self.resource.priority, self.resource.name)
+            yield "/etc/rc%s.d/K%02d%s" % (x, 100-self.resource.priority.as_int(), self.resource.name.as_string())
 
     def _disabled_links(self):
         for x in (0, 1, 2, 3, 4, 5, 6):
-            yield "/etc/rc%s.d/K%02d%s" % (x, 100-self.resource.priority, self.resource.name)
+            yield "/etc/rc%s.d/K%02d%s" % (x, 100-self.resource.priority.as_int(), self.resource.name.as_string())
 
     def _update_links(self, context, goal):
         # We turn our "goal" symlinks into a set and use a glob to get a set of
@@ -51,7 +51,7 @@ class _LsbServiceMixin(utils._ServiceMixin):
         # The difference between the 2 sets are the links we need to create
         # and the links we need to remove
         target = set(goal)
-        current = set(glob.glob("/etc/rc*.d/[SK][0-9][0-9]%s"  % self.resource.name))
+        current = set(glob.glob("/etc/rc*.d/[SK][0-9][0-9]%s"  % self.resource.name.as_string()))
 
         need_deleting = current - target
         need_creating = target - current
@@ -63,7 +63,7 @@ class _LsbServiceMixin(utils._ServiceMixin):
             context.change(ShellCommand(["rm", ln]))
 
         for ln in need_creating:
-            context.change(ShellCommand(["ln", "-s", "/etc/init.d/%s" % self.resource.name, ln]))
+            context.change(ShellCommand(["ln", "-s", "/etc/init.d/%s" % self.resource.name.as_string(), ln]))
 
         return True
 
