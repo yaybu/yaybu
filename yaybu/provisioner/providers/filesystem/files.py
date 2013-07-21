@@ -29,9 +29,11 @@ class YaybuTemplateLoader(BaseLoader):
 
     def __init__(self, ctx):
         self.ctx = ctx
+        self.secret = False
 
     def get_source(self, environment, template):
         f = self.ctx.get_file(template)
+        self.secret = self.secret or "secret" in f.labels
         source = f.read()
         return source, template, lambda: False
 
@@ -60,25 +62,28 @@ class File(provider.Provider):
         static = self.resource.static.as_string(default='')
 
         if template:
+            template_args = self.resource.template_args.resolve()
+
             # set a special line ending
             # this strips the \n from the template line meaning no blank line,
             # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
+            loader = YaybuTemplateLoader(context)
             try:
-                env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
+                env = Environment(loader=loader, line_statement_prefix='%')
                 template = env.get_template(template)
-                contents = template.render(self.resource.template_args.resolve()) + "\n" # yuk
+                contents = template.render(template_args) + "\n" # yuk
             except UndefinedError as e:
                 raise error.ParseError(str(e))
 
-            #sensitive = "secret" in self.resource.template_args.get_labels()
-            sensitive = False
+            sensitive = loader.secret
+            if template_args:
+                 sensitive = sensitive or "secret" in self.resource.template_args.get_labels()
 
         elif static:
             s = None
             fp = context.get_file(static)
             contents = fp.read()
-
-            sensitive = getattr(fp, 'secret', False)
+            sensitive = "secret" in fp.labels
 
         else:
             contents = None

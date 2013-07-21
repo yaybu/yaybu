@@ -30,7 +30,7 @@ class Link(provider.Provider):
     def _get_owner(self, context):
         """ Return the uid for the resource owner, or None if no owner is
         specified. """
-        owner = self.resource.owner.as_string()
+        owner = self.resource.owner.as_string(default='')
         if owner:
             try:
                 return context.transport.getpwnam(owner).pw_uid
@@ -40,7 +40,7 @@ class Link(provider.Provider):
     def _get_group(self, context):
         """ Return the gid for the resource group, or None if no group is
         specified. """
-        group = self.resource.group.as_string()
+        group = self.resource.group.as_string(default='')
         if group:
             try:
                 return context.transport.getgrnam(group).gr_gid
@@ -98,11 +98,11 @@ class Link(provider.Provider):
         if isalink:
             uid, gid, mode = self._stat(context)
 
-        if owner is not None and owner != uid:
+        if owner and owner != uid:
             context.change(ShellCommand(["/bin/chown", "-h", self.resource.owner, self.resource.name]))
             changed = True
 
-        if group is not None and group != gid:
+        if group and group != gid:
             context.change(ShellCommand(["/bin/chgrp", "-h", self.resource.group, self.resource.name]))
             changed = True
 
