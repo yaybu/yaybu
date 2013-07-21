@@ -2,7 +2,7 @@ import unittest2
 import os
 import tempfile
 import mock
-import yaml
+import json
 import datetime
 import shutil
 from mock import MagicMock as Mock
@@ -28,12 +28,12 @@ class TestVMBoxCache(unittest2.TestCase):
         for c in cachedata:
             cd = os.path.join(self.cachedir, c['id'])
             os.mkdir(cd)
-            mp = os.path.join(cd, "metadata.yaml")
+            mp = os.path.join(cd, "metadata")
             metadata = {
                 'name': c['url'],
                 'created': str(datetime.datetime.now())
             }
-            yaml.safe_dump(metadata, open(mp, "w"), default_flow_style=False)
+            json.dump(metadata, open(mp, "w"))
         self.cache = VMBoxCache(self.cachedir)
 
     def tearDown(self):

@@ -31,7 +31,9 @@ from pipes import quote
 
 from libcloud.common.types import LibcloudError
 import logging
-import yaml
+import json
+import urllib2
+import uuid
 
 logger = logging.getLogger("yaybu.parts.compute.vmware")
 
@@ -337,10 +339,10 @@ class VMBoxCache:
     by the name that was used to retrieve it - we don't have a concept of an
     embedded name or a global name register. """
 
-    # The cache has one directory per box, with a metadata yaml file describing
+    # The cache has one directory per box, with a metadata json file describing
     # what we call the file and when it was retrieved
     # there may be additional directories and files in the cache that are ignored
-    # only directories containing a metadata.yaml are considered
+    # only directories containing a metadata are considered
 
     def __init__(self, cachedir):
         self.cachedir = cachedir
@@ -351,8 +353,21 @@ class VMBoxCache:
         for item in os.listdir(self.cachedir):
             ip = os.path.join(self.cachedir, item)
             if os.path.isdir(ip):
-                mp = os.path.join(ip, "metadata.yaml")
+                mp = os.path.join(ip, "metadata")
                 if os.path.exists(mp):
-                    md = yaml.load(open(mp))
+                    md = json.load(open(mp))
                     self.items[md['name']] = item
+
+    def insert(self, location):
+        """ Insert an item into the cache from a specified location. """
+        name = uuid.uuid4()
+        path = os.path.join(self.cachedir, name)
+        metadata = {
+            'name': location,
+            'created': str(datetime.datetime.now())
+        }
+        mp = os.path.join(path, "metadata")
+        json.dump(metadata, open(mp, "w"))
+        image = urllib2.urlopen(location)
+
 
