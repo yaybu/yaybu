@@ -31,6 +31,7 @@ from pipes import quote
 
 from libcloud.common.types import LibcloudError
 import logging
+import yaml
 
 logger = logging.getLogger("yaybu.parts.compute.vmware")
 
@@ -292,4 +293,61 @@ class VMWareDriver(NodeDriver):
     def ex_set_runtime_variable(self, node, variable, value):
         logger.debug("Setting runtime variable %r on node %r to %r" % (variable, node.id, value))
         self._action("writeVariable", node.id, "runtimeConfig", variable, value)
+
+
+class VMBoxCollection:
+
+    """ A collection of archive files, some of which may be remote and some
+    local, with a local cache and a set of them that are expanded and ready
+    for use. """
+
+    ## TODO: What about file and directory modes? Rely on umask?
+
+    def __init__(self, root="~/.yaybu"):
+        self.root = os.path.expanduser(root)
+
+        # a set of images that are only cloned, with additional information
+        # needed to start and connect to them correctly
+        self.templatedir = os.path.join(self.root, "vmware", "templates")
+
+        # a cache of downloaded image files
+        self.cachedir = os.path.join(self.root, "vmware", "cache")
+
+        # instances that may be started and running
+        self.instancedir = os.path.join(self.root, "vmware", "instances")
+
+        self.setupdirs()
+
+    def setupdirs(self):
+        """ Create directories if required """
+        for d in self.templatedir, self.cachedir, self.instancedir:
+            if not os.path.exists(d):
+                os.makedirs(d)
+
+    def fetch(self, uri):
+        """ Fetches the specified uri into the cache. Right now this only
+        supports a full URL, but we expect to have some canonical locations
+        and an extension mechanism. """
+
+
+
+class VMBoxCache:
+
+    """ A cache of compressed instances. Each item in the cache is identified
+    by the name that was used to retrieve it - we don't have a concept of an
+    embedded name or a global name register. """
+
+    def __init__(self, cachedir):
+        self.cachedir = cachedir
+        self.items = {}
+        self.scan()
+
+    def scan(self):
+        for item in os.listdir(self.cachedir):
+            ip = os.path.join(self.cachedir, item)
+            if os.path.isdir(ip):
+                mp = os.path.join(ip, "metadata.yaml")
+                if os.path.exists(mp):
+                    md = yaml.load(open(mp))
+                    self.items[md['name']] = item
 
