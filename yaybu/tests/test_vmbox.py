@@ -32,6 +32,7 @@ class TestImageDownload(unittest2.TestCase):
         image_download("file://" + src, dst, progress)
         self.assertEqual(open(dst).read(), "foo"*10000)
         progress.assert_has_calls([call(27), call(54), call(81), call(100)])
+        shutil.rmtree(d)
 
 
 class TestVMBoxCache(unittest2.TestCase):
@@ -67,4 +68,23 @@ class TestVMBoxCache(unittest2.TestCase):
     def test_stray_dir(self):
         os.mkdir(os.path.join(self.cachedir, "foo"))
         self.test_scan()
+
+    def test_insert(self):
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.write("foo"*10000)
+        f.close()
+        context = Mock()
+        self.cache.insert("file://" + f.name, context)
+        dirs = os.listdir(self.cachedir)
+        self.assertEqual(len(dirs), 4)
+        dirs.remove("001")
+        dirs.remove("002")
+        dirs.remove("003")
+        self.assertEqual(len(dirs), 1)
+        d = dirs[0]
+        metadata = json.load(open(os.path.join(self.cachedir, d, "metadata")))
+        self.assertEqual(metadata['name'], "file://" + f.name)
+
+
+
 
