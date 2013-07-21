@@ -337,6 +337,11 @@ class VMBoxCache:
     by the name that was used to retrieve it - we don't have a concept of an
     embedded name or a global name register. """
 
+    # The cache has one directory per box, with a metadata yaml file describing
+    # what we call the file and when it was retrieved
+    # there may be additional directories and files in the cache that are ignored
+    # only directories containing a metadata.yaml are considered
+
     def __init__(self, cachedir):
         self.cachedir = cachedir
         self.items = {}
