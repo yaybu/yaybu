@@ -55,7 +55,8 @@ class Mercurial(Provider):
 
     @classmethod
     def isvalid(self, policy, resource, yay):
-        return resource.scm and resource.scm.lower() == "mercurial"
+        scm = resource.scm.as_string(default='')
+        return scm and scm.lower() == "mercurial"
 
     def get_hg_command(self, action, *args):
         command = [

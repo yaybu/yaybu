@@ -92,7 +92,7 @@ class User(provider.Provider):
             changed = True
 
         uid = self.resource.uid.as_string(default='')
-        if int(uid) and info["uid"] != uid:
+        if uid and info["uid"] != int(uid):
             command.extend(["--uid", self.resource.uid])
             changed = True
 
@@ -117,7 +117,7 @@ class User(provider.Provider):
                     command.extend(["--gid", str(gid)])
                     changed = True
 
-        groups = self.resource.groups.as_list(default=[])
+        groups = self.resource.groups.resolve()  #as_list(default=[])
         if groups:
             desired_groups = set(groups)
             current_groups = set(g.gr_name for g in context.transport.getgrall() if name in g.gr_mem)
@@ -137,7 +137,7 @@ class User(provider.Provider):
             command.extend(["--shell", str(self.resource.shell)])
             changed = True
 
-        disabled_login = self.resource.disable_login.resolve()
+        disabled_login = self.resource.disabled_login.resolve()
         if disabled_login and not info["disabled-login"]:
             command.extend(["--password", "!"])
             changed = True

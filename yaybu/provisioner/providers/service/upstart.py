@@ -65,7 +65,7 @@ class _UpstartServiceMixin(utils._ServiceMixin):
             yield self._parse_line(line)
 
     def status(self, context):
-        command = ["/sbin/status", self.resource.name]
+        command = ["/sbin/status", self.resource.name.as_string()]
         try:
             rv, stdout, stderr = context.transport.execute(command)
         except error.SystemError as exc:

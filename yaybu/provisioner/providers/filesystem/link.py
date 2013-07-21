@@ -30,7 +30,7 @@ class Link(provider.Provider):
     def _get_owner(self, context):
         """ Return the uid for the resource owner, or None if no owner is
         specified. """
-        owner = self.resource.as_string()
+        owner = self.resource.owner.as_string()
         if owner:
             try:
                 return context.transport.getpwnam(owner).pw_uid
@@ -40,7 +40,7 @@ class Link(provider.Provider):
     def _get_group(self, context):
         """ Return the gid for the resource group, or None if no group is
         specified. """
-        group = self.resource.as_string()
+        group = self.resource.group.as_string()
         if group:
             try:
                 return context.transport.getgrnam(group).gr_gid

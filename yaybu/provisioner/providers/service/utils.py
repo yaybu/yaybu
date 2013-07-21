@@ -27,20 +27,22 @@ class _ServiceMixin(object):
     features = []
 
     def status(self, context):
-        if self.resource.running:
-            rc, stdout, stderr = context.transport.execute(self.resource.running)
+        running = self.resource.running.as_string(default='')
+        if running:
+            rc, stdout, stderr = context.transport.execute(running)
             if rc == 0:
                 return "running"
             else:
                 return "not-running"
 
-        if not self.resource.pidfile:
+        pidfile = self.resource.pidfile.as_string(default='')
+        if not pidfile:
             return "unknown"
 
-        if not context.transport.exists(self.resource.pidfile):
+        if not context.transport.exists(pidfile):
             return "not-running"
 
-        pid = context.transport.get(self.resource.pidfile).strip()
+        pid = context.transport.get(pidfile).strip()
         try:
             pid = int(pid)
         except:

@@ -28,7 +28,10 @@ class Directory(provider.Provider):
 
     def check_path(self, context, directory):
         if context.transport.isdir(directory):
+            print "PASS", directory
             return
+        print directory
+
         simulate = context.simulate
         transport = context.transport
         frags = directory.split("/")
@@ -36,7 +39,7 @@ class Directory(provider.Provider):
         for i in frags:
             path = os.path.join(path, i)
             if not transport.exists(path):
-                if self.resource.parents:
+                if self.resource.parents.resolve():
                     return
                 if simulate:
                     return

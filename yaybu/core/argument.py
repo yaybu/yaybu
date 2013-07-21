@@ -58,7 +58,9 @@ class Argument(ast.Pythonic, ast.Scalarish, ast.AST):
         super(Argument, self).__init__()
         self.resource = resource
         self.node = node
-        self.default = kwargs.pop("default", None)
+        self.anchor = node.inner.anchor
+        self.parent = node.inner
+        self.default = kwargs.pop("default", '')
         self.__doc__ = kwargs.pop("help", None)
 
     def resolve(self):
@@ -195,6 +197,9 @@ class List(Argument):
 
     def resolve(self):
         return self.node.as_list(default=self.default)
+
+    def get_iterable(self, default=object()):
+        return self.node.get_iterable()
 
     def __iter__(self):
         return iter(self.node.resolve())
