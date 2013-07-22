@@ -97,10 +97,6 @@ class Provision(base.GraphExternalAction):
                 self.transport.makedirs(save_parent)
 
         if self.transport.exists(self.state.save_file):
-            #FIXME: REMOVE THESE LINES BEFORING MERGING
-            if not self.resume and not self.no_resume:
-                self.no_resume = True
-
             if self.resume:
                 self.state.loaded = False
             elif self.no_resume:
