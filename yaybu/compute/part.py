@@ -66,7 +66,7 @@ class Compute(base.GraphExternalAction):
         driver_id = self.params.driver.id.as_string()
         if driver_id.lower() == "vmware":
             Driver = VMWareDriver
-        if driver_id.lower() == "bigv":
+        elif driver_id.lower() == "bigv":
             Driver = BigVNodeDriver
         else:
             Driver = get_compute_driver(getattr(ComputeProvider, driver_id))
