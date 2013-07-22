@@ -58,8 +58,10 @@ class OptionParsingCmd(cmd.Cmd):
 
             try:
                 return func(opts, args)
-
             except error.Error as e:
+                if getattr(self, "debug", False):
+                    import pdb
+                    pdb.post_mortem()
                 print str(e)
                 return e.returncode
             except KeyboardInterrupt:
@@ -137,7 +139,7 @@ class BaseYaybuCmd(OptionParsingCmd):
     prompt = "yaybu> "
     interactive_shell = True
 
-    def __init__(self, config=None, ypath=(), verbose=2, logfile=None):
+    def __init__(self, config=None, ypath=(), verbose=2, logfile=None, debug=False):
         """ Global options are provided on the command line, before the
         command """
         cmd.Cmd.__init__(self)
@@ -145,6 +147,7 @@ class BaseYaybuCmd(OptionParsingCmd):
         self.ypath = ypath
         self.verbose = verbose
         self.logfile = logfile
+        self.debug = debug
 
     @property
     def yaybufile(self):
