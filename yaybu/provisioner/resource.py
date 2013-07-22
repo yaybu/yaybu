@@ -129,7 +129,6 @@ class Resource(object):
         for k in dir(self):
             prop = getattr(self, k)
             if isinstance(prop, Property):
-                print prop.klass, prop.kwargs
                 setattr(self, k, prop.klass(self, getattr(self.inner, k), **prop.kwargs))
 
     @classmethod
