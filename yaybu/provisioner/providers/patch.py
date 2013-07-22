@@ -61,7 +61,7 @@ class Patch(provider.Provider):
         patch = context.get_file(self.resource.patch.as_string())
         data = patch.read()
         #FIXME: Would be good to validate the patch here a bit
-        return data, "secret" in patch.labels()
+        return data, "secret" in patch.labels
 
     def apply_patch(self, context):
         patch, sensitive = self.get_patch(context)
@@ -89,7 +89,7 @@ class Patch(provider.Provider):
             contents = template.render(template_args)
             sensitive = loader.secret or "secret" in self.resource.template_args.get_labels()
 
-        fc = EnsureFile(name, contents, self.resource.owner, self.resource.group, self.resource.mode, sensitive)
+        fc = EnsureFile(name, contents, self.resource.owner.as_string(), self.resource.group.as_string(), self.resource.mode.resolve(), sensitive)
         context.change(fc)
 
         return fc.changed
