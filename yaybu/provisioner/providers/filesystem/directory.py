@@ -28,9 +28,7 @@ class Directory(provider.Provider):
 
     def check_path(self, context, directory):
         if context.transport.isdir(directory):
-            print "PASS", directory
             return
-        print directory
 
         simulate = context.simulate
         transport = context.transport
