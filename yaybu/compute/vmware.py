@@ -234,7 +234,7 @@ class VMWareDriver(NodeDriver):
             nodes.append(n)
         return nodes
 
-    def create_node(self, name, size, image):
+    def create_node(self, name, size, image, **kwargs):
         source = os.path.expanduser(image.id)
         if not os.path.exists(source):
             raise LibcloudError("Base image %s not found" % source)
