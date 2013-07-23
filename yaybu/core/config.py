@@ -203,7 +203,6 @@ class Config(BaseConfig):
         try:
             return func(*args, **kwargs)
         except Error as e:
-            raise
             msg = e.get_string()
             msg += "\n" + get_exception_context()
             raise ParseError(msg)
