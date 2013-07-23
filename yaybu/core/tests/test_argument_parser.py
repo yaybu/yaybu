@@ -14,7 +14,7 @@ class TestArgumentParser(TestCase):
             """)
 
     def test_missing_arg(self):
-        self.assertRaises(error.ParseError, self.chroot.apply, """
+        self.assertRaises(error.NoMatching, self.chroot.apply, """
             resources:
                 - Execute:
                     name: test_missing_arg
