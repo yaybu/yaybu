@@ -70,7 +70,9 @@ class Compute(base.GraphExternalAction):
             Driver = BigVNodeDriver
         else:
             Driver = get_compute_driver(getattr(ComputeProvider, driver_id))
-        return Driver(**args_from_expression(Driver, self.params.driver))
+        driver = Driver(**args_from_expression(Driver, self.params.driver))
+        driver.yaybu_ui = self.root.ui
+        return driver
 
     @property
     @memoized
