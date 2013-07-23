@@ -78,7 +78,7 @@ class Progress(object):
         self.pos = 0
 
     def __enter__(self):
-        self.ui._progress = self
+        self.ui._progress.insert(0, self)
         return self
 
     def progress(self, progress):
@@ -95,7 +95,7 @@ class Progress(object):
 
     def __exit__(self, type_, value, tb):
         #self.progress(self.upperbound)
-        self.ui._progress = None
+        self.ui._progress.remove(self)
         self.ui.print("")
 
 
@@ -113,7 +113,7 @@ class Throbber(object):
         self.state = -1
 
     def __enter__(self):
-        self.ui._progress = self
+        self.ui._progress.insert(0, self)
         self.draw()
         return self
 
@@ -131,7 +131,7 @@ class Throbber(object):
         self.ui.stdout.flush()
 
     def __exit__(self, type_, value, tb):
-        self.ui._progress = None
+        self.ui._progress.remove(self)
         if tb:
             char = " "
         else:
@@ -145,6 +145,7 @@ class TextFactory(object):
 
     def __init__(self, stdout=None):
         self.stdout = stdout or sys.stdout
+        self._progress = []
 
     @property
     def columns(self):
@@ -165,7 +166,7 @@ class TextFactory(object):
         self.stdout.write(name + "\n")
         self.stdout.flush()
         if self._progress:
-            self._progress.draw()
+            self._progress[0].draw()
 
     def info(self, msg, *args):
         self.print(msg)
