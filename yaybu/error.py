@@ -19,30 +19,17 @@ based on our interpretation of the failure mode they represent. Resources will
 define the errors they may return. """
 
 import errno
+from yay.errors import ParseError, NoMatching, EvaluationError
 
-class Error(Exception):
-    """ Base class for all yaybu specific exceptions. """
-    returncode = 253
+ParseError.returncode = 128
 
-    def __init__(self, msg=""):
-        self.msg = msg
-
-    def __str__(self):
-        return "%s: %s" % (self.__class__.__name__, self.msg)
-
-class ParseError(Error):
-    """ Root of exceptions that are caused by an error in input. """
-
-    returncode = 128
-    """ returns error code 128 to the invoking environment. """
-
-class BindingError(Error):
+class BindingError(ParseError):
     """ An error during policy binding. """
 
     returncode = 129
     """ returns error code 129 to the invoking environment. """
 
-class ExecutionError(Error):
+class ExecutionError(EvaluationError):
     """ Root of exceptions that are caused by execution failing in an unexpected way. """
     returncode = 130
     """ returns error code 130 to the invoking environment. """
@@ -140,7 +127,7 @@ class PathComponentNotDirectory(ExecutionError):
     returncode = 147
     """ returns error code 147 to the invoking environment. """
 
-class SavedEventsAndNoInstruction(Error):
+class SavedEventsAndNoInstruction(ExecutionError):
     """ There is a saved events file and the user has not decided what to do
     about it. Invoke with --resume or --no-resume. """
     returncode = 148
@@ -152,12 +139,12 @@ class MissingAsset(ExecutionError):
     returncode = 149
     """ returns error code 149 to the invoking environment. """
 
-class CheckoutError(Error):
+class CheckoutError(ExecutionError):
     """ An insurmountable problem was encountered during checkout """
     returncode = 150
     """ returns error code 150 to the invoking environment. """
 
-class Incompatible(Error):
+class Incompatible(ExecutionError):
     """ An incompatibility was detected and execution can't continue """
     returncode = 151
 

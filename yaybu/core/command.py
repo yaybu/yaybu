@@ -58,12 +58,12 @@ class OptionParsingCmd(cmd.Cmd):
 
             try:
                 return func(opts, args)
-            except error.Error as e:
+            except yay.errors.Error as e:
                 if getattr(self, "debug", False):
                     import pdb
                     pdb.post_mortem()
-                print str(e)
-                return e.returncode
+                print e.get_string()
+                return getattr(e, "returncode", 128)
             except KeyboardInterrupt:
                 print "^C"
 

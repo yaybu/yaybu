@@ -199,14 +199,6 @@ class Config(BaseConfig):
                 }
             })
 
-    def _reraise_yay_errors(self, func, *args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Error as e:
-            msg = e.get_string()
-            msg += "\n" + get_exception_context()
-            raise ParseError(msg)
-
     @property
     @memoized
     def state(self):
@@ -225,13 +217,4 @@ class Config(BaseConfig):
             state = SimulatedStateStorageAdaptor(state)
 
         return state
-
-    def resolve(self):
-        return self._reraise_yay_errors(super(Config, self).resolve)
-
-    def load_uri(self, *args, **kwargs):
-        return self._reraise_yay_errors(super(Config, self).load_uri, *args, **kwargs)
-
-    def add(self, mapping):
-        return self._reraise_yay_errors(super(Config, self).add, mapping)
 
