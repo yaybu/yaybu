@@ -26,6 +26,7 @@ from yaybu.core.policy import (Policy,
                                NAND)
 
 from yaybu.core.argument import (
+    Property,
     FullPath,
     String,
     Integer,
@@ -64,41 +65,42 @@ class File(Resource):
 
     """
 
-    name = FullPath()
+    name = Property(FullPath)
     """The full path to the file this resource represents."""
 
-    owner = String(default="root")
+    owner = Property(String, default="root")
     """A unix username or UID who will own created objects. An owner that
     begins with a digit will be interpreted as a UID, otherwise it will be
     looked up using the python 'pwd' module."""
 
-    group = String(default="root")
+    group = Property(String, default="root")
     """A unix group or GID who will own created objects. A group that begins
     with a digit will be interpreted as a GID, otherwise it will be looked up
     using the python 'grp' module."""
 
-    mode = Octal(default="644")
+    mode = Property(Octal, default="644")
     """A mode representation as an octal. This can begin with leading zeros if
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work."""
 
-    static = File()
+    static = Property(File)
     """A static file to copy into this resource. The file is located on the
     yaybu path, so can be colocated with your recipes."""
 
-    template = File()
+    template = Property(File)
     """A jinja2 template, used to generate the contents of this resource. The
     template is located on the yaybu path, so can be colocated with your
     recipes"""
 
-    template_args = Dict(default={})
+    template_args = Property(Dict, default={})
     """The arguments passed to the template."""
 
     def hash(self, ctx):
-        if not ctx.transport.exists(self.name):
+        name = self.name.as_string()
+        if not ctx.transport.exists(name):
             return ""
-        return hashlib.sha1(ctx.transport.get(self.name)).hexdigest() + \
-            str(ctx.transport.stat(self.name).st_mtime)
+        return hashlib.sha1(ctx.transport.get(name)).hexdigest() + \
+            str(ctx.transport.stat(name).st_mtime)
 
 
 class FileApplyPolicy(Policy):

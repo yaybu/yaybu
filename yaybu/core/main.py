@@ -63,7 +63,7 @@ def _main():
 
     atexit.register(logging.shutdown)
 
-    com = command.YaybuCmd(config=opts.config, verbose=opts.verbose, ypath=opts.ypath, logfile=opts.logfile)
+    com = command.YaybuCmd(config=opts.config, verbose=opts.verbose, ypath=opts.ypath, logfile=opts.logfile, debug=opts.debug)
 
     gpgagent.setup_gpg_agent()
     try:

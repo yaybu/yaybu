@@ -19,11 +19,10 @@ import types
 import urlparse
 import sys
 import os
-from abc import ABCMeta, abstractmethod, abstractproperty
 import unicodedata
 import random
 import yay
-from yay import errors
+from yay import errors, ast
 
 
 def get_unicode_glyphs():
@@ -37,7 +36,16 @@ def get_unicode_glyphs():
 # we abuse urlparse for our parsing needs
 urlparse.uses_netloc.append("package")
 
-class Argument(object):
+
+class Property(object):
+
+    def __init__(self, klass, **kwargs):
+        self.klass = klass
+        self.kwargs = kwargs
+        self.__doc__ = kwargs.pop("help", None)
+
+
+class Argument(ast.Pythonic, ast.Scalarish, ast.AST):
 
     """
     Adds a property descriptor to a class that automatically validates and
@@ -46,19 +54,26 @@ class Argument(object):
     It is immutable.
     """
 
-    metaclass = ABCMeta
-
-    def __init__(self, **kwargs):
-        self.default = kwargs.pop("default", None)
+    def __init__(self, resource, node, **kwargs):
+        super(Argument, self).__init__()
+        self.resource = resource
+        self.node = node
+        self.anchor = node.inner.anchor
+        self.parent = node.inner
+        self.default = kwargs.pop("default", '')
         self.__doc__ = kwargs.pop("help", None)
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
+    def resolve(self):
         try:
-            return instance.inner[self.name].resolve()
+            return self.node.resolve()
         except errors.NoMatching:
             return self.default
+
+    def get_labels(self):
+        return self.node.get_labels()
+
+    def get_local_labels(self):
+        return self.node.get_local_labels()
 
     def __get_censored__(self, instance, owner):
         if instance is None:
@@ -76,11 +91,9 @@ class Boolean(Argument):
 
     default = False
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
+    def resolve(self):
         try:
-            value = instance.inner[self.name].resolve()
+            value = self.node.resolve()
         except errors.NoMatching:
             return self.default
 
@@ -96,10 +109,8 @@ class String(Argument):
 
     """ Represents a string. """
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        return instance.inner[self.name].as_string(default=self.default)
+    def resolve(self):
+        return self.node.as_string(default=self.default)
 
     @classmethod
     def _generate_valid(self):
@@ -114,10 +125,8 @@ class FullPath(Argument):
     """ Represents a full path on the filesystem. This should start with a
     '/'. """
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        value = instance.inner[self.name].as_string(default=self.default)
+    def resolve(self):
+        value = self.node.as_string(default=self.default)
         #if not value.startswith("/"):
         #    raise error.ParseError("%s is not a full path" % value)
         return value
@@ -137,10 +146,8 @@ class Integer(Argument):
     throw an :py:exc:error.ParseError if the passed in value cannot represent
     a base-10 integer. """
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        return instance.inner[self.name].as_int(default=self.default)
+    def resolve(self):
+        return self.node.as_int(default=self.default)
 
     @classmethod
     def _generate_valid(self):
@@ -151,10 +158,8 @@ class DateTime(Argument):
 
     """ Represents a date and time. This is parsed in ISO8601 format. """
 
-    def __get__(self, instance, onwer):
-        if instance is None:
-            return self
-        value = instance.inner[self.name].as_string(default=self.default)
+    def resolve(self):
+        value = self.node.as_string(default=self.default)
         if not value:
             return None
         if isinstance(value, basestring):
@@ -169,11 +174,9 @@ class Octal(Integer):
 
     """ An octal integer.  This is specifically used for file permission modes. """
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
+    def resolve(self):
         try:
-            value = instance.inner[self.name].resolve()
+            value = self.node.resolve()
         except errors.NoMatching:
             value = self.default
         if isinstance(value, int):
@@ -188,10 +191,8 @@ class Octal(Integer):
 
 class Dict(Argument):
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        return instance.inner[self.name].as_dict(default=self.default)
+    def resolve(self):
+        return self.node.as_dict(default=self.default)
 
     @classmethod
     def _generate_valid(self):
@@ -200,10 +201,14 @@ class Dict(Argument):
 
 class List(Argument):
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        return instance.inner[self.name].as_list(default=self.default)
+    def resolve(self):
+        return self.node.as_list(default=self.default)
+
+    def get_iterable(self, default=object()):
+        return self.node.get_iterable()
+
+    def __iter__(self):
+        return iter(self.node.resolve())
 
     @classmethod
     def _generate_valid(self):
@@ -226,18 +231,17 @@ class StandardPolicy:
 
 class PolicyTrigger:
 
-    def __init__(self, policy, when, on, immediately=True):
+    def __init__(self, policy, when, on):
         self.policy = policy
         self.when = when
         self.on = on
-        self.immediately = immediately
 
     def bind(self, resources, target):
         if not self.on in resources:
             raise error.BindingError("Cannot bind %r to missing resource named '%s'" % (target, self.on))
         if not self.when in resources[self.on].policies:
             raise error.BindingError("%r cannot bind to non-existant event %s on resource %r" % (target, self.when, resources[self.on]))
-        resources[self.on].register_observer(self.when, target, self.policy, self.immediately)
+        resources[self.on].register_observer(self.when, target, self.policy)
         return resources[self.on]
 
 
@@ -274,12 +278,11 @@ class PolicyArgument(Argument):
 
     """ Parses the policy: argument for resources, including triggers etc. """
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
+    def resolve(self):
+        instance = self.resource
 
         try:
-            value = instance.inner[self.name].resolve()
+            value = self.node.resolve()
         except errors.NoMatching:
             #return PolicyCollection(instance.policies.default())
             return None
@@ -300,9 +303,9 @@ class PolicyArgument(Argument):
                     triggers.append(
                         PolicyTrigger(
                             policy=policy,
-                            when=condition['when'],
-                            on=condition['on'],
-                            immediately=condition.get('immediately', 'true') == 'true')
+                            when=str(condition['when']),
+                            on=str(condition['on']),
+                            )
                         )
             return PolicyCollection(triggers=triggers)
 

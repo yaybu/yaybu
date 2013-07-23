@@ -22,7 +22,7 @@ from yaybu.provisioner.changes import ShellCommand
 
 def is_installed(context, resource):
     # work out if the package is already installed
-    command = ["dpkg-query", "-W", "-f='${Status}'", resource.name]
+    command = ["dpkg-query", "-W", "-f='${Status}'", resource.name.as_string()]
 
     try:
         rc, stdout, stderr = context.transport.execute(command)
@@ -43,12 +43,6 @@ class AptInstall(provider.Provider):
 
     policies = (resources.package.PackageInstallPolicy,)
 
-    @classmethod
-    def isvalid(self, policy, resource, yay):
-        if resource.version is not None:
-            return False
-        return super(AptInstall, self).isvalid(policy, resource, yay)
-
     def apply(self, context, output):
         if is_installed(context, self.resource):
             return False
@@ -58,7 +52,7 @@ class AptInstall(provider.Provider):
             }
 
         # the search returned 1, package is not installed, continue and install it
-        command = ["apt-get", "install", "-q", "-y", self.resource.name]
+        command = ["apt-get", "install", "-q", "-y", self.resource.name.as_string()]
 
         try:
             context.change(ShellCommand(command, env=env))
@@ -72,10 +66,6 @@ class AptUninstall(provider.Provider):
 
     policies = (resources.package.PackageUninstallPolicy,)
 
-    @classmethod
-    def isvalid(self, policy, resource, yay):
-        return super(AptUninstall, self).isvalid(policy, resource, yay)
-
     def apply(self, context, output):
         if not is_installed(context, self.resource):
             return False
@@ -85,9 +75,9 @@ class AptUninstall(provider.Provider):
             }
 
         command = ["apt-get", "remove", "-q", "-y"]
-        if self.resource.purge:
+        if self.resource.purge.as_bool():
             command.append("--purge")
-        command.append(self.resource.name)
+        command.append(self.resource.name.as_string())
 
         try:
             context.change(ShellCommand(command, env=env))

@@ -30,18 +30,19 @@ class Execute(provider.Provider):
         return super(Execute, self).isvalid(*args, **kwargs)
 
     def apply(self, context, output):
-        if self.resource.creates is not None \
-           and context.transport.exists(self.resource.creates):
+        creates = self.resource.creates.as_string()
+        if creates and context.transport.exists(creates):
             #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
             return False
 
-        if self.resource.touch is not None \
-                and context.transport.exists(self.resource.touch):
+        touch = self.resource.touch.as_string()
+        if touch and context.transport.exists(touch):
             return False
 
-        if self.resource.unless:
+        unless = self.resource.unless.as_string()
+        if unless:
             try:
-                if context.transport.execute(self.resource.unless)[0] == 0:
+                if context.transport.execute(unless)[0] == 0:
                     return False
 
             except error.InvalidUser as exc:
@@ -49,7 +50,7 @@ class Execute(provider.Provider):
                 # guard. We bail out with True so that Yaybu treates the
                 # resource as applied.
                 if context.simulate:
-                    context.changelog.info("User '%s' not found; assuming this recipe will create it" % self.resource.user)
+                    context.changelog.info("User '%s' not found; assuming this recipe will create it" % self.resource.user.as_string())
                     return True
                 raise
 
@@ -58,26 +59,32 @@ class Execute(provider.Provider):
                 # guard. We bail out with True so that Yaybu treates the
                 # resource as applied.
                 if context.simulate:
-                    context.changelog.info("Group '%s' not found; assuming this recipe will create it" % self.resource.group)
+                    context.changelog.info("Group '%s' not found; assuming this recipe will create it" % self.resource.group.as_string())
                     return True
                 raise
 
-        commands = [self.resource.command] if self.resource.command else self.resource.commands
+        command = self.resource.command.as_string()
+        if command:
+            commands = [self.resource.command]
+        else:
+            commands = list(self.resource.commands.get_iterable())
+
         for command in commands:
             try:
                 context.change(ShellCommand(command,
-                    cwd=self.resource.cwd or None,
-                    env=self.resource.environment or None,
-                    user=self.resource.user,
-                    group=self.resource.group or None,
-                    umask=self.resource.umask
+                    cwd=self.resource.cwd.as_string() or None,
+                    env=self.resource.environment.resolve() or None,
+                    user=self.resource.user.as_string(),
+                    group=self.resource.group.as_string() or None,
+                    umask=self.resource.umask.as_int(),
                     ))
             except error.SystemError as exc:
+                returncode = self.resource.returncode.as_int(default=0)
                 rc = exc.returncode
-                if self.resource.returncode is not None and rc != self.resource.returncode:
+                if returncode and rc != returncode:
                     raise error.CommandError("%s failed with return code %d" % (self.resource, rc))
 
-        if self.resource.touch is not None:
+        if self.resource.touch.as_string():
             context.change(ShellCommand(["touch", self.resource.touch]))
 
         return True

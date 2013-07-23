@@ -26,13 +26,10 @@ class Directory(provider.Provider):
 
     policies = (resources.directory.DirectoryAppliedPolicy,)
 
-    @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(Directory, self).isvalid(*args, **kwargs)
-
     def check_path(self, context, directory):
         if context.transport.isdir(directory):
             return
+
         simulate = context.simulate
         transport = context.transport
         frags = directory.split("/")
@@ -40,7 +37,7 @@ class Directory(provider.Provider):
         for i in frags:
             path = os.path.join(path, i)
             if not transport.exists(path):
-                if self.resource.parents:
+                if self.resource.parents.resolve():
                     return
                 if simulate:
                     return
@@ -49,15 +46,17 @@ class Directory(provider.Provider):
                 raise error.PathComponentNotDirectory(path)
 
     def apply(self, context, output):
+        name = self.resource.name.as_string()
+
         changed = False
-        self.check_path(context, os.path.dirname(self.resource.name))
+        self.check_path(context, os.path.dirname(name))
 
         return context.change(EnsureDirectory(
-            self.resource.name,
-            self.resource.owner,
-            self.resource.group,
-            self.resource.mode,
-            self.resource.parents,
+            name,
+            self.resource.owner.as_string(),
+            self.resource.group.as_string(),
+            self.resource.mode.resolve(),
+            self.resource.parents.resolve(),
             ))
 
 
@@ -65,14 +64,12 @@ class RemoveDirectory(provider.Provider):
 
     policies = (resources.directory.DirectoryRemovedPolicy,)
 
-    @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(RemoveDirectory, self).isvalid(*args, **kwargs)
-
     def apply(self, context, output):
-        if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
-            raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
-        if context.transport.exists(self.resource.name):
+        name = self.resource.name.as_string()
+
+        if context.transport.exists(name) and not context.transport.isdir(name):
+            raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, name))
+        if context.transport.exists(name):
             context.change(ShellCommand(["/bin/rmdir", self.resource.name]))
             changed = True
         else:
@@ -84,14 +81,12 @@ class RemoveDirectoryRecursive(provider.Provider):
 
     policies = (resources.directory.DirectoryRemovedRecursivePolicy,)
 
-    @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(RemoveDirectoryRecursive, self).isvalid(*args, **kwargs)
-
     def apply(self, context, output):
-        if context.transport.exists(self.resource.name) and not context.transport.isdir(self.resource.name):
-            raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, self.resource.name))
-        if context.transport.exists(self.resource.name):
+        name = self.resource.name.as_string()
+
+        if context.transport.exists(name) and not context.transport.isdir(name):
+            raise error.InvalidProviderError("%r: %s exists and is not a directory" % (self, name))
+        if context.transport.exists(name):
             context.change(ShellCommand(["/bin/rm", "-rf", self.resource.name]))
             changed = True
         else:

@@ -29,9 +29,11 @@ class YaybuTemplateLoader(BaseLoader):
 
     def __init__(self, ctx):
         self.ctx = ctx
+        self.secret = False
 
     def get_source(self, environment, template):
         f = self.ctx.get_file(template)
+        self.secret = self.secret or "secret" in f.labels
         source = f.read()
         return source, template, lambda: False
 
@@ -41,10 +43,6 @@ class File(provider.Provider):
     """ Provides file creation using templates or static files. """
 
     policies = (resources.file.FileApplyPolicy,)
-
-    @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(File, self).isvalid(*args, **kwargs)
 
     def check_path(self, ctx, directory, simulate):
         if ctx.transport.isdir(directory):
@@ -59,58 +57,33 @@ class File(provider.Provider):
             elif not ctx.transport.isdir(path):
                 raise error.PathComponentNotDirectory(path)
 
-    def has_protected_strings(self):
-        def iter(val):
-            if isinstance(val, dict):
-                for v in val.values():
-                    if iter(v):
-                        return True
-                return False
-
-            elif isinstance(val, list):
-                for v in val:
-                    if iter(v):
-                        return True
-                return False
-
-            else:
-                return isinstance(val, String)
-
-        return iter(self.resource.template_args)
-
-    def get_template_args(self):
-        """ I return a copy of the template_args that contains only basic types (i.e. no protected strings) """
-        def _(val):
-            if isinstance(val, dict):
-                return dict((k,_(v)) for (k,v) in val.items())
-            elif isinstance(val, list):
-                return list(_(v) for v in val)
-            elif isinstance(val, String):
-                return val.unprotected
-            else:
-                return val
-        return _(self.resource.template_args)
-
     def get_file_contents(self, context):
-        if self.resource.template:
+        template = self.resource.template.as_string(default='')
+        static = self.resource.static.as_string(default='')
+
+        if template:
+            template_args = self.resource.template_args.resolve()
+
             # set a special line ending
             # this strips the \n from the template line meaning no blank line,
             # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
+            loader = YaybuTemplateLoader(context)
             try:
-                env = Environment(loader=YaybuTemplateLoader(context), line_statement_prefix='%')
-                template = env.get_template(self.resource.template)
-                contents = template.render(self.get_template_args()) + "\n" # yuk
+                env = Environment(loader=loader, line_statement_prefix='%')
+                template = env.get_template(template)
+                contents = template.render(template_args) + "\n" # yuk
             except UndefinedError as e:
                 raise error.ParseError(str(e))
 
-            sensitive = self.has_protected_strings()
+            sensitive = loader.secret
+            if template_args:
+                 sensitive = sensitive or "secret" in self.resource.template_args.get_labels()
 
-        elif self.resource.static:
+        elif static:
             s = None
-            fp = context.get_file(self.resource.static)
+            fp = context.get_file(static)
             contents = fp.read()
-
-            sensitive = getattr(fp, 'secret', False)
+            sensitive = "secret" in fp.labels
 
         else:
             contents = None
@@ -120,21 +93,27 @@ class File(provider.Provider):
 
     def test(self, context):
         # Validate that the file exists and any template values can be filled in
-        if self.resource.template:
-            with context.root.ui.throbber("Testing '%s' exists and is a valid template..." % self.resource.template):
+        if self.resource.template.as_string():
+            with context.root.ui.throbber("Testing '%s' exists and is a valid template..." % self.resource.template.as_string()):
                 self.get_file_contents(context)
-        elif self.resource.static:
-            with context.root.ui.throbber("Testing '%s' exists..." % self.resource.static):
+        elif self.resource.static.as_string():
+            with context.root.ui.throbber("Testing '%s' exists..." % self.resource.static.as_string()):
                 self.get_file_contents(context)
 
     def apply(self, context, output):
-        name = self.resource.name
+        name = self.resource.name.as_string()
 
         self.check_path(context, os.path.dirname(name), context.simulate)
 
         contents, sensitive = self.get_file_contents(context)
 
-        fc = EnsureFile(self.resource.name, contents, self.resource.owner, self.resource.group, self.resource.mode, sensitive)
+        fc = EnsureFile(
+            name,
+            contents,
+            self.resource.owner.as_string(),
+            self.resource.group.as_string(),
+            self.resource.mode.resolve(),
+            sensitive)
         context.change(fc)
 
         return fc.changed
@@ -143,28 +122,21 @@ class File(provider.Provider):
 class RemoveFile(provider.Provider):
     policies = (resources.file.FileRemovePolicy,)
 
-    @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(RemoveFile, self).isvalid(*args, **kwargs)
-
     def apply(self, context, output):
-        if context.transport.exists(self.resource.name):
-            if not context.transport.isfile(self.resource.name):
-                raise error.InvalidProvider("%s exists and is not a file" % self.resource.name)
+        name = self.resource.name.as_string()
+        if context.transport.exists(name):
+            if not context.transport.isfile(name):
+                raise error.InvalidProvider("%s exists and is not a file" % name)
             context.change(ShellCommand(["rm", self.resource.name]))
             changed = True
         else:
-            context.changelog.debug("File %s missing already so not removed" % self.resource.name)
+            context.changelog.debug("File %s missing already so not removed" % name)
             changed = False
         return changed
 
 
 class WatchFile(provider.Provider):
     policies = (resources.file.FileWatchedPolicy, )
-
-    @classmethod
-    def isvalid(self, *args, **kwargs):
-        return super(WatchFile, self).isvalid(*args, **kwargs)
 
     def apply(self, context, output):
         """ Watched files don't have any policy applied to them """

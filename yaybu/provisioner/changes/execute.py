@@ -17,6 +17,7 @@ import os
 import shlex
 
 from yay import String
+from yay.ast import AST
 
 from yaybu import error, changes
 
@@ -56,15 +57,27 @@ class ShellCommand(changes.Change):
         transport = ctx.transport
 
         if isinstance(self.command, Command):
-            logas = self.command.as_list(secret=True)
-            command = self.command.as_list(secret=False)
+            raise NotImplementedError
         elif isinstance(self.command, String):
-            logas = shlex.split(self.command.protected.encode("UTF-8"))
-            command = shlex.split(self.command.unprotected.encode("UTF-8"))
+            raise NotImplementedError
         elif isinstance(self.command, list):
-            logas = command = self.command[:]
+            command = []
+            for c in self.command:
+                if isinstance(c, AST):
+                    command.append(c.as_string())
+                else:
+                    command.append(c)
+            logas = []
+            for c in self.command:
+                if isinstance(c, AST):
+                    logas.append(c.as_safe_string())
+                else:
+                    logas.append(c)
         elif isinstance(self.command, basestring):
             logas = command = shlex.split(self.command.encode("UTF-8"))
+        elif isinstance(self.command, AST):
+            command = shlex.split(self.command.as_string().encode("UTF-8"))
+            logas = shlex.split(self.command.as_safe_string().encode("UTF-8"))
 
         command = self._tounicode(command)
         logas = self._tounicode(logas)

@@ -55,7 +55,8 @@ class Mercurial(Provider):
 
     @classmethod
     def isvalid(self, policy, resource, yay):
-        return resource.scm and resource.scm.lower() == "mercurial"
+        scm = resource.scm.as_string(default='')
+        return scm and scm.lower() == "mercurial"
 
     def get_hg_command(self, action, *args):
         command = [
@@ -69,62 +70,62 @@ class Mercurial(Provider):
     def info(self, context, action, *args):
         rc, stdout, stderr = context.transport.execute(
             self.get_hg_command(action, *args),
-            user=self.resource.user,
-            cwd=self.resource.name,
+            user=self.resource.user.as_string(),
+            cwd=self.resource.name.as_string(),
             )
         return rc, stdout, stderr
 
     def action(self, context, action, *args):
         context.change(ShellCommand(
             self.get_hg_command(action, *args),
-            user=self.resource.user,
-            cwd=self.resource.name,
+            user=self.resource.user.as_string(),
+            cwd=self.resource.name.as_string(),
             ))
 
     def apply(self, context, output):
         created = False
         changed = False
 
-        context.change(EnsureDirectory(self.resource.name, self.resource.user, self.resource.group, 0755))
+        context.change(EnsureDirectory(self.resource.name.as_string(), self.resource.user.as_string(), self.resource.group.as_string(), 0755))
 
-        if not context.transport.exists(os.path.join(self.resource.name, ".hg")):
+        if not context.transport.exists(os.path.join(self.resource.name.as_string(), ".hg")):
             try:
                 self.action(context, "init")
             except SystemError:
                 raise CheckoutError("Cannot initialise local repository.")
             created = True
 
-        url = _inject_credentials(self.resource.repository, self.resource.scm_username, self.resource.scm_password)
+        url = _inject_credentials(self.resource.repository.as_string(), self.resource.scm_username.as_string(), self.resource.scm_password.as_string())
 
         try:
             f = context.change(EnsureFile(
-                os.path.join(self.resource.name, ".hg", "hgrc"),
-                hgrc % {"repository": url, "path": self.resource.name},
-                self.resource.user,
-                self.resource.group,
+                os.path.join(self.resource.name.as_string(), ".hg", "hgrc"),
+                hgrc % {"repository": url, "path": self.resource.name.as_string()},
+                self.resource.user.as_string(),
+                self.resource.group.as_string(),
                 0600,
                 True))
-            changed = changed or f.changed
+            # changed = changed or f.changed
         except SystemError:
             raise CheckoutError("Could not set the remote repository.")
 
         try:
             f = context.change(EnsureFile(
-                os.path.join(self.resource.name, ".hg", "should.py"),
+                os.path.join(self.resource.name.as_string(), ".hg", "should.py"),
                 open(os.path.join(os.path.dirname(__file__), "mercurial.hgext")).read(),
-                self.resource.user,
-                self.resource.group,
+                self.resource.user.as_string(),
+                self.resource.group.as_string(),
                 0600,
                 True))
-            changed = changed or f.changed
+            # changed = changed or f.changed
         except SystemError:
             raise CheckoutError("Could not setup mercurial idempotence extension")
 
         should_args = []
-        if self.resource.branch:
-            should_args.extend(["-b", self.resource.branch])
-        if self.resource.tag:
-            should_args.extend(["-t", self.resource.tag])
+        if self.resource.branch.as_string(default=''):
+            should_args.extend(["-b", self.resource.branch.as_string()])
+        if self.resource.tag.as_string(default=''):
+            should_args.extend(["-t", self.resource.tag.as_string()])
 
         if created or self.info(context, "should-pull", *should_args)[0] != 0:
             try:
@@ -134,9 +135,9 @@ class Mercurial(Provider):
                 raise CheckoutError("Could not fetch changes from remote repository.")
 
         if created or self.info(context, "should-update", *should_args)[0] != 0:
-            if self.resource.tag:
+            if self.resource.tag.as_string():
                 args = [self.resource.tag]
-            elif self.resource.branch:
+            elif self.resource.branch.as_string():
                 args = [self.resource.branch]
             else:
                 args = []

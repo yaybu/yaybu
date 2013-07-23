@@ -22,6 +22,7 @@ from yaybu.core.policy import (Policy,
                                NAND)
 
 from yaybu.core.argument import (
+    Property,
     FullPath,
     String,
     Integer,
@@ -33,19 +34,19 @@ class Special(Resource):
 
     """ A special file, as created by mknod. """
 
-    name = FullPath()
+    name = Property(FullPath)
     """ The full path to the special file on disk. """
 
-    owner = String(default="root")
+    owner = Property(String, default="root")
     """ The unix user who should own this special file. """
 
-    group = String(default="root")
+    group = Property(String, default="root")
     """ The unix group who should own this special file. """
 
-    mode = Octal(default=0644)
+    mode = Property(Octal, default=0644)
     """ The octal representation of the permissions for this special file. """
 
-    type = String(default="fifo")
+    type = Property(String, default="fifo")
     """ One of the following strings:
 
       block
@@ -58,13 +59,14 @@ class Special(Resource):
     It defaults to fifo
     """
 
-    major = Integer()
+    major = Property(Integer)
     """ The major number for the special file. If the type of the special file
     is block or character, then this must be specified. """
 
-    minor = Integer()
+    minor = Property(Integer)
     """ The minor number for the special file. If the type of the special file
     is block or character, then this must be specified. """
+
 
 class SpecialAppliedPolicy(Policy):
 
