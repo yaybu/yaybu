@@ -19,6 +19,7 @@ from . import (
     git,
     group,
     mercurial,
+    mount,
     mounted,
     service,
     subversion,
