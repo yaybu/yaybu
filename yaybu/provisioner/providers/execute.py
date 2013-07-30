@@ -42,7 +42,10 @@ class Execute(provider.Provider):
         unless = self.resource.unless.as_string()
         if unless:
             try:
-                if context.transport.execute(unless)[0] == 0:
+                if context.transport.execute(unless,
+                        user=self.resource.user.as_string(),
+                        cwd=self.resource.cwd.as_string(),
+                        )[0] == 0:
                     return False
 
             except error.InvalidUser as exc:
@@ -81,7 +84,7 @@ class Execute(provider.Provider):
             except error.SystemError as exc:
                 returncode = self.resource.returncode.as_int(default=0)
                 rc = exc.returncode
-                if returncode and rc != returncode:
+                if rc != returncode:
                     raise error.CommandError("%s failed with return code %d" % (self.resource, rc))
 
         if self.resource.touch.as_string():
