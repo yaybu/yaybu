@@ -65,7 +65,7 @@ class Svn(Provider):
             log.info(error_string)
             log.info("This error was ignored in simulate mode")
 
-        name = self.resource.as_string()
+        name = self.resource.name.as_string()
 
         if not context.transport.exists(name):
             return self.action_checkout(context)
@@ -136,5 +136,7 @@ class Svn(Provider):
 
     def svn(self, context, action, *args, **kwargs):
         command = self.get_svn_args(action, *args, **kwargs)
-        sc = context.change(ShellCommand(command, user=self.resource.user.as_string()))
+        sc = ShellCommand(command, user=self.resource.user.as_string())
+        context.change(sc)
         return sc.returncode, sc.stdout, sc.stderr
+
