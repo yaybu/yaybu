@@ -160,8 +160,8 @@ class Compute(base.GraphExternalAction):
             self.members.set('domain', n.extra['dns_name'].split(".",1)[1])
 
     def _fake_node_info(self):
-        self.members.set('public_ips', '0.0.0.0')
-        self.members.set('private_ips', '0.0.0.0')
+        self.members.set('public_ip', '0.0.0.0')
+        self.members.set('private_ip', '0.0.0.0')
         self.members.set('fqdn', 'missing-host')
 
     def test(self):
