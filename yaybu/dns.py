@@ -63,13 +63,16 @@ class ZoneSync(MetadataSync):
             )
 
     def update(self, uid, record):
-        self.driver.update_zone(
-            zone = self.zone,
-            domain = record['domain'],
-            type = record['type'],
-            ttl = record['ttl'],
-            extra = record['extra'],
-            )
+        try:
+            self.driver.update_zone(
+                zone = self.zone,
+                domain = record['domain'],
+                type = record['type'],
+                ttl = record['ttl'],
+                extra = record['extra'],
+                )
+        except NotImplementedError:
+            print "This zone's settings are immutable"
 
     def delete(self, uid, record):
         self.driver.delete_zone(self.zone)
