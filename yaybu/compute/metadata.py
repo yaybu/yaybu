@@ -9,3 +9,6 @@ EC2NodeDriver.create_node_kwargs = [
     'ex_blockdevicemappings',
     ]
 
+# see https://issues.apache.org/jira/browse/LIBCLOUD-367
+EC2NodeDriver.features['create_node'] = []
+
