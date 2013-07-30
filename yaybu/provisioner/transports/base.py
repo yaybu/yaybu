@@ -16,7 +16,7 @@ import logging
 import pipes
 import os
 from subprocess import list2cmdline
-
+from yay.ast import AST
 from yaybu import error
 
 class Transport(object):
@@ -50,6 +50,10 @@ class Transport(object):
             full_command.append("--")
 
         if isinstance(command, list):
+            command = command[:]
+            for i, segment in enumerate(command):
+                if isinstance(segment, AST):
+                    command[i] = segment.as_string()
             command = list2cmdline(command)
 
         parts = []
