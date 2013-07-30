@@ -111,7 +111,7 @@ class Compute(base.GraphExternalAction):
         return NodeImage(
             id = id,
             name = self.params.image.name.as_string(default=id),
-            extra = self.params.image.extra.as_dict(),
+            extra = self.params.image.extra.as_dict(default={}),
             driver = self.driver,
             )
 
