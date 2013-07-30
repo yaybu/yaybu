@@ -20,6 +20,7 @@ from yaybu.provisioner.resources import (
     special,
     group,
     checkout,
+    mount,
     package,
     patch,
     user,
