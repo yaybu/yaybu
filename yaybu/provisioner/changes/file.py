@@ -105,7 +105,7 @@ class FileChangeTextRenderer(changes.TextRenderer):
     renderer_for = EnsureFile
 
     def empty_file(self, filename):
-        self.logger.notice("Emptied file %s", filename)
+        self.logger.notice("Emptied file %s" % filename)
 
     def new_file(self, filename, contents, sensitive):
         self.logger.notice("Writing new file '%s'" % filename)
@@ -113,7 +113,7 @@ class FileChangeTextRenderer(changes.TextRenderer):
             self.diff("", contents)
 
     def changed_file(self, filename, previous, replacement, sensitive):
-        self.logger.notice("Changed file %s", filename)
+        self.logger.notice("Changed file %s" % filename)
         if not sensitive:
             self.diff(previous, replacement)
 
