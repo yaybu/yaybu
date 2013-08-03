@@ -18,24 +18,21 @@ import inspect
 import itertools
 from yay import errors
 
-def get_argv0():
-    #FIXME: This can be memoized
-    argv0 = os.path.realpath(sys.prefix)
-    while os.path.islink(argv0):
-        argv0 = os.readlink(argv0)
-    return argv0
-
 def is_mac_bundle():
     if sys.platform != "darwin":
         return False
-    if "Yaybu.app" not in get_argv0():
+    try:
+        get_bundle_path("")
+        return True
+    except RuntimeError:
         return False
-    return True
 
 def get_bundle_path(path):
-    argv0 = get_argv0()
-    bundle_root = argv0[:argv0.find('Yaybu.app')+len('Yaybu.app')]
-    return os.path.join(bundle_root, "Contents", path)
+    for p in sys.path:
+        if "Yaybu.app" in p:
+            bundle_root = p[:p.find('Yaybu.app')+len('Yaybu.app')]
+            return os.path.join(bundle_root, "Contents", path)
+    raise RuntimeError("Application is not bundled")
 
 
 # merci, twisted
