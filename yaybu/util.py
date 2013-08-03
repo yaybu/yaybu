@@ -30,7 +30,7 @@ def is_mac_bundle():
 def get_bundle_path(path):
     for p in sys.path:
         if "Yaybu.app" in p:
-            bundle_root = p[:p.rfind('Yaybu.app')+len('Yaybu.app')]
+            bundle_root = p[:p.rfind('Yaybu.app/Contents/Resources')+len('Yaybu.app')]
             return os.path.join(bundle_root, "Contents", path)
     raise RuntimeError("Application is not bundled")
 
