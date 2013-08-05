@@ -21,7 +21,12 @@ from yaybu.core import (argument,
 from yaybu.provisioner import resource, provider
 
 from yaybu import error
-from yay.ast import bind
+from yay.ast import bind as bind_
+
+def bind(foo):
+    b = bind_(foo)
+    b.parent = None
+    return b
 
 from mock import Mock
 
