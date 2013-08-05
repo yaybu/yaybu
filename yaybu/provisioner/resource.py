@@ -124,12 +124,17 @@ class Resource(object):
     def __init__(self, inner):
         """ Takes a reference to a Yay AST node """
         self.inner = PythonicWrapper(inner)
+        self.inner.parent = inner.parent
         self.observers = collections.defaultdict(list)
 
         for k in dir(self):
             prop = getattr(self, k)
             if isinstance(prop, Property):
-                setattr(self, k, prop.klass(self, getattr(self.inner, k), **prop.kwargs))
+                i = getattr(self.inner, k)
+                i.inner.parent = inner.parent
+                i.parent = inner.parent
+                p = prop.klass(self, i, **prop.kwargs)
+                setattr(self, k, p)
 
     @classmethod
     def get_argument_names(klass):
@@ -342,10 +347,12 @@ class ResourceBundle(ordereddict.OrderedDict):
         # Create implicit File[] nodes for any watched files
         try:
             for watched in resource.watch:
-                w = self.add("File", bind({
+                res = bind({
                     "name": watched,
                     "policy": "watched",
-                }))
+                })
+                res.parent = instance
+                w = self.add("File", res)
                 w._original_hash = None
         except errors.NoMatching:
             pass
