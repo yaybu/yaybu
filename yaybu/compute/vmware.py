@@ -160,6 +160,9 @@ class VMXFile(object):
 
 class VMWareDriver(NodeDriver):
 
+    """ This is an implementation of a libcloud driver for VMWare, that is
+    used in preference to libvirt because it is better. """
+
     type = Provider.VMWARE
     name = "vmware"
     website = "http://www.vmware.com/products/fusion/"
@@ -206,6 +209,9 @@ class VMWareDriver(NodeDriver):
         return self.connection.request(command, capture_output=capture_output).body
 
     def list_images(self, location=None):
+        ## TODO
+        ## list the template images from the cache
+        ## provide friendly names somehow, perhaps deduping on leafname or something
         if not location:
             location = self.vm_library
         locs = []
@@ -240,6 +246,27 @@ class VMWareDriver(NodeDriver):
         return nodes
 
     def create_node(self, name, size, image, **kwargs):
+        """ Create a new VM from a template VM and start it.
+        """
+        ## TODO: look at image.id, which is the name of the template image
+        ## i.e. it is either an http or file URL then use the image cache to
+        ## fetch it if necessary, then use the new location below to actually
+        ## create the new vm
+        ## self.yaybu_context is the context object that I need to do the progress
+        ## bar with
+        ##
+        ## with self.yaybu_context.ui.progressbar as p:
+        ##     p.progress(50)
+        ##
+        ## then install credentials as per the existing code
+        ## provide options for create_node for which sort of credential installation
+        ## to use -
+        ##
+        ## https://github.com/apache/libcloud/blob/trunk/libcloud/compute/base.py#L518
+        ##
+        ## support all 2 options, ssh_key and password
+        ##
+        ## for extra marks, detect the terminal width
         source = os.path.expanduser(image.id)
         if not os.path.exists(source):
             raise LibcloudError("Base image %s not found" % source)
@@ -348,6 +375,14 @@ class VMBoxCollection:
 
 
 class RemoteVMBox:
+
+    ## TODO
+    # first look for Content-MD5 header
+    # then try the .md5 file
+    # what about signatures?
+    # look for .sig file as a detached gpg signature
+    # set an option in __init__ to require it, optionally
+    # then provide a switch to enable this
 
     def __init__(self, location):
         self.location = location
