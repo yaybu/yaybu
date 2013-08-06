@@ -29,6 +29,7 @@ from libcloud.compute.base import NodeImage, NodeSize, NodeAuthPassword, NodeAut
 
 from .vmware import VMWareDriver
 from .bigv import BigVNodeDriver
+from .docker import DockerNodeDriver
 
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
@@ -68,6 +69,8 @@ class Compute(base.GraphExternalAction):
             Driver = VMWareDriver
         elif driver_id.lower() == "bigv":
             Driver = BigVNodeDriver
+        elif driver_id.lower() == "docker":
+            Driver = DockerNodeDriver
         else:
             Driver = get_compute_driver(getattr(ComputeProvider, driver_id))
         driver = Driver(**args_from_expression(Driver, self.params.driver))
