@@ -74,7 +74,7 @@ class Compute(base.GraphExternalAction):
         else:
             Driver = get_compute_driver(getattr(ComputeProvider, driver_id))
         driver = Driver(**args_from_expression(Driver, self.params.driver))
-        driver.yaybu_ui = self.root.ui
+        driver.yaybu_context = self.root
         return driver
 
     @property
