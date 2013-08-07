@@ -75,13 +75,11 @@ class Argument(ast.Pythonic, ast.Scalarish, ast.AST):
     def get_local_labels(self):
         return self.node.get_local_labels()
 
-    def __get_censored__(self, instance, owner):
-        if instance is None:
-             return self
-        try:
-            return instance.inner[self.name].as_safe_string()
-        except errors.NoMatching:
-            return self.default
+    def as_safe_string(self):
+        return self.node.as_safe_string()
+
+    def contains_secrets(self):
+        return self.node.contains_secrets()
 
 
 class Boolean(Argument):
