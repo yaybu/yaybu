@@ -353,6 +353,50 @@ class BaseYaybuCmd(OptionParsingCmd):
         import gevent
         gevent.run()
 
+    def opts_shell(self, parser):
+        parser.add_option("-c", "--command", default=None, action="store")
+        parser.add_option("-i", "--interactive", default=False, action="store_true")
+
+    def do_shell(self, opts, args):
+        """
+        usage: shell
+
+        Parse a Yaybufile and drop into a python shell session for debugging
+        """
+
+        if "--" in args:
+            graph_args = args[:args.index("--")]
+            script_args = args[args.index("--")+1:]
+        else:
+            graph_args = args
+            script_args = []
+
+        graph = self._get_graph(opts, graph_args)
+        mylocals = {'graph': graph, '__name__': '__main__'}
+
+        handled = False
+        if opts.command:
+            exec(opts.command, mylocals)
+            handled = True
+        elif args and args[0] == "-":
+            execfile("/dev/stdin", mylocals)
+            handled = True
+        elif args:
+            execfile(args[0], mylocals)
+            handled = True
+
+        if not handled or opts.interactive:
+            import code
+            try:
+                import readline
+                import rlcompleter
+                readline.set_completer(rlcompleter.Completer(mylocals).complete)
+                readline.parse_and_bind("tab:complete")
+            except ImportError:
+                pass
+
+            code.interact(local=mylocals)
+
     def do_exit(self, opts=None, args=None):
         """ Exit yaybu """
         raise SystemExit
