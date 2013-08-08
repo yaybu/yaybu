@@ -375,7 +375,7 @@ class VMBoxCollection:
 
 
 class RemoteVMBox:
-
+    
     ## TODO
     # first look for Content-MD5 header
     # then try the .md5 file
@@ -386,17 +386,43 @@ class RemoteVMBox:
 
     def __init__(self, location):
         self.location = location
-        self.get_hash()
-
+        
     def get_hash(self):
-        """ Fetch the hash from the remote image """
+        """ Try methods in order until one returns something other than None.
+        This is the MD5. """
+        methods = (self._hash_headers,
+                   self._hash_detached)
+        for m in methods:
+            md5 = m()
+            if md5 is not None:
+                return md5
+        
+    def _hash_headers(self):
+        """ Fetch the MD5 hash from the first "Content-MD5" header if
+        present. """
+        rq = urllib2.Request(self.location)
+        rq.get_method = lambda: 'HEAD'
+        rs = urllib2.urlopen(rq)
+        headers = rs.info().getheaders("Content-MD5")
+        if headers:
+            md5 = headers[0]
+        else:
+            md5 = None
+        return md5
+
+    def _hash_detached(self):
+        """ Fetch the hash from a detached text file alongside the original
+        """
         md5_location = self.location + ".md5"
         try:
-            self.hash = urllib2.urlopen(md5_location).read()
+            md5 = urllib2.urlopen(md5_location).read()
         except urllib2.URLError:
-            self.hash = None
+            md5 = None
+        return md5
 
     def download(self, dst, progress, batch_size=8192):
+        """ Download the file and calculate its hash """
+        self.hash = self.get_hash()
         h = hashlib.md5()
         downloaded = 0
         percent = 0
