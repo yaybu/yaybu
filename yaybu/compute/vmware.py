@@ -376,6 +376,9 @@ class VMBoxCollection:
 
 class RemoteVMBox:
     
+    """ Provides tooling around remote images, specifically hash verification
+    and image signing. """
+    
     ## TODO
     # first look for Content-MD5 header
     # then try the .md5 file
@@ -480,16 +483,16 @@ class VMBoxCache:
         name = str(uuid.uuid4())
         path = os.path.join(self.cachedir, name)
         os.mkdir(path)
+        mp = os.path.join(path, "metadata")
+        ip = os.path.join(path, "image")
+        with context.ui.progress(100) as p:
+            r.download(ip, p.progress)
         metadata = {
             'name': location,
             'created': str(datetime.datetime.now()),
             'hash': r.hash
         }
-        mp = os.path.join(path, "metadata")
-        ip = os.path.join(path, "image")
         json.dump(metadata, open(mp, "w"))
-        with context.ui.progress(100) as p:
-            r.download(ip, p.progress)
         return name
 
     def image(self, location):
