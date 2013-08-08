@@ -6,9 +6,11 @@ import mock
 import json
 import datetime
 import shutil
-from mock import MagicMock as Mock, call
+from mock import MagicMock as Mock, call, patch
 
+from yaybu.compute import vmware
 from yaybu.compute.vmware import VMBoxCache, VMBoxCollection, RemoteVMBox
+
 cachedata = [
     {'id': '001',
      'url': "http://yaybu.com/image/ubuntu/12.04.2-server-amd64",
@@ -22,6 +24,24 @@ cachedata = [
 ]
 
 class TestImageDownload(unittest2.TestCase):
+    
+    def test_hash_headers_header_present(self):
+        with patch('yaybu.compute.vmware.urllib2') as ul2:
+            ul2.urlopen().info().getheaders.return_value = ["foo"]
+            r = RemoteVMBox("http://www.example.com")
+            self.assertEqual(r._hash_headers(), "foo")
+        
+    def test_hash_headers_header_not_present(self):
+        with patch('yaybu.compute.vmware.urllib2') as ul2:
+            ul2.urlopen().info().getheaders.return_value = []
+            r = RemoteVMBox("http://www.example.com")
+            self.assertEqual(r._hash_headers(), None)
+    
+    def test_hash_detached(self):
+        pass
+    
+    def test_get_hash(self):
+        pass
 
     def test_image_download(self):
         progress = Mock()
