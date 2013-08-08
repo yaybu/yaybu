@@ -38,23 +38,50 @@ class TestImageDownload(unittest2.TestCase):
             self.assertEqual(r._hash_headers(), None)
     
     def test_hash_detached(self):
-        pass
+        with patch('yaybu.compute.vmware.urllib2') as ul2:
+            ul2.urlopen().read.return_value = "foo"
+            r = RemoteVMBox("http://www.example.com")
+            self.assertEqual(r._hash_detached(), "foo")
     
-    def test_get_hash(self):
-        pass
+    def test_get_hash_from_header(self):
+        with patch('yaybu.compute.vmware.urllib2') as ul2:
+            ul2.urlopen().info().getheaders.return_value = ["foo"]
+            r = RemoteVMBox("http://www.example.com")
+            self.assertEqual(r.get_hash(), "foo")
+            
+    def test_get_hash_from_detached(self):
+        with patch('yaybu.compute.vmware.urllib2') as ul2:
+            ul2.urlopen().info().getheaders.return_value = []
+            ul2.urlopen().read.return_value = "foo"
+            r = RemoteVMBox("http://www.example.com")
+            self.assertEqual(r.get_hash(), "foo")
 
-    def test_image_download(self):
+    def test_image_download_good_hash(self):
+        h = hashlib.md5()
         progress = Mock()
         d = tempfile.mkdtemp()
         src = os.path.join(d, "src")
         dst = os.path.join(d, "dst")
         open(src, "w").write("foo"*10000)
+        h.update("foo"*10000)
+        open(src + ".md5", "w").write(h.hexdigest())
         r = RemoteVMBox("file://" + src)
         r.download(dst, progress)
         self.assertEqual(open(dst).read(), "foo"*10000)
         progress.assert_has_calls([call(27), call(54), call(81), call(100)])
         shutil.rmtree(d)
 
+    def test_image_download_wrong_hash(self):
+        progress = Mock()
+        d = tempfile.mkdtemp()
+        src = os.path.join(d, "src")
+        dst = os.path.join(d, "dst")
+        open(src, "w").write("foo"*10000)
+        open(src + ".md5", "w").write("foo")
+        r = RemoteVMBox("file://" + src)
+        self.assertRaises(ValueError, r.download, dst, progress)
+        shutil.rmtree(d)
+        
 class TestVMBoxCache(unittest2.TestCase):
 
     def setUp(self):
