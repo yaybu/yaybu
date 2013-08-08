@@ -27,6 +27,7 @@ setup(name='Yaybu',
           'apache-libcloud >= 0.12.1',
           'paramiko >= 1.8.0',
           'gevent',
+          'gnupg',
       ],
       dependency_links = [
           'https://gevent.googlecode.com/files/gevent-1.0rc2.tar.gz#egg=gevent-1.0rc2',
