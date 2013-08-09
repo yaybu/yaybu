@@ -29,6 +29,7 @@ from yaybu.compute import Compute
 from yaybu.provisioner import Provision
 from yaybu.loadbalancer import LoadBalancer
 from yaybu.dns import Zone
+from yaybu.static import StaticContainer
 from yaybu.heroku import Heroku
 from yaybu.changesource import GitChangeSource, GitHubChangeSource
 from yaybu.printer import Printer
@@ -138,6 +139,7 @@ class Config(BaseConfig):
             "LoadBalancer": ast.PythonClassFactory(LoadBalancer),
             "Zone": ast.PythonClassFactory(Zone),
             "Heroku": ast.PythonClassFactory(Heroku),
+            "StaticContainer": ast.PythonClassFactory(StaticContainer),
             "GitChangeSource": ast.PythonClassFactory(GitChangeSource),
             "GitHubChangeSource": ast.PythonClassFactory(GitHubChangeSource),
             "Printer": ast.PythonClassFactory(Printer),
