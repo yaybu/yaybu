@@ -14,7 +14,6 @@ import subprocess
 import yay
 import yay.errors
 from yaybu.core import error, util
-from yaybu.util import is_mac_bundle
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -406,84 +405,4 @@ class BaseYaybuCmd(OptionParsingCmd):
         print
         self.do_exit()
 
-
-class BundledDarwinYaybuCmd(BaseYaybuCmd):
-
-    def preloop(self):
-        BaseYaybuCmd.preloop(self)
-        if not self.is_on_path():
-            print "Run 'link' in this window to be able to run 'yaybu' from an ordinary terminal."
-            print ""
-        print "Run 'open' to choose a Yaybufile"
-        print ""
-
-    def is_on_path(self):
-        for path in os.environ.get("PATH", "").split(":"):
-            bin = os.path.join(path, "yaybu")
-            if "Yaybu.app" in path:
-                continue
-            if os.path.exists(bin):
-                return True
-        return False
-
-    def do_link(self, opts, args):
-        if self.is_on_path():
-            print "Already on path!"
-            return 1
-
-        prefix = sys.argv[0]
-        bundle = prefix[:prefix.find("Yaybu.app")+len("Yaybu.app")]
-
-        f = os.path.join(bundle, "Contents", "Resources", "bin", "yaybu")
-        t = "/usr/local/bin/yaybu"
-        os.system("osascript -e 'do shell script \"test ! -d /usr/local/bin && mkdir -p /usr/local/bin; ln -s %s %s\" with administrator privileges'" % (f, t))
-
-    def do_open(self, opts, args):
-        p = subprocess.Popen(["osascript"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate("""
-            tell application "Finder"
-                activate
-                set af to choose file with prompt "Choose Yaybufile"
-            end tell
-            set pf to POSIX path of af
-            """)
-
-        if p.returncode:
-            print "Yaybufile not changed"
-            return 0
-
-        path = os.path.abspath(stdout.strip())
-        if not os.path.exists(path):
-            print "'%s' doesn not exist. Yaybufile not changed"
-            return 0
-
-        self.config = path
-        self.ypath = [os.path.dirname(path)]
-        print self.ypath
-
-    def do_update(self):
-        from Foundation import NSBundle
-        import objc
-        import plistlib
-
-        from yaybu.util import get_bundle_path
-
-        bundle = NSBundle.mainBundle()
-
-        d =  NSBundle.mainBundle().infoDictionary()
-        p = plistlib.Plist.fromFile(get_bundle_path("Info.plist"))
-        d.update(p)
-
-        objc.loadBundle('Sparkle', globals(), bundle_path=get_bundle_path('Frameworks/Sparkle.framework'))
-        s = SUUpdater.sharedUpdater()
-        s.checkForUpdatesInBackground()
-
-        from PyObjCTools import AppHelper
-        AppHelper.runConsoleEventLoop(installInterrupt=True)
-
-
-if is_mac_bundle():
-    YaybuCmd = BundledDarwinYaybuCmd
-else:
-    YaybuCmd = BaseYaybuCmd
 
