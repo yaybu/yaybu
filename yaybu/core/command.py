@@ -133,7 +133,7 @@ class OptionParsingCmd(cmd.Cmd):
         self.do_help((),(command,))
 
 
-class BaseYaybuCmd(OptionParsingCmd):
+class YaybuCmd(OptionParsingCmd):
 
     prompt = "yaybu> "
     interactive_shell = True
