@@ -168,12 +168,11 @@ class VMWareDriver(NodeDriver):
     website = "http://www.vmware.com/products/fusion/"
     connectionCls = Connection
 
-    def __init__(self, vm_library="~/.yaybu/vmware/library", vm_instances="~/.yaybu/vmware/instances", vmrun=None, hosttype=None):
+    def __init__(self, yaybu_root="~/.yaybu", vmrun=None, hosttype=None):
         super(VMWareDriver, self).__init__(None)
-        self.vm_library = os.path.expanduser(vm_library)
-        self.vm_instances = os.path.expanduser(vm_instances)
         self.vmrun = vmrun or self._find_vmrun()
         self.hosttype = hosttype or self._find_hosttype()
+        self.image_cache = VMBoxCollection(root=yaybu_root)
 
     def _find_vmrun(self):
         known_locations = [
@@ -245,6 +244,16 @@ class VMWareDriver(NodeDriver):
             nodes.append(n)
         return nodes
 
+    def _image_smells_remote(self, iid):
+        remote_smells = ('http://', 'https://', 'file://')
+        for smell in remote_smells:
+            if image.id.startswith(smell):
+                return True
+        return False
+    
+    def fetch_remote_image(self, image):
+        self.image_cache.install(image.id)
+        
     def create_node(self, name, size, image, **kwargs):
         """ Create a new VM from a template VM and start it.
         """
@@ -267,7 +276,11 @@ class VMWareDriver(NodeDriver):
         ## support all 2 options, ssh_key and password
         ##
         ## for extra marks, detect the terminal width
-        source = os.path.expanduser(image.id)
+        
+        if self._image_smells_remote(image.id):
+            source = self.fetch_remote_image(image)
+        else:
+            source = os.path.expanduser(image.id)
         if not os.path.exists(source):
             raise LibcloudError("Base image %s not found" % source)
 
@@ -348,7 +361,7 @@ class VMBoxCollection:
 
         # a set of images that are only cloned, with additional information
         # needed to start and connect to them correctly
-        self.templatedir = os.path.join(self.root, "vmware", "templates")
+        self.templatedir = os.path.join(self.root, "vmware", "library")
 
         # a cache of downloaded image files
         self.cachedir = os.path.join(self.root, "vmware", "cache")
@@ -379,14 +392,6 @@ class RemoteVMBox:
     """ Provides tooling around remote images, specifically hash verification
     and image signing. """
     
-    ## TODO
-    # first look for Content-MD5 header
-    # then try the .md5 file
-    # what about signatures?
-    # look for .sig file as a detached gpg signature
-    # set an option in __init__ to require it, optionally
-    # then provide a switch to enable this
-
     def __init__(self, location):
         self.location = location
         
