@@ -36,6 +36,8 @@ import urllib2
 import uuid
 import datetime
 
+import zipfile
+
 logger = logging.getLogger("yaybu.parts.compute.vmware")
 
 class Response(object):
@@ -250,10 +252,10 @@ class VMWareDriver(NodeDriver):
             if image.id.startswith(smell):
                 return True
         return False
-    
+
     def fetch_remote_image(self, image):
         self.image_cache.install(image.id)
-        
+
     def create_node(self, name, size, image, **kwargs):
         """ Create a new VM from a template VM and start it.
         """
@@ -276,7 +278,7 @@ class VMWareDriver(NodeDriver):
         ## support all 2 options, ssh_key and password
         ##
         ## for extra marks, detect the terminal width
-        
+
         if self._image_smells_remote(image.id):
             source = self.fetch_remote_image(image)
         else:
@@ -338,13 +340,47 @@ class VMWareDriver(NodeDriver):
         logger.debug("Setting runtime variable %r on node %r to %r" % (variable, node.id, value))
         self._action("writeVariable", node.id, "runtimeConfig", variable, value)
 
+class VMException(Exception):
+    pass
+
 class VMBoxImage:
+
+    """ A compressed and packaged virtual machine image """
 
     def __init__(self, path):
         self.path = path
 
-    def install(self, destdir, name):
-        pass
+    def extract(self, destdir):
+        """ Extract the compressed image into the destination directory, with
+        the specified name. """
+        if os.path.exists(destdir):
+            raise VMException("%r exists, and will not be clobbered" % (destdir,))
+        os.mkdir(destdir)
+        with zipfile.ZipFile(self.path, "r", zipfile.ZIP_DEFLATED, True) as z:
+            for f in z.namelist():
+                pathname = os.path.join(destdir, f)
+                print "Writing", pathname
+                zf = z.open(f, "r")
+                of = open(pathname, "w")
+                while True:
+                    data = zf.read(8192)
+                    if not data:
+                        break
+                    of.write(data)
+
+    def compress(self, srcdir):
+        """ Create the package from the specified source directory. """
+        if not os.path.isdir(srcdir):
+            raise VMException("%r does not exist, is not accessible or is not a directory" % (srcdir,))
+        with zipfile.ZipFile(self.path, "w", zipfile.ZIP_DEFLATED, True) as z:
+            z.comment = "Created by Yaybu"
+            for f in sorted(os.listdir(srcdir)):
+                if f.endswith("nvram") or ".vm" in f:
+                    print "Packing", f
+                    z.write(os.path.join(srcdir, f), f)
+            print "Done."
+
+
 
 class VMBoxCollection:
 
@@ -388,13 +424,13 @@ class VMBoxCollection:
 
 
 class RemoteVMBox:
-    
+
     """ Provides tooling around remote images, specifically hash verification
     and image signing. """
-    
+
     def __init__(self, location):
         self.location = location
-        
+
     def get_hash(self):
         """ Try methods in order until one returns something other than None.
         This is the MD5. """
@@ -404,7 +440,7 @@ class RemoteVMBox:
             md5 = m()
             if md5 is not None:
                 return md5
-        
+
     def _hash_headers(self):
         """ Fetch the MD5 hash from the first "Content-MD5" header if
         present. """
