@@ -253,9 +253,6 @@ class VMWareDriver(NodeDriver):
                 return True
         return False
 
-    def fetch_remote_image(self, image):
-        self.image_cache.install(image.id)
-
     def create_node(self, name, size, image, **kwargs):
         """ Create a new VM from a template VM and start it.
         """
@@ -280,7 +277,7 @@ class VMWareDriver(NodeDriver):
         ## for extra marks, detect the terminal width
 
         if self._image_smells_remote(image.id):
-            source = self.fetch_remote_image(image)
+            source = self.image_cache.install(image.id)
         else:
             source = os.path.expanduser(image.id)
         if not os.path.exists(source):
@@ -397,7 +394,7 @@ class VMBoxCollection:
 
         # a set of images that are only cloned, with additional information
         # needed to start and connect to them correctly
-        self.templatedir = os.path.join(self.root, "vmware", "library")
+        self.librarydir = os.path.join(self.root, "vmware", "library")
 
         # a cache of downloaded image files
         self.cachedir = os.path.join(self.root, "vmware", "cache")
@@ -410,18 +407,18 @@ class VMBoxCollection:
 
     def setupdirs(self):
         """ Create directories if required """
-        for d in self.templatedir, self.cachedir, self.instancedir:
+        for d in self.librarydir, self.cachedir, self.instancedir:
             if not os.path.exists(d):
                 os.makedirs(d)
 
     def install(self, uri, name):
-        """ Fetches the specified uri into the cache. Right now this only
-        supports a full URL, but we expect to have some canonical locations
-        and an extension mechanism. """
+        """ Fetches the specified uri into the cache and then extracts it
+        into the library. """
+        destdir = os.path.join(self.librarydir, name)
         self.cache.insert(uri)
         vmi = self.ImageClass(self.cache.image(uri))
-        vmi.install(self.instancedir, name)
-
+        vmi.extract(destdir)
+        return destdir
 
 class RemoteVMBox:
 
