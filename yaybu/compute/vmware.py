@@ -35,6 +35,7 @@ import json
 import urllib2
 import uuid
 import datetime
+import urlparse
 
 import zipfile
 
@@ -246,10 +247,10 @@ class VMWareDriver(NodeDriver):
             nodes.append(n)
         return nodes
 
-    def _image_smells_remote(self, iid):
+    def _image_smells_remote(self, imageid):
         remote_smells = ('http://', 'https://', 'file://')
         for smell in remote_smells:
-            if image.id.startswith(smell):
+            if imageid.startswith(smell):
                 return True
         return False
 
@@ -277,13 +278,13 @@ class VMWareDriver(NodeDriver):
         ## for extra marks, detect the terminal width
 
         if self._image_smells_remote(image.id):
-            source = self.image_cache.install(image.id)
+            source = self.image_cache.install(image.id, context=self.yaybu_context)
         else:
             source = os.path.expanduser(image.id)
         if not os.path.exists(source):
             raise LibcloudError("Base image %s not found" % source)
 
-        target_dir = os.path.join(self.vm_instances, str(uuid.uuid4()))
+        target_dir = os.path.join(self.image_cache.instancedir, str(uuid.uuid4()))
         target = os.path.join(target_dir, "vm.vmx")
 
         target_parent = os.path.dirname(target_dir)
@@ -411,14 +412,30 @@ class VMBoxCollection:
             if not os.path.exists(d):
                 os.makedirs(d)
 
-    def install(self, uri, name):
+    def guess_name(self, uri):
+        """ Use the name of the file with the extension stripped off """
+        path = urlparse.urlparse(uri).path
+        leaf = path.split("/")[-1]
+        if not leaf:
+            raise VMException("Cannot guess name for %r" % (uri,))
+        return leaf.rsplit(".", 1)[0]
+
+    def _locate_vmx(self, path):
+        for f in os.listdir(path):
+            if f.endswith(".vmx"):
+                return os.path.join(path, f)
+
+    def install(self, uri, name=None, context=None):
         """ Fetches the specified uri into the cache and then extracts it
-        into the library. """
+        into the library.  If name is None then a name is made up. """
+        if name is None:
+            name = self.guess_name(uri)
         destdir = os.path.join(self.librarydir, name)
-        self.cache.insert(uri)
-        vmi = self.ImageClass(self.cache.image(uri))
-        vmi.extract(destdir)
-        return destdir
+        if not os.path.exists(destdir):
+            self.cache.insert(uri, context)
+            vmi = self.ImageClass(self.cache.image(uri))
+            vmi.extract(destdir)
+        return self._locate_vmx(destdir)
 
 class RemoteVMBox:
 
@@ -482,7 +499,7 @@ class RemoteVMBox:
         fout.close()
         if self.hash != None:
             if h.hexdigest() != self.hash:
-                raise ValueError("Wrong hash")
+                raise ValueError("Wrong hash. Calculated %r != Correct %r" % (h.hexdigest(), self.hash))
 
 class VMBoxCache:
 
@@ -517,6 +534,8 @@ class VMBoxCache:
             context: A context object used for progress reporting
 
         """
+        if self.items.has_key(location):
+            return
         r = RemoteVMBox(location)
         name = str(uuid.uuid4())
         path = os.path.join(self.cachedir, name)
@@ -534,5 +553,7 @@ class VMBoxCache:
         return name
 
     def image(self, location):
-        return os.path.join(self.item[location], "image")
+        if not self.items.has_key(location):
+            raise KeyError("Item is not in cache")
+        return os.path.join(self.cachedir, self.items[location], "image")
 
