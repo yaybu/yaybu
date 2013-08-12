@@ -15,6 +15,7 @@ Contents:
    compute
    provisioner
    dns
+   combining_parts
 
 
 Indices and tables
