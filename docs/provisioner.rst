@@ -18,44 +18,36 @@ parameter::
             password: penguin55
             private_key: path/to/id_rsa
 
-The part deploys a list of resources provided by the ``resources`` parameter.
-These are idempotent - when used correctly they only make changes that need
-making, which means that you can see quite clearly what has been changed by an
-update deployment and it is safe to run repeatedly.
-
-Connection details
-==================
-
-Deploy to an existing server or VM
-----------------------------------
-
-To deploy to your current computer by SSH you can use a ``Yaybufile`` like this::
-
-    new Provisioner as provisioner:
-
         resources:
-            - File:
-                name: /some_empty_file
+          - File:
+              name: /etc/my.cnf
+              template: mytemplate.j2
+              template_args:
+                  hello: world
 
-            - Execute:
-                name: hello_world
-                command: touch /hello_world
-                creates: /hello_world
 
-        server:
-            fqdn: localhost
-            username: root
-            password: penguin55
-            private_key: path/to/key
+You can pass the following settings:
 
-``fqdn`` is a fully qualified domain name (though IP addresses are also
-accepted). If ``username`` isn't provided, it will use the username you are
-currently logged in as. If neither ``password`` or ``private_key``, Yaybu will
-consult your ssh-agent.
+``fqdn``
+    A fully qualified domain name to connect to (via SSH). An IP can also be used if required.
+``port``
+    The port to connect to. This is optional, and port 22 will be used if not provied.
+``username``
+    The ssh username to login as. If this isn't root then Yaybu will attempt to use sudo when it requires root access to perform a task.
+``password``
+    The ssh password to login with.
+``private_key``
+    An RSA or DSA private key that can be used to log in to the target server.
+``resources``
+    The provisioner part expresses server configuration in units called "resources". These are things like files, init.d services or unix accounts.
+
+If you do not provide a ``private_key`` or a ``password`` Yaybu will fallback to trying keys in your ssh keyring. If you provide both then it will prefer to use a password.
 
 
 Built-in resources
 ==================
+
+This section describes the built-in resources you can use to describe your server configuration.
 
 File
 ----
@@ -445,4 +437,93 @@ The available parameters are:
 ``pidfile``
     Where the service creates its pid file. This can be provided instead of
     ``running``  as an alternative way of checking if a service is running or not.
+
+
+Dependencies between resources
+==============================
+
+Resources are always applied in the order they are listed in the resources property. You can rely on this to build repeatble and reliable processes. However this might not be enough. There are a couple of other ways to express relationships between resources.
+
+One example is when you want to run a script only if you have deployed a new version of your code::
+
+    resources:
+      - Checkout:
+          name: /usr/local/src/mycheckout
+          repository: git://github.com/example/example_project
+
+      - Execute:
+          name: install-requirements
+          command: /var/sites/myapp/bin/pip install -r /usr/local/src/mycheckout/requirements.txt
+          policy:
+              execute:
+                  when: sync
+                  on: Checkout[/usr/local/src/mycheckout]
+
+When the ``Checkout`` step pulls in a change from a repository, the ``Execute`` resource will apply its ``execute`` policy.
+
+You can do the same for monitoring file changes too::
+
+    resources:
+      - File:
+          name: /etc/apache2/security.conf
+          static: apache2/security.conf
+
+      - Execute:
+          name: restart-apache
+          commands:
+            - apache2ctl configtest
+            - apache2ctl graceful
+          policy:
+              execute:
+                  when: apply
+                  on: File[/etc/apache2/security.conf]
+
+Sometimes you can't use ``File`` (perhaps ``buildout`` or ``maven`` or similar generates a config file for you), but you still want to trigger a command when a file changes during deployment::
+
+    resources:
+      - Execute:
+          name: buildout
+          command: buildout -c production.cfg
+          watches:
+            - /var/sites/mybuildout/parts/apache.cfg
+
+      - Execute:
+          name: restart-apache
+          commands:
+            - apache2ctl configtest
+            - apache2ctl graceful
+          policy:
+              execute:
+                  when: watched
+                  on: File[/var/sites/mybuildout/parts/apache.cfg]
+
+This declares that the ``buildout`` step might change a ``File`` (the ``apache.cfg``). Subsequent step can then subscribe to ``File[/var/sites/mybuildout/parts/apache.cfg]`` as though it was an ordinary file.
+
+
+Examples
+========
+
+Deploy to an existing server or VM
+----------------------------------
+
+To deploy to your current computer by SSH you can use a ``Yaybufile`` like this::
+
+    new Provisioner as provisioner:
+
+        resources:
+            - File:
+                name: /some_empty_file
+
+            - Execute:
+                name: hello_world
+                command: touch /hello_world
+                creates: /hello_world
+
+        server:
+            fqdn: localhost
+            username: root
+            password: penguin55
+            private_key: path/to/key
+
+
 
