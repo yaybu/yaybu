@@ -529,7 +529,8 @@ These are idempotent - when used correctly they only make changes that need
 making, which means that you can see quite clearly what has been changed by an
 update deployment and it is safe to run repeatedly.
 
-For detailed documentation of the resources you can you see the online documention.
+For detailed documentation of the resources you can you see the 
+`online documention <https://yaybu.readthedocs.org/en/latest/provisioner.html#built-in-resources>`_.
 
 Zone
 ----
