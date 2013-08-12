@@ -23,6 +23,9 @@ These are idempotent - when used correctly they only make changes that need
 making, which means that you can see quite clearly what has been changed by an
 update deployment and it is safe to run repeatedly.
 
+Connection details
+==================
+
 Deploy to an existing server or VM
 ----------------------------------
 
@@ -31,7 +34,6 @@ To deploy to your current computer by SSH you can use a ``Yaybufile`` like this:
     new Provisioner as provisioner:
 
         resources:
-
             - File:
                 name: /some_empty_file
 
@@ -46,17 +48,17 @@ To deploy to your current computer by SSH you can use a ``Yaybufile`` like this:
             password: penguin55
             private_key: path/to/key
 
-Here we are setting up a provisioner 'part'. We use the ``Yaybufile`` to plumb
-together a series of parts and these parts then do the orchestration work.
-
 ``fqdn`` is a fully qualified domain name (though IP addresses are also
 accepted). If ``username`` isn't provided, it will use the username you are
 currently logged in as. If neither ``password`` or ``private_key``, Yaybu will
 consult your ssh-agent.
 
 
+Built-in resources
+==================
+
 File
-====
+----
 
 A provider for this resource will create or amend an existing file to the
 provided specification.
@@ -115,7 +117,7 @@ The available parameters are:
 
 
 Directory
-=========
+---------
 
 A directory on disk. Directories have limited metadata, so this resource is
 quite limited.
@@ -146,7 +148,7 @@ The available parameters are:
 
 
 Link
-====
+----
 
 A resource representing a symbolic link. The link will be from `name` to `to`.
 If you specify owner, group and/or mode then these settings will be applied to
@@ -179,7 +181,7 @@ The available parameters are:
 
 
 Execute
-=======
+-------
 
 Execute a command. This command *is* executed in a shell subprocess.
 
@@ -249,7 +251,7 @@ The available parameters are:
 
 
 Checkout
-========
+--------
 
 This represents a "working copy" from a Source Code Management system.
 This could be provided by, for example, Subversion or Git remote
@@ -300,7 +302,7 @@ The available parameters are:
 
 
 Package
-=======
+-------
 
 Represents an operating system package, installed and managed via the
 OS package management system. For example, to ensure these three packages
@@ -324,7 +326,7 @@ The available parameters are:
 
 
 User
-====
+----
 
 A resource representing a UNIX user in the password database. The underlying
 implementation currently uses the "useradd" and "usermod" commands to implement
@@ -381,7 +383,7 @@ The available parameters are:
 
 
 Group
-=====
+-----
 
 A resource representing a unix group stored in the /etc/group file.
 ``groupadd`` and ``groupmod`` are used to actually make modifications.
@@ -408,7 +410,7 @@ The available parameters are:
 
 
 Service
-=======
+-------
 
 This represents service startup and shutdown via an init daemon.
 
