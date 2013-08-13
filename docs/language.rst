@@ -71,7 +71,7 @@ a directory based on a customer project id::
             name: /var/local/sites/{{projectcode}}/src
             repository: svn://mysvnserver/{{projectcode}}
 
-If you variables are in mappings you can access them using ``.`` as seperator.
+If your variables are in mappings you can access them using ``.`` as separator.
 You can also access specific items in lists with ``[]``::
 
     projects:
@@ -201,7 +201,7 @@ Lets say ``host.distro`` contains your Ubuntu version and you want to install
 difference packages based on the distro. You could do something like::
 
     packages:
-        select distro:
+        select host.distro:
             karmic:
                 - python-setuptools
             lucid:
@@ -215,20 +215,25 @@ For Loops
 You might want to have a list of project codes and then define multiple
 resources for each item in that list. You would do something like this::
 
-    projectcodes:
-        MyCustomer-100
-        MyCustomer-72
+    projects:
+        - name: MyCustomer-100
+          checkouts:
+            - https://svn.example.com/svn/example1
+
+        - name: MyCustomer-72
+          checkouts:
+            - https://svn.example.com/svn/example1
+            - https://svn.example.com/svn/example2
 
     extend resources:
-
-        for p in projectcodes:
+        for p in projects:
             - Directory:
-                  name: /var/local/sites/{{p}}
+                  name: /var/local/sites/{{ p }}
 
-            for q in p.qcodes:
+            for c in p.checkouts:
                 - Checkout:
-                    name: /var/local/sites/{{p}}/src
-                    repository: svn://mysvnserver/{{q}}
+                    name: /var/local/sites/{{ p }}/src/{{ c }}
+                    repository: svn://mysvnserver/{{ c }}
 
 You can also have conditions::
 
@@ -259,7 +264,7 @@ You might need to loop over a list within a list::
     stuff:
         for s in staff:
             for d in s.devices:
-                {{d}}
+                - {{d}}
 
 This will produce a single list that is equivalent to::
 
@@ -281,7 +286,7 @@ keys. A for over a mapping with a condition might look like this::
     cheap:
         for f in fruit:
            if fruit[f] < 10:
-             {{f}}
+              - {{f}}
 
 That would return a list with apple and strawberry in it. The list will
 be sorted alphabetically: mappings are generally unordered but we want
@@ -296,6 +301,30 @@ Any sandboxed python function can be called where an expression would exist in a
     set foo = sum(a)
     for x in range(foo):
         - x
+
+
+Here
+====
+
+Here is a reserved word that expands to the nearest parent node that is a mapping.
+
+You can use it to refer to siblings::
+
+    some_data:
+        sitename: www.example.com
+        sitedir: /var/www/{{ here.sitename }}
+
+You can use it with ``set`` to refer to specific points of the graph::
+
+     some_data:
+         set self = here
+
+        nested:
+            something: goodbye
+            mapping: {{ self.something }}         # Should be 'hello'
+            other_mapping: {{ here.something }}   # Should be 'goodbye'
+
+        something: hello
 
 
 Macros and Prototypes
@@ -342,27 +371,4 @@ In their final form, they behave exactly like mappings::
     some_key:
         new DjangoSite:
             sitename: www.example.com
-
-Here
-====
-
-Here is a reserved word that expands to the nearest parent node that is a mapping.
-
-You can use it to refer to siblings::
-
-    some_data:
-        sitename: www.example.com
-        sitedir: /var/www/{{ here.sitename }}
-
-You can use it with ``set`` to refer to specific points of the graph::
-
-     some_data:
-         set self = here
-
-        nested:
-            something: goodbye
-            mapping: {{ self.something }}         # Should be 'hello'
-            other_mapping: {{ here.something }}   # Should be 'goodbye'
-
-        something: hello
 
