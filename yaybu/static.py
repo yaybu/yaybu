@@ -35,40 +35,45 @@ class StaticContainer(base.GraphExternalAction):
     as S3 or Nimbus
 
     new StaticContainer as container:
-        driver:
+        source: path/to/look/in
+
+        destination:
             id: AWS
             key:
             secret:
-
-        container: container_name
-        directory: path/to/look/in
+            container: container_name
     """
 
     keys = []
 
     def _get_source_container(self):
-        directory = self.params.directory.as_string()
+        try:
+            return self._get_source_container_from_string()
+        except errors.TypeError:
+            driver_name = self.params.source.id.as_string()
+            Driver = get_driver(getattr(Provider, driver_name))
+            driver = Driver(**args_from_expression(Driver, self.params.source, ignore=("container", )))
+            container = driver.get_container(self.params.source.container.as_string())
+            return container
 
+    def _get_source_container_from_string(self):
+        directory = self.params.source.as_string()
         Driver = get_driver(Provider.LOCAL)
         driver = Driver(os.path.dirname(directory))
         return driver.get_container(os.path.basename(directory))
 
-    @property
-    @memoized
-    def driver(self):
-        driver_name = self.params.driver.id.as_string()
+    def _get_destination_container(self):
+        driver_name = self.params.destination.id.as_string()
         Driver = get_driver(getattr(Provider, driver_name))
-        driver = Driver(**args_from_expression(Driver, self.params.driver))
-        return driver
+        driver = Driver(**args_from_expression(Driver, self.params.destination, ignore=("container", )))
 
-    def _get_container(self):
-        container_name = self.params.container.as_string()
+        container_name = self.params.destination.container.as_string()
         changed = False
         try:
-            container = self.driver.get_container(container_name=container_name)
+            container = driver.get_container(container_name=container_name)
         except ContainerDoesNotExistError:
             with self.root.ui.throbber("Creating container '%s'" % container_name):
-                container = self.driver.create_container(container_name=container_name)
+                container = driver.create_container(container_name=container_name)
                 changed = True
         return changed, container
 
@@ -84,14 +89,15 @@ class StaticContainer(base.GraphExternalAction):
 
     def test(self):
         with self.root.ui.throbber("Testing DNS credentials/connectivity") as throbber:
-            self.driver.list_containers()
+            self._get_source_container()
+            self._get_destination_container()
 
     def apply(self):
         if self.root.readonly:
             return
 
         src = self._get_source_container()
-        changed, dest = self._get_container()
+        changed, dest = self._get_destination_container()
 
         manifest = self._get_manifest(dest)
 

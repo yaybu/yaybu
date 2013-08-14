@@ -12,10 +12,11 @@ Contents:
    :maxdepth: 2
 
    installation
-   language
    compute
    provisioner
    dns
+   sync
+   language
    combining_parts
 
 
