@@ -30,12 +30,15 @@ import subprocess
 from pipes import quote
 
 from libcloud.common.types import LibcloudError
+from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
 import logging
 import json
 import urllib2
 import uuid
 import datetime
 import urlparse
+import tempfile
+from functools import partial
 
 import zipfile
 
@@ -170,6 +173,7 @@ class VMWareDriver(NodeDriver):
     name = "vmware"
     website = "http://www.vmware.com/products/fusion/"
     connectionCls = Connection
+    features = {'create_node': ['ssh_key', 'password']}
 
     def __init__(self, yaybu_root="~/.yaybu", vmrun=None, hosttype=None):
         super(VMWareDriver, self).__init__(None)
@@ -253,20 +257,86 @@ class VMWareDriver(NodeDriver):
             if imageid.startswith(smell):
                 return True
         return False
+    
+    def apply_auth_password(self, vmrun, username, password):
+        """ Set the password of the specified username to the provided password """
+        vmrun("start")
+        vmrun("runProgramInGuest", "/usr/bin/sudo", "/bin/bash", "-c", "echo '%s:%s'|/usr/sbin/chpasswd" % (username, password))
+        vmrun("reset", "soft")
+        
+    def apply_auth_ssh(self, vmrun, username, pubkey):
+        """ Add the provided ssh public key to the specified user's authorised keys """
+        ## TODO actually find homedir properly
+        ## TODO find sudo properly
+        homedir = "/home/%s" % username 
+        tmpfile = tempfile.NamedTemporaryFile(delete=False)
+        tmpfile.write(pubkey)
+        tmpfile.close()
+        vmrun("start")
+        vmrun("createDirectoryInGuest", "%s/.ssh" % homedir)
+        vmrun("copyFileFromHostToGuest", tmpfile.name, "%s/.ssh/authorized_keys" % homedir)
+        vmrun("runProgramInGuest", "/bin/chmod", "0700", "%s/.ssh" % homedir)
+        vmrun("runProgramInGuest", "/bin/chmod", "0600", "%s/.ssh/authorized_keys" % homedir)
+        vmrun("reset", "soft")
+        os.unlink(tmpfile.name)
+        
+    def _get_guest_auth(self, target):
+        infofile = os.path.join(os.path.dirname(target), "VM-INFO")
+        d = json.load(open(infofile))
+        return d['username'], d['password']
+    
+    def _guest_action(self, target, username, password, command, *params):
+        self._action("-gu", username, "-gp", password, command, target, *params)
+    
+    def apply_auth(self, target, auth):
+        """ Apply the specified authentication credentials to the virtual machine. """
+        username, password = self._get_guest_auth(target)
+        vmrun = partial(self._guest_action, target, username, password)
+        if isinstance(auth, NodeAuthPassword):
+            self.apply_auth_password(vmrun, auth.username, auth.password)
+        if isinstance(auth, NodeAuthSSHKey):
+            self.apply_auth_ssh(vmrun, auth.username, auth.pubkey)
+
+    def _get_and_check_auth(self, auth):
+        """
+        Helper function for providers supporting L{NodeAuthPassword} or
+        L{NodeAuthSSHKey}
+
+        Validates that only a supported object type is passed to the auth
+        parameter and raises an exception if it is not.
+
+        If no L{NodeAuthPassword} object is provided but one is expected then a
+        password is automatically generated.
+        """
+
+        if isinstance(auth, NodeAuthPassword):
+            if 'password' in self.features['create_node']:
+                return auth
+            raise LibcloudError(
+                'Password provided as authentication information, but password'
+                'not supported', driver=self)
+
+        if isinstance(auth, NodeAuthSSHKey):
+            if 'ssh_key' in self.features['create_node']:
+                return auth
+            raise LibcloudError(
+                'SSH Key provided as authentication information, but SSH Key'
+                'not supported', driver=self)
+
+        if 'password' in self.features['create_node']:
+            value = os.urandom(16)
+            value = binascii.hexlify(value).decode('ascii')
+            return NodeAuthPassword(value, generated=True)
+
+        if auth:
+            raise LibcloudError(
+                '"auth" argument provided, but it was not a NodeAuthPassword'
+                'or NodeAuthSSHKey object', driver=self)
 
     def create_node(self, name, size, image, **kwargs):
         """ Create a new VM from a template VM and start it.
         """
-        ## TODO: look at image.id, which is the name of the template image
-        ## i.e. it is either an http or file URL then use the image cache to
-        ## fetch it if necessary, then use the new location below to actually
-        ## create the new vm
-        ## self.yaybu_context is the context object that I need to do the progress
-        ## bar with
-        ##
-        ## with self.yaybu_context.ui.progressbar as p:
-        ##     p.progress(50)
-        ##
+
         ## then install credentials as per the existing code
         ## provide options for create_node for which sort of credential installation
         ## to use -
@@ -277,6 +347,9 @@ class VMWareDriver(NodeDriver):
         ##
         ## for extra marks, detect the terminal width
 
+        auth = kwargs.get('auth', None)
+        if auth is not None:
+            auth = self._get_and_check_auth(auth)
         if self._image_smells_remote(image.id):
             source = self.image_cache.install(image.id, context=self.yaybu_context)
         else:
@@ -302,6 +375,9 @@ class VMWareDriver(NodeDriver):
             src_path = os.path.dirname(source)
             shutil.copytree(src_path, target_dir)
             os.rename(os.path.join(target_dir, os.path.basename(source)), target)
+            
+        if auth is not None:
+            self.apply_auth(target, auth)
 
         node = Node(target, name, NodeState.PENDING, None, None, self)
 
@@ -366,7 +442,7 @@ class VMBoxImage:
                         break
                     of.write(data)
 
-    def compress(self, srcdir):
+    def compress(self, srcdir, username, password):
         """ Create the package from the specified source directory. """
         if not os.path.isdir(srcdir):
             raise VMException("%r does not exist, is not accessible or is not a directory" % (srcdir,))
@@ -376,6 +452,7 @@ class VMBoxImage:
                 if f.endswith("nvram") or ".vm" in f:
                     print "Packing", f
                     z.write(os.path.join(srcdir, f), f)
+            z.writestr("VM-INFO", json.dumps({'username': username, 'password': password}))
             print "Done."
 
 
@@ -550,6 +627,7 @@ class VMBoxCache:
             'hash': r.hash
         }
         json.dump(metadata, open(mp, "w"))
+        self.items[location] = name
         return name
 
     def image(self, location):

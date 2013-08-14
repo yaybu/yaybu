@@ -8,7 +8,8 @@ new Provisioner as vm1:
         image:
             id: http://localhost/yaybu/ubuntu-12.04.2.zip
 
-        user: ubuntu
+        username: ubuntu
+        password: password
 
     resources:
       - Package:

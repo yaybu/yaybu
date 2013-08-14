@@ -20,6 +20,7 @@ import datetime
 import collections
 import time
 import copy
+import getpass
 
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
@@ -138,11 +139,20 @@ class Compute(base.GraphExternalAction):
             )
 
     def _get_auth(self):
+        username = self.params.username.as_string(default=getpass.getuser())
         if 'password' in self.driver.features['create_node']:
-            return NodeAuthPassword(self.params.password.as_string())
-        elif 'ssh_key' in self.driver.features['create_node']:
-            fp = self.root.openers.open(self.params.public_key.as_string())
-            return NodeAuthSSHKey(fp.read())
+            password = self.params.password.as_string(default=None)
+            if password is not None:
+                auth = NodeAuthPassword(password)
+                auth.username = username
+                return auth
+        if 'ssh_key' in self.driver.features['create_node']:
+            pubkey = self.params.public_key.as_string(default=None)
+            if pubkey is not None:
+                fp = self.root.openers.open(pubkey)
+                auth = NodeAuthSSHKey(fp.read())
+                auth.username = username
+                return auth
 
     def _update_node_info(self):
         """ Return a dictionary of information about this node """

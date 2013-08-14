@@ -211,9 +211,11 @@ class BaseYaybuCmd(OptionParsingCmd):
         if args[0] == "compress":
             image_path = args[1]
             source = args[2]
+            username = args[3]
+            password = args[4]
             print "Packaging VM in", source, "into image at", image_path
             image = VMBoxImage(image_path)
-            image.compress(source)
+            image.compress(source, username, password)
         elif args[0] == "extract":
             image_path = args[1]
             dest = args[2]
