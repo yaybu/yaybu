@@ -16,12 +16,14 @@
 from __future__ import absolute_import
 
 import os
+import StringIO
+import json
 
 from yaybu.core.util import memoized
 from yaybu.util import args_from_expression
 from yaybu import base
 from yay import ast, errors
-from libcloud.storage.types import Provider, ContainerDoesNotExistError
+from libcloud.storage.types import Provider, ContainerDoesNotExistError, ObjectDoesNotExistError
 from libcloud.storage.providers import get_driver
 from libcloud.common.types import LibcloudError
 
@@ -70,6 +72,16 @@ class StaticContainer(base.GraphExternalAction):
                 changed = True
         return changed, container
 
+    def _get_manifest(self, container):
+        try:
+            manifest = container.get_object(".yaybu-manifest")
+            return json.loads(''.join(manifest.as_stream()))
+        except ObjectDoesNotExistError:
+            return {}
+
+    def _set_manifest(self, container, manifest):
+        container.upload_object_via_stream(StringIO.StringIO(json.dumps(manifest)), ".yaybu-manifest")
+
     def test(self):
         with self.root.ui.throbber("Testing DNS credentials/connectivity") as throbber:
             self.driver.list_containers()
@@ -81,11 +93,13 @@ class StaticContainer(base.GraphExternalAction):
         src = self._get_source_container()
         changed, dest = self._get_container()
 
+        manifest = self._get_manifest(dest)
+
         source = dict((o.name, o) for o in src.iterate_objects())
         destination = dict((o.name, o) for o in dest.iterate_objects())
 
-        source_set = frozenset(source.keys())
-        destination_set = frozenset(destination.keys())
+        source_set = frozenset(source.keys()) - frozenset((".yaybu-manifest", ))
+        destination_set = frozenset(destination.keys()) - frozenset((".yaybu-manifest", ))
 
         to_add = source_set - destination_set
         to_check = source_set.intersection(destination_set)
@@ -96,11 +110,15 @@ class StaticContainer(base.GraphExternalAction):
             with self.root.ui.throbber("Uploading new static file '%s'" % name):
                 source_stream = source[name].as_stream()
                 dest.upload_object_via_stream(source_stream, name)
+                manifest[name] = {'source_hash': source[name].hash}
                 changed = True
 
         for name in to_check:
             obj_s = source[name]
             obj_d = destination[name]
+
+            if name in manifest and obj_s.hash == manifest[name]['source_hash']:
+                continue
 
             if obj_s.size == obj_d.size and obj_s.hash == obj_d.hash:
                 continue
@@ -108,12 +126,17 @@ class StaticContainer(base.GraphExternalAction):
             with self.root.ui.throbber("Updating static file '%s'" % name):
                 source_stream = obj_s.as_stream()
                 dest.upload_object_via_stream(source_stream, name)
+                manifest[name] = {'source_hash': obj_s.hash}
                 changed = True
 
         for name in to_delete:
             with self.root.ui.throbber("Deleting static file '%s'" % name):
                 destination[name].delete()
+                if name in manifest:
+                    del manifest[name]
                 changed = True
+
+        self._set_manifest(dest, manifest)
 
         # HACK ALERT
         self.root.changelog.changed = self.root.changelog.changed or changed
