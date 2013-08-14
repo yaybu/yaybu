@@ -1,0 +1,16 @@
+new Provisioner as vm1:
+    new Compute as server:
+        name: mytest vm
+
+        driver:
+            id: VMWARE
+
+        image:
+            id: http://localhost/yaybu/ubuntu-12.04.2.zip
+
+        user: ubuntu
+
+    resources:
+      - Package:
+          name: git-core
+
