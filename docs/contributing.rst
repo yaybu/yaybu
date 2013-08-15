@@ -5,7 +5,7 @@ Contributing
 Join us on IRC
 ==============
 
-We are in ``#oftc`` on ``irc.oftc.net``.
+We are in ``#yaybu`` on ``irc.oftc.net``.
 
 
 Getting the source
