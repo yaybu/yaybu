@@ -101,9 +101,18 @@ class Compute(base.GraphExternalAction):
         existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
         if len(existing) > 1:
             raise LibcloudError(_("There are already multiple nodes called '%s'") % name)
-        elif len(existing) == 1:
-            logger.debug("Node '%s' already running - not creating new node" % (name, ))
-            return existing[0]
+        elif not existing:
+            return None
+        node = existing[0]
+        if node.state != NodeState.RUNNING:
+            ex_start = getattr(node.driver, "ex_start", None)
+            if ex_start is not None:
+                logger.debug("Starting node")
+                ex_start(node)
+            else:
+                raise LibcloudError(_("The node is not running and cannot be started"))
+        logger.debug("Node '%s' already running - not creating new node" % (name, ))
+        return node
 
     def _get_image(self):
         try:
@@ -237,13 +246,13 @@ class Compute(base.GraphExternalAction):
                 self._update_node_info()
                 return
 
-            except LibcloudError:
+            except LibcloudError, e:
                 logger.warning("Node %r did not start before timeout. retrying." % self.full_name)
                 node.destroy()
                 continue
 
-            except:
-                logger.warning("Node %r had an unexpected error - node will be cleaned up and processing will stop" % self.full_name)
+            except Exception, e:
+                logger.warning("Node %r had an unexpected error %s - node will be cleaned up and processing will stop" % (self.full_name, e))
                 node.destroy()
                 raise
                 return

@@ -163,11 +163,11 @@ class VMXFile(object):
         self.settings[key] = value
         self.save()
 
-class TargetVM:
+class VMWareVM:
     
-    def __init__(self, instancedir):
+    def __init__(self, instancedir, id=None):
         self.instancedir = instancedir
-        self.id = self._gen_id()
+        self.id = id or self._gen_id()
 
     def _gen_id(self):
         return str(uuid.uuid4())
@@ -194,6 +194,12 @@ class TargetVM:
         d = json.load(open(infofile))
         return d[name]
     
+    def set_info(self, name, value):
+        infofile = os.path.join(self.directory, "VM-INFO")
+        d = json.load(open(infofile))
+        d[name] = value
+        json.dump(open(infofile, "w"))
+    
     @property
     def username(self):
         return self.info("username")
@@ -201,6 +207,15 @@ class TargetVM:
     @property
     def password(self):
         return self.info("password")
+    
+    def _get_name(self):
+        return self.info("name")
+    
+    def _set_name(self, name):
+        self.set_info("name", name)
+        
+    name = property(_get_name, _set_name)
+
             
 
 class VMWareDriver(NodeDriver):
@@ -218,7 +233,22 @@ class VMWareDriver(NodeDriver):
         super(VMWareDriver, self).__init__(None)
         self.vmrun = vmrun or self._find_vmrun()
         self.hosttype = hosttype or self._find_hosttype()
-        self.image_cache = VMBoxCollection(root=yaybu_root)
+        self.machines = VMBoxCollection(root=yaybu_root)
+        
+    def ex_start(self, node):
+        """
+        Start a stopped node.
+        
+        @param node: Node which should be used
+        @type  node: L{Node}
+        
+        @rtype: C{bool}
+        """
+        with self.yaybu_context.ui.throbber("Starting VM") as t:
+            self._action("start", node.id, "nogui", capture_output=False)
+            node.state = NodeState.RUNNING
+            self._decorate_node(node)
+        return True
 
     def _find_vmrun(self):
         known_locations = [
@@ -278,20 +308,31 @@ class VMWareDriver(NodeDriver):
 
     def list_locations(self):
         return []
-
-    def list_nodes(self):
-        nodes = []
+    
+    def _list_running(self):
+        """ List running virtual machines """
         lines = iter(self._action("list").strip().splitlines())
         lines.next() # Skip the summary line
         for line in lines:
             if not line.strip():
                 continue
-            n = Node(line.strip(), line.strip(), NodeState.UNKNOWN, None, None, self)
-            n.name = self._action("readVariable", n.id, "runtimeConfig", "displayName").strip()
-            ip = self._action("readVariable", n.id, "guestVar", "ip").strip()
+            yield line.strip()
+
+    def _decorate_node(self, node):
+        """ Add ips """
+        if node.state == NodeState.RUNNING:
+            ip = self._action("readVariable", node.id, "guestVar", "ip").strip()
             if ip:
-                n.public_ips = [ip]
-                n.state = NodeState.RUNNING
+                node.public_ips = [ip]
+        
+    def list_nodes(self):
+        """ List all of the nodes the driver knows about. """
+        nodes = []
+        running = list(self._list_running())
+        for vm in self.machines.instances():
+            state = NodeState.RUNNING if vm.vmx in running else NodeState.UNKNOWN
+            n = Node(vm.vmx, vm.vmx, state, None, None, self)
+            self._decorate_node(n)
             nodes.append(n)
         return nodes
 
@@ -384,7 +425,7 @@ class VMWareDriver(NodeDriver):
         """ If the source looks like it is remote then fetch the image and
         extract it into the library directory, otherwise use it directly. """
         if self._image_smells_remote(image.id):
-            source = self.image_cache.install(image.id, context=self.yaybu_context)
+            source = self.machines.install(image.id, context=self.yaybu_context)
         else:
             source = os.path.expanduser(image.id)
         if not os.path.exists(source):
@@ -393,7 +434,7 @@ class VMWareDriver(NodeDriver):
     
     def _get_target(self):
         """ Create a new target in the instance directory """
-        target = TargetVM(self.image_cache.instancedir)
+        target = VMWareVM(self.machines.instancedir)
         target.setup()
         return target
     
@@ -418,6 +459,7 @@ class VMWareDriver(NodeDriver):
         target = self._get_target()
         logger.debug("Creating node %r" % (name,))
         self._clone(source, target)
+        target.name = name
         self.apply_auth(target, auth)
         node = Node(target.vmx, name, NodeState.PENDING, None, None, self)
 
@@ -554,6 +596,11 @@ class VMBoxCollection:
             vmi = self.ImageClass(self.cache.image(uri))
             vmi.extract(destdir, context)
         return self._locate_vmx(destdir)
+    
+    def instances(self):
+        """ Return a generator of VMWareVM objects. """
+        for i in os.listdir(self.instancedir):
+            yield VMWareVM(self.instancedir, i)
 
 class RemoteVMBox:
 
