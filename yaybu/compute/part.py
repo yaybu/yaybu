@@ -208,12 +208,13 @@ class Compute(base.GraphExternalAction):
             logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
 
             with self.root.ui.throbber(_("Creating node '%r'...") % (self.full_name, )) as throbber:
+                kwargs = args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
+                kwargs['auth'] = self._get_auth()
                 node = self.driver.create_node(
                     name=self.full_name,
                     image=self._get_image(),
                     size=self._get_size(),
-                    auth=self._get_auth(),
-                    **args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
+                    **kwargs
                     )
 
             logger.debug("Waiting for node %r to start" % (self.full_name, ))

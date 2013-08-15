@@ -163,6 +163,45 @@ class VMXFile(object):
         self.settings[key] = value
         self.save()
 
+class TargetVM:
+    
+    def __init__(self, instancedir):
+        self.instancedir = instancedir
+        self.id = self._gen_id()
+
+    def _gen_id(self):
+        return str(uuid.uuid4())
+
+    @property
+    def directory(self):
+        return os.path.join(self.instancedir, self.id)
+    
+    @property
+    def vmx(self):
+        return os.path.join(self.directory, "vm.vmx")
+
+    @property
+    def parent(self):
+        return os.path.dirname(self.directory)
+
+    def setup(self):
+        """ Create the parent directories if required """
+        if not os.path.isdir(self.parent):
+            os.mkdir(self.parent)
+
+    def info(self, name):
+        infofile = os.path.join(self.directory, "VM-INFO")
+        d = json.load(open(infofile))
+        return d[name]
+    
+    @property
+    def username(self):
+        return self.info("username")
+    
+    @property
+    def password(self):
+        return self.info("password")
+            
 
 class VMWareDriver(NodeDriver):
 
@@ -214,6 +253,11 @@ class VMWareDriver(NodeDriver):
         logger.debug("Executing %r" % (" ".join(command),))
         return self.connection.request(command, capture_output=capture_output).body
 
+    def _guest_action(self, target, command, *params):
+        self._action("-gu", target.username, "-gp", target.password, 
+                     command, target.vmx, *params,
+                     capture_output=False)
+    
     def list_images(self, location=None):
         ## TODO
         ## list the template images from the cache
@@ -260,38 +304,41 @@ class VMWareDriver(NodeDriver):
     
     def apply_auth_password(self, vmrun, username, password):
         """ Set the password of the specified username to the provided password """
-        vmrun("start")
-        vmrun("runProgramInGuest", "/usr/bin/sudo", "/bin/bash", "-c", "echo '%s:%s'|/usr/sbin/chpasswd" % (username, password))
-        vmrun("reset", "soft")
+        with self.yaybu_context.ui.throbber("Applying new password credentials") as t:
+            t.throb()
+            vmrun("start", "nogui")
+            t.throb()
+            vmrun("runProgramInGuest", "/usr/bin/sudo", "/bin/bash", "-c", "echo '%s:%s'|/usr/sbin/chpasswd" % (username, password))
+            t.throb()
+            vmrun("reset", "soft")
         
     def apply_auth_ssh(self, vmrun, username, pubkey):
         """ Add the provided ssh public key to the specified user's authorised keys """
         ## TODO actually find homedir properly
         ## TODO find sudo properly
-        homedir = "/home/%s" % username 
-        tmpfile = tempfile.NamedTemporaryFile(delete=False)
-        tmpfile.write(pubkey)
-        tmpfile.close()
-        vmrun("start")
-        vmrun("createDirectoryInGuest", "%s/.ssh" % homedir)
-        vmrun("copyFileFromHostToGuest", tmpfile.name, "%s/.ssh/authorized_keys" % homedir)
-        vmrun("runProgramInGuest", "/bin/chmod", "0700", "%s/.ssh" % homedir)
-        vmrun("runProgramInGuest", "/bin/chmod", "0600", "%s/.ssh/authorized_keys" % homedir)
-        vmrun("reset", "soft")
-        os.unlink(tmpfile.name)
+        with context.ui.throbber("Applying new SSH credentials") as t:
+            homedir = "/home/%s" % username 
+            tmpfile = tempfile.NamedTemporaryFile(delete=False)
+            tmpfile.write(pubkey)
+            tmpfile.close()
+            t.throb()
+            vmrun("start", "nogui")
+            t.throb()
+            vmrun("createDirectoryInGuest", "%s/.ssh" % homedir)
+            t.throb()
+            vmrun("copyFileFromHostToGuest", tmpfile.name, "%s/.ssh/authorized_keys" % homedir)
+            t.throb()
+            vmrun("runProgramInGuest", "/bin/chmod", "0700", "%s/.ssh" % homedir)
+            t.throb()
+            vmrun("runProgramInGuest", "/bin/chmod", "0600", "%s/.ssh/authorized_keys" % homedir)
+            t.throb()
+            vmrun("reset", "soft")
+            t.throb()
+            os.unlink(tmpfile.name)
         
-    def _get_guest_auth(self, target):
-        infofile = os.path.join(os.path.dirname(target), "VM-INFO")
-        d = json.load(open(infofile))
-        return d['username'], d['password']
-    
-    def _guest_action(self, target, username, password, command, *params):
-        self._action("-gu", username, "-gp", password, command, target, *params)
-    
     def apply_auth(self, target, auth):
         """ Apply the specified authentication credentials to the virtual machine. """
-        username, password = self._get_guest_auth(target)
-        vmrun = partial(self._guest_action, target, username, password)
+        vmrun = partial(self._guest_action, target)
         if isinstance(auth, NodeAuthPassword):
             self.apply_auth_password(vmrun, auth.username, auth.password)
         if isinstance(auth, NodeAuthSSHKey):
@@ -332,54 +379,47 @@ class VMWareDriver(NodeDriver):
             raise LibcloudError(
                 '"auth" argument provided, but it was not a NodeAuthPassword'
                 'or NodeAuthSSHKey object', driver=self)
-
-    def create_node(self, name, size, image, **kwargs):
-        """ Create a new VM from a template VM and start it.
-        """
-
-        ## then install credentials as per the existing code
-        ## provide options for create_node for which sort of credential installation
-        ## to use -
-        ##
-        ## https://github.com/apache/libcloud/blob/trunk/libcloud/compute/base.py#L518
-        ##
-        ## support all 2 options, ssh_key and password
-        ##
-        ## for extra marks, detect the terminal width
-
-        auth = kwargs.get('auth', None)
-        if auth is not None:
-            auth = self._get_and_check_auth(auth)
+        
+    def _get_source(self, image):
+        """ If the source looks like it is remote then fetch the image and
+        extract it into the library directory, otherwise use it directly. """
         if self._image_smells_remote(image.id):
             source = self.image_cache.install(image.id, context=self.yaybu_context)
         else:
             source = os.path.expanduser(image.id)
         if not os.path.exists(source):
             raise LibcloudError("Base image %s not found" % source)
-
-        target_dir = os.path.join(self.image_cache.instancedir, str(uuid.uuid4()))
-        target = os.path.join(target_dir, "vm.vmx")
-
-        target_parent = os.path.dirname(target_dir)
-        if not os.path.exists(target_parent):
-            os.makedirs(target_parent)
-
-        logger.debug("Creating node %r" % (name,))
-        # First try to clone the VM with the VMWare commands. We do this in
-        # the hope that they know what the fastest and most efficient way to
-        # clone an image is. But if that fails we can just copy the entire
-        # image directory.
+        return source
+    
+    def _get_target(self):
+        """ Create a new target in the instance directory """
+        target = TargetVM(self.image_cache.instancedir)
+        target.setup()
+        return target
+    
+    def _clone(self, source, target):
+        """ Try to clone the VM with the VMWare commands. We do this in the
+        hope that they know what the fastest and most efficient way to clone
+        an image is. But if that fails we can just copy the entire image
+        directory. """
         try:
-            self._action("clone", source, target)
+            self._action("clone", source, target.vmx)
         except LibcloudError:
             src_path = os.path.dirname(source)
-            shutil.copytree(src_path, target_dir)
-            os.rename(os.path.join(target_dir, os.path.basename(source)), target)
-            
-        if auth is not None:
-            self.apply_auth(target, auth)
+            shutil.copytree(src_path, target.directory)
+            os.rename(os.path.join(target.directory, os.path.basename(source)), target.vmx)
 
-        node = Node(target, name, NodeState.PENDING, None, None, self)
+    def create_node(self, name, size, image, auth=None, **kwargs):
+        """ Create a new VM from a template VM and start it.
+        """
+
+        auth = self._get_and_check_auth(auth)
+        source = self._get_source(image)
+        target = self._get_target()
+        logger.debug("Creating node %r" % (name,))
+        self._clone(source, target)
+        self.apply_auth(target, auth)
+        node = Node(target.vmx, name, NodeState.PENDING, None, None, self)
 
         # If a NodeSize is provided then we can control the amount of RAM the
         # VM has. Number of CPU's would be easy to scale too, but this isn't
@@ -390,9 +430,9 @@ class VMWareDriver(NodeDriver):
         #        self.ex_set_runtime_variable(node, "displayName", name, str(size.ram))
         #        self._action("writeVariable", target, "runtimeConfig", "memsize", str(size.ram))
 
-        self._action("start", target, "nogui", capture_output=False)
+        self._action("start", target.vmx, "nogui", capture_output=False)
         self.ex_set_runtime_variable(node, "displayName", name)
-        return Node(target, name, NodeState.PENDING, None, None, self)
+        return node
 
     def reboot_node(self, node):
         logger.debug("Rebooting node %r" % (node.id,))
@@ -424,23 +464,24 @@ class VMBoxImage:
     def __init__(self, path):
         self.path = path
 
-    def extract(self, destdir):
+    def extract(self, destdir, context):
         """ Extract the compressed image into the destination directory, with
         the specified name. """
         if os.path.exists(destdir):
             raise VMException("%r exists, and will not be clobbered" % (destdir,))
         os.mkdir(destdir)
-        with zipfile.ZipFile(self.path, "r", zipfile.ZIP_DEFLATED, True) as z:
-            for f in z.namelist():
-                pathname = os.path.join(destdir, f)
-                print "Writing", pathname
-                zf = z.open(f, "r")
-                of = open(pathname, "w")
-                while True:
-                    data = zf.read(8192)
-                    if not data:
-                        break
-                    of.write(data)
+        with context.ui.throbber("Extracting virtual machine") as t:
+            with zipfile.ZipFile(self.path, "r", zipfile.ZIP_DEFLATED, True) as z:
+                for f in z.namelist():
+                    pathname = os.path.join(destdir, f)
+                    zf = z.open(f, "r")
+                    of = open(pathname, "w")
+                    while True:
+                        data = zf.read(8192)
+                        if not data:
+                            break
+                        of.write(data)
+                    t.throb()
 
     def compress(self, srcdir, username, password):
         """ Create the package from the specified source directory. """
@@ -511,7 +552,7 @@ class VMBoxCollection:
         if not os.path.exists(destdir):
             self.cache.insert(uri, context)
             vmi = self.ImageClass(self.cache.image(uri))
-            vmi.extract(destdir)
+            vmi.extract(destdir, context)
         return self._locate_vmx(destdir)
 
 class RemoteVMBox:
