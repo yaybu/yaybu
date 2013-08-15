@@ -39,6 +39,7 @@ import datetime
 import urlparse
 import tempfile
 from functools import partial
+import time
 
 import zipfile
 
@@ -244,11 +245,14 @@ class VMWareDriver(NodeDriver):
         
         @rtype: C{bool}
         """
-        with self.yaybu_context.ui.throbber("Starting VM") as t:
+        with self.yaybu_context.ui.throbber("Starting existing VM") as t:
             self._action("start", node.id, "nogui", capture_output=False)
             node.state = NodeState.RUNNING
-            self._decorate_node(node)
-        return True
+        with self.yaybu_context.ui.throbber("Waiting for VM to boot completely") as t:
+            while not self._decorate_node(node):
+                time.sleep(1)
+                t.throb()
+                    
 
     def _find_vmrun(self):
         known_locations = [
@@ -319,11 +323,15 @@ class VMWareDriver(NodeDriver):
             yield line.strip()
 
     def _decorate_node(self, node):
-        """ Add ips """
+        """ Add ips. Returns True if it successfully decorated it, False if
+        it failed and None if the node was not running. """
         if node.state == NodeState.RUNNING:
             ip = self._action("readVariable", node.id, "guestVar", "ip").strip()
             if ip:
                 node.public_ips = [ip]
+                return True
+            return False
+        return None
         
     def list_nodes(self):
         """ List all of the nodes the driver knows about. """
@@ -443,12 +451,13 @@ class VMWareDriver(NodeDriver):
         hope that they know what the fastest and most efficient way to clone
         an image is. But if that fails we can just copy the entire image
         directory. """
-        try:
-            self._action("clone", source, target.vmx)
-        except LibcloudError:
-            src_path = os.path.dirname(source)
-            shutil.copytree(src_path, target.directory)
-            os.rename(os.path.join(target.directory, os.path.basename(source)), target.vmx)
+        with self.yaybu_context.ui.throbber("Cloning template VM") as t:
+            try:
+                self._action("clone", source, target.vmx)
+            except LibcloudError:
+                src_path = os.path.dirname(source)
+                shutil.copytree(src_path, target.directory)
+                os.rename(os.path.join(target.directory, os.path.basename(source)), target.vmx)
 
     def create_node(self, name, size, image, auth=None, **kwargs):
         """ Create a new VM from a template VM and start it.
@@ -457,7 +466,6 @@ class VMWareDriver(NodeDriver):
         auth = self._get_and_check_auth(auth)
         source = self._get_source(image)
         target = self._get_target()
-        logger.debug("Creating node %r" % (name,))
         self._clone(source, target)
         target.name = name
         self.apply_auth(target, auth)
@@ -707,6 +715,8 @@ class VMBoxCache:
         os.mkdir(path)
         mp = os.path.join(path, "metadata")
         ip = os.path.join(path, "image")
+        with context.ui.throbber("Downloading packed VM") as t:
+            pass
         with context.ui.progress(100) as p:
             r.download(ip, p.progress)
         metadata = {
