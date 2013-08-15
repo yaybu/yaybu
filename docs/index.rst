@@ -16,8 +16,9 @@ Contents:
    provisioner
    dns
    sync
-   language
    combining_parts
+   language
+   contributing
 
 
 Indices and tables
