@@ -139,7 +139,7 @@ class Compute(base.GraphExternalAction):
             )
 
     def _get_auth(self):
-        username = self.params.username.as_string(default=getpass.getuser())
+        username = self.params.user.as_string(default=getpass.getuser())
         if 'password' in self.driver.features['create_node']:
             password = self.params.password.as_string(default=None)
             if password is not None:
