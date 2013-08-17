@@ -14,6 +14,7 @@ Contents:
    installation
    compute
    provisioner
+   loadbalancer
    dns
    sync
    combining_parts
