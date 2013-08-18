@@ -20,26 +20,32 @@ Yaybu can manage your DNS using a ``Zone`` part. A basic setup looks like this::
             data: www.example.org
             type: CNAME
 
-This is implemented using `libcloud<http://libcloud.apache.org/>`_. 
+In this example, when you run ``yaybu apply`` this part will look for a zone named ``example.com`` and create it if it does not exist. It will ensure that all the ``records`` given exist and are of the right ``type`` and have the right ``data``.
 
 
 Inputs
 ======
 
-``driver``
+Use the ``driver`` argument to find and initialize a libcloud DNS driver. You must specify an ``id`` so that the right service is targetted. Other variables include users and secrets and are described in the service-specific notes below.
 
-You must specify a ``domain``.
+You must specify a ``domain``. If a zone for this domain doesn't exist it will be created.
 
+You must provide a list of DNS ``records`` to publish in the zone. At the very least you will specify a ``name`` and ``data`` but other options are available:
+
+``name``
+    For example ``www`` or ``pop``. You do not need to specify a fully qualified domain name.
+``type``
+    The type of DNS record - for example ``A`` or ``CNAME``.
+``data``
+    The data to put in the DNS record. This varies between record types, but is typically an IP address for ``A`` records or a fully qualified domain name for a ``CNAME`` record.
 ``ttl``
-
-``extra``
-
-``records``
+    How long this record can be cached for, specified in seconds. Specifying ``86400`` seconds would mean that if a DNS record was changed some DNS servers could be returning the old value for up to 24 hours.
 
 
 Supported services
 ==================
 
+Using ``libcloud`` to implement this part allows us to support a number of DNS services. Some of these receive more extensive real world testing than others and are listed in this section.
 
 Gandi
 -----
@@ -79,7 +85,6 @@ Route53
 The driver id for `Route53<http://aws.amazon.com/route53/>`_ is ``ROUTE53``::
 
     new Zone as dns:
-
         domain: example.com
 
         driver:
