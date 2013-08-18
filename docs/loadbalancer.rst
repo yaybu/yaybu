@@ -23,14 +23,14 @@ A basic setup looks like this::
           - {{ server1 }}
 
 
-Inputs
-======
+Options
+=======
 
 You must specify a ``name`` when creating a ``LoadBalanacer`` part. Some backends will use this as a unique id for the load balancer. Take care to avoid duplicating load balancer names in different configurations!
 
 The ``driver`` section contains the settings used by libcloud to initialize a driver. This typically includes account information - a access key and secret, a username and password, or similar.
 
-You musticy specify a ``port`` for the load balancer to listen on.
+You must specify a ``port`` for the load balancer to listen on.
 
 The load balancer needs to know what ``protocol`` it is balancing. For example, if it is handling SSL connections it can act as an SSL terminator but to do this it needs to know it is an SSL protocol. Not all balancers support all protocols, and Yaybu doesn't expose SSL support at the moment. You can set ``protocol`` to one of:
 
@@ -101,48 +101,13 @@ Each load balancer that is created has a unique ``id``. In some cases this may b
 A load balancer has a ``public_ip``. This is the public facing method of accessing the load balancer.
 
 
-Brightbox
-=========
+Supported services
+==================
 
-The driver id for brightbox is ``BRIGHTBOX``::
-
-    new LoadBalancer as lb:
-        name: my-load-balancer
-
-        driver:
-            id: BRIGHTBOX
-            key: acc-43ks4
-            secret: mybrightboxsecret
-
-        port: 80
-        protocol: http
-        algorithm: round-robin
-
-        members:
-          - id: ec2123
-
-For the Brightbox loadbalancer:
-
- * ``protocol`` must be ``http`` or ``tcp``
- * ``algorithm`` must be ``round-robin`` or ``least-connections``
- * ``members`` are managed by instance id, and you cannot set the backend port (your backends must listen on the same port as your load balancer).
-
-
-Cloudstack
-==========
-
-The driver id for cloudstack is not currently set upstream, so it is currently unavailable.
-
-For the CloudStack loadbalancer:
-
- * After creating a balancer you cannot change its setting (you can continue to add and remove members).
- * ``protocol`` must be ``tcp``
- * ``algorithm`` must be ``round-robin`` or ``least-connections``
- * ``members`` are managed by instance id. You cannot set the backend port.
-
+Using libcloud to implement this part allows us to support a number of DNS services. Some of these receive more extensive real world testing than others and are listed in this section.
 
 Elastic Load Balancing
-======================
+----------------------
 
 The driver id for Elastic Load Balancing is ``ELB``::
 
@@ -176,8 +141,53 @@ For this driver:
  * ``ex_members_availability_zones`` is an ELB specific extension that controls which Amazon availabilty zones a balancer is in.
 
 
+Community supported services
+============================
+
+By using libcloud to support the services in the previous section, the following services are also available:
+
+Brightbox
+---------
+
+The driver id for brightbox is ``BRIGHTBOX``::
+
+    new LoadBalancer as lb:
+        name: my-load-balancer
+
+        driver:
+            id: BRIGHTBOX
+            key: acc-43ks4
+            secret: mybrightboxsecret
+
+        port: 80
+        protocol: http
+        algorithm: round-robin
+
+        members:
+          - id: ec2123
+
+For the Brightbox loadbalancer:
+
+ * ``protocol`` must be ``http`` or ``tcp``
+ * ``algorithm`` must be ``round-robin`` or ``least-connections``
+ * ``members`` are managed by instance id, and you cannot set the backend port (your backends must listen on the same port as your load balancer).
+
+
+Cloudstack
+----------
+
+The driver id for cloudstack is not currently set upstream, so it is currently unavailable.
+
+For the CloudStack loadbalancer:
+
+ * After creating a balancer you cannot change its setting (you can continue to add and remove members).
+ * ``protocol`` must be ``tcp``
+ * ``algorithm`` must be ``round-robin`` or ``least-connections``
+ * ``members`` are managed by instance id. You cannot set the backend port.
+
+
 GoGrid
-======
+------
 
 The driver id for GoGrid is ``GOGRID``::
 
@@ -204,7 +214,7 @@ For this driver:
 
 
 Ninefold
-========
+--------
 
 The driver id for Ninefold is ``NINEFOLD``::
 
@@ -227,7 +237,7 @@ Ninefold uses CloudStack, so see that section for additional notes.
 
 
 Rackspace
-=========
+---------
 
 The driver id for Rackspace load balancing is ``RACKSPACE_UK``::
 

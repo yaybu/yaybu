@@ -23,8 +23,8 @@ Yaybu can manage your DNS using a ``Zone`` part. A basic setup looks like this::
 In this example, when you run ``yaybu apply`` this part will look for a zone named ``example.com`` and create it if it does not exist. It will ensure that all the ``records`` given exist and are of the right ``type`` and have the right ``data``.
 
 
-Inputs
-======
+Options
+=======
 
 Use the ``driver`` argument to find and initialize a libcloud DNS driver. You must specify an ``id`` so that the right service is targetted. Other variables include users and secrets and are described in the service-specific notes below.
 
