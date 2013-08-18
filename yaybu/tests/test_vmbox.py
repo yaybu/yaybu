@@ -73,6 +73,11 @@ class TestRemoteVMBox(unittest2.TestCase):
         self.assertRaises(ValueError, r.download, dst, progress)
         shutil.rmtree(d)
 
+
+    def test_context_manager(self):
+        ## TODO
+        pass
+
 fixture = [
     { 'url': 'https://yaybu.com/library/ubuntu-12.04.2-amd64',
       'name': 'ubuntu-12.04.2-amd64',
@@ -87,11 +92,11 @@ class TestVMBoxLibrary(unittest2.TestCase):
     def setUp(self):
         self.root = tempfile.mkdtemp()
         for f in fixture:
-            d = os.path.join(self.root, "library", f['name'])
+            d = os.path.join(self.root, "vmware", "library", f['name'])
             os.makedirs(d)
             mp = os.path.join(d, "metadata")
             metadata = {
-                'name': f['url'],
+                'url': f['url'],
                 'created': str(datetime.datetime.now()),
                 'hash': None
             }
@@ -99,7 +104,11 @@ class TestVMBoxLibrary(unittest2.TestCase):
         self.library = VMBoxLibrary(self.root)
 
     def test_scan(self):
-        pass
+        self.assertEqual(self.library.library, {
+            'https://yaybu.com/library/ubuntu-12.04.2-amd64': 'ubuntu-12.04.2-amd64',
+            'https://elsewhere.com/frob-14.7': 'foo',
+        })
+
 
     #def tearDown(self):
         #""" delete the cache dir """

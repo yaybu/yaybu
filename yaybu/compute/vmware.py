@@ -666,7 +666,7 @@ class VMBoxLibrary:
                 mp = os.path.join(ip, "metadata")
                 if os.path.exists(mp):
                     md = json.load(open(mp))
-                    self.items[md['uri']] = item
+                    self.library[md['url']] = item
 
     def guess_name(self, uri):
         """ Use the name of the file with the extension stripped off """
