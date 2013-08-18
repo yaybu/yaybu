@@ -134,38 +134,8 @@ from libcloud.compute.types import Provider
 # FIXME:
 Provider.VMWARE = 99
 
-class VMXFile(object):
-
-    def __init__(self, path):
-        self.path = path
-        self.settings = {}
-        self.load()
-
-    def load(self):
-        self.settings = {}
-        with open(self.path, "r") as fp:
-            for line in fp.readlines():
-                if not line.strip():
-                    continue
-                if line.sartswith('#'):
-                    continue
-                k, v = line.split("=", 1)
-                self.settings[k.strip().lower()] = v.str()
-
-    def save(self):
-        with open(self.path, "w") as fp:
-            for key in sorted(self.settings.keys()):
-                fp.write("%s = %s\n" % (key, self.settings[key]))
-
-    def __getitem__(self, key):
-        return self.settings[key]
-
-    def __setitem__(self, key, value):
-        self.settings[key] = value
-        self.save()
-
 class VMWareVM:
-    
+
     def __init__(self, instancedir, id=None):
         self.instancedir = instancedir
         self.id = id or self._gen_id()
@@ -176,7 +146,7 @@ class VMWareVM:
     @property
     def directory(self):
         return os.path.join(self.instancedir, self.id)
-    
+
     @property
     def vmx(self):
         return os.path.join(self.directory, "vm.vmx")
@@ -194,30 +164,30 @@ class VMWareVM:
         infofile = os.path.join(self.directory, "VM-INFO")
         d = json.load(open(infofile))
         return d[name]
-    
+
     def set_info(self, name, value):
         infofile = os.path.join(self.directory, "VM-INFO")
         d = json.load(open(infofile))
         d[name] = value
         json.dump(open(infofile, "w"))
-    
+
     @property
     def username(self):
         return self.info("username")
-    
+
     @property
     def password(self):
         return self.info("password")
-    
+
     def _get_name(self):
         return self.info("name")
-    
+
     def _set_name(self, name):
         self.set_info("name", name)
-        
+
     name = property(_get_name, _set_name)
 
-            
+
 
 class VMWareDriver(NodeDriver):
 
@@ -235,14 +205,14 @@ class VMWareDriver(NodeDriver):
         self.vmrun = vmrun or self._find_vmrun()
         self.hosttype = hosttype or self._find_hosttype()
         self.machines = VMBoxCollection(root=yaybu_root)
-        
+
     def ex_start(self, node):
         """
         Start a stopped node.
-        
+
         @param node: Node which should be used
         @type  node: L{Node}
-        
+
         @rtype: C{bool}
         """
         with self.yaybu_context.ui.throbber("Starting existing VM") as t:
@@ -252,7 +222,7 @@ class VMWareDriver(NodeDriver):
             while not self._decorate_node(node):
                 time.sleep(1)
                 t.throb()
-                    
+
 
     def _find_vmrun(self):
         known_locations = [
@@ -288,10 +258,10 @@ class VMWareDriver(NodeDriver):
         return self.connection.request(command, capture_output=capture_output).body
 
     def _guest_action(self, target, command, *params):
-        self._action("-gu", target.username, "-gp", target.password, 
+        self._action("-gu", target.username, "-gp", target.password,
                      command, target.vmx, *params,
                      capture_output=False)
-    
+
     def list_images(self, location=None):
         ## TODO
         ## list the template images from the cache
@@ -312,7 +282,7 @@ class VMWareDriver(NodeDriver):
 
     def list_locations(self):
         return []
-    
+
     def _list_running(self):
         """ List running virtual machines """
         lines = iter(self._action("list").strip().splitlines())
@@ -332,7 +302,7 @@ class VMWareDriver(NodeDriver):
                 return True
             return False
         return None
-        
+
     def list_nodes(self):
         """ List all of the nodes the driver knows about. """
         nodes = []
@@ -350,7 +320,7 @@ class VMWareDriver(NodeDriver):
             if imageid.startswith(smell):
                 return True
         return False
-    
+
     def apply_auth_password(self, vmrun, username, password):
         """ Set the password of the specified username to the provided password """
         with self.yaybu_context.ui.throbber("Applying new password credentials") as t:
@@ -360,13 +330,13 @@ class VMWareDriver(NodeDriver):
             vmrun("runProgramInGuest", "/usr/bin/sudo", "/bin/bash", "-c", "echo '%s:%s'|/usr/sbin/chpasswd" % (username, password))
             t.throb()
             vmrun("reset", "soft")
-        
+
     def apply_auth_ssh(self, vmrun, username, pubkey):
         """ Add the provided ssh public key to the specified user's authorised keys """
         ## TODO actually find homedir properly
         ## TODO find sudo properly
         with context.ui.throbber("Applying new SSH credentials") as t:
-            homedir = "/home/%s" % username 
+            homedir = "/home/%s" % username
             tmpfile = tempfile.NamedTemporaryFile(delete=False)
             tmpfile.write(pubkey)
             tmpfile.close()
@@ -384,7 +354,7 @@ class VMWareDriver(NodeDriver):
             vmrun("reset", "soft")
             t.throb()
             os.unlink(tmpfile.name)
-        
+
     def apply_auth(self, target, auth):
         """ Apply the specified authentication credentials to the virtual machine. """
         vmrun = partial(self._guest_action, target)
@@ -428,7 +398,7 @@ class VMWareDriver(NodeDriver):
             raise LibcloudError(
                 '"auth" argument provided, but it was not a NodeAuthPassword'
                 'or NodeAuthSSHKey object', driver=self)
-        
+
     def _get_source(self, image):
         """ If the source looks like it is remote then fetch the image and
         extract it into the library directory, otherwise use it directly. """
@@ -439,13 +409,13 @@ class VMWareDriver(NodeDriver):
         if not os.path.exists(source):
             raise LibcloudError("Base image %s not found" % source)
         return source
-    
+
     def _get_target(self):
         """ Create a new target in the instance directory """
         target = VMWareVM(self.machines.instancedir)
         target.setup()
         return target
-    
+
     def _clone(self, source, target):
         """ Try to clone the VM with the VMWare commands. We do this in the
         hope that they know what the fastest and most efficient way to clone
@@ -546,77 +516,43 @@ class VMBoxImage:
             z.writestr("VM-INFO", json.dumps({'username': username, 'password': password}))
             print "Done."
 
-
-
-class VMBoxCollection:
-
-    """ A collection of archive files, some of which may be remote and some
-    local, with a local cache and a set of them that are expanded and ready
-    for use. """
-
-    ## TODO: What about file and directory modes? Rely on umask?
-
-    ImageClass = VMBoxImage
-
-    def __init__(self, root="~/.yaybu"):
-        self.root = os.path.expanduser(root)
-
-        # a set of images that are only cloned, with additional information
-        # needed to start and connect to them correctly
-        self.librarydir = os.path.join(self.root, "vmware", "library")
-
-        # a cache of downloaded image files
-        self.cachedir = os.path.join(self.root, "vmware", "cache")
-
-        # instances that may be started and running
-        self.instancedir = os.path.join(self.root, "vmware", "instances")
-
-        self.setupdirs()
-        self.cache = VMBoxCache(self.cachedir)
-
-    def setupdirs(self):
-        """ Create directories if required """
-        for d in self.librarydir, self.cachedir, self.instancedir:
-            if not os.path.exists(d):
-                os.makedirs(d)
-
-    def guess_name(self, uri):
-        """ Use the name of the file with the extension stripped off """
-        path = urlparse.urlparse(uri).path
-        leaf = path.split("/")[-1]
-        if not leaf:
-            raise VMException("Cannot guess name for %r" % (uri,))
-        return leaf.rsplit(".", 1)[0]
-
-    def _locate_vmx(self, path):
-        for f in os.listdir(path):
-            if f.endswith(".vmx"):
-                return os.path.join(path, f)
-
-    def install(self, uri, name=None, context=None):
-        """ Fetches the specified uri into the cache and then extracts it
-        into the library.  If name is None then a name is made up. """
-        if name is None:
-            name = self.guess_name(uri)
-        destdir = os.path.join(self.librarydir, name)
-        if not os.path.exists(destdir):
-            self.cache.insert(uri, context)
-            vmi = self.ImageClass(self.cache.image(uri))
-            vmi.extract(destdir, context)
-        return self._locate_vmx(destdir)
-    
-    def instances(self):
-        """ Return a generator of VMWareVM objects. """
-        for i in os.listdir(self.instancedir):
-            yield VMWareVM(self.instancedir, i)
-
 class RemoteVMBox:
 
     """ Provides tooling around remote images, specifically hash verification
     and image signing. """
 
-    def __init__(self, location):
+    def __init__(self, location, tempdir, context):
         self.location = location
+        self.tempdir = tempdir
+        self.context = context
+
+    def __enter__(self):
+        """ Fetch an item into the temporary directory from a remote location
+
+        Args:
+            location: A url to the compressed box
+            context: A context object used for progress reporting
+
+        Returns: the full path to the downloaded package directory
+
+        """
+        r = RemoteVMBox(location)
+        self.path = tempfile.mkdtemp(dir=self.tempdir)
+        mp = os.path.join(self.path, "metadata")
+        ip = os.path.join(self.path, "image")
+        with context.ui.throbber("Downloading packed VM") as t:
+            pass
+        with context.ui.progress(100) as p:
+            r.download(ip, p.progress)
+        metadata = {
+            'uri': location,
+            'created': str(datetime.datetime.now()),
+            'hash': r.hash
+        }
+        json.dump(metadata, open(mp, "w"))
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        shutil.rmtree(self.path)
 
     def get_hash(self):
         """ Try methods in order until one returns something other than None.
@@ -674,62 +610,106 @@ class RemoteVMBox:
             if h.hexdigest() != self.hash:
                 raise ValueError("Wrong hash. Calculated %r != Correct %r" % (h.hexdigest(), self.hash))
 
-class VMBoxCache:
+class VMBoxLibrary:
 
-    """ A cache of compressed instances. Each item in the cache is identified
-    by the name that was used to retrieve it - we don't have a concept of an
-    embedded name or a global name register. """
+    """ A library of virtual machines, and a mechanism for adding packaged
+    virtual machines to the library from local or remote locations.
 
-    # The cache has one directory per box, with a metadata json file describing
-    # what we call the file and when it was retrieved
-    # there may be additional directories and files in the cache that are ignored
-    # only directories containing a metadata are considered
+    Some of these VMs are "templates" and not intended to be run from their
+    existing location. Some are copies of the templates and are in use.
 
-    def __init__(self, cachedir):
-        self.cachedir = cachedir
-        self.items = {}
+    The directory structure resembles:
+
+    ~/.yaybu/vmware/
+        /instances/
+            /<UUID>/
+                VM-INFO
+                <vmware files>
+        /library/
+            /<UUID>/
+                metadata
+                image/
+                    <vmware files>
+        /temp/
+            <UUID>/
+                <files created during download and extraction>
+
+    """
+
+    # This is the class that represents the images
+    ImageClass = VMBoxImage
+
+    def __init__(self, root="~/.yaybu"):
+        self.root = os.path.expanduser(root)
+        self.library = {}
+        # a set of images that are only cloned
+        self.librarydir = os.path.join(self.root, "vmware", "library")
+        # instances that may be started and running
+        self.instancedir = os.path.join(self.root, "vmware", "instances")
+        # A temporary directory for downloading and extracting that must be on
+        # the same partition
+        self.tempdir = os.path.join(self.root, "vmware", "temp")
+        self.setupdirs()
         self.scan()
 
+    def setupdirs(self):
+        """ Create directories if required """
+        for d in self.librarydir, self.instancedir, self.tempdir:
+            if not os.path.exists(d):
+                os.makedirs(d)
+
     def scan(self):
-        for item in os.listdir(self.cachedir):
-            ip = os.path.join(self.cachedir, item)
+        """ Scan the library and populate self.library """
+        for item in os.listdir(self.librarydir):
+            ip = os.path.join(self.librarydir, item)
             if os.path.isdir(ip):
                 mp = os.path.join(ip, "metadata")
                 if os.path.exists(mp):
                     md = json.load(open(mp))
-                    self.items[md['name']] = item
+                    self.items[md['uri']] = item
 
-    def insert(self, location, context):
-        """ Insert an item into the cache from a specified location.
+    def guess_name(self, uri):
+        """ Use the name of the file with the extension stripped off """
+        path = urlparse.urlparse(uri).path
+        leaf = path.split("/")[-1]
+        if not leaf:
+            raise VMException("Cannot guess name for %r" % (uri,))
+        return leaf.rsplit(".", 1)[0]
 
-        Args:
-            location: A url to the compressed box
-            context: A context object used for progress reporting
+    def _locate_vmx(self, path):
+        for f in os.listdir(path):
+            if f.endswith(".vmx"):
+                return os.path.join(path, f)
+
+    def fetch(self, uri, name, context):
+        """ Fetch the URI """
+        if name is None:
+            name = self.guess_name(uri)
+        destdir = os.path.join(self.librarydir, name)
+        if os.path.exists(destdir):
+            origuri = json.load(open(os.path.join(destdir, 'metadata')))['uri']
+            raise VMException("Requested to download %s from %s but already downloaded from %s" % (name, uri, origuri))
+        with RemoteVMBox(uri, self.tempdir, context) as box:
+            vmi = self.ImageClass(box.path)
+            vmi.extract(destdir, context)
+
+    def get(self, uri, name=None, context=None):
+        """ Fetches the specified uri into the cache and then extracts it
+        into the library.  If name is None then a name is made up.
+
+        Arguments:
+            name: the suggested name for the downloaded VM. Note that
+                  if the VM is already present it may have a different name, but will
+                  be used anyway.
+
 
         """
-        if self.items.has_key(location):
-            return
-        r = RemoteVMBox(location)
-        name = str(uuid.uuid4())
-        path = os.path.join(self.cachedir, name)
-        os.mkdir(path)
-        mp = os.path.join(path, "metadata")
-        ip = os.path.join(path, "image")
-        with context.ui.throbber("Downloading packed VM") as t:
-            pass
-        with context.ui.progress(100) as p:
-            r.download(ip, p.progress)
-        metadata = {
-            'name': location,
-            'created': str(datetime.datetime.now()),
-            'hash': r.hash
-        }
-        json.dump(metadata, open(mp, "w"))
-        self.items[location] = name
-        return name
+        if not uri in self.library:
+            self.fetch(uri, name, context)
+        name = self.library[uri]
+        return self._locate_vmx(os.path.join(self.librarydir, name))
 
-    def image(self, location):
-        if not self.items.has_key(location):
-            raise KeyError("Item is not in cache")
-        return os.path.join(self.cachedir, self.items[location], "image")
-
+    def instances(self):
+        """ Return a generator of VMWareVM objects. """
+        for i in os.listdir(self.instancedir):
+            yield VMWareVM(self.instancedir, i)
