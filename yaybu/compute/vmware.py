@@ -507,6 +507,9 @@ class VMBoxImage:
                 break
             of.write(data)
 
+    def _store_metadata(self, destdir, metadata):
+        json.dump(metadata, open(os.path.join(destdir, "VM-INFO"), "w"))
+
     def extract(self, destdir, context, metadata):
         """ Extract the compressed image into the destination directory, with
         the specified name. """
@@ -519,7 +522,7 @@ class VMBoxImage:
                         pathname = os.path.join(destdir, f)
                         self._zcopy(pathname, z, f)
                     t.throb()
-            json.dump(metadata, open(os.path.join(destdir, "VM-INFO"), "w"))
+            self._store_metadata(destdir, metadata)
 
     def compress(self, srcdir, username, password):
         """ Create the package from the specified source directory. """
