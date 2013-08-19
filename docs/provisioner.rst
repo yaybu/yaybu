@@ -26,7 +26,22 @@ parameter::
                   hello: world
 
 
-You can pass the following settings:
+Options
+=======
+
+You specify a list of ``resources`` to apply to a designated ``server``.
+
+The ``resources`` are specified as a list of simple files, directories, users, etc that are executed in order::
+
+    resources:
+      - File:
+          name: /etc/my.cnf
+          static: staticfile.cnf
+
+      - User:
+          name: django
+
+You can pass the following settings to the ``server`` argument:
 
 ``fqdn``
     A fully qualified domain name to connect to (via SSH). An IP can also be used if required.
