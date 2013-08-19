@@ -1,3 +1,5 @@
+.. _staticcontainer:
+
 ======================================
 Syncing static files to cloud services
 ======================================

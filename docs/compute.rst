@@ -1,3 +1,5 @@
+.. _compute:
+
 =================
 Compute instances
 =================

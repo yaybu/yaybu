@@ -1,3 +1,5 @@
+.. _load_balancer:
+
 =============================
 Managing cloud load balancers
 =============================
