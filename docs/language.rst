@@ -1,6 +1,6 @@
-====================
-Language walkthrough
-====================
+==================
+Language reference
+==================
 
 The language used in your ``Yaybufile`` is called ``yay``. It is YAML-like, but
 has templates and pythonic expressions. Some other tools just use a templated

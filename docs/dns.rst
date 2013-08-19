@@ -52,7 +52,7 @@ Using ``libcloud`` to implement this part allows us to support a number of DNS s
 Gandi
 -----
 
-The driver id for `Gandi<http://www.gandi.net/>`_ is ``GANDI``::
+The driver id for `Gandi <http://www.gandi.net/>`_ is ``GANDI``::
 
     new Zone as dns:
         driver:
@@ -84,7 +84,7 @@ Gandi supports the following record types:
 Route53
 -------
 
-The driver id for `Route53<http://aws.amazon.com/route53/>`_ is ``ROUTE53``::
+The driver id for `Route53 <http://aws.amazon.com/route53/>`_ is ``ROUTE53``::
 
     new Zone as dns:
         domain: example.com
@@ -124,7 +124,7 @@ By using `libcloud` to support the services in the previous section, the followi
 HostVirtual
 -----------
 
-The driver id for `HostVirtual<http://www.vr.org/>`_ is ``HOSTVIRTUAL``::
+The driver id for `HostVirtual <http://www.vr.org/>`_ is ``HOSTVIRTUAL``::
 
     new Zone as dns:
         domain: example.com
@@ -154,7 +154,7 @@ HostVirtual supports the following recort types:
 Linode
 ------
 
-The driver id for `Linode<https://www.linode.com/wiki/index.php/Linode_DNS>`_ is ``LINODE``::
+The driver id for `Linode <https://www.linode.com/wiki/index.php/Linode_DNS>`_ is ``LINODE``::
 
     new Zone as dns:
         domain: example.com
@@ -184,7 +184,7 @@ Linode supports the following record types:
 RackSpace
 ---------
 
-The driver id for `Rackspace DNS<http://www.rackspace.com/cloud/dns/>`_ is ``RACKSPACE_UK`` or ``RACKSPACE_US``::
+The driver id for `Rackspace DNS <http://www.rackspace.com/cloud/dns/>`_ is ``RACKSPACE_UK`` or ``RACKSPACE_US``::
 
     new Zone as dns:
         domain: example.com
@@ -214,7 +214,7 @@ Rackspace supports the following record types:
 Zerigo
 ------
 
-The driver id for `Zerigo<http://www.zerigo.com/managed-dns>`_ is ``ZERIGO``::
+The driver id for `Zerigo <http://www.zerigo.com/managed-dns>`_ is ``ZERIGO``::
 
     new Zone as dns:
         domain: example.com
