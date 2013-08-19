@@ -97,7 +97,7 @@ class TestVMBoxLibrary(unittest2.TestCase):
         for f in fixture:
             d =  os.path.join(self.librarydir, f['name'])
             os.makedirs(d)
-            mp = os.path.join(d, "metadata")
+            mp = os.path.join(d, "VM-INFO")
             metadata = {
                 'url': f['url'],
                 'created': str(datetime.datetime.now()),
