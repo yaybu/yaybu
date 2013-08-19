@@ -158,7 +158,7 @@ class Compute(base.GraphExternalAction):
         if 'ssh_key' in self.driver.features['create_node']:
             pubkey = self.params.public_key.as_string(default=None)
             if pubkey is not None:
-                fp = self.root.openers.open(pubkey)
+                fp = self.root.openers.open(os.path.expanduser(pubkey))
                 auth = NodeAuthSSHKey(fp.read())
                 auth.username = username
                 return auth

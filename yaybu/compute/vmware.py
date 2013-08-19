@@ -29,7 +29,7 @@ import shlex
 import subprocess
 from pipes import quote
 
-from libcloud.common.types import LibcloudError
+from libcloud.common.types import *
 from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
 import logging
 import json
@@ -45,6 +45,14 @@ import zipfile
 
 logger = logging.getLogger("yaybu.parts.compute.vmware")
 
+class VMRunError(LibcloudError):
+    pass
+
+class FileAlreadyExistsError(VMRunError):
+
+    def __init__(self):
+        self.value = "File or directory already exists"
+
 class Response(object):
 
     def __init__(self, status, body, error):
@@ -53,7 +61,7 @@ class Response(object):
         self.error = error
 
         if not self.success():
-            raise LibcloudError(self.parse_error())
+            raise self.parse_error()
 
         self.object = self.parse_body()
 
@@ -61,7 +69,9 @@ class Response(object):
         return self.body
 
     def parse_error(self):
-        return self.error
+        if self.body == 'Error: The file already exists\n':
+            raise FileAlreadyExistsError()
+        raise ProviderError(self.body + " " + self.error, self.error)
 
     def success(self):
         return self.status == 0
@@ -260,7 +270,7 @@ class VMWareDriver(NodeDriver):
     def _guest_action(self, target, command, *params):
         self._action("-gu", target.username, "-gp", target.password,
                      command, target.vmx, *params,
-                     capture_output=False)
+                     capture_output=True)
 
     def list_images(self, location=None):
         ## TODO
@@ -335,7 +345,7 @@ class VMWareDriver(NodeDriver):
         """ Add the provided ssh public key to the specified user's authorised keys """
         ## TODO actually find homedir properly
         ## TODO find sudo properly
-        with context.ui.throbber("Applying new SSH credentials") as t:
+        with self.yaybu_context.ui.throbber("Applying new SSH credentials") as t:
             homedir = "/home/%s" % username
             tmpfile = tempfile.NamedTemporaryFile(delete=False)
             tmpfile.write(pubkey)
@@ -343,7 +353,10 @@ class VMWareDriver(NodeDriver):
             t.throb()
             vmrun("start", "nogui")
             t.throb()
-            vmrun("createDirectoryInGuest", "%s/.ssh" % homedir)
+            try:
+                vmrun("createDirectoryInGuest", "%s/.ssh" % homedir)
+            except FileAlreadyExistsError:
+                pass
             t.throb()
             vmrun("copyFileFromHostToGuest", tmpfile.name, "%s/.ssh/authorized_keys" % homedir)
             t.throb()
