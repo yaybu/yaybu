@@ -38,10 +38,32 @@ class TestVMBoxImage(unittest2.TestCase):
                 call(),
                 ])
 
-
-
     def test_extract_metadata(self):
-        pass
+        with patch('zipfile.ZipFile') as zf:
+            zf().__enter__().namelist.return_value = ["foo", "bar", "baz"]
+            vi = VMBoxImage("foo.zip")
+            vi._store_metadata = Mock()
+            vi._zcopy = Mock()
+            ctx = Mock()
+            vi.extract("/var/tmp/frob", ctx, {"foo": "bar"})
+            vi._store_metadata.assert_has_calls([
+                call('/var/tmp/frob', {"foo": "bar"})
+                ])
+
+    def test_extract_metadata_vminfo(self):
+        with patch('zipfile.ZipFile') as zf:
+            zf().__enter__().namelist.return_value = ["foo", "bar", "VM-INFO"]
+            zf().__enter__().open().read.return_value = '{"baz": "quux"}'
+            vi = VMBoxImage("foo.zip")
+            vi._store_metadata = Mock()
+            vi._zcopy = Mock()
+            ctx = Mock()
+            vi.extract("/var/tmp/frob", ctx, {"foo": "bar"})
+            vi._store_metadata.assert_has_calls([
+                call('/var/tmp/frob', {"foo": "bar", "baz": "quux"})
+                ])
+
+
 
 
 class TestRemoteVMBox(unittest2.TestCase):
