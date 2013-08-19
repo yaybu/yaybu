@@ -6,6 +6,8 @@ import mock
 import json
 import datetime
 import shutil
+import zipfile
+
 from mock import MagicMock as Mock, call, patch
 
 from yaybu.compute import vmware
@@ -83,7 +85,7 @@ fixture = [
       'name': 'ubuntu-12.04.2-amd64',
       },
     { 'url': 'https://elsewhere.com/frob-14.7',
-      'name': 'foo',
+      'name': 'frob',
       },
 ]
 
@@ -91,8 +93,9 @@ class TestVMBoxLibrary(unittest2.TestCase):
 
     def setUp(self):
         self.root = tempfile.mkdtemp()
+        self.librarydir = os.path.join(self.root, "vmware", "library",)
         for f in fixture:
-            d = os.path.join(self.root, "vmware", "library", f['name'])
+            d =  os.path.join(self.librarydir, f['name'])
             os.makedirs(d)
             mp = os.path.join(d, "metadata")
             metadata = {
@@ -103,51 +106,43 @@ class TestVMBoxLibrary(unittest2.TestCase):
             json.dump(metadata, open(mp, "w"))
         self.library = VMBoxLibrary(self.root)
 
+    def tearDown(self):
+        """ delete the cache dir """
+        shutil.rmtree(self.librarydir)
+
     def test_scan(self):
         self.assertEqual(self.library.library, {
             'https://yaybu.com/library/ubuntu-12.04.2-amd64': 'ubuntu-12.04.2-amd64',
-            'https://elsewhere.com/frob-14.7': 'foo',
+            'https://elsewhere.com/frob-14.7': 'frob',
         })
 
+    def test_stray_file(self):
+        open(os.path.join(self.librarydir, "foo"), "w").write("bar")
+        self.test_scan()
 
-    #def tearDown(self):
-        #""" delete the cache dir """
-        #shutil.rmtree(self.librarydir)
+    def test_stray_dir(self):
+        os.mkdir(os.path.join(self.librarydir, "foo"))
+        self.test_scan()
 
-    #def test_scan(self):
-        #self.assertEqual(self.cache.items, {
-             #"http://yaybu.com/image/ubuntu/12.04.2-server-amd64": "001",
-             #"http://yaybu.com/image/ubuntu/10.04.2-server-amd64": "002",
-             #"http://yaybu.com/image/debian/squeeze-i386": "003",
-             #})
-
-    #def test_stray_file(self):
-        #open(os.path.join(self.librarydir, "foo"), "w").write("bar")
-        #self.test_scan()
-
-    #def test_stray_dir(self):
-        #os.mkdir(os.path.join(self.librarydir, "foo"))
-        #self.test_scan()
-
-    #def test_insert(self):
-        #f = tempfile.NamedTemporaryFile(delete=False)
-        #f.write("foo"*10000)
-        #f.close()
-        #h = hashlib.md5()
-        #h.update("foo"*10000)
-        #open(f.name + ".md5", "w").write(h.hexdigest())
-        #context = Mock()
-        #self.cache.insert("file://" + f.name, context)
-        #dirs = os.listdir(self.librarydir)
-        #self.assertEqual(len(dirs), 4)
-        #dirs.remove("001")
-        #dirs.remove("002")
-        #dirs.remove("003")
-        #self.assertEqual(len(dirs), 1)
-        #d = dirs[0]
-        #metadata = json.load(open(os.path.join(self.librarydir, d, "metadata")))
-        #self.assertEqual(metadata['name'], "file://" + f.name)
-        #self.assertEqual(metadata['hash'], h.hexdigest())
+    def test_get(self):
+        f = tempfile.NamedTemporaryFile(delete=False)
+        z = zipfile.ZipFile(f, "w", zipfile.ZIP_DEFLATED)
+        z.writestr("foo", "foo"*1000)
+        z.close()
+        h = hashlib.md5()
+        h.update(open(f.name).read())
+        open(f.name + ".md5", "w").write(h.hexdigest())
+        context = Mock()
+        self.library.get("file://" + f.name, context, 'bar')
+        dirs = os.listdir(self.librarydir)
+        self.assertEqual(sorted(dirs), sorted([
+            'ubuntu-12.04.2-amd64',
+            'frob',
+            'bar',
+            ]))
+        metadata = json.load(open(os.path.join(self.librarydir, 'bar', "VM-INFO")))
+        self.assertEqual(metadata['url'], "file://" + f.name)
+        self.assertEqual(metadata['hash'], h.hexdigest())
 
 
 

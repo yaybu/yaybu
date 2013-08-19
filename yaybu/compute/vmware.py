@@ -204,7 +204,7 @@ class VMWareDriver(NodeDriver):
         super(VMWareDriver, self).__init__(None)
         self.vmrun = vmrun or self._find_vmrun()
         self.hosttype = hosttype or self._find_hosttype()
-        self.machines = VMBoxCollection(root=yaybu_root)
+        self.machines = VMBoxLibrary(root=yaybu_root)
 
     def ex_start(self, node):
         """
@@ -403,7 +403,7 @@ class VMWareDriver(NodeDriver):
         """ If the source looks like it is remote then fetch the image and
         extract it into the library directory, otherwise use it directly. """
         if self._image_smells_remote(image.id):
-            source = self.machines.install(image.id, context=self.yaybu_context)
+            source = self.machines.get(image.id, context=self.yaybu_context)
         else:
             source = os.path.expanduser(image.id)
         if not os.path.exists(source):
@@ -484,24 +484,29 @@ class VMBoxImage:
     def __init__(self, path):
         self.path = path
 
-    def extract(self, destdir, context):
+    def _zcopy(self, pathname, zfile, name):
+        """ Copy the contents of a file out of a zipfile. """
+        zf = zfile.open(name, "r")
+        of = open(pathname, "w")
+        while True:
+            data = zf.read(8192)
+            if not data:
+                break
+            of.write(data)
+
+    def extract(self, destdir, context, metadata):
         """ Extract the compressed image into the destination directory, with
         the specified name. """
-        if os.path.exists(destdir):
-            raise VMException("%r exists, and will not be clobbered" % (destdir,))
-        os.mkdir(destdir)
         with context.ui.throbber("Extracting virtual machine") as t:
             with zipfile.ZipFile(self.path, "r", zipfile.ZIP_DEFLATED, True) as z:
                 for f in z.namelist():
-                    pathname = os.path.join(destdir, f)
-                    zf = z.open(f, "r")
-                    of = open(pathname, "w")
-                    while True:
-                        data = zf.read(8192)
-                        if not data:
-                            break
-                        of.write(data)
+                    if f == "VM-INFO":
+                        metadata.update(json.loads(z.open(f, "r").read()))
+                    else:
+                        pathname = os.path.join(destdir, f)
+                        self._zcopy(pathname, z, f)
                     t.throb()
+            json.dump(metadata, open(os.path.join(destdir, "VM-INFO"), "w"))
 
     def compress(self, srcdir, username, password):
         """ Create the package from the specified source directory. """
@@ -523,7 +528,7 @@ class RemoteVMBox:
 
     def __init__(self, location, tempdir, context):
         self.location = location
-        self.tempdir = tempdir
+        self._tempdir = tempdir
         self.context = context
 
     def __enter__(self):
@@ -536,23 +541,21 @@ class RemoteVMBox:
         Returns: the full path to the downloaded package directory
 
         """
-        r = RemoteVMBox(location)
-        self.path = tempfile.mkdtemp(dir=self.tempdir)
-        mp = os.path.join(self.path, "metadata")
-        ip = os.path.join(self.path, "image")
-        with context.ui.throbber("Downloading packed VM") as t:
+        self.dir = tempfile.mkdtemp(dir=self._tempdir)
+        self.image = os.path.join(self.dir, "image")
+        with self.context.ui.throbber("Downloading packed VM") as t:
             pass
-        with context.ui.progress(100) as p:
-            r.download(ip, p.progress)
-        metadata = {
-            'uri': location,
+        with self.context.ui.progress(100) as p:
+            self.download(self.image, p.progress)
+        self.metadata = {
+            'url': self.location,
             'created': str(datetime.datetime.now()),
-            'hash': r.hash
+            'hash': self.hash
         }
-        json.dump(metadata, open(mp, "w"))
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        shutil.rmtree(self.path)
+        shutil.rmtree(self.dir)
 
     def get_hash(self):
         """ Try methods in order until one returns something other than None.
@@ -606,7 +609,9 @@ class RemoteVMBox:
             progress(percent)
         fin.close()
         fout.close()
-        if self.hash != None:
+        if self.hash is None:
+            self.hash = h.hexdigest()
+        else:
             if h.hexdigest() != self.hash:
                 raise ValueError("Wrong hash. Calculated %r != Correct %r" % (h.hexdigest(), self.hash))
 
@@ -646,8 +651,7 @@ class VMBoxLibrary:
         self.librarydir = os.path.join(self.root, "vmware", "library")
         # instances that may be started and running
         self.instancedir = os.path.join(self.root, "vmware", "instances")
-        # A temporary directory for downloading and extracting that must be on
-        # the same partition
+        # A temporary directory, we put it here so we know we have enough room
         self.tempdir = os.path.join(self.root, "vmware", "temp")
         self.setupdirs()
         self.scan()
@@ -663,7 +667,7 @@ class VMBoxLibrary:
         for item in os.listdir(self.librarydir):
             ip = os.path.join(self.librarydir, item)
             if os.path.isdir(ip):
-                mp = os.path.join(ip, "metadata")
+                mp = os.path.join(ip, "VM-INFO")
                 if os.path.exists(mp):
                     md = json.load(open(mp))
                     self.library[md['url']] = item
@@ -687,13 +691,17 @@ class VMBoxLibrary:
             name = self.guess_name(uri)
         destdir = os.path.join(self.librarydir, name)
         if os.path.exists(destdir):
-            origuri = json.load(open(os.path.join(destdir, 'metadata')))['uri']
+            vminfo = os.path.join(destdir, 'VM-INFO')
+            origuri = json.load(open(vminfo))['url']
             raise VMException("Requested to download %s from %s but already downloaded from %s" % (name, uri, origuri))
         with RemoteVMBox(uri, self.tempdir, context) as box:
-            vmi = self.ImageClass(box.path)
-            vmi.extract(destdir, context)
+            tmp = tempfile.mkdtemp(dir=self.tempdir)
+            vmi = self.ImageClass(box.image)
+            vmi.extract(tmp, context, box.metadata)
+            os.rename(tmp, destdir)
+            self.library[uri] = name
 
-    def get(self, uri, name=None, context=None):
+    def get(self, uri, context=None, name=None):
         """ Fetches the specified uri into the cache and then extracts it
         into the library.  If name is None then a name is made up.
 
