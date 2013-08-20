@@ -34,6 +34,69 @@ default = %(repository)s
 should = %(path)s/.hg/should.py
 """
 
+mercurial_ext = """
+from mercurial import util, hg, node
+
+def should_pull(ui, repo, **opts):
+    default_path = repo.ui.configlist('paths', 'default')[0]
+
+    if not hasattr(hg, "peer"):
+        source, revs, checkout = hg.parseurl(ui.expandpath(default_path), [])
+        peer = hg.repository(ui, source)
+    else:
+        peer = hg.peer(ui, {}, default_path)
+
+    remote_branches = peer.branchmap()
+    local_branches = repo.branchmap()
+
+    if opts['branch'] not in remote_branches:
+        raise util.Abort('NO_SUCH_BRANCH: "%s" is not in the repository' % opts['branch'])
+
+    if opts['branch'] not in local_branches:
+        raise util.Abort('PULL: "%s" in not local, but is available in remote' % opts['branch'])
+
+    if not opts['tag']:
+        if remote_branches[opts['branch']] != local_branches[opts['branch']]:
+            raise util.Abort('PULL: "%s" is out of date' % opts['branch'])
+
+        ui.write("OK: Up to date\n")
+
+    else:
+        if not opts['tag'] in repo.tags().keys():
+           raise util.Abort('PULL: "%s" is not in local' % opts['tag'])
+
+        ui.write("OK: Tag is already available locally\n")
+
+
+def should_update(ui, repo, **opts):
+    if opts['tag']:
+        target = opts['tag']
+        revmap = repo.tags()
+        if not target in revmap:
+            raise util.Abort("FAIL: Tag '%s' not found locally" % target)
+        targetrev = [revmap[target]]
+    else:
+        target = opts['branch']
+        revmap = repo.branchmap()
+        if not target in revmap:
+            raise util.Abort("FAIL: Branch '%s' not found locally" % target)
+        targetrev = revmap[target]
+
+    localrev = [node.short(p.node()) for p in repo[None].parents()]
+    targetrev = [node.short(p) for p in targetrev]
+
+    if localrev != targetrev:
+        raise util.Abort("UPDATE: Checkout is at '%s', target '%s' is at revision '%s'" % (localrev, target, targetrev))
+
+    ui.write("OK: Checkout is up to date\n")
+
+
+cmdtable = {
+    'should-pull': (should_pull, [('b', 'branch', 'default', 'Branch to track'), ('t', 'tag', '', 'Tag to track')], '[options]'),
+    'should-update': (should_update, [('b', 'branch', 'default', 'Branch to track'), ('t', 'tag', '', 'Tag to track')], '[options]'),
+    }
+"""
+
 
 def _inject_credentials(url, username=None, password=None):
     if username and password:
@@ -112,7 +175,7 @@ class Mercurial(Provider):
         try:
             f = context.change(EnsureFile(
                 os.path.join(self.resource.name.as_string(), ".hg", "should.py"),
-                open(os.path.join(os.path.dirname(__file__), "mercurial.hgext")).read(),
+                mercurial_ext,
                 self.resource.user.as_string(),
                 self.resource.group.as_string(),
                 0600,
