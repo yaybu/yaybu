@@ -13,7 +13,7 @@ Contents:
 
    installation
    command_line
-   runtime_arguments
+   defining_arguments
    compute
    provisioner
    loadbalancer

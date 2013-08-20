@@ -516,6 +516,25 @@ Sometimes you can't use ``File`` (perhaps ``buildout`` or ``maven`` or similar g
 
 This declares that the ``buildout`` step might change a ``File`` (the ``apache.cfg``). Subsequent step can then subscribe to ``File[/var/sites/mybuildout/parts/apache.cfg]`` as though it was an ordinary file.
 
+All of these examples use a trigger system. When a trigger has been set yaybu will remember it between invocations. Consider the following example::
+
+    resources:
+      - File:
+          name: /etc/apache2/sites-enabled/mydemosite
+
+      - Directory:
+          name: /var/local/tmp/this/paths/parent/dont/exist
+
+      - Execute:
+          name: restart-apache2
+          command: /etc/init.d/apache2 restart
+          policy:
+              execute:
+                  when: apply
+                  on: File[/etc/apache2/sites-enabled/mydemosite]
+
+When it is run it will create a file in the ``/etc/apache2/sites-enabled`` folder. Yaybu knows that the ``Execute[restart-apache2]`` step must be run later. It will record a trigger for the ``Execute`` statement in ``/var/run/yaybu/``. If the ``Directory[]`` step fails and yaybu terminates then the next time yaybu is execute it will instruct you to use the ``--resume`` or ``--no-resume`` command line option. If you ``--resume`` it will remember that it needs to restart apache2. If you choose ``--no-resume`` it will not remember, and apache will not be restarted.
+
 
 Examples
 ========
