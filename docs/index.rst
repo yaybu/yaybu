@@ -12,6 +12,8 @@ Contents:
    :maxdepth: 2
 
    installation
+   command_line
+   runtime_arguments
    compute
    provisioner
    loadbalancer
