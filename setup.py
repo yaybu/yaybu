@@ -38,9 +38,5 @@ setup(name='Yaybu',
       entry_points = """
       [console_scripts]
       yaybu = yaybu.core.main:main
-      [yaybu.resources]
-      resources = yaybu.provisioner.resources
-      [yaybu.providers]
-      providers = yaybu.provisioner.providers
       """
       )

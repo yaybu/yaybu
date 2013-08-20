@@ -16,9 +16,11 @@ from pkg_resources import iter_entry_points
 
 from .part import Provision
 
+import yaybu.provisioner.resources
 for ep in iter_entry_points(group='yaybu.resource', name=None):
     ep.load()
 
+import yaybu.provisioner.providers
 for ep in iter_entry_points(group='yaybu.providers', name=None):
     ep.load()
 
