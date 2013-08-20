@@ -59,13 +59,13 @@ def should_pull(ui, repo, **opts):
         if remote_branches[opts['branch']] != local_branches[opts['branch']]:
             raise util.Abort('PULL: "%s" is out of date' % opts['branch'])
 
-        ui.write("OK: Up to date\n")
+        ui.write("OK: Up to date")
 
     else:
         if not opts['tag'] in repo.tags().keys():
            raise util.Abort('PULL: "%s" is not in local' % opts['tag'])
 
-        ui.write("OK: Tag is already available locally\n")
+        ui.write("OK: Tag is already available locally")
 
 
 def should_update(ui, repo, **opts):
@@ -88,7 +88,7 @@ def should_update(ui, repo, **opts):
     if localrev != targetrev:
         raise util.Abort("UPDATE: Checkout is at '%s', target '%s' is at revision '%s'" % (localrev, target, targetrev))
 
-    ui.write("OK: Checkout is up to date\n")
+    ui.write("OK: Checkout is up to date")
 
 
 cmdtable = {
