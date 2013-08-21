@@ -66,11 +66,19 @@ class Patch(provider.Provider):
     def apply_patch(self, context):
         patch, sensitive = self.get_patch(context)
 
-        cmd = 'patch --dry-run -N --silent -r - -o - %s -' % self.resource.source.as_string()
+        cmd = 'patch -t --dry-run -N --silent -r /dev/stderr -o - %s -' % self.resource.source.as_string()
         returncode, stdout, stderr = context.transport.execute(cmd, stdin=patch)
 
         if returncode != 0:
-            raise error.CommandError("Unable to apply patch\n" + stderr)
+            context.changelog.info("Patch does not apply cleanly")
+            context.changelog.info("Patch file used was %s" % self.resource.patch.as_string())
+            context.changelog.info("File to patch was %s" % self.resource.source.as_string())
+
+            context.changelog.info("")
+            context.changelog.info("Reported error was:")
+            map(context.changelog.info, stderr.split("\n"))
+
+            raise error.CommandError("Unable to apply patch")
 
         return stdout, sensitive
 
