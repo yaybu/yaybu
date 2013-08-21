@@ -87,7 +87,6 @@ class MetadataSync(Change):
 
             # renderer.debug("'%s' not changed" % rid)
 
-        """
         if self.purge_remote:
             for rid, record in remote:
                 if not rid in local_lookup:
@@ -95,6 +94,5 @@ class MetadataSync(Change):
                     self.changed = True
                     if not ctx.simulate:
                         self.delete(rid)
-        """
 
         return self

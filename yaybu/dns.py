@@ -31,6 +31,8 @@ logger = logging.getLogger(__name__)
 
 class ZoneSync(MetadataSync):
 
+    purge_remote = False
+
     def __init__(self, expression, driver, zone):
         self.expression = expression
         self.driver = driver
@@ -79,6 +81,8 @@ class ZoneSync(MetadataSync):
 
 
 class RecordSync(MetadataSync):
+
+    purge_remote = False
 
     def __init__(self, expression, driver, zone):
         self.expression = expression
