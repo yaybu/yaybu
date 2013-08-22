@@ -174,6 +174,14 @@ class TestFileApply(TestCase):
                     static: {{ "package://yaybu.provisioner.providers.tests/test_carriage_returns2.j2" }}
             """)
 
+    def test_static_empty(self):
+        self.chroot.check_apply("""
+            resources:
+                - File:
+                    name: /etc/foo
+                    static: {{ "package://yaybu.provisioner.providers.tests/empty_file" }}
+            """)
+
     def test_missing(self):
         """ Test trying to use a file that isn't in the yaybu path """
         self.assertRaises(error.MissingAsset, self.chroot.apply, """
