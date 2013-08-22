@@ -13,29 +13,13 @@
 # limitations under the License.
 
 import os
-
-from jinja2 import Environment, BaseLoader, TemplateNotFound
+import subprocess
 
 from yaybu import error
 from yaybu.provisioner import resources
 from yaybu.provisioner import provider
 from yaybu.provisioner.changes import EnsureFile
-import subprocess
-
-from yay import String
-
-
-class YaybuTemplateLoader(BaseLoader):
-
-    def __init__(self, ctx):
-        self.ctx = ctx
-        self.secret = False
-
-    def get_source(self, environment, template):
-        f = self.ctx.get_file(template)
-        source = f.read()
-        self.secret = self.secret or "secret" in f.labels
-        return source, template, lambda: False
+from yaybu.util import render_string
 
 
 class Patch(provider.Provider):
@@ -96,11 +80,8 @@ class Patch(provider.Provider):
 
         template_args = self.resource.template_args.resolve()
         if template_args:
-            loader = YaybuTemplateLoader(context)
-            env = Environment(loader=loader, line_statement_prefix='%')
-            template = env.from_string(contents)
-            contents = template.render(template_args)
-            sensitive = loader.secret or self.resource.template_args.contains_secrets()
+            contents, secret = render_string(context, contents, template_args)
+            sensitive = sensitive or secret
 
         fc = EnsureFile(name, contents, self.resource.owner.as_string(), self.resource.group.as_string(), self.resource.mode.resolve(), sensitive)
         context.change(fc)

@@ -14,28 +14,11 @@
 
 import os
 
-from jinja2 import Environment, BaseLoader, TemplateNotFound
-from jinja2.exceptions import UndefinedError
-
 from yaybu import error
 from yaybu.provisioner import resources
 from yaybu.provisioner import provider
 from yaybu.provisioner.changes import ShellCommand, AttributeChanger, EnsureFile
-
-from yay import String
-
-
-class YaybuTemplateLoader(BaseLoader):
-
-    def __init__(self, ctx):
-        self.ctx = ctx
-        self.secret = False
-
-    def get_source(self, environment, template):
-        f = self.ctx.get_file(template)
-        self.secret = self.secret or "secret" in f.labels
-        source = f.read()
-        return source, template, lambda: False
+from yaybu.util import render_template
 
 
 class File(provider.Provider):
@@ -63,19 +46,7 @@ class File(provider.Provider):
 
         if template:
             template_args = self.resource.template_args.resolve()
-
-            # set a special line ending
-            # this strips the \n from the template line meaning no blank line,
-            # if a template variable is undefined. See ./yaybu/recipe/interfaces.j2 for an example
-            loader = YaybuTemplateLoader(context)
-            try:
-                env = Environment(loader=loader, line_statement_prefix='%')
-                template = env.get_template(template)
-                contents = template.render(template_args) + "\n" # yuk
-            except UndefinedError as e:
-                raise error.ParseError(str(e))
-
-            sensitive = loader.secret
+            contents, sensitive = render_template(context, template, template_args)
             if template_args:
                  sensitive = sensitive or self.resource.template_args.contains_secrets()
 
