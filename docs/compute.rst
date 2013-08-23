@@ -165,16 +165,64 @@ Now your ``Yaybufile`` looks like this::
 Community supported services
 ============================
 
-By using libcloud to support the services in the previous section, the following services are also available:
+By using libcloud to support the services in the previous section, the following services are also available. Please adopt your favourite and help improve documentation for it.
 
 Cloudstack
 ----------
 
+The driver id for `CloudStack <http://cloudstack.apache.org/>`_ is ``CLOUDSTACK``::
+
+    new Compute as server:
+        name: new_cloudstack_server
+
+        driver:
+            id: CLOUDSTACK
+            host: yourcloudstackhost.com
+            path: /api/2.0
+            key: yourkey
+            secret: yoursecret
+
+        image: yourimageid
+        size: yoursizeid
+
+.. note:: The CloudStack libcloud driver could be updated to allow the user to inject SSH keys, but this is not currently in progress.
+
+
 Digital Ocean
 -------------
 
+The driver if for `Digital Ocean <http://www.digitalocean.com>`_ is ``DIGITAL_OCEAN``::
+
+    new Compute as server:
+        name: new_digital_ocean_server
+
+        driver:
+            id: DIGITAL_OCEAN
+            key: yourkey
+            secret: yoursecret
+
+        image: yourimageid
+        size: yoursizeid
+
+.. note:: The Digitial Ocean libcloud driver could be updated to allow the user to inject SSH keys, but this is not currently in progress.
+
+
 Gandi
 -----
+
+The driver id for `Gandi <http://www.gandi.net>`_ is ``GANDI``::
+
+    new Compute as server:
+        name: new_gandi_server
+
+        driver:
+            id: GANDI
+            key: yourkey
+            secret: yoursecret
+
+        image: yourimageid
+        size: yoursizeid
+
 
 GoGrid
 ------
@@ -197,5 +245,20 @@ SoftLayer
 And more
 --------
 
-The libcloud project supports `a lot <http://libcloud.apache.org/docs/compute/supported_providers.html>`_ of compute services.
+The libcloud project supports `a lot <http://libcloud.apache.org/docs/compute/supported_providers.html>`_ of compute services. The goal is that any cloud service supported by libcloud can be controlled using Yaybu, and any fixes to improve that support will be pushed upstream.
+
+
+Adding support for your other hosting services
+==============================================
+
+Depending on what you are doing there are different requirements.
+
+If you have prepepared images and simply want to stop and start them then the only requirement is that you are using a version of libcloud that supports that service (and exposes it as a public driver).
+
+If you want to use your hosting service in conjuction with a Provisioner part you will additionally need:
+
+ * SSH to be installed and working in the base image you choose.
+ * You have credentials that can obtain root access
+    * Either the service lets you set a password/SSH key at create time
+    * Or the base image has credentials baked into it that you can use
 
