@@ -63,9 +63,6 @@ class TestVMBoxImage(unittest2.TestCase):
                 call('/var/tmp/frob', {"foo": "bar", "baz": "quux"})
                 ])
 
-
-
-
 class TestRemoteVMBox(unittest2.TestCase):
 
     def _make_box(self, location):
@@ -196,7 +193,3 @@ class TestVMBoxLibrary(unittest2.TestCase):
         metadata = json.load(open(os.path.join(self.librarydir, 'bar', "VM-INFO")))
         self.assertEqual(metadata['url'], "file://" + f.name)
         self.assertEqual(metadata['hash'], h.hexdigest())
-
-
-
-
