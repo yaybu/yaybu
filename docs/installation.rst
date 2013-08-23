@@ -2,12 +2,10 @@
 Installing Yaybu
 ================
 
-.. warning: The version of Yaybu described in this documentation is currently not available as a stable release.
-
-
 Latest stable release
 =====================
 
+.. warning: The version of Yaybu described in this documentation is currently not available as a stable release.
 Ubuntu
 ------
 
