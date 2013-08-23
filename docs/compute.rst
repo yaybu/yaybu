@@ -161,3 +161,41 @@ Now your ``Yaybufile`` looks like this::
 
         user: ubuntu
 
+
+Community supported services
+============================
+
+By using libcloud to support the services in the previous section, the following services are also available:
+
+Cloudstack
+----------
+
+Digital Ocean
+-------------
+
+Gandi
+-----
+
+GoGrid
+------
+
+IBM SCE
+-------
+
+Linode
+------
+
+OpenStack
+---------
+
+Rackspace
+---------
+
+SoftLayer
+---------
+
+And more
+--------
+
+The libcloud project supports `a lot <http://libcloud.apache.org/docs/compute/supported_providers.html>`_ of compute services.
+
