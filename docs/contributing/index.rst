@@ -7,7 +7,6 @@ Information for those wishing to write their own providers, or add new classes o
 .. toctree::
    :maxdepth: 2
 
-   ascode
    integration
    todo
 

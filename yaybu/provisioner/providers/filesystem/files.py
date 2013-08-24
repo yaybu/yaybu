@@ -77,7 +77,7 @@ class File(provider.Provider):
 
             sensitive = loader.secret
             if template_args:
-                 sensitive = sensitive or "secret" in self.resource.template_args.get_labels()
+                 sensitive = sensitive or self.resource.template_args.contains_secrets()
 
         elif static:
             s = None

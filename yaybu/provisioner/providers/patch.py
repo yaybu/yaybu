@@ -87,7 +87,7 @@ class Patch(provider.Provider):
             env = Environment(loader=loader, line_statement_prefix='%')
             template = env.from_string(contents)
             contents = template.render(template_args)
-            sensitive = loader.secret or "secret" in self.resource.template_args.get_labels()
+            sensitive = loader.secret or self.resource.template_args.contains_secrets()
 
         fc = EnsureFile(name, contents, self.resource.owner.as_string(), self.resource.group.as_string(), self.resource.mode.resolve(), sensitive)
         context.change(fc)

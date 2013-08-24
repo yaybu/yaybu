@@ -34,6 +34,8 @@ class LoadBalancer(base.GraphExternalAction):
     This part manages a libcloud load balancer
 
         new LoadBalancer as mylb:
+            name: mylb
+
             driver:
                 id: AWS
                 key:
@@ -73,3 +75,56 @@ class LoadBalancer(base.GraphExternalAction):
         if self.root.readonly:
             return
 
+        self.state.refresh()
+
+        default_algorithm = self.driver.list_supported_algorithms()[0]
+        default_protocol = self.driver.list_protocols()[0]
+
+        name = self.params.name.as_string()
+        port = self.params.port.as_integer()
+        protocol = self.params.protocol.as_string()
+        algorithm = self.params.algorithm.as_string()
+
+        lb = None
+
+        if "balancer_id" in self.state:
+            lb = self.driver.get_balancer(self.state["balancer_id"])
+        else:
+            for balancer in self.driver.list_balancers(self):
+                if balancer.name == self.params.name.as_string():
+                    self.state.update(balancer_id=balancer.id)
+                    lb = balancer
+
+        changed = False
+
+        if not lb:
+            with self.root.ui.throbber("Creating load balancer '%s'" % name) as throbber:
+                lb = self.driver.create_balancer(
+                    name = name,
+                    port = port,
+                    protocol = protocol,
+                    algorithm = algorithm,
+                    members = [],
+                    )
+                changed = True
+
+        else:
+            if balancer.name != name:
+                changed = True
+            if balancer.port != port:
+                changed = True
+            if balancer.protocol != protocol:
+                changed = True
+            if balancer.algorithm != algorithm:
+                changed = True
+
+            with self.root.ui.throbber("Updating load balancer '%s'" % name) as throbber:
+                self.driver.update_balancer(
+                    balancer = lb,
+                    name = name,
+                    port = port,
+                    protocol = protocol,
+                    algorithm = algorithm,
+                    )
+
+        return changed
