@@ -14,7 +14,15 @@
 
 import logging
 import subprocess
-import os, getpass, pwd, grp, select
+import os, getpass, select
+try:
+    import pwd
+except ImportError:
+    pass
+try:
+    import grp
+except ImportError:
+    pass
 try:
     import spwd
 except ImportError:
@@ -171,7 +179,7 @@ class LocalTransport(LocalExecute, base.Transport):
 
     def getgrnam(self, name):
         return grp.getgrnam(name)
-       
+
     def getgrgid(self, gid):
         return grp.getgrgid(gid)
 
