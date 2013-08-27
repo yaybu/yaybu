@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import logging
-import os
+import posixpath
 import shlex
 
 from yay import String
@@ -104,7 +104,7 @@ class ShellCommand(changes.Change):
         if command[0].startswith("./"):
             if len(command[0]) <= 2:
                 command_exists = False
-            if not transport.exists(os.path.join(self.cwd, command[0][2:])):
+            if not transport.exists(posixpath.join(self.cwd, command[0][2:])):
                 command_exists = False
 
         elif command[0].startswith("/"):
@@ -113,7 +113,7 @@ class ShellCommand(changes.Change):
 
         else:
             for path in env["PATH"].split(":"):
-                if transport.exists(os.path.join(path, command[0])):
+                if transport.exists(posixpath.join(path, command[0])):
                     break
             else:
                 command_exists = False
