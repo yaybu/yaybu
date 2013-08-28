@@ -1,8 +1,10 @@
+.. _encryption:
+
 ==============================================
 Protecting your secrets, keys and certificates
 ==============================================
 
-Yaybu natively supports the use of GPG as a way to protect both secret variables in your configuration files and the use of encrypted assets when using the Provisioner part.
+Yaybu natively supports the use of GPG as a way to protect both secret variables in your configuration files and the use of encrypted assets when using the :ref:`Provisioner <provisioner>` part.
 
 Installing GPG
 ==============
