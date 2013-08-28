@@ -42,6 +42,15 @@ from functools import partial
 import time
 
 import zipfile
+if not hasattr(zipfile.ZipFile, "__exit__"):
+    class Zipfile(zipfile.ZipFile):
+        def __enter__(self):
+            return self
+        def __exit__(self, type, value, traceback):
+            self.close()
+else:
+    ZipFile = zipfile.ZipFile
+
 
 logger = logging.getLogger("yaybu.parts.compute.vmware")
 
@@ -506,7 +515,7 @@ class VMBoxImage:
         """ Extract the compressed image into the destination directory, with
         the specified name. """
         with context.ui.throbber("Extracting virtual machine") as t:
-            with zipfile.ZipFile(self.path, "r", zipfile.ZIP_DEFLATED, True) as z:
+            with ZipFile(self.path, "r", zipfile.ZIP_DEFLATED, True) as z:
                 for f in z.namelist():
                     if f == "VM-INFO":
                         metadata.update(json.loads(z.open(f, "r").read()))
@@ -520,7 +529,7 @@ class VMBoxImage:
         """ Create the package from the specified source directory. """
         if not os.path.isdir(srcdir):
             raise VMException("%r does not exist, is not accessible or is not a directory" % (srcdir,))
-        with zipfile.ZipFile(self.path, "w", zipfile.ZIP_DEFLATED, True) as z:
+        with ZipFile(self.path, "w", zipfile.ZIP_DEFLATED, True) as z:
             z.comment = "Created by Yaybu"
             for f in sorted(os.listdir(srcdir)):
                 if f.endswith("nvram") or ".vm" in f:
