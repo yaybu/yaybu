@@ -335,11 +335,7 @@ class VMWareDriver(NodeDriver):
         """ Set the password of the specified username to the provided password """
         with self.yaybu_context.ui.throbber("Applying new password credentials") as t:
             t.throb()
-            vmrun("start", "nogui")
-            t.throb()
             vmrun("runProgramInGuest", "/usr/bin/sudo", "/bin/bash", "-c", "echo '%s:%s'|/usr/sbin/chpasswd" % (username, password))
-            t.throb()
-            vmrun("reset", "soft")
 
     def apply_auth_ssh(self, vmrun, username, pubkey):
         """ Add the provided ssh public key to the specified user's authorised keys """
@@ -351,8 +347,6 @@ class VMWareDriver(NodeDriver):
             tmpfile.write(pubkey)
             tmpfile.close()
             t.throb()
-            vmrun("start", "nogui")
-            t.throb()
             try:
                 vmrun("createDirectoryInGuest", "%s/.ssh" % homedir)
             except FileAlreadyExistsError:
@@ -363,8 +357,6 @@ class VMWareDriver(NodeDriver):
             vmrun("runProgramInGuest", "/bin/chmod", "0700", "%s/.ssh" % homedir)
             t.throb()
             vmrun("runProgramInGuest", "/bin/chmod", "0600", "%s/.ssh/authorized_keys" % homedir)
-            t.throb()
-            vmrun("reset", "soft")
             t.throb()
             os.unlink(tmpfile.name)
 
@@ -451,7 +443,6 @@ class VMWareDriver(NodeDriver):
         target = self._get_target()
         self._clone(source, target)
         target.name = name
-        self.apply_auth(target, auth)
         node = Node(target.vmx, name, NodeState.PENDING, None, None, self)
 
         # If a NodeSize is provided then we can control the amount of RAM the
@@ -463,8 +454,9 @@ class VMWareDriver(NodeDriver):
         #        self.ex_set_runtime_variable(node, "displayName", name, str(size.ram))
         #        self._action("writeVariable", target, "runtimeConfig", "memsize", str(size.ram))
 
-        self._action("start", target.vmx, "nogui", capture_output=False)
+        self.ex_start(node)
         self.ex_set_runtime_variable(node, "displayName", name)
+        self.apply_auth(target, auth)
         return node
 
     def reboot_node(self, node):
