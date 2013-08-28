@@ -103,11 +103,11 @@ Ideally you should sign the keys of the people you are working with to build a w
 
 In order to encrypt for you collaborators will need a copy of the public portion of your key. You can publish your key like so::
 
-    gpg --keyserver subkeys.pgp.net --send-key D770E8A9
+    gpg --keyserver pgp.mit.edu --send-key D770E8A9
 
 Anyone can retrieve your public key like so::
 
-    gpg --keyserver subkeys.gpg.net --recv-keys D770E8A9
+    gpg --keyserver pgp.mit.edu --recv-keys D770E8A9
 
 
 Encrypting your configuration
