@@ -42,15 +42,7 @@ from functools import partial
 import time
 
 import zipfile
-if not hasattr(zipfile.ZipFile, "__exit__"):
-    class Zipfile(zipfile.ZipFile):
-        def __enter__(self):
-            return self
-        def __exit__(self, type, value, traceback):
-            self.close()
-else:
-    ZipFile = zipfile.ZipFile
-
+from yaybu.util import ZipFile
 
 logger = logging.getLogger("yaybu.parts.compute.vmware")
 

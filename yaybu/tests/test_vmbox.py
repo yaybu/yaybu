@@ -16,7 +16,7 @@ from yaybu.compute.vmware import VMBoxLibrary, RemoteVMBox, VMBoxImage
 class TestVMBoxImage(unittest2.TestCase):
 
     def test_extract(self):
-        with patch('zipfile.ZipFile') as zf:
+        with patch('yaybu.compute.vmware.ZipFile') as zf:
             zf().__enter__().namelist.return_value = ["foo", "bar", "baz"]
             vi = VMBoxImage("foo.zip")
             vi._store_metadata = Mock()
@@ -39,7 +39,7 @@ class TestVMBoxImage(unittest2.TestCase):
                 ])
 
     def test_extract_metadata(self):
-        with patch('zipfile.ZipFile') as zf:
+        with patch('yaybu.compute.vmware.ZipFile') as zf:
             zf().__enter__().namelist.return_value = ["foo", "bar", "baz"]
             vi = VMBoxImage("foo.zip")
             vi._store_metadata = Mock()
@@ -51,7 +51,7 @@ class TestVMBoxImage(unittest2.TestCase):
                 ])
 
     def test_extract_metadata_vminfo(self):
-        with patch('zipfile.ZipFile') as zf:
+        with patch('yaybu.compute.vmware.ZipFile') as zf:
             zf().__enter__().namelist.return_value = ["foo", "bar", "VM-INFO"]
             zf().__enter__().open().read.return_value = '{"baz": "quux"}'
             vi = VMBoxImage("foo.zip")
