@@ -22,7 +22,7 @@
 #3. There needs to be a user with a password/key that can get to root without sudo requiring a passphrase.
 
 #============================================================================================
-# libcloud/common/proces.py
+# libcloud/common/process.py
 
 import os
 import shlex
@@ -225,7 +225,7 @@ class VMWareDriver(NodeDriver):
 
         @rtype: C{bool}
         """
-        with self.yaybu_context.ui.throbber("Starting existing VM") as t:
+        with self.yaybu_context.ui.throbber("Starting VM") as t:
             self._action("start", node.id, "nogui", capture_output=False)
             node.state = NodeState.RUNNING
         with self.yaybu_context.ui.throbber("Waiting for VM to boot completely") as t:
