@@ -19,7 +19,7 @@ import zipfile
 
 # Python2.7 introduced context manager support for ZipFile
 if not hasattr(zipfile.ZipFile, "__exit__"):
-    class Zipfile(zipfile.ZipFile):
+    class ZipFile(zipfile.ZipFile):
         def __enter__(self):
             return self
         def __exit__(self, type, value, traceback):
