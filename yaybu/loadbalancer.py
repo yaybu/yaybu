@@ -25,7 +25,51 @@ from libcloud.loadbalancer.types import Provider, State
 from libcloud.loadbalancer.providers import get_driver
 from libcloud.common.types import LibcloudError
 
+from yaybu.changes import MetadataSync
+
+
 logger = logging.getLogger(__name__)
+
+
+class SyncMembersByIp(MetadataSync):
+
+    def __init__(self, expression, driver, balancer):
+        self.expression = expression = expression
+        self.driver = driver
+        self.zone = zone
+
+    def get_local_records(self):
+        for m in self.expression:
+            ip = m.ip.as_string()
+            yield ip, dict(
+                ip = ip,
+                )
+
+    def get_remote_records(self):
+        if not self.balancer:
+            raise StopIteration
+
+        for m in self.balancer.list_members():
+            yield m.ip, dict(
+                ip = ip,
+                )
+
+    def add(self, record):
+        self.member.attach_member(Member(
+            id = record['id'],
+            ip = record['id'],
+            port = record['port'],
+            ))
+
+    def update(self, record):
+        pass
+
+    def delete(self, uid, record):
+        self.member.detach_member(Member(
+            id = record['id'],
+            ip = record['ip'],
+            port = record['port'],
+            ))
 
 
 class LoadBalancer(base.GraphExternalAction):
@@ -82,27 +126,7 @@ class LoadBalancer(base.GraphExternalAction):
                 if balancer.name == self.params.name.as_string():
                     return balancer
 
-    def _apply_members_by_ip(self, balancer):
-        master = {}
-        for member in self.params.members.get_iterable():
-            master[ip] = member
-
-        slave = {}
-        for member in balancer.list_members():
-            slave[member.ip] = member
-
-        for key, value in master.items():
-            if not key in slave:
-                balancer.attach_member(Member(id=None, ip=value.ip.as_string(), port=None))
-            else:
-                # check stuff matches
-                pass
-
-        for key, value in slave.items():
-            if not key in master:
-                balancer.detach_member(value)
-
-    def apply(self):
+   def apply(self):
         if self.root.readonly:
             return
 
