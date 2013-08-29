@@ -19,7 +19,7 @@ The latest release is packaged as ``deb`` packages and is available via a PPA fo
 OSX
 ---
 
-A ``.dmg`` is available from the `releases <https://github.com/isotoma/yaybu/releases>`_ page at GitHub.
+A ``.dmg`` is available from the `releases <https://github.com/yaybu/yaybu/releases>`_ page at GitHub.
 
 Drag the Yaybu icon into your Applications folder. When you first run Yaybu it will prompt you to install command line tools. This will simply create a symlink from ``/usr/local/bin/yaybu`` to command line tools embedded inside the Yaybu bundle.
 

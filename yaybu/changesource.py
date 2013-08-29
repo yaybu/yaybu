@@ -34,7 +34,7 @@ class GitChangeSource(base.GraphExternalAction):
 
     new GitChangeSource as changesource:
 
-        repository: https://github.com/isotoma/yaybu
+        repository: https://github.com/yaybu/yaybu
         polling-interval: 30
 
 
@@ -119,7 +119,7 @@ class GitHubChangeSource(base.GraphExternalAction):
     pushed to github
 
     new GitHubChangeSource as changesource:
-        repository: https://github.com/isotoma.yaybu
+        repository: https://github.com/yaybu/yaybu
         polling-interval: 0
         listen:
           - 0.0.0.0:8080
