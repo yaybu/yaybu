@@ -164,13 +164,18 @@ class Zone(base.GraphExternalAction):
             data: 192.168.1.1
     """
 
+    extra_drivers = {}
+
     keys = []
 
     @property
     @memoized
     def driver(self):
         driver_name = self.params.driver.id.as_string()
-        Driver = get_dns_driver(getattr(DNSProvider, driver_name))
+        if driver_name in self.extra_drivers:
+            Driver = self.extra_drivers[driver_name]
+        else:
+            Driver = get_dns_driver(getattr(DNSProvider, driver_name))
         driver = Driver(**args_from_expression(Driver, self.params.driver))
         return driver
 
@@ -205,7 +210,7 @@ class Zone(base.GraphExternalAction):
         if not zone:
             zone = self._get_zone_by_domain(domain)
 
-        if not zone:
+        if not self.root.simulate and not zone:
             raise errors.Error("Failed to create new zone")
 
         rchange = self.root.changelog.apply(
