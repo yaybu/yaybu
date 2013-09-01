@@ -1,4 +1,4 @@
-# Copyright 2012 Isotoma Limited
+# Copyright 2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from __future__ import absolute_import
 import logging
 
 from yaybu.core.util import memoized
+from yaybu.core.state import PartState
+from yaybu.util import args_from_expression
 from yaybu import base
 from yay import errors
 from libcloud.loadbalancer.base import Member, Algorithm
@@ -31,18 +33,20 @@ from yaybu.changes import MetadataSync
 logger = logging.getLogger(__name__)
 
 
-class SyncMembersByIp(MetadataSync):
+class SyncMembers(MetadataSync):
 
     def __init__(self, expression, driver, balancer):
         self.expression = expression = expression
         self.driver = driver
-        self.zone = zone
+        self.balancer = balancer
 
     def get_local_records(self):
         for m in self.expression:
             ip = m.ip.as_string()
             yield ip, dict(
+                id = None,
                 ip = ip,
+                port = m.port.as_int(default=0) or None,
                 )
 
     def get_remote_records(self):
@@ -51,18 +55,21 @@ class SyncMembersByIp(MetadataSync):
 
         for m in self.balancer.list_members():
             yield m.ip, dict(
-                ip = ip,
+                id = None,
+                ip = m.ip,
+                port = m.port,
                 )
 
     def add(self, record):
         self.member.attach_member(Member(
             id = record['id'],
-            ip = record['id'],
+            ip = record['ip'],
             port = record['port'],
             ))
 
     def update(self, record):
-        pass
+        self.delete(record)
+        self.add(record)
 
     def delete(self, uid, record):
         self.member.detach_member(Member(
@@ -103,30 +110,39 @@ class LoadBalancer(base.GraphExternalAction):
 
     """
 
+    extra_drivers = {}
+
     keys = []
 
     @property
     @memoized
+    def state(self):
+        return PartState(self.root.state, self.params.name.as_string())
+
+    @property
+    @memoized
     def driver(self):
-        config = self["driver"].as_dict()
-        self.driver_name = config['id']
-        del config['id']
-        driver = getattr(Provider, self.driver_name)
-        driver_class = get_driver(driver)
-        return driver_class(**config)
+        driver_id = self.params.driver.id.as_string()
+        if driver_id in self.extra_drivers:
+            Driver = self.extra_drivers[driver_id]
+        else:
+            Driver = get_driver(getattr(Provider, driver_id))
+
+        driver = Driver(**args_from_expression(Driver, self.params.driver))
+        return driver
 
     def _find_balancer(self):
         if "balancer_id" in self.state:
             try:
                 return self.driver.get_balancer(self.state["balancer_id"])
-            except BalancerNotFound:
+            except:
                 return None
         else:
-            for balancer in self.driver.list_balancers(self):
+            for balancer in self.driver.list_balancers():
                 if balancer.name == self.params.name.as_string():
                     return balancer
 
-   def apply(self):
+    def apply(self):
         if self.root.readonly:
             return
 
@@ -136,7 +152,7 @@ class LoadBalancer(base.GraphExternalAction):
         default_protocol = self.driver.list_protocols()[0]
 
         name = self.params.name.as_string()
-        port = self.params.port.as_integer()
+        port = self.params.port.as_int()
         protocol = self.params.protocol.as_string()
         algorithm = self.params.algorithm.as_string()
 
@@ -145,35 +161,52 @@ class LoadBalancer(base.GraphExternalAction):
 
         if not lb:
             with self.root.ui.throbber("Creating load balancer '%s'" % name) as throbber:
-                lb = self.driver.create_balancer(
-                    name = name,
-                    port = port,
-                    protocol = protocol,
-                    algorithm = algorithm,
-                    members = [],
-                    )
+                if not self.root.simulate:
+                    lb = self.driver.create_balancer(
+                        name = name,
+                        port = port,
+                        protocol = protocol,
+                        algorithm = algorithm,
+                        members = [],
+                        )
+                else:
+                    lb = None
                 changed = True
+                self.root.changelog.changed = True
 
         else:
-            if balancer.name != name:
+            if lb.name != name:
+                print "Requested name %s, current name %s" % (name, lb.name)
                 changed = True
-            if balancer.port != port:
+            if lb.port != port:
+                print "Requested port %s, current port %s" % (port, lb.port)
                 changed = True
-            if balancer.protocol != protocol:
-                changed = True
-            if balancer.algorithm != algorithm:
-                changed = True
+            #if lb.protocol != protocol:
+            #    changed = True
+            #if lb.algorithm != algorithm:
+            #    changed = True
 
-            with self.root.ui.throbber("Updating load balancer '%s'" % name) as throbber:
-                self.driver.update_balancer(
-                    balancer = lb,
-                    name = name,
-                    port = port,
-                    protocol = protocol,
-                    algorithm = algorithm,
-                    )
+            if changed:
+                with self.root.ui.throbber("Updating load balancer '%s'" % name) as throbber:
+                    if not self.root.simulate:
+                        self.driver.update_balancer(
+                            balancer = lb,
+                            name = name,
+                            port = port,
+                            protocol = protocol,
+                            algorithm = algorithm,
+                            )
+                    self.root.changelog.changed = True
 
-        self.state.update(balancer_id=balancer.id)
+        self.root.changelog.apply(
+            SyncMembers(
+                expression = self.params.members,
+                driver = self.driver,
+                balancer = lb,
+                ))
+
+        if lb:
+            self.state.update(balancer_id=lb.id)
 
         return changed
 
