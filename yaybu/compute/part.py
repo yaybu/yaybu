@@ -20,6 +20,7 @@ import datetime
 import collections
 import time
 import copy
+import getpass
 
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
@@ -100,9 +101,18 @@ class Compute(base.GraphExternalAction):
         existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
         if len(existing) > 1:
             raise LibcloudError(_("There are already multiple nodes called '%s'") % name)
-        elif len(existing) == 1:
-            logger.debug("Node '%s' already running - not creating new node" % (name, ))
-            return existing[0]
+        elif not existing:
+            return None
+        node = existing[0]
+        if node.state != NodeState.RUNNING:
+            ex_start = getattr(node.driver, "ex_start", None)
+            if ex_start is not None:
+                logger.debug("Starting node")
+                ex_start(node)
+            else:
+                raise LibcloudError(_("The node is not running and cannot be started"))
+        logger.debug("Node '%s' already running - not creating new node" % (name, ))
+        return node
 
     def _get_image(self):
         try:
@@ -138,11 +148,20 @@ class Compute(base.GraphExternalAction):
             )
 
     def _get_auth(self):
+        username = self.params.user.as_string(default=getpass.getuser())
         if 'password' in self.driver.features['create_node']:
-            return NodeAuthPassword(self.params.password.as_string())
-        elif 'ssh_key' in self.driver.features['create_node']:
-            fp = self.root.openers.open(self.params.public_key.as_string())
-            return NodeAuthSSHKey(fp.read())
+            password = self.params.password.as_string(default=None)
+            if password is not None:
+                auth = NodeAuthPassword(password)
+                auth.username = username
+                return auth
+        if 'ssh_key' in self.driver.features['create_node']:
+            pubkey = self.params.public_key.as_string(default=None)
+            if pubkey is not None:
+                fp = self.root.openers.open(os.path.expanduser(pubkey))
+                auth = NodeAuthSSHKey(fp.read())
+                auth.username = username
+                return auth
 
     def _update_node_info(self):
         """ Return a dictionary of information about this node """
@@ -198,12 +217,13 @@ class Compute(base.GraphExternalAction):
             logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
 
             with self.root.ui.throbber(_("Creating node '%r'...") % (self.full_name, )) as throbber:
+                kwargs = args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
+                kwargs['auth'] = self._get_auth()
                 node = self.driver.create_node(
                     name=self.full_name,
                     image=self._get_image(),
                     size=self._get_size(),
-                    auth=self._get_auth(),
-                    **args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
+                    **kwargs
                     )
 
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
@@ -226,13 +246,13 @@ class Compute(base.GraphExternalAction):
                 self._update_node_info()
                 return
 
-            except LibcloudError:
+            except LibcloudError, e:
                 logger.warning("Node %r did not start before timeout. retrying." % self.full_name)
                 node.destroy()
                 continue
 
-            except:
-                logger.warning("Node %r had an unexpected error - node will be cleaned up and processing will stop" % self.full_name)
+            except Exception, e:
+                logger.warning("Node %r had an unexpected error %s - node will be cleaned up and processing will stop" % (self.full_name, e))
                 node.destroy()
                 raise
                 return

@@ -14,6 +14,7 @@ import subprocess
 import yay
 import yay.errors
 from yaybu.core import error, util
+from yaybu.compute.vmware import VMBoxImage
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -187,23 +188,15 @@ class YaybuCmd(OptionParsingCmd):
 
         return graph
 
-    def opts_vm(self, parser):
-        parser.add_option("-d", "--vmdir", help="directory vmware stores images", default="~/vmware")
-        parser.add_option("-i", "--image", help="url of base image", default="https://s3-eu-west-1.amazonaws.com/yaybu/yaybubase.tar.bz2")
-        parser.add_option("-c", "--filecache", help="location of copy of image file", default="~/vmware/yaybubase.tar.bz2")
-        parser.add_option("-k", "--pubkey", help="path to your public key", default="~/.ssh/id_rsa.pub")
-        parser.add_option("-n", "--vmname", help="the name of the vm within vmware", default="yaybubase")
-        parser.add_option("-u", "--vmuser", help="The username of the user account in the vm", default="ubuntu")
-        parser.add_option("-p", "--vmpass", help="The password for the vm user account", default="password")
-
-
     def help_vm(self):
-        print "Usage: yaybu vm [options] command"
+        print "Usage: yaybu vm command [args]"
         print
         print "Commands:"
         print "  list         List available virtual machine templates for download"
         print "  install      Install a remote machine image as a new template"
         print "  install-key  Copy your SSH key to a locally installed template vm"
+        print "  compress     Compress a virtual machine and create an image"
+        print "  extract      Extract an image to a specified location"
         print
 
     def do_vm(self, opts, args):
@@ -211,12 +204,24 @@ class YaybuCmd(OptionParsingCmd):
         usage: vm
         Manipulate virtual machines on this host.
         """
-        from . import vmware
-        if len(args) != 1:
+        if len(args) == 1:
             self.do_help((), ("vm",))
             return
-        v = vmware.VMSetup(opts)
-        v.run(args[0])
+        if args[0] == "compress":
+            image_path = args[1]
+            source = args[2]
+            username = args[3]
+            password = args[4]
+            print "Packaging VM in", source, "into image at", image_path
+            image = VMBoxImage(image_path)
+            image.compress(source, username, password)
+        elif args[0] == "extract":
+            image_path = args[1]
+            dest = args[2]
+            print "Extracting VM in", image_path,"to", dest
+            image = VMBoxImage(image_path)
+            image.extract(dest)
+
 
     def do_expand(self, opts, args):
         """

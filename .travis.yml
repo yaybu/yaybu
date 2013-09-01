@@ -5,7 +5,7 @@ python:
 
 install:
   - pip install unittest2 discover mock fakechroot nose2
-  - pip install https://github.com/isotoma/yay/zipball/master
+  - pip install https://github.com/yaybu/yay/zipball/master
   - python setup.py develop
 
 script: nose2

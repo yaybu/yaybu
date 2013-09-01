@@ -21,6 +21,7 @@ Contents:
    sync
    combining_parts
    language
+   encryption
    contributing
 
 
