@@ -1,58 +1,19 @@
-import unittest2
-import os
-import tempfile
-import mock
-from optparse import OptionParser
 
 from libcloud.loadbalancer.types import State, LibcloudLBError
 from libcloud.loadbalancer.base import Driver, LoadBalancer as LB, Member, Algorithm
 
-from yaybu.core.command import YaybuCmd
-from yaybu import error
 from yaybu.loadbalancer import LoadBalancer
+from yaybu.tests.base import TestCase
 
 
-class TestLoadBalancer(unittest2.TestCase):
+class TestLoadBalancer(TestCase):
 
     def setUp(self):
-        MockLoadBalancer.next_id = 0
-        MockLoadBalancer.members = {}
+        self.addCleanup(setattr, MockLoadBalancer, "next_id", 0)
+        self.addCleanup(setattr, MockLoadBalancer, "members", {})
 
         LoadBalancer.extra_drivers['DUMMY'] = MockLoadBalancer
-        def _():
-            del LoadBalancer.extra_drivers['DUMMY']
-        self.addCleanup(_)
-
-    def _config(self, contents):
-        f = tempfile.NamedTemporaryFile(delete=False)
-        f.write(contents)
-        f.close()
-        path = os.path.realpath(f.name)
-        self.addCleanup(os.unlink, path)
-        return path
-
-    def _up(self, config, *args):
-        config_file = self._config(config)
-        config_dir = os.path.dirname(config_file)
-        p = OptionParser()
-        y = YaybuCmd(config_file, ypath=(config_dir, ))
-        y.verbose = 2
-        y.debug = True
-        y.opts_up(p)
-        return y.do_up(*p.parse_args(list(args)))
-
-    def up(self, config, *args):
-        self._up(config, "-s", *args)
-        try:
-            self._up(config, *args)
-        except error.NothingChanged:
-            raise RuntimeError("Either simulate wasn't read-only or simulate didn't detect change was required")
-
-        try:
-            self._up(config, *args)
-        except error.NothingChanged:
-            return
-        raise RuntimeError("Action wasn't idempotent")
+        self.addCleanup(LoadBalancer.extra_drivers.pop, 'DUMMY', None)
 
     def test_empty_records_list(self):
         self.up("""
