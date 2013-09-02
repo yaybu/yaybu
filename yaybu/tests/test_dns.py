@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from libcloud.dns.types import RecordType
+
 from yaybu.tests.base import TestCase
 from yaybu.tests.mocks.libcloud_dns import MockDNSDriver
 
@@ -20,8 +22,10 @@ class TestZone(TestCase):
 
     def setUp(self):
         MockDNSDriver.install(self)
+        self.driver = MockDNSDriver("", "")
 
     def test_empty_records_list(self):
+        self.assertEqual(len(self.driver.list_zones()), 0)
         self.up("""
             new Zone as myzone:
                     driver:
@@ -31,8 +35,14 @@ class TestZone(TestCase):
                     domain: example.com
                     records: []
             """)
+        zones = self.driver.list_zones()
+        self.assertEqual(len(zones), 1)
+        # FIXME: Investigate rstrip...
+        self.assertEqual(zones[0].domain.rstrip("."), "example.com")
+        self.assertEqual(zones[0].list_records(), [])
 
     def test_add_records(self):
+        self.assertEqual(len(self.driver.list_zones()), 0)
         self.up("""
             new Zone as myzone:
                     driver:
@@ -44,4 +54,13 @@ class TestZone(TestCase):
                       - name: www
                         data: 127.0.0.1
             """)
+        zones = self.driver.list_zones()
+        self.assertEqual(len(zones), 1)
+
+        records = zones[0].list_records()
+        self.assertEqual(len(records), 1)
+
+        self.assertEqual(records[0].name, "www")
+        self.assertEqual(records[0].type, RecordType.A)
+        self.assertEqual(records[0].data, "127.0.0.1")
 
