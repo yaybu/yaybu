@@ -47,6 +47,24 @@ class TestLoadBalancer(TestCase):
         self.assertEqual(balancers[0].name, "my_test_loadbalancer")
         self.assertEqual(balancers[0].port, 80)
 
+    def test_destroy(self):
+        self.test_empty_records_list()
+        self.destroy("""
+            new LoadBalancer as mylb:
+                name: my_test_loadbalancer
+
+                driver:
+                    id: DUMMY
+                    key: hello
+                    secret: password
+
+                port: 80
+                protocol: http
+                algorithm: random
+                members: []
+            """)
+        self.assertEqual(len(self.driver.list_balancers()), 0)
+
     def test_add_member_to_new(self):
         self.assertEqual(self.driver.list_balancers(), [])
 
