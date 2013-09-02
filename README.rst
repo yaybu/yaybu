@@ -315,18 +315,8 @@ in ``#yaybu``.
 
 To get a development environment with required dependencies::
 
-    python bootstrap.py
-    bin/buildout
-
-Then write a configuration file called ``Yaybufile``::
-
-And run it with::
-
-    ./bin/yaybu up
-
-
-Running the tests
------------------
+    virtualenv .
+    ./bin/pip install -r requirements.txt
 
 NOTE: Currently the testrunner will try and run a set of integration tests
 against an ubuntu chroot. These tests are only run on ubuntu systems with the
@@ -334,7 +324,13 @@ following packages installed::
 
     sudo apt-get install fakechroot fakeroot debootstrap cowdancer
 
-To run the tests you can then::
+To run the test::
 
-    ./bin/test
+    ./bin/nose2
+
+Then write a configuration file called ``Yaybufile``::
+
+And run it with::
+
+    ./bin/yaybu up
 
