@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.core.util import memoized
 from yaybu.core.state import PartState
 from yay import ast
 

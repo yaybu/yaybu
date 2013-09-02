@@ -16,16 +16,15 @@ import unittest2
 import os
 import tempfile
 import hashlib
-import mock
 import json
 import datetime
 import shutil
 import zipfile
 
-from mock import MagicMock as Mock, call, patch, mock_open
+from mock import MagicMock as Mock, call, patch
 
-from yaybu.compute import vmware
 from yaybu.compute.vmware import VMBoxLibrary, RemoteVMBox, VMBoxImage
+
 
 class TestVMBoxImage(unittest2.TestCase):
 

@@ -17,7 +17,7 @@ import os
 from yaybu import error
 from yaybu.provisioner import resources
 from yaybu.provisioner import provider
-from yaybu.provisioner.changes import ShellCommand, AttributeChanger, EnsureFile
+from yaybu.provisioner.changes import ShellCommand, EnsureFile
 from yaybu.util import render_template
 
 

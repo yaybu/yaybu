@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, shutil, grp
-
 from yaybu.provisioner.tests.fixture import TestCase
-from yaybu.util import sibpath
 from yaybu import error
 
 

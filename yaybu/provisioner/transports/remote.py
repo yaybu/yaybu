@@ -19,9 +19,6 @@ for example, ssh or fakechroot
 
 import collections
 
-from yaybu import error
-from . import base
-
 
 stat_result = collections.namedtuple("stat_result", \
     ("st_mode", "st_ino", "st_dev", "st_nlink", "st_uid", "st_gid", \

@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, shutil, stat
+import stat
 
 from yaybu.provisioner.tests.fixture import TestCase
-from yaybu.util import sibpath
 from yaybu.core import error
 
 test_execute_on_path = """

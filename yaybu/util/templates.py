@@ -14,7 +14,7 @@
 
 import sys
 
-from jinja2 import Environment, BaseLoader, TemplateNotFound, StrictUndefined
+from jinja2 import Environment, BaseLoader, StrictUndefined
 from jinja2.exceptions import UndefinedError, TemplateSyntaxError
 
 from yay import errors

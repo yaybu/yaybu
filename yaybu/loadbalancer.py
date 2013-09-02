@@ -21,11 +21,9 @@ from yaybu.core.util import memoized
 from yaybu.core.state import PartState
 from yaybu.util import args_from_expression
 from yaybu import base
-from yay import errors
 from libcloud.loadbalancer.base import Member, Algorithm
 from libcloud.loadbalancer.types import Provider, State
 from libcloud.loadbalancer.providers import get_driver
-from libcloud.common.types import LibcloudError
 
 from yaybu.changes import MetadataSync
 

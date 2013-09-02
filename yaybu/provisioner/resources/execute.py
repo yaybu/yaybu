@@ -13,20 +13,13 @@
 # limitations under the License.
 
 from yaybu.provisioner.resource import Resource
-from yaybu.core.policy import (
-    Policy,
-    Absent,
-    Present,
-    XOR,
-    NAND)
-
+from yaybu.core.policy import Policy, Present, XOR
 from yaybu.core.argument import (
     Property,
     FullPath,
     String,
     Integer,
     Octal,
-    File,
     Dict,
     List,
     )

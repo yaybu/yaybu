@@ -13,11 +13,7 @@
 # limitations under the License.
 
 from yaybu.provisioner.resource import Resource
-from yaybu.core.policy import (
-    Policy,
-    Absent,
-    Present,
-    )
+from yaybu.core.policy import Policy, Present
 from yaybu.core.argument import (
     Property,
     FullPath,

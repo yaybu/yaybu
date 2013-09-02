@@ -13,10 +13,9 @@
 # limitations under the License.
 
 
-import os, shutil, grp, signal
+import os, signal
 
 from yaybu.provisioner.tests.fixture import TestCase
-from yaybu.util import sibpath
 from yaybu import error
 
 

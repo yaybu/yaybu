@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import pipes
 import select
-import collections
 import socket
 import time
 import paramiko
@@ -23,8 +21,6 @@ from paramiko.ssh_exception import SSHException
 from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
 import StringIO
-
-from yay import String
 
 from yaybu import error
 from . import remote, base

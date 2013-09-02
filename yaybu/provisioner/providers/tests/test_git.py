@@ -13,9 +13,7 @@
 # limitations under the License.
 
 from yaybu.provisioner.tests.fixture import TestCase
-import subprocess
-import time
-import os
+
 
 class GitTest(TestCase):
     """

@@ -15,11 +15,11 @@
 import os
 
 from yay.openers.base import Openers, SearchpathFromGraph
-from yay.errors import Error, NoMatching, get_exception_context
+from yay.errors import NoMatching
 from yay.config import Config as BaseConfig
 from yay import ast
 
-from yaybu.core.error import ParseError, ArgParseError
+from yaybu.core.error import ArgParseError
 from yaybu.core.util import memoized
 from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
 from yaybu.core.ui import TextFactory

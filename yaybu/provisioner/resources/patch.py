@@ -12,15 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, hashlib
-
 from yaybu.provisioner.resource import Resource
-from yaybu.core.policy import (Policy,
-                               Absent,
-                               Present,
-                               XOR,
-                               NAND)
-
+from yaybu.core.policy import Policy, Present
 from yaybu.core.argument import (
     Property,
     FullPath,
@@ -30,6 +23,7 @@ from yaybu.core.argument import (
     File,
     Dict,
     )
+
 
 class Patch(Resource):
 
@@ -43,7 +37,7 @@ class Patch(Resource):
             target: /output
             source: /output
             patch: localfile
- 
+
     """
 
     name = Property(FullPath)

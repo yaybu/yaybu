@@ -12,17 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from __future__ import absolute_import
-
-import logging
 import subprocess
 
-from yaybu.changes import MetadataSync
-from yaybu.core.util import memoized
-from yaybu.util import args_from_expression
 from yaybu import base
-from yay import ast, errors
 
 
 class GitChangeSource(base.GraphExternalAction):

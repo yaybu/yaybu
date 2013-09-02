@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import os
-import stat
-import logging
 
 from yaybu import error
 from yaybu.provisioner import resources

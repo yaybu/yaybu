@@ -15,18 +15,15 @@
 from __future__ import absolute_import
 
 import os
-import uuid
 import logging
 import StringIO
 import datetime
-import copy
 import json
 import shutil
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta
 
 from libcloud.storage.types import Provider as StorageProvider
 from libcloud.storage.providers import get_driver as get_storage_driver
-from libcloud.common.types import LibcloudError
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 
 from yaybu.core.util import memoized

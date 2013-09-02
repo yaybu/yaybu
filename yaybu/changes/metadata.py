@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from .base import Change, TextRenderer
+from .base import Change
 
 
 #class Record(object):

@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import subprocess
-import os, getpass, select
+import os, select
 try:
     import pwd
 except ImportError:
@@ -27,12 +26,7 @@ try:
     import spwd
 except ImportError:
     spwd = None
-import shlex
-import pipes
 
-from yay import String
-
-from yaybu import error
 from . import base
 
 

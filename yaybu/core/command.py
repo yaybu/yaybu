@@ -15,14 +15,10 @@
 """ Provides command-driven input to yaybu, using cmd.Cmd """
 
 import os
-import sys
 import cmd
 import optparse
-import copy
 import logging
 import pprint
-from functools import partial
-import subprocess
 
 import yay
 import yay.errors

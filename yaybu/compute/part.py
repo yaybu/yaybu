@@ -13,13 +13,7 @@
 # limitations under the License.
 
 import os
-import uuid
 import logging
-import StringIO
-import datetime
-import collections
-import time
-import copy
 import getpass
 
 from libcloud.compute.types import Provider as ComputeProvider

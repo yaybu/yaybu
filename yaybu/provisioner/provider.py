@@ -14,7 +14,7 @@
 
 """ Core classes for providers """
 
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 from yaybu.core import policy
 

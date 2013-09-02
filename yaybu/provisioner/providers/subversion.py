@@ -12,16 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, logging
+import logging
 
 from yaybu.provisioner.provider import Provider
 from yaybu.error import MissingDependency
 from yaybu.provisioner import resources
-from yaybu.provisioner.changes.execute import Command
 from yaybu.provisioner.changes import ShellCommand, EnsureDirectory
-
-
-import shlex
 
 
 log = logging.getLogger("subversion")

@@ -19,13 +19,11 @@ import os
 import StringIO
 import json
 
-from yaybu.core.util import memoized
 from yaybu.util import args_from_expression
 from yaybu import base
-from yay import ast, errors
+from yay import errors
 from libcloud.storage.types import Provider, ContainerDoesNotExistError, ObjectDoesNotExistError
 from libcloud.storage.providers import get_driver
-from libcloud.common.types import LibcloudError
 
 
 class StaticContainer(base.GraphExternalAction):
