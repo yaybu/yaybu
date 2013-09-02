@@ -27,7 +27,7 @@ class MockLoadBalancer(Driver):
     @classmethod
     def install(cls, testcase):
         testcase.addCleanup(setattr, MockLoadBalancer, "next_id", 0)
-        testcase.addCleanup(setattr, MockLoadBalancer, "members", {})
+        testcase.addCleanup(setattr, MockLoadBalancer, "balancers", {})
 
         LoadBalancer.extra_drivers['DUMMY'] = MockLoadBalancer
         testcase.addCleanup(LoadBalancer.extra_drivers.pop, 'DUMMY', None)
@@ -62,8 +62,7 @@ class MockLoadBalancer(Driver):
             port=port,
             driver=self
         )
-        pending_balancer._members = []
-        balancer._members = []
+        balancer._members = pending_balancer._members = list(members)
         self.balancers[str(self.next_id)] = balancer
         self.next_id += 1
         return pending_balancer

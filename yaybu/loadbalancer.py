@@ -40,10 +40,10 @@ class SyncMembers(MetadataSync):
 
     def get_local_records(self):
         for m in self.expression:
-            ip = m.ip.as_string()
-            yield ip, dict(
-                id = None,
-                ip = ip,
+            id = m.id.as_string()
+            yield id, dict(
+                id = m.id.as_string(default='') or None,
+                ip = m.ip.as_string(default='') or None,
                 port = m.port.as_int(default=0) or None,
                 )
 
@@ -52,14 +52,14 @@ class SyncMembers(MetadataSync):
             raise StopIteration
 
         for m in self.balancer.list_members():
-            yield m.ip, dict(
-                id = None,
+            yield m.id, dict(
+                id = m.id,
                 ip = m.ip,
                 port = m.port,
                 )
 
     def add(self, record):
-        self.member.attach_member(Member(
+        self.balancer.attach_member(Member(
             id = record['id'],
             ip = record['ip'],
             port = record['port'],
@@ -70,7 +70,7 @@ class SyncMembers(MetadataSync):
         self.add(record)
 
     def delete(self, uid, record):
-        self.member.detach_member(Member(
+        self.balancer.detach_member(Member(
             id = record['id'],
             ip = record['ip'],
             port = record['port'],

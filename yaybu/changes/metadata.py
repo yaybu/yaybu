@@ -57,7 +57,7 @@ class MetadataSync(Change):
     def update(self, uid, record):
         raise NotImplementedError
 
-    def delete(self, uid):
+    def delete(self, uid, record):
         raise NotImplementedError
 
     def apply(self, ctx, renderer):
@@ -90,9 +90,9 @@ class MetadataSync(Change):
         if self.purge_remote:
             for rid, record in remote:
                 if not rid in local_lookup:
-                    renderer.info("Deleting '%s'" % rid)
-                    self.changed = True
-                    if not ctx.simulate:
-                        self.delete(rid)
+                    with ctx.root.ui.throbber("Deleting '%s'" % rid) as throbber:
+                        self.changed = True
+                        if not ctx.simulate:
+                            self.delete(rid, record)
 
         return self
