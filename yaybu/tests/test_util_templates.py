@@ -112,3 +112,9 @@ class TestTemplate(TestCase):
         """
         self.assertRaises(error.MissingAsset, render_string, self.context, contents, {})
 
+    def test_template_error(self):
+        contents = """
+        {{ 0 / 0 }}
+        """
+        self.assertRaises(error.TemplateError, render_string, self.context, contents, {})
+

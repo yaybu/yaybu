@@ -12,11 +12,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 
 from jinja2 import Environment, BaseLoader, TemplateNotFound, StrictUndefined
 from jinja2.exceptions import UndefinedError, TemplateSyntaxError
 
+from yay import errors
 from yaybu import error
+
+
+class JinjaTracebackAnchor(errors.Anchor):
+    """
+    Most Jinja2 exceptions have quite poor error information :-(
+    One of the features is that the Jinja errors appear in the TB...
+    """
+    def __init__(self, template, tb):
+        self.template = template
+        self.tb = tb
+
+    def long_description_lines(self):
+        t = self.tb
+        while t.tb_next:
+            t = t.tb_next
+        f = t.tb_frame
+        yield "'%s' at line %d" % (self.template.name, f.f_lineno-1)
+
+        if self.template.filename and self.template.filename != "<template>":
+            template = self.template
+            source, t, _ = template.environment.loader.get_source(template.environment, template.filename)
+            yield "  " + source.splitlines()[f.f_lineno-1]
+
+
+class JinjaSyntaxAnchor(errors.Anchor):
+    """
+    Provide something like a yay anchor so that Jinja errors have lots of context
+    """
+
+    def __init__(self, orig_exception):
+        self.orig_exception = orig_exception
+
+    def long_description_lines(self):
+        e = self.orig_exception
+        yield "'%s' at line %d" % (e.filename or e.name, e.lineno) #, column 7
+        if e.source is not None:
+            try:
+                yield "  " + e.source.splitlines()[e.lineno - 1]
+            except IndexError:
+                pass
 
 
 class LessStrictUndefined(StrictUndefined):
@@ -68,13 +110,25 @@ def get_template_environment(context):
     return env
 
 
-def _call(callable, *args, **kwargs):
+def _call_get(callable, *args, **kwargs):
     try:
         return callable(*args, **kwargs)
     except TemplateSyntaxError as e:
-        raise error.ParseError(str(e))
+        raise error.ParseError(str(e), anchor=JinjaSyntaxAnchor(e))
+
+
+def _call_render(template, *args, **kwargs):
+    try:
+        return template.render(*args, **kwargs)
+    except errors.Error as e:
+        # Don't intercept valid Yaybu errors
+        raise
     except UndefinedError as e:
-        raise error.NoMatching(str(e))
+        tb = sys.exc_info()[2]
+        raise error.NoMatching(str(e), anchor=JinjaTracebackAnchor(template, tb))
+    except BaseException as e:
+        tb = sys.exc_info()[2]
+        raise error.TemplateError("The template engine was unable to fill in your template and reported: '%s'" % str(e), anchor=JinjaTracebackAnchor(template, tb))
 
 
 def render_string(context, contents, arguments):
@@ -88,8 +142,8 @@ def render_string(context, contents, arguments):
     Template exceptions will be mapped to Yaybu expections.
     """
     env = get_template_environment(context)
-    template = _call(env.from_string, contents)
-    rendered = _call(template.render, arguments) + "\n"
+    template = _call_get(env.from_string, contents)
+    rendered = _call_render(template, arguments) + "\n"
     return rendered, env.loader.secret
 
 
@@ -104,7 +158,7 @@ def render_template(context, template, arguments):
     Template exceptions will be mapped to Yaybu exceptions.
     """
     env = get_template_environment(context)
-    template = _call(env.get_template, template)
-    rendered = _call(template.render, arguments) + "\n"
+    template = _call_get(env.get_template, template)
+    rendered = _call_render(template, arguments) + "\n"
     return rendered, env.loader.secret
 
