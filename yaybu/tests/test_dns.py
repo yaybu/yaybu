@@ -19,7 +19,7 @@ class TestZone(TestCase):
                     records: []
             """)
 
-    def __test_add_records(self):
+    def test_add_records(self):
         self.up("""
             new Zone as myzone:
                     driver:
