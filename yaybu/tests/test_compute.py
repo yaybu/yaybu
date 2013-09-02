@@ -37,8 +37,7 @@ class TestClusterIntegration(TestCase):
             """)
         nodes = self.driver.list_nodes()
         self.assertEqual(len(nodes), 1)
-        # FIXME: A better mock is required before we can test the config was deployed correctly :-(
-        self.assertEqual(nodes[0].name, "dummy-1")
+        self.assertEqual(nodes[0].name, "hello")
 
     def test_destroy(self):
         self.test_empty_compute_node()

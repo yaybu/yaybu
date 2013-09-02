@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from libcloud.compute.base import Node, NodeSize, NodeImage
+from libcloud.compute.types import NodeState
 from libcloud.compute.drivers.dummy import DummyNodeDriver
+
 from yaybu.compute import Compute
 
 
@@ -29,6 +31,38 @@ class MockNodeDriver(DummyNodeDriver):
 
     def __init__(self, api_key, secret):
         pass
+
+    def create_node(self, **kwargs):
+        l = len(self.nl) + 1
+
+        size = kwargs.get('size', NodeSize(
+            id='s1',
+            name='foo',
+            ram=2048,
+            disk=160,
+            bandwidth=None,
+            price=0.0,
+            driver=self,
+            ))
+
+        image = kwargs.get('image', NodeImage(
+            id='i2',
+            name='image',
+            driver=self,
+            ))
+
+        n = Node(id=l,
+            name=kwargs.get('name', 'dummy-%d' % l),
+            state=NodeState.RUNNING,
+            public_ips=['127.0.0.%d' % l],
+            private_ips=[],
+            driver=self,
+            size=size,
+            image=image,
+            extra=kwargs.get('extra', {}),
+            )
+        self.nl.append(n)
+        return n
 
     @classmethod
     def install(self, test_case):
