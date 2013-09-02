@@ -57,6 +57,12 @@ class Compute(base.GraphExternalAction):
             size: t1.micro         # Smallest AWS size
     """
 
+    extra_drivers = {
+        "VMWARE": VMWareDriver,
+        "BIGV": BigVNodeDriver,
+        "DOCKER": DockerNodeDriver,
+        }
+
     def __init__(self, node):
         super(Compute, self).__init__(node)
         self.libcloud_node = None
@@ -66,12 +72,8 @@ class Compute(base.GraphExternalAction):
     @memoized
     def driver(self):
         driver_id = self.params.driver.id.as_string()
-        if driver_id.lower() == "vmware":
-            Driver = VMWareDriver
-        elif driver_id.lower() == "bigv":
-            Driver = BigVNodeDriver
-        elif driver_id.lower() == "docker":
-            Driver = DockerNodeDriver
+        if driver_id in self.extra_drivers:
+            Driver = self.extra_drivers[driver_id]
         else:
             Driver = get_compute_driver(getattr(ComputeProvider, driver_id))
         driver = Driver(**args_from_expression(Driver, self.params.driver))
@@ -219,6 +221,12 @@ class Compute(base.GraphExternalAction):
             with self.root.ui.throbber(_("Creating node '%r'...") % (self.full_name, )) as throbber:
                 kwargs = args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
                 kwargs['auth'] = self._get_auth()
+
+                if self.root.simulate:
+                    self._fake_node_info()
+                    self.root.changelog.changed = True
+                    return
+
                 node = self.driver.create_node(
                     name=self.full_name,
                     image=self._get_image(),
@@ -244,6 +252,7 @@ class Compute(base.GraphExternalAction):
                 logger.debug("Node %r running" % (self.full_name, ))
                 # self.their_name = self.libcloud_node.name
                 self._update_node_info()
+                self.root.changelog.changed = True
                 return
 
             except LibcloudError, e:
