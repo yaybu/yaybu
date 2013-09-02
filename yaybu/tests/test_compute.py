@@ -40,3 +40,18 @@ class TestClusterIntegration(TestCase):
         # FIXME: A better mock is required before we can test the config was deployed correctly :-(
         self.assertEqual(nodes[0].name, "dummy-1")
 
+    def test_destroy(self):
+        self.test_empty_compute_node()
+        self.destroy("""
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                image: ubuntu
+                size: big
+                key: foo
+            """)
+        self.assertEqual(len(self.driver.list_nodes()), 0)
+

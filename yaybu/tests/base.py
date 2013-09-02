@@ -31,15 +31,18 @@ class TestCase(unittest2.TestCase):
         self.addCleanup(os.unlink, path)
         return path
 
-    def _up(self, config, *args):
+    def _do(self, action, config, *args):
         config_file = self._config(config)
         config_dir = os.path.dirname(config_file)
         p = OptionParser()
         y = YaybuCmd(config_file, ypath=(config_dir, ))
         y.verbose = 2
         y.debug = True
-        y.opts_up(p)
-        return y.do_up(*p.parse_args(list(args)))
+        getattr(y, "opts_" + action)(p)
+        return getattr(y, "do_" + action)(*p.parse_args(list(args)))
+
+    def _up(self, config, *args):
+        return self._do("up", config, *args)
 
     def up(self, config, *args):
         # Every call to self.up validates that simulate and actual mode works
@@ -60,4 +63,7 @@ class TestCase(unittest2.TestCase):
         except error.NothingChanged:
             return
         raise RuntimeError("Action wasn't idempotent")
+
+    def destroy(self, config, *args):
+        return self._do("destroy", config, *args)
 
