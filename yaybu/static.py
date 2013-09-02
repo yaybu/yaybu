@@ -44,6 +44,7 @@ class StaticContainer(base.GraphExternalAction):
             container: container_name
     """
 
+    extra_drivers = {}
     keys = []
 
     def _get_source_container(self):
@@ -51,7 +52,10 @@ class StaticContainer(base.GraphExternalAction):
             return self._get_source_container_from_string()
         except errors.TypeError:
             driver_name = self.params.source.id.as_string()
-            Driver = get_driver(getattr(Provider, driver_name))
+            if driver_name in self.extra_drivers:
+                Driver = self.extra_drivers[driver_name]
+            else:
+                Driver = get_driver(getattr(Provider, driver_name))
             driver = Driver(**args_from_expression(Driver, self.params.source, ignore=("container", )))
             container = driver.get_container(self.params.source.container.as_string())
             return container
@@ -64,7 +68,10 @@ class StaticContainer(base.GraphExternalAction):
 
     def _get_destination_container(self):
         driver_name = self.params.destination.id.as_string()
-        Driver = get_driver(getattr(Provider, driver_name))
+        if driver_name in self.extra_drivers:
+            Driver = self.extra_drivers[driver_name]
+        else:
+            Driver = get_driver(getattr(Provider, driver_name))
         driver = Driver(**args_from_expression(Driver, self.params.destination, ignore=("container", )))
 
         container_name = self.params.destination.container.as_string()
@@ -72,23 +79,30 @@ class StaticContainer(base.GraphExternalAction):
         try:
             container = driver.get_container(container_name=container_name)
         except ContainerDoesNotExistError:
+            if self.root.readonly:
+                return True, None
             with self.root.ui.throbber("Creating container '%s'" % container_name):
+                if self.root.simulate:
+                    return True, None
                 container = driver.create_container(container_name=container_name)
                 changed = True
         return changed, container
 
     def _get_manifest(self, container):
-        try:
-            manifest = container.get_object(".yaybu-manifest")
-            return json.loads(''.join(manifest.as_stream()))
-        except ObjectDoesNotExistError:
-            return {}
+        if container:
+            try:
+                manifest = container.get_object(".yaybu-manifest")
+                return json.loads(''.join(manifest.as_stream()))
+            except ObjectDoesNotExistError:
+                pass
+        return {}
 
     def _set_manifest(self, container, manifest):
-        container.upload_object_via_stream(StringIO.StringIO(json.dumps(manifest)), ".yaybu-manifest")
+        if not self.root.simulate:
+            container.upload_object_via_stream(StringIO.StringIO(json.dumps(manifest)), ".yaybu-manifest")
 
     def test(self):
-        with self.root.ui.throbber("Testing DNS credentials/connectivity") as throbber:
+        with self.root.ui.throbber("Testing storage credentials/connectivity") as throbber:
             self._get_source_container()
             self._get_destination_container()
 
@@ -102,7 +116,10 @@ class StaticContainer(base.GraphExternalAction):
         manifest = self._get_manifest(dest)
 
         source = dict((o.name, o) for o in src.iterate_objects())
-        destination = dict((o.name, o) for o in dest.iterate_objects())
+        if dest:
+            destination = dict((o.name, o) for o in dest.iterate_objects())
+        else:
+            destination = {}
 
         source_set = frozenset(source.keys()) - frozenset((".yaybu-manifest", ))
         destination_set = frozenset(destination.keys()) - frozenset((".yaybu-manifest", ))
@@ -114,9 +131,10 @@ class StaticContainer(base.GraphExternalAction):
         # FIXME: Need to dereference object names...
         for name in to_add:
             with self.root.ui.throbber("Uploading new static file '%s'" % name):
-                source_stream = source[name].as_stream()
-                dest.upload_object_via_stream(source_stream, name)
-                manifest[name] = {'source_hash': source[name].hash}
+                if not self.root.simulate:
+                    source_stream = source[name].as_stream()
+                    dest.upload_object_via_stream(source_stream, name)
+                    manifest[name] = {'source_hash': source[name].hash}
                 changed = True
 
         for name in to_check:
@@ -130,16 +148,18 @@ class StaticContainer(base.GraphExternalAction):
                 continue
 
             with self.root.ui.throbber("Updating static file '%s'" % name):
-                source_stream = obj_s.as_stream()
-                dest.upload_object_via_stream(source_stream, name)
-                manifest[name] = {'source_hash': obj_s.hash}
+                if not self.root.simulate:
+                    source_stream = obj_s.as_stream()
+                    dest.upload_object_via_stream(source_stream, name)
+                    manifest[name] = {'source_hash': obj_s.hash}
                 changed = True
 
         for name in to_delete:
             with self.root.ui.throbber("Deleting static file '%s'" % name):
-                destination[name].delete()
-                if name in manifest:
-                    del manifest[name]
+                if not self.root.simulate:
+                    destination[name].delete()
+                    if name in manifest:
+                        del manifest[name]
                 changed = True
 
         self._set_manifest(dest, manifest)
