@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.provisioner.tests.fixture import TestCase
+from yaybu.tests.provisioner_fixture import TestCase
 from yaybu.core import error
 import pwd
 import grp
@@ -74,7 +74,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/templated
-                    template: {{ "package://yaybu.provisioner.providers.tests/template1.j2" }}
+                    template: {{ "package://yaybu.tests/assets/template1.j2" }}
                     template_args:
                         foo: this is foo
                         bar: 42
@@ -88,7 +88,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/templated
-                    template: {{ "package://yaybu.provisioner.providers.tests/template_with_extends.j2" }}
+                    template: {{ "package://yaybu.tests/assets/template_with_extends.j2" }}
                     template_args:
                         foo: this is foo
                         bar: 42
@@ -107,7 +107,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_modify_file
-                    template: {{ "package://yaybu.provisioner.providers.tests/template1.j2" }}
+                    template: {{ "package://yaybu.tests/assets/template1.j2" }}
                     template_args:
                         foo: this is a modified file
                         bar: 37
@@ -159,7 +159,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_carriage_returns
-                    template: {{ "package://yaybu.provisioner.providers.tests/test_carriage_returns.j2" }}
+                    template: {{ "package://yaybu.tests/assets/test_carriage_returns.j2" }}
                     """)
 
     def test_carriage_returns2(self):
@@ -172,7 +172,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_carriage_returns2
-                    template: {{ "package://yaybu.provisioner.providers.tests/test_carriage_returns2.j2" }}
+                    template: {{ "package://yaybu.tests/assets/test_carriage_returns2.j2" }}
             """)
 
     def test_unicode(self):
@@ -184,7 +184,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/foo
-                    static: {{ "package://yaybu.provisioner.providers.tests/test_carriage_returns2.j2" }}
+                    static: {{ "package://yaybu.tests/assets/test_carriage_returns2.j2" }}
             """)
 
     def test_static_empty(self):
@@ -192,7 +192,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/foo
-                    static: {{ "package://yaybu.provisioner.providers.tests/empty_file" }}
+                    static: {{ "package://yaybu.tests/assets/empty_file" }}
             """)
 
     def test_missing(self):

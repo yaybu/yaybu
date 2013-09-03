@@ -18,7 +18,7 @@ import os
 import pwd
 import grp
 import stat
-from yaybu.provisioner.tests.fixture import TestCase
+from yaybu.tests.provisioner_fixture import TestCase
 
 
 def sibpath(filename):

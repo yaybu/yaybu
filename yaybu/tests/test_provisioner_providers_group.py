@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.provisioner.tests.fixture import TestCase
+from yaybu.tests.provisioner_fixture import TestCase
 from yaybu import error
 
 

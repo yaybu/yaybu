@@ -15,7 +15,7 @@
 
 import os, signal
 
-from yaybu.provisioner.tests.fixture import TestCase
+from yaybu.tests.provisioner_fixture import TestCase
 from yaybu import error
 
 
