@@ -16,6 +16,7 @@ from libcloud.dns.types import RecordType
 
 from yaybu.tests.base import TestCase
 from yaybu.tests.mocks.libcloud_dns import MockDNSDriver
+from yaybu.tests.mocks.libcloud_compute import MockNodeDriver
 
 
 class TestZone(TestCase):
@@ -62,5 +63,42 @@ class TestZone(TestCase):
 
         self.assertEqual(records[0].name, "www")
         self.assertEqual(records[0].type, RecordType.A)
+        self.assertEqual(records[0].data, "127.0.0.1")
+
+
+class TestZoneWithCompute(TestCase):
+
+    def setUp(self):
+        MockDNSDriver.install(self)
+        MockNodeDriver.install(self)
+        self.driver = MockDNSDriver("", "")
+
+    def test_dns_consumes_data_from_compute(self):
+        self.up("""
+            new Compute as mycompute:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummy
+                    secret: dummy
+                image: foo
+
+            new Zone as myzone:
+                    driver:
+                        id: DUMMY
+                        api_key: dummykey
+                        secret: dummysecret
+                    domain: example.com
+                    records:
+                      - name: www
+                        data: {{ mycompute.public_ip }}
+            """)
+
+        zones = self.driver.list_zones()
+        self.assertEqual(len(zones), 1)
+
+        records = zones[0].list_records()
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0].name, "www")
         self.assertEqual(records[0].data, "127.0.0.1")
 
