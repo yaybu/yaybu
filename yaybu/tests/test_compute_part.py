@@ -39,6 +39,27 @@ class TestClusterIntegration(TestCase):
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0].name, "hello")
 
+    def test_another_compute_node(self):
+        self.assertEqual(len(self.driver.list_nodes()), 0)
+        self.driver.create_node()
+        self.driver.create_node()
+        self.up("""
+            new Compute as myserver:
+                name: hello-im-another-node
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                image: ubuntu
+                size: big
+                key: foo
+            """)
+        nodes = self.driver.list_nodes()
+        self.assertEqual(len(nodes), 3)
+        nodes = filter(lambda n: n.name == "hello-im-another-node", self.driver.list_nodes())
+        self.assertEqual(len(nodes), 1)
+        self.assertEqual(nodes[0].name, "hello-im-another-node")
+
     def test_destroy(self):
         self.test_empty_compute_node()
         self.destroy("""

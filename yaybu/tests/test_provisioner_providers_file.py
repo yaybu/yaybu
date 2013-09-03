@@ -176,7 +176,7 @@ class TestFileApply(TestCase):
             """)
 
     def test_unicode(self):
-        self.chroot.check_apply(open(sibpath("unicode1.yay")).read())
+        self.chroot.check_apply(open(sibpath("assets/unicode1.yay")).read())
 
     def test_static(self):
         """ Test setting the contents to that of a static file. """

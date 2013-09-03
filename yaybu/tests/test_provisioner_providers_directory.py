@@ -68,7 +68,7 @@ class TestDirectory(TestCase):
 
     def test_unicode(self):
         utf8 = "/etc/£££££" # this is utf-8 encoded
-        self.chroot.check_apply(open(sibpath("directory_unicode1.yay")).read())
+        self.chroot.check_apply(open(sibpath("assets/directory_unicode1.yay")).read())
         self.failUnlessExists(utf8)
 
     def test_attributes(self):

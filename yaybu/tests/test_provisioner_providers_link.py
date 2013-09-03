@@ -93,5 +93,5 @@ class TestLink(TestCase):
         """)
 
     def test_unicode(self):
-        self.chroot.check_apply(open(sibpath("link_unicode1.yay")).read())
+        self.chroot.check_apply(open(sibpath("assets/link_unicode1.yay")).read())
 
