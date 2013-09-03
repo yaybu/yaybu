@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from yaybu import error
 from yaybu.tests.base import TestCase
 from yaybu.tests.mocks.libcloud_compute import MockNodeDriver
 
@@ -38,6 +39,21 @@ class TestClusterIntegration(TestCase):
         nodes = self.driver.list_nodes()
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0].name, "hello")
+
+    def test_node_already_exists(self):
+        self.assertEqual(len(self.driver.list_nodes()), 0)
+        self.driver.create_node(name="dummy-1")
+        self.assertRaises(error.NothingChanged, self.up, """
+            new Compute as myserver:
+                name: dummy-1
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                image: ubuntu
+                size: big
+                key: foo
+            """)
 
     def test_another_compute_node(self):
         self.assertEqual(len(self.driver.list_nodes()), 0)
