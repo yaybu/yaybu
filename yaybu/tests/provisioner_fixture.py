@@ -68,9 +68,6 @@ class YaybuFakeChroot(unittest2.FakeChroot):
 
         return self.yaybu(path2, *args)
 
-    def apply_simulate(self, contents):
-        return self.apply(path2, "--simulate")
-
     def check_apply(self, contents, *args, **kwargs):
         # Apply the change in simulate mode
         sim_args = list(args) + ["-s"]
@@ -87,9 +84,6 @@ class YaybuFakeChroot(unittest2.FakeChroot):
             return
 
         raise CalledProcessError("Change still outstanding")
-
-    #deprecated
-    check_apply_simulate = apply_simulate
 
 
 class TestCase(unittest2.TestCase):

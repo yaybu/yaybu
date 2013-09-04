@@ -36,11 +36,11 @@ class TestFileApply(TestCase):
         Right now we treat missing directories as a warning in simulate mode, as other outside processes might have created them.
         Later on we might not generate warnings for resources we can see will be created
         """
-        self.chroot.apply_simulate("""
+        self.chroot.apply("""
             resources:
               - File:
                   name: /etc/missing/filename
-            """)
+            """, "--simulate")
 
     def test_create_file(self):
         self.chroot.check_apply("""
