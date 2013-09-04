@@ -1,20 +1,32 @@
-==================
-Language reference
-==================
+Language Tour
+=============
 
-The language used in your ``Yaybufile`` is called ``yay``. It is YAML-like, but
-has templates and pythonic expressions. Some other tools just use a templated
-form of YAML, which is powerful. But not as powerful as when these new features
-are first class citizens of the language.
+Yay is a non-strict language that supports lazy evaluation. It is a sort of
+mutant child of YAML and Python, with some of the features of both.
 
-In this section we'll skim through some of the important bits.
+There are some significant differences from YAML and this absolutely does not
+attempt to implement the more esoteric parts of YAML.
 
-If you like it, it is packaged as a separate library and can be used in your
-own python applications.
+A particularly significant restriction is that keys may not contain
+whitespace. keys in a configuration language are expected to be simple bare
+terms. This also helpfully keeps the magic smoke firmly inside our parser.
+
+It is important to understand that for any line of input it is imperative
+"pythonish" or declarative "yamlish". It actually works well and we find it
+very easy to read, for example::
+
+    a: b
+    if a == 'b':
+        c: d
+
+It is pretty clear that some of those lines are declarative and some are
+imperative. When in pythonish mode it works just as you would expect from
+python, when in yamlish mode it works as a declarative language for defining
+terms.
 
 
 Mappings
-========
+~~~~~~~~
 
 A mapping is a set of key value pairs. They key is a string and the value
 can be any type supported by Yay. All Yay files will contain at least one
@@ -33,10 +45,9 @@ relationships between each item is based on the amount of indentation::
            dhcp: yes
 
 List
-====
+~~~~
 
-You can create an ordered list of things by creating an intended bulleted
-list::
+You can create a list of things by creating an intended bulleted list::
 
     packages:
         - python-yay
@@ -47,14 +58,8 @@ If you need to express an empty list you can also do::
 
     packages: []
 
-If a list is already defined and you wish to extend from elsewhere in your configuration you can use the ``extend`` keyword::
-
-    extend packages:
-        - python-libcloud
-
-
-Variables
-=========
+Variable Expansion
+~~~~~~~~~~~~~~~~~~
 
 If you were to specify the same Yaybu recipe over and over again you would
 be able to pull out a lot of duplication. You can create templates with
@@ -71,7 +76,7 @@ a directory based on a customer project id::
             name: /var/local/sites/{{projectcode}}/src
             repository: svn://mysvnserver/{{projectcode}}
 
-If your variables are in mappings you can access them using ``.`` as separator.
+If you variables are in mappings you can access them using ``.`` as seperator.
 You can also access specific items in lists with ``[]``::
 
     projects:
@@ -94,47 +99,11 @@ to ``project.name``::
 
     example_key: {{project.id else project.name}}
 
-
-Lazy evaluation
-===============
-
-Yay is a non-strict, lazyily evaluated language. This means that expressions are
-calculated when they are required not when they are declared::
-
-    var1: 50
-    var2: {{ var1 + 5 }}
-    var1: 0
-
-In an imperative language ``var2`` would be ``55``. But it is actually ``5``.
-Stated like this it seems weird and counterintuitive. So lets see how it is
-useful. Imagine you have a firewall recipe saved as ``firewall.yay``::
-
-    firewall:
-       allow_pings: true
-       open:
-         - range: 1.1.1.1/32
-
-    resources:
-      - File:
-          name: /etc/iptables.conf
-          template: iptables.conf.j2
-          template_args:
-              rules: {{ firewall }}
-
-Now for a contrived reason approved in a secret court your new projects server
-can't be pingable. You can't just use your existing ``firewall.yay``... Wait,
-you can. In your ``Yaybufile``::
-
-    include "firewall.yay"
-
-    firewall:
-        allow_pings: false
-
-
 Including Files
-===============
+~~~~~~~~~~~~~~~
 
-You can reuse configuration fragments by saving them as a ``.yay`` file and using the ``include`` keyword. If you had a ``foo.yay`` that looked like this::
+You can import a recipe using the yay extends feature. If you had a template
+``foo.yay``::
 
     resources:
         - Directory:
@@ -143,42 +112,73 @@ You can reuse configuration fragments by saving them as a ``.yay`` file and usin
               name: /var/local/sites/{{projectcode}}/src
               repository: svn://mysvnserver/{{projectcode}}
 
-You could reuse this recipe in your ``Yaybufile`` like so::
+You can reuse this recipe in ``bar.yay`` like so::
 
     include "foo.yay"
 
+    include foo.bar.includes
+
     projectcode: MyCustomer-145
 
-You can control where Yaybu looks for include files by manipulating the ``searchpath``::
 
-    yaybu:
-        extend searchpath:
-            - path/to/yay/files
+Search paths
+~~~~~~~~~~~~
 
+You can add a directory to the search path::
 
-Ephemeral metadata and variables
-================================
+    search "/var/yay/includes"
 
-Ephemeral variables do not appear in the final configuration. They are scratch space that enable DRY practice.
+    search foo.bar.searchpath
 
-They are especially useful in for-loops::
+Configuration
+~~~~~~~~~~~~~
+
+::
+    configure openers:
+      foo: bar
+        baz: quux
+
+    configure basicauth:
+        zip: zop
+
+Ephemeral keys
+~~~~~~~~~~~~~~
+
+These will not appear in the output::
+
+    for a in b
+        set c = d.foo.bar.baz
+        set d = dsds.sdsd.sewewe
+        set e = as.ew.qw
+        foo: c
+
+Extending Lists
+~~~~~~~~~~~~~~~
+
+If you were to specify resources twice in the same file, or indeed across
+multiple files, the most recently specified one would win::
+
+    resources:
+        - foo
+        - bar
+
+    resources:
+        - baz
+
+If you were to do this, resources would only contain baz. Yay has a function
+to allow appending to predefined lists: append::
+
+    resources:
+        - foo
+        - bar
 
     extend resources:
-        for site in all_sites:
-            set directory = "/var/www/" + site.name
+        - baz
 
-            - Directory:
-                  name: {{ directory }}
+Conditions
+~~~~~~~~~~
 
-            - File:
-                  name: {{ directory }}/mytemplate.cfg
-                  static: mytemplate.cfg
-
-
-Conditional expressions
-=======================
-
-One way to have conditions in your configuration file is with the ``if`` keyword::
+::
 
     foo:
         if averylongvariablename == anotherverylongvariablename and \
@@ -195,45 +195,26 @@ One way to have conditions in your configuration file is with the ``if`` keyword
         else:
           - baz
 
-The select statement is another way to have conditions in your configuration.
-
-Lets say ``host.distro`` contains your Ubuntu version and you want to install
-difference packages based on the distro. You could do something like::
-
-    packages:
-        select host.distro:
-            karmic:
-                - python-setuptools
-            lucid:
-                - python-distribute
-                - python-zc.buildout
-
-
 For Loops
-=========
+~~~~~~~~~
 
 You might want to have a list of project codes and then define multiple
 resources for each item in that list. You would do something like this::
 
-    projects:
-        - name: MyCustomer-100
-          checkouts:
-            - https://svn.example.com/svn/example1
-
-        - name: MyCustomer-72
-          checkouts:
-            - https://svn.example.com/svn/example1
-            - https://svn.example.com/svn/example2
+    projectcodes:
+        MyCustomer-100
+        MyCustomer-72
 
     extend resources:
-        for p in projects:
-            - Directory:
-                  name: /var/local/sites/{{ p }}
 
-            for c in p.checkouts:
+        for p in projectcodes:
+            - Directory:
+                  name: /var/local/sites/{{p}}
+
+            for q in p.qcodes:
                 - Checkout:
-                    name: /var/local/sites/{{ p }}/src/{{ c }}
-                    repository: svn://mysvnserver/{{ c }}
+                    name: /var/local/sites/{{p}}/src
+                    repository: svn://mysvnserver/{{q}}
 
 You can also have conditions::
 
@@ -264,7 +245,7 @@ You might need to loop over a list within a list::
     stuff:
         for s in staff:
             for d in s.devices:
-                - {{d}}
+                {{d}}
 
 This will produce a single list that is equivalent to::
 
@@ -286,15 +267,30 @@ keys. A for over a mapping with a condition might look like this::
     cheap:
         for f in fruit:
            if fruit[f] < 10:
-              - {{f}}
+             {{f}}
 
 That would return a list with apple and strawberry in it. The list will
 be sorted alphabetically: mappings are generally unordered but we want
 the iteration order to be stable.
 
+Select
+~~~~~~
+
+The select statement is a way to have conditions in your configuration.
+
+Lets say ``host.distro`` contains your Ubuntu version and you want to install
+difference packages based on the distro. You could do something like::
+
+    packages:
+        select distro:
+            karmic:
+                - python-setuptools
+            lucid:
+                - python-distribute
+                - python-zc.buildout
 
 Function calls
-==============
+~~~~~~~~~~~~~~
 
 Any sandboxed python function can be called where an expression would exist in a yay statement::
 
@@ -302,9 +298,72 @@ Any sandboxed python function can be called where an expression would exist in a
     for x in range(foo):
         - x
 
+Class bindings
+~~~~~~~~~~~~~~
+
+Classes can be constructed on-the-fly::
+
+    parts:
+        web:
+            new Compute:
+                foo: bar
+                % for x in range(4)
+                    baz: x
+
+Classes may have special side-effects, or provide additional data, at runtime.
+
+Each name for a class will be looked up in a registry for a concrete implementation that is
+implemented in python.
+
+Macros
+~~~~~~
+
+Macros provided parameterised blocks that can be reused, rather like a function.
+
+you can define a macro with::
+
+    macro mymacro:
+        foo: bar
+        baz: {{thing}}
+
+You can then call it later::
+
+    foo:
+        for q in x:
+            call mymacro:
+                thing: {{q}}
+
+Prototypes
+~~~~~~~~~~
+
+Prototypes contain a default mapping which you can then override. You can
+think of a prototype as a class that you can then extend.
+
+In their final form, they behave exactly like mappings::
+
+    prototype DjangoSite:
+        set self = here
+
+        name: www.example.com
+
+        sitedir: /var/local/sites/{{ self.name }}
+        rundir: /var/run/{{ self.name }}
+        tmpdir: /var/tmp/{{ self.name }}
+
+        resources:
+            - Directory:
+                name: {{ self.tmpdir }}
+
+            - Checkout:
+                name: {{ self.sitedir}}
+                source: git://github.com/
+
+    some_key:
+        new DjangoSite:
+            name: www.mysite.com
 
 Here
-====
+~~~~
 
 Here is a reserved word that expands to the nearest parent node that is a mapping.
 
@@ -325,50 +384,3 @@ You can use it with ``set`` to refer to specific points of the graph::
             other_mapping: {{ here.something }}   # Should be 'goodbye'
 
         something: hello
-
-
-Macros and Prototypes
-=====================
-
-Macros provided parameterised blocks that can be reused.
-
-you can define a macro with::
-
-    macro mymacro:
-        foo: bar
-        baz: {{thing}}
-
-You can then call it later::
-
-    foo:
-        for q in x:
-            call mymacro:
-                thing: {{q}}
-
-Prototypes contain a default mapping which you can then override. They
-are different from macros in that a prototype is not parameterised, but
-can instead be extended.
-
-In their final form, they behave exactly like mappings::
-
-    prototype DjangoSite:
-        set self = here
-
-        name: www.example-site.com
-
-        sitedir: /var/local/sites/{{ self.name }}
-        rundir: /var/run/{{ self.name }}
-        tmpdir: /var/tmp/{{ self.name }}
-
-        resources:
-            - Directory:
-                name: {{ self.tmpdir }}
-
-            - Checkout:
-                name: {{ self.sitedir}}
-                source: git://github.com/
-
-    some_key:
-        new DjangoSite:
-            sitename: www.example.com
-

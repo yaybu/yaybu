@@ -28,6 +28,11 @@ parameter::
                   hello: world
 
 
+To provision to a server, Yaybu needs to be able to access it. In particular you MUST make sure that:
+
+ * Yaybu has passwordless access over ssh to the server.
+ * Yaybu has passwordless access to sudo. The best way to achieve this is to ensure you are in the appropriate group ('admin' or 'sudo' on Ubuntu for example, depending on which version). Then add the NOPASSWD: directive to the appropriate group.
+
 Options
 =======
 

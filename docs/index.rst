@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    installation
+   quickstart
    command_line
    defining_arguments
    compute
@@ -22,7 +23,8 @@ Contents:
    combining_parts
    language
    encryption
-   contributing
+   change_source
+   hacking
 
 
 Indices and tables
