@@ -2,7 +2,7 @@ nose2
 unittest2
 mock
 fakechroot
+yay
 
--e git://github.com/yaybu/yay#egg=yay
 -e .
 
