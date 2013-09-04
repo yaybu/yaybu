@@ -6,7 +6,7 @@ new Provisioner as vm1:
             id: VMWARE
 
         image:
-            id: http://localhost/yaybu/ubuntu-12.04.2.zip
+            id: http://yaybu.com/dist/ubuntu-12.04.3-server-amd64.zip
 
         user: ubuntu
         password: password
