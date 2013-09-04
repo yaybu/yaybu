@@ -54,11 +54,6 @@ class YaybuFakeChroot(unittest2.FakeChroot):
 
         return y.do_up(*p.parse_args(list(args)))
 
-    def simulate(self, configfile, *args):
-        """ Run yaybu in simulate mode """
-        args = ["--simulate"] + list(args)
-        return self.yaybu(configfile, *args)
-
     def apply(self, contents, *args):
         path = self.write_temporary_file(contents)[0]
         path2 = self.write_temporary_file(
@@ -74,18 +69,7 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         return self.yaybu(path2, *args)
 
     def apply_simulate(self, contents):
-        path = self.write_temporary_file(contents)[0]
-        path2 = self.write_temporary_file(
-            """
-            include "%s"
-            main:
-                new Provisioner:
-                    server:
-                        fqdn: fakechroot:///
-                    resources: {{ resources }}
-            """ % path)[0]
-
-        return self.simulate(path2)
+        return self.apply(path2, "--simulate")
 
     def check_apply(self, contents, *args, **kwargs):
         # Apply the change in simulate mode
