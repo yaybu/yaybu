@@ -18,7 +18,7 @@ import getpass
 
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
-from libcloud.common.types import LibcloudError
+from libcloud.common.types import LibcloudError, InvalidCredsError
 from libcloud.compute.types import NodeState
 from libcloud.compute.base import NodeImage, NodeSize, NodeAuthPassword, NodeAuthSSHKey
 
@@ -29,7 +29,7 @@ from .docker import DockerNodeDriver
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
 from yaybu.util import args_from_expression
-from yaybu import base
+from yaybu import base, error
 from yaybu.i18n import _
 from yay import errors
 
@@ -94,7 +94,10 @@ class Compute(base.GraphExternalAction):
         return dict((s.id, s) for s in self.driver.list_sizes())
 
     def _find_node(self, name):
-        existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
+        try:
+            existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
+        except InvalidCredsError:
+            raise error.InvalidCredsError("Credentials invalid - unable to check/create '%s'" % self.params.name.as_string(), anchor=None)
         if len(existing) > 1:
             raise LibcloudError(_("There are already multiple nodes called '%s'") % name)
         elif not existing:
@@ -184,7 +187,10 @@ class Compute(base.GraphExternalAction):
 
     def test(self):
         with self.root.ui.throbber(_("Testing compute credentials/connectivity")):
-            self.driver.list_nodes()
+            try:
+                self.driver.list_nodes()
+            except InvalidCredsError:
+                raise error.InvalidCredError("Unable to login to compute service", anchor=self.params.driver.id.anchor)
 
     def apply(self):
         if self.libcloud_node:
