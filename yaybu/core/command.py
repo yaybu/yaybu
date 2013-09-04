@@ -204,23 +204,34 @@ class YaybuCmd(OptionParsingCmd):
         usage: vm
         Manipulate virtual machines on this host.
         """
-        if len(args) == 1:
+        if len(args) == 0:
             self.do_help((), ("vm",))
             return
         if args[0] == "compress":
-            image_path = args[1]
-            source = args[2]
-            username = args[3]
-            password = args[4]
-            print "Packaging VM in", source, "into image at", image_path
-            image = VMBoxImage(image_path)
-            image.compress(source, username, password)
+            if len(args) == 5:
+                image_path = args[1]
+                source = args[2]
+                username = args[3]
+                password = args[4]
+                print "Packaging VM in", source, "into image at", image_path
+                image = VMBoxImage(image_path)
+                image.compress(source, username, password)
+            else:
+                print "Usage: yaybu vm compress <image> <source> <username> <password>"
+                return
         elif args[0] == "extract":
-            image_path = args[1]
-            dest = args[2]
-            print "Extracting VM in", image_path,"to", dest
-            image = VMBoxImage(image_path)
-            image.extract(dest)
+            if len(args) == 3:
+                image_path = args[1]
+                dest = args[2]
+                print "Extracting VM in", image_path,"to", dest
+                image = VMBoxImage(image_path)
+                image.extract(dest)
+            else:
+                print "Usage: yaybu vm extract <image> <destination>"
+                return
+        else:
+            self.do_help((), ("vm",))
+            return
 
 
     def do_expand(self, opts, args):
