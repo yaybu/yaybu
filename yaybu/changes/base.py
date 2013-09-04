@@ -16,12 +16,6 @@
 """ Classes that handle logging of changes. """
 
 import abc
-import sys
-import logging
-import types
-import json
-
-from yaybu import error
 
 
 class Change(object):

@@ -14,16 +14,14 @@
 
 import os
 import logging
-import sys
 import getpass
 
 import yay
-from yay import errors
-from yay.errors import LanguageError, NotFound, NotModified
+from yay.errors import NotFound, NotModified
 
 from yaybu.provisioner import resource
 from yaybu import error
-from yaybu.error import ParseError, MissingAsset, Incompatible, UnmodifiedAsset
+from yaybu.error import MissingAsset, UnmodifiedAsset
 from yaybu import base
 
 from . import event, transports

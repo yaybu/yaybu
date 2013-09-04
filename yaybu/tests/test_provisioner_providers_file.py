@@ -1,10 +1,23 @@
-from yaybu.provisioner.tests.fixture import TestCase
+# Copyright 2013 Isotoma Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from yaybu.tests.provisioner_fixture import TestCase
 from yaybu.core import error
 import pwd
 import grp
 import os
 import stat
-import errno
 
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
@@ -23,11 +36,11 @@ class TestFileApply(TestCase):
         Right now we treat missing directories as a warning in simulate mode, as other outside processes might have created them.
         Later on we might not generate warnings for resources we can see will be created
         """
-        self.chroot.apply_simulate("""
+        self.chroot.apply("""
             resources:
               - File:
                   name: /etc/missing/filename
-            """)
+            """, "--simulate")
 
     def test_create_file(self):
         self.chroot.check_apply("""
@@ -61,7 +74,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/templated
-                    template: {{ "package://yaybu.provisioner.providers.tests/template1.j2" }}
+                    template: {{ "package://yaybu.tests/assets/template1.j2" }}
                     template_args:
                         foo: this is foo
                         bar: 42
@@ -75,7 +88,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/templated
-                    template: {{ "package://yaybu.provisioner.providers.tests/template_with_extends.j2" }}
+                    template: {{ "package://yaybu.tests/assets/template_with_extends.j2" }}
                     template_args:
                         foo: this is foo
                         bar: 42
@@ -94,7 +107,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_modify_file
-                    template: {{ "package://yaybu.provisioner.providers.tests/template1.j2" }}
+                    template: {{ "package://yaybu.tests/assets/template1.j2" }}
                     template_args:
                         foo: this is a modified file
                         bar: 37
@@ -146,7 +159,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_carriage_returns
-                    template: {{ "package://yaybu.provisioner.providers.tests/test_carriage_returns.j2" }}
+                    template: {{ "package://yaybu.tests/assets/test_carriage_returns.j2" }}
                     """)
 
     def test_carriage_returns2(self):
@@ -159,11 +172,11 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_carriage_returns2
-                    template: {{ "package://yaybu.provisioner.providers.tests/test_carriage_returns2.j2" }}
+                    template: {{ "package://yaybu.tests/assets/test_carriage_returns2.j2" }}
             """)
 
     def test_unicode(self):
-        self.chroot.check_apply(open(sibpath("unicode1.yay")).read())
+        self.chroot.check_apply(open(sibpath("assets/unicode1.yay")).read())
 
     def test_static(self):
         """ Test setting the contents to that of a static file. """
@@ -171,7 +184,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/foo
-                    static: {{ "package://yaybu.provisioner.providers.tests/test_carriage_returns2.j2" }}
+                    static: {{ "package://yaybu.tests/assets/test_carriage_returns2.j2" }}
             """)
 
     def test_static_empty(self):
@@ -179,7 +192,7 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/foo
-                    static: {{ "package://yaybu.provisioner.providers.tests/empty_file" }}
+                    static: {{ "package://yaybu.tests/assets/empty_file" }}
             """)
 
     def test_missing(self):

@@ -12,7 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .execute import ShellCommand
-from .attributes import AttributeChanger
-from .file import EnsureFile
-from .directory import EnsureDirectory
+from yaybu.tests.provisioner_fixture import TestCase
+from yaybu.core.error import MissingDependency
+
+
+class SubversionMissingTest(TestCase):
+
+    def test_missing_svn(self):
+        self.assertRaises(MissingDependency, self.chroot.apply, """
+           resources:
+               - Checkout:
+                   scm: subversion
+                   name: /dest
+                   repository: /source
+                   branch: trunk
+           """)
+

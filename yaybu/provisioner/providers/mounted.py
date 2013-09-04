@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 from yaybu.provisioner.provider import Provider
 from yaybu.provisioner import resources
 
@@ -29,7 +27,7 @@ class Mounted(Provider):
     def apply(self, context, output):
         for w in self.resource.watch.as_list():
             if context.transport.exists(w):
-            	context.change(ShellCommand(["touch", "-ac", w]))
+                context.change(ShellCommand(["touch", "-ac", w]))
 
         return True
 

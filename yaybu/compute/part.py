@@ -13,18 +13,12 @@
 # limitations under the License.
 
 import os
-import uuid
 import logging
-import StringIO
-import datetime
-import collections
-import time
-import copy
 import getpass
 
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
-from libcloud.common.types import LibcloudError
+from libcloud.common.types import LibcloudError, InvalidCredsError
 from libcloud.compute.types import NodeState
 from libcloud.compute.base import NodeImage, NodeSize, NodeAuthPassword, NodeAuthSSHKey
 
@@ -35,7 +29,7 @@ from .docker import DockerNodeDriver
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
 from yaybu.util import args_from_expression
-from yaybu import base
+from yaybu import base, error
 from yaybu.i18n import _
 from yay import errors
 
@@ -57,6 +51,12 @@ class Compute(base.GraphExternalAction):
             size: t1.micro         # Smallest AWS size
     """
 
+    extra_drivers = {
+        "VMWARE": VMWareDriver,
+        "BIGV": BigVNodeDriver,
+        "DOCKER": DockerNodeDriver,
+        }
+
     def __init__(self, node):
         super(Compute, self).__init__(node)
         self.libcloud_node = None
@@ -66,12 +66,8 @@ class Compute(base.GraphExternalAction):
     @memoized
     def driver(self):
         driver_id = self.params.driver.id.as_string()
-        if driver_id.lower() == "vmware":
-            Driver = VMWareDriver
-        elif driver_id.lower() == "bigv":
-            Driver = BigVNodeDriver
-        elif driver_id.lower() == "docker":
-            Driver = DockerNodeDriver
+        if driver_id in self.extra_drivers:
+            Driver = self.extra_drivers[driver_id]
         else:
             Driver = get_compute_driver(getattr(ComputeProvider, driver_id))
         driver = Driver(**args_from_expression(Driver, self.params.driver))
@@ -98,7 +94,10 @@ class Compute(base.GraphExternalAction):
         return dict((s.id, s) for s in self.driver.list_sizes())
 
     def _find_node(self, name):
-        existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
+        try:
+            existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
+        except InvalidCredsError:
+            raise error.InvalidCredsError("Credentials invalid - unable to check/create '%s'" % self.params.name.as_string(), anchor=None)
         if len(existing) > 1:
             raise LibcloudError(_("There are already multiple nodes called '%s'") % name)
         elif not existing:
@@ -188,7 +187,10 @@ class Compute(base.GraphExternalAction):
 
     def test(self):
         with self.root.ui.throbber(_("Testing compute credentials/connectivity")):
-            self.driver.list_nodes()
+            try:
+                self.driver.list_nodes()
+            except InvalidCredsError:
+                raise error.InvalidCredError("Unable to login to compute service", anchor=self.params.driver.id.anchor)
 
     def apply(self):
         if self.libcloud_node:
@@ -219,6 +221,12 @@ class Compute(base.GraphExternalAction):
             with self.root.ui.throbber(_("Creating node '%r'...") % (self.full_name, )) as throbber:
                 kwargs = args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
                 kwargs['auth'] = self._get_auth()
+
+                if self.root.simulate:
+                    self._fake_node_info()
+                    self.root.changelog.changed = True
+                    return
+
                 node = self.driver.create_node(
                     name=self.full_name,
                     image=self._get_image(),
@@ -244,6 +252,7 @@ class Compute(base.GraphExternalAction):
                 logger.debug("Node %r running" % (self.full_name, ))
                 # self.their_name = self.libcloud_node.name
                 self._update_node_info()
+                self.root.changelog.changed = True
                 return
 
             except LibcloudError, e:

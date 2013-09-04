@@ -18,8 +18,6 @@ BigV (http://bigv.io) driver.
 """
 
 import base64
-import binascii
-import os
 
 try:
     import simplejson as json
@@ -30,7 +28,6 @@ from libcloud.utils.py3 import httplib
 from libcloud.utils.py3 import b
 
 from libcloud.common.types import LibcloudError
-from libcloud.compute.providers import Provider
 from libcloud.common.base import JsonResponse, ConnectionUserAndKey
 from libcloud.compute.base import is_private_subnet
 from libcloud.compute.types import NodeState, InvalidCredsError

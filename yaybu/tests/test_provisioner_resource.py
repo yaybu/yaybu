@@ -1,4 +1,4 @@
-# Copyright 2011 Isotoma Limited
+# Copyright 2011-2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,23 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import unittest
 import datetime
-from yaybu.core import (argument,
-                        policy,
-                        )
-from yaybu.provisioner import resource, provider
+from mock import Mock
 
-from yaybu import error
 from yay.ast import bind as bind_
+
+from yaybu.core import argument, policy
+from yaybu.provisioner import resource, provider
+from yaybu import error
+from yaybu.tests.provisioner_fixture import TestCase
+
 
 def bind(foo):
     b = bind_(foo)
     b.parent = None
     return b
 
-from mock import Mock
 
 class F(resource.Resource):
     foo = argument.Property(argument.String, default="42")
@@ -314,3 +314,27 @@ class TestResourceBundle(unittest.TestCase):
         e2 = Ev1(bind(dict(name="e2")))
         resources = {'e1': e1, 'e2': e2}
         self.assertRaises(error.BindingError, e1.bind, resources)
+
+
+class TestWatched(TestCase):
+
+    def test_watched(self):
+        self.chroot.check_apply("""
+            resources:
+                - Execute:
+                    name: test_watched
+                    command: touch /watched-file
+                    creates: /watched-file
+                    watch:
+                      - /watched-file
+                - Execute:
+                    name: test_output
+                    command: touch /event-triggered
+                    creates: /event-triggered
+                    policy:
+                        execute:
+                            when: watched
+                            on: File[/watched-file]
+            """)
+        self.failUnlessExists("/event-triggered")
+

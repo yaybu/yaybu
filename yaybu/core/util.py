@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from yay import stringbuilder
-import types
 import functools
+
 
 def version():
     import pkg_resources

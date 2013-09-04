@@ -18,10 +18,8 @@ import dateutil.parser
 import types
 import urlparse
 import sys
-import os
 import unicodedata
 import random
-import yay
 from yay import errors, ast
 
 

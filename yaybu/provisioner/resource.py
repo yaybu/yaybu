@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys, os, hashlib
 from yaybu.core.argument import Property, Argument, List, PolicyArgument, String
 from yaybu.core import policy
 from yaybu import error
@@ -22,6 +21,7 @@ from yaybu.core import ordereddict
 from yay import errors
 from yay.ast import bind, PythonicWrapper
 from yay.errors import LanguageError, get_exception_context
+
 
 class ResourceType(type):
 

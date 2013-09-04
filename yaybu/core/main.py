@@ -28,7 +28,7 @@ def _main():
 
     from yaybu import util
     from yaybu.core.util import version
-    from yaybu.core import command, gpgagent
+    from yaybu.core import command
 
     parser = optparse.OptionParser(version=version(), usage=usage)
     parser.disable_interspersed_args()
@@ -65,15 +65,11 @@ def _main():
 
     com = command.YaybuCmd(config=opts.config, verbose=opts.verbose, ypath=opts.ypath, logfile=opts.logfile, debug=opts.debug)
 
-    gpgagent.setup_gpg_agent()
-    try:
-        if args:
-            com.interactive_shell = False
-            sys.exit(com.onecmd(" ".join(args)) or 0)
-        else:
-            com.cmdloop()
-    finally:
-        gpgagent.teardown_gpg_agent()
+    if args:
+        com.interactive_shell = False
+        sys.exit(com.onecmd(" ".join(args)) or 0)
+    else:
+        com.cmdloop()
 
 
 def main():

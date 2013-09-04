@@ -16,7 +16,6 @@ import os
 import logging
 import urlparse
 import urllib
-import re
 
 from yaybu.provisioner.provider import Provider
 from yaybu.core.error import CheckoutError, SystemError

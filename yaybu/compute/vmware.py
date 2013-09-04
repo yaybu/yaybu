@@ -28,6 +28,7 @@ import os
 import shlex
 import subprocess
 from pipes import quote
+import binascii
 
 from libcloud.common.types import *
 from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey

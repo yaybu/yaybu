@@ -16,20 +16,18 @@
 both the metadata associated with the file (for example owner and permission)
 and the contents of the files themselves. """
 
-import os, hashlib
+import hashlib
 
 from yaybu.provisioner.resource import Resource
 from yaybu.core.policy import (Policy,
                                Absent,
                                Present,
-                               XOR,
                                NAND)
 
 from yaybu.core.argument import (
     Property,
     FullPath,
     String,
-    Integer,
     Octal,
     File,
     Dict,

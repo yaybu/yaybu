@@ -1,4 +1,4 @@
-# Copyright 2012 Isotoma Limited
+# Copyright 2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,10 +21,9 @@ from yaybu.changes import MetadataSync
 from yaybu.core.util import memoized
 from yaybu.util import args_from_expression
 from yaybu import base
-from yay import ast, errors
+from yay import errors
 from libcloud.dns.types import Provider as DNSProvider
 from libcloud.dns.providers import get_driver as get_dns_driver
-from libcloud.common.types import LibcloudError
 
 logger = logging.getLogger(__name__)
 

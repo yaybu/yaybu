@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, shlex, glob
+import glob
 
 from yaybu.provisioner import provider
 from . import utils
-from yaybu.provisioner import resources
 from yaybu.provisioner.changes import ShellCommand
 
 

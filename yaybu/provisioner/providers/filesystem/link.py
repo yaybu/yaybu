@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-import os
 import stat
-import logging
 
 from yaybu import error
 from yaybu.provisioner import resources

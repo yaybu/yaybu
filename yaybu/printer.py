@@ -15,7 +15,6 @@
 
 from __future__ import absolute_import
 from yaybu import base
-from yay import ast, errors
 
 
 class Printer(base.GraphExternalAction):

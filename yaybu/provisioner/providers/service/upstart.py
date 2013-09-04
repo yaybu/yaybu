@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from collections import namedtuple
 
 from yaybu import error
 from yaybu.provisioner import provider
 from . import utils
-from yaybu.provisioner import resources
 
 UpstartInfo = namedtuple('UpstartInfo', ['name', 'goal', 'status'])
 

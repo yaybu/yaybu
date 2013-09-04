@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import shlex
-
 from yaybu.provisioner import provider
 from . import utils
 

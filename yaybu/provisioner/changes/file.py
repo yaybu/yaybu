@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import stat
 import difflib
 import string
 
-from jinja2 import Environment, BaseLoader, TemplateNotFound
-
-from yaybu import error, changes
+from yaybu import changes
 from .execute import ShellCommand
 from .attributes import AttributeChanger
+
 
 def binary_buffers(*buffers):
 

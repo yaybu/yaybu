@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-import subprocess
 
 from yaybu import error
 from yaybu.provisioner import resources
