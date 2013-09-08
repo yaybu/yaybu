@@ -14,6 +14,7 @@
 
 from libcloud.loadbalancer.base import Algorithm, Member
 
+from yaybu import error
 from yaybu.tests.base import TestCase
 from yaybu.tests.mocks.libcloud_loadbalancer import MockLoadBalancer
 
@@ -23,6 +24,87 @@ class TestLoadBalancer(TestCase):
     def setUp(self):
         MockLoadBalancer.install(self)
         self.driver = MockLoadBalancer('', '')
+
+    def test_validate_port_negative(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new LoadBalancer as mylb:
+                name: my_test_loadbalancer
+
+                driver:
+                    id: DUMMY
+                    key: hello
+                    secret: password
+
+                port: -80
+                protocol: http
+                algorithm: random
+                members: []
+            """)
+
+    def test_validate_port_zero(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new LoadBalancer as mylb:
+                name: my_test_loadbalancer
+
+                driver:
+                    id: DUMMY
+                    key: hello
+                    secret: password
+
+                port: 0
+                protocol: http
+                algorithm: random
+                members: []
+            """)
+
+
+    def test_validate_port_too_big(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new LoadBalancer as mylb:
+                name: my_test_loadbalancer
+
+                driver:
+                    id: DUMMY
+                    key: hello
+                    secret: password
+
+                port: 65536
+                protocol: http
+                algorithm: random
+                members: []
+            """)
+
+    def test_validate_invalid_protocol(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new LoadBalancer as mylb:
+                name: my_test_loadbalancer
+
+                driver:
+                    id: DUMMY
+                    key: hello
+                    secret: password
+
+                port: 80
+                protocol: htttp
+                algorithm: random
+                members: []
+            """)
+
+    def test_validate_invalid_algorithm(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new LoadBalancer as mylb:
+                name: my_test_loadbalancer
+
+                driver:
+                    id: DUMMY
+                    key: hello
+                    secret: password
+
+                port: 80
+                protocol: http
+                algorithm: round-robot
+                members: []
+            """)
 
     def test_empty_records_list(self):
         self.assertEqual(self.driver.list_balancers(), [])

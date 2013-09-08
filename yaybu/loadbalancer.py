@@ -17,18 +17,27 @@ from __future__ import absolute_import
 
 import logging
 
-from yaybu.core.util import memoized
-from yaybu.core.state import PartState
-from yaybu.util import args_from_expression
-from yaybu import base
 from libcloud.loadbalancer.base import Member, Algorithm
 from libcloud.loadbalancer.types import Provider, State
 from libcloud.loadbalancer.providers import get_driver
 
+from yaybu.core.util import memoized
+from yaybu.core.state import PartState
+from yaybu.util import args_from_expression
+from yaybu import base, error
 from yaybu.changes import MetadataSync
 
 
 logger = logging.getLogger(__name__)
+
+ALGORITHM_NAMES = {}
+ALGORITHM_IDS = {}
+for k, v in vars(Algorithm).items():
+    if k.startswith("_"):
+        continue
+    k = k.replace("_", "-").lower()
+    ALGORITHM_NAMES[v] = k
+    ALGORITHM_IDS[k] = v
 
 
 class SyncMembers(MetadataSync):
@@ -146,13 +155,20 @@ class LoadBalancer(base.GraphExternalAction):
 
         self.state.refresh()
 
-        default_algorithm = self.driver.list_supported_algorithms()[0]
-        default_protocol = self.driver.list_protocols()[0]
-
         name = self.params.name.as_string()
         port = self.params.port.as_int()
-        protocol = self.params.protocol.as_string()
-        algorithm = self.params.algorithm.as_string()
+        if port <=0 or port > 65535:
+            raise error.ValueError("Port must be > 0 and <= 65535", anchor=self.params.port.anchor)
+
+        protocols = self.driver.list_protocols()
+        protocol = self.params.protocol.as_string(default=protocols[0])
+        if not protocol in protocols:
+            raise error.ValueError("'%s' not a supported protocol\nExpected one of '%s'" % (protocol, ", ".join(protocols)), anchor=self.params.protocol.anchor)
+
+        algorithms = [ALGORITHM_NAMES[aid] for aid in self.driver.list_supported_algorithms()]
+        algorithm = self.params.algorithm.as_string(default=algorithms[0])
+        if not algorithm in algorithms:
+            raise error.ValueError("'%s' not a supported algorithm\nExpected one of '%s'" % (algorithm, ", ".join(algorithms)), anchor=self.params.algorithm.anchor)
 
         lb = self._find_balancer()
         changed = False
@@ -164,7 +180,7 @@ class LoadBalancer(base.GraphExternalAction):
                         name = name,
                         port = port,
                         protocol = protocol,
-                        algorithm = algorithm,
+                        algorithm = ALGORITHM_IDS[algorithm],
                         members = [],
                         )
                 else:

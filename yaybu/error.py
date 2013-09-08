@@ -182,6 +182,10 @@ class InvalidCredsError(ExecutionError):
     """ Invalid credentials """
     returncode = 156
 
+class ValueError(ExecutionError):
+    """ Invalid value passed to a part """
+    returncode = 157
+
 class NothingChanged(ExecutionError):
     """ Not really an error, but we need to know if this happens for our
     tests. This exception is never really raised, but it's useful to keep the
