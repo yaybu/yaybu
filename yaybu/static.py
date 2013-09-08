@@ -19,7 +19,7 @@ import os
 import StringIO
 import json
 
-from yaybu.util import args_from_expression
+from yaybu.util import get_driver_from_expression
 from yaybu import base
 from yay import errors
 from libcloud.storage.types import Provider, ContainerDoesNotExistError, ObjectDoesNotExistError
@@ -49,12 +49,7 @@ class StaticContainer(base.GraphExternalAction):
         try:
             return self._get_source_container_from_string()
         except errors.TypeError:
-            driver_name = self.params.source.id.as_string()
-            if driver_name in self.extra_drivers:
-                Driver = self.extra_drivers[driver_name]
-            else:
-                Driver = get_driver(getattr(Provider, driver_name))
-            driver = Driver(**args_from_expression(Driver, self.params.source, ignore=("container", )))
+            driver = get_driver_from_expression(self.params.source, get_driver, Provider, self.extra_drivers, ignore=("container", ))
             container = driver.get_container(self.params.source.container.as_string())
             return container
 
@@ -65,12 +60,7 @@ class StaticContainer(base.GraphExternalAction):
         return driver.get_container(os.path.basename(directory))
 
     def _get_destination_container(self):
-        driver_name = self.params.destination.id.as_string()
-        if driver_name in self.extra_drivers:
-            Driver = self.extra_drivers[driver_name]
-        else:
-            Driver = get_driver(getattr(Provider, driver_name))
-        driver = Driver(**args_from_expression(Driver, self.params.destination, ignore=("container", )))
+        driver = get_driver_from_expression(self.params.destination, get_driver, Provider, self.extra_drivers, ignore=("container", ))
 
         container_name = self.params.destination.container.as_string()
         changed = False

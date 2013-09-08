@@ -19,11 +19,11 @@ import logging
 
 from yaybu.changes import MetadataSync
 from yaybu.core.util import memoized
-from yaybu.util import args_from_expression
+from yaybu.util import get_driver_from_expression
 from yaybu import base
 from yay import errors
-from libcloud.dns.types import Provider as DNSProvider
-from libcloud.dns.providers import get_driver as get_dns_driver
+from libcloud.dns.types import Provider
+from libcloud.dns.providers import get_driver
 
 logger = logging.getLogger(__name__)
 
@@ -170,13 +170,7 @@ class Zone(base.GraphExternalAction):
     @property
     @memoized
     def driver(self):
-        driver_name = self.params.driver.id.as_string()
-        if driver_name in self.extra_drivers:
-            Driver = self.extra_drivers[driver_name]
-        else:
-            Driver = get_dns_driver(getattr(DNSProvider, driver_name))
-        driver = Driver(**args_from_expression(Driver, self.params.driver))
-        return driver
+        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers)
 
     def test(self):
         with self.root.ui.throbber("Testing DNS credentials/connectivity") as throbber:

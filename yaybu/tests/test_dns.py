@@ -26,6 +26,17 @@ class TestZone(TestCase):
         MockDNSDriver.install(self)
         self.driver = MockDNSDriver("", "")
 
+    def test_validate_driver_id(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new Zone as myzone:
+                    driver:
+                        id: DUMMYY
+                        api_key: dummykey
+                        secret: dummysecret
+                    domain: example.com
+                    records: []
+            """)
+
     def test_empty_records_list(self):
         self.assertEqual(len(self.driver.list_zones()), 0)
         self.up("""

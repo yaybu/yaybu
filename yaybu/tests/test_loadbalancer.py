@@ -25,6 +25,20 @@ class TestLoadBalancer(TestCase):
         MockLoadBalancer.install(self)
         self.driver = MockLoadBalancer('', '')
 
+    def test_validate_driver_id(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new LoadBalancer as mylb:
+                name: my_test_loadbalancer
+                driver:
+                    id: DUMMYY
+                    key: hello
+                    secret: password
+                port: 80
+                protocol: http
+                algorithm: random
+                members: []
+            """)
+
     def test_validate_port_negative(self):
         self.assertRaises(error.ValueError, self.up, """
             new LoadBalancer as mylb:

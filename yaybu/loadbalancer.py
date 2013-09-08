@@ -23,7 +23,7 @@ from libcloud.loadbalancer.providers import get_driver
 
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
-from yaybu.util import args_from_expression
+from yaybu.util import get_driver_from_expression
 from yaybu import base, error
 from yaybu.changes import MetadataSync
 
@@ -129,14 +129,7 @@ class LoadBalancer(base.GraphExternalAction):
     @property
     @memoized
     def driver(self):
-        driver_id = self.params.driver.id.as_string()
-        if driver_id in self.extra_drivers:
-            Driver = self.extra_drivers[driver_id]
-        else:
-            Driver = get_driver(getattr(Provider, driver_id))
-
-        driver = Driver(**args_from_expression(Driver, self.params.driver))
-        return driver
+        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers)
 
     def _find_balancer(self):
         if "balancer_id" in self.state:

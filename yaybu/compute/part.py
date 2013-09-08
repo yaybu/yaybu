@@ -16,8 +16,8 @@ import os
 import logging
 import getpass
 
-from libcloud.compute.types import Provider as ComputeProvider
-from libcloud.compute.providers import get_driver as get_compute_driver
+from libcloud.compute.types import Provider
+from libcloud.compute.providers import get_driver
 from libcloud.common.types import LibcloudError, InvalidCredsError
 from libcloud.compute.types import NodeState
 from libcloud.compute.base import NodeImage, NodeSize, NodeAuthPassword, NodeAuthSSHKey
@@ -28,7 +28,7 @@ from .docker import DockerNodeDriver
 
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
-from yaybu.util import args_from_expression
+from yaybu.util import get_driver_from_expression, args_from_expression
 from yaybu import base, error
 from yaybu.i18n import _
 from yay import errors
@@ -65,14 +65,7 @@ class Compute(base.GraphExternalAction):
     @property
     @memoized
     def driver(self):
-        driver_id = self.params.driver.id.as_string()
-        if driver_id in self.extra_drivers:
-            Driver = self.extra_drivers[driver_id]
-        else:
-            Driver = get_compute_driver(getattr(ComputeProvider, driver_id))
-        driver = Driver(**args_from_expression(Driver, self.params.driver))
-        driver.yaybu_context = self.root
-        return driver
+        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers)
 
     @property
     @memoized

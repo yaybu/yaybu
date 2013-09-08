@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from .backports import *
+from .libcloud import *
 from .templates import *
 from .misc import *
 

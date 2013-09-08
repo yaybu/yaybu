@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from yaybu import error
 from yaybu.tests.base import TestCase
 from yaybu.tests.mocks.libcloud_storage import MockStorageDriver
 
@@ -22,6 +23,38 @@ class TestStaticContainer(TestCase):
         MockStorageDriver.install(self)
         self.driver = MockStorageDriver("", "")
         self.driver.create_container("source")
+
+    def test_invalid_source_id(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new StaticContainer as mystorage:
+                source:
+                    id: DUMMYY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: source
+
+                destination:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: destination
+            """)
+
+    def test_invalid_destination_id(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new StaticContainer as mystorage:
+                source:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: source
+
+                destination:
+                    id: DUMMYY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: destination
+            """)
 
     def test_empty_source(self):
         self.assertEqual(len(self.driver.list_containers()), 1)

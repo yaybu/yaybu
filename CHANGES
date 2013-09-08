@@ -11,6 +11,10 @@ Changelog for yaybu
 - ``LoadBalancer`` part has better validation - and more useful errors if you
   provide an incorrect value for an enum.
 
+- Validate ``driver.id`` for all libcloud based parts, and use difflib to
+  suggest the closest driver id where possible. E.g. for ``ROUTE52`` suggest
+  ``ROUTE53``.
+
 
 3.0 (2013-09-04)
 ----------------

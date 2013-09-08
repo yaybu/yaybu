@@ -23,6 +23,19 @@ class TestClusterIntegration(TestCase):
         MockNodeDriver.install(self)
         self.driver = MockNodeDriver("", "")
 
+    def test_validate_driver_id(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMYY
+                    api_key: dummykey
+                    secret: dummysecret
+                image: ubuntu
+                size: big
+                key: foo
+            """)
+
     def test_empty_compute_node(self):
         self.assertEqual(len(self.driver.list_nodes()), 0)
         self.up("""
