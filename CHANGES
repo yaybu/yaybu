@@ -1,10 +1,12 @@
 Changelog for yaybu
 ===================
 
-3.0.1 (unreleased)
-------------------
+3.1 (unreleased)
+----------------
 
-- Nothing changed yet.
+- If ``shared`` is ``True`` (the default) then Yaybu won't delete records in
+  DNS zone's that it didn't create. If it is ``False`` then it will remove any
+  records that arent declared in your configuration.
 
 
 3.0 (2013-09-04)

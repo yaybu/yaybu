@@ -73,7 +73,8 @@ class ZoneSync(MetadataSync):
                 extra = record['extra'],
                 )
         except NotImplementedError:
-            print "This zone's settings are immutable"
+            #print "This zone's settings are immutable"
+            pass
 
     def delete(self, uid, record):
         self.driver.delete_zone(self.zone)
@@ -81,12 +82,11 @@ class ZoneSync(MetadataSync):
 
 class RecordSync(MetadataSync):
 
-    purge_remote = False
-
-    def __init__(self, expression, driver, zone):
+    def __init__(self, expression, driver, zone, purge_remote=False):
         self.expression = expression
         self.driver = driver
         self.zone = zone
+        self.purge_remote = purge_remote
 
     def get_local_records(self):
         for rec in self.expression.records:
@@ -139,8 +139,8 @@ class RecordSync(MetadataSync):
             )
 
     def delete(self, uid, record):
-        self.driver.update_record(
-            record = self.driver.get_record(zone.id, uid),
+        self.driver.delete_record(
+            record = self.driver.get_record(self.zone.id, uid),
             )
 
 
@@ -217,6 +217,8 @@ class Zone(base.GraphExternalAction):
                 expression = self.params,
                 driver = driver,
                 zone = zone,
+                purge_remote = not self.params.shared.as_bool(default=True),
             ))
 
         return zchange.changed or rchange.changed
+

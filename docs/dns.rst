@@ -43,6 +43,8 @@ You must provide a list of DNS ``records`` to publish in the zone. At the very l
 ``ttl``
     How long this record can be cached for, specified in seconds. Specifying ``86400`` seconds would mean that if a DNS record was changed some DNS servers could be returning the old value for up to 24 hours.
 
+By default Yaybu won't delete records that it didn't create. This means you can share a zone between multiple projects. However if you set ``shared`` to False then Yaybu will clean up records it doesn't 'own'.
+
 
 Supported services
 ==================

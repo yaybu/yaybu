@@ -65,6 +65,25 @@ class TestZone(TestCase):
         self.assertEqual(records[0].type, RecordType.A)
         self.assertEqual(records[0].data, "127.0.0.1")
 
+    def test_cleans_up_existing_zone(self):
+        z = self.driver.create_zone("example.com.", "master", 0)
+        z.create_record("www", type=RecordType.A, data='127.0.0.1')
+
+        self.up("""
+            new Zone as myzone:
+                    driver:
+                        id: DUMMY
+                        api_key: dummykey
+                        secret: dummysecret
+                    domain: example.com
+                    records: []
+                    shared: 0
+            """)
+
+        zones = self.driver.list_zones()
+        self.assertEqual(len(zones), 1)
+        self.assertEqual(zones[0].list_records(), [])
+
 
 class TestZoneWithCompute(TestCase):
 
