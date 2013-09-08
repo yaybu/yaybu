@@ -14,6 +14,7 @@
 
 from libcloud.dns.types import RecordType
 
+from yaybu import error
 from yaybu.tests.base import TestCase
 from yaybu.tests.mocks.libcloud_dns import MockDNSDriver
 from yaybu.tests.mocks.libcloud_compute import MockNodeDriver
@@ -65,7 +66,7 @@ class TestZone(TestCase):
         self.assertEqual(records[0].type, RecordType.A)
         self.assertEqual(records[0].data, "127.0.0.1")
 
-    def test_cleans_up_existing_zone(self):
+    def test_cleans_up_existing_zone_not_shared(self):
         z = self.driver.create_zone("example.com.", "master", 0)
         z.create_record("www", type=RecordType.A, data='127.0.0.1')
 
@@ -83,6 +84,24 @@ class TestZone(TestCase):
         zones = self.driver.list_zones()
         self.assertEqual(len(zones), 1)
         self.assertEqual(zones[0].list_records(), [])
+
+    def test_cleans_up_existing_zone_shared(self):
+        z = self.driver.create_zone("example.com.", "master", 0)
+        z.create_record("www", type=RecordType.A, data='127.0.0.1')
+
+        self.assertRaises(error.NothingChanged, self.up, """
+            new Zone as myzone:
+                    driver:
+                        id: DUMMY
+                        api_key: dummykey
+                        secret: dummysecret
+                    domain: example.com
+                    records: []
+            """)
+
+        zones = self.driver.list_zones()
+        self.assertEqual(len(zones), 1)
+        self.assertEqual(len(zones[0].list_records()), 1)
 
 
 class TestZoneWithCompute(TestCase):
