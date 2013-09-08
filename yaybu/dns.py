@@ -20,6 +20,7 @@ import logging
 from yaybu.changes import MetadataSync
 from yaybu.core.util import memoized
 from yaybu.util import get_driver_from_expression
+from yaybu.minidns import MiniDNSDriver
 from yaybu import base
 from yay import errors
 from libcloud.dns.types import Provider
@@ -151,7 +152,7 @@ class Zone(base.GraphExternalAction):
 
     new Zone as myzone:
         driver:
-            id: AWS
+            id: ROUTE53
             key:
             secret:
         domain: example.com
@@ -163,7 +164,9 @@ class Zone(base.GraphExternalAction):
             data: 192.168.1.1
     """
 
-    extra_drivers = {}
+    extra_drivers = {
+        'MINIDNS': MiniDNSDriver,
+    }
 
     keys = []
 
