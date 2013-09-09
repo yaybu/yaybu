@@ -17,7 +17,7 @@ from yaybu.tests.base import TestCase
 from yaybu.tests.mocks.libcloud_compute import MockNodeDriver
 
 
-class TestClusterIntegration(TestCase):
+class TestCompute(TestCase):
 
     def setUp(self):
         MockNodeDriver.install(self)
@@ -103,4 +103,52 @@ class TestClusterIntegration(TestCase):
                 key: foo
             """)
         self.assertEqual(len(self.driver.list_nodes()), 0)
+
+
+class TestComputeCluster(TestCase):
+
+    def setUp(self):
+        MockNodeDriver.install(self)
+        self.driver = MockNodeDriver("", "")
+
+    def test_compute_nodes(self):
+        self.assertEqual(len(self.driver.list_nodes()), 0)
+        self.up("""
+            container1:
+                new Compute as server:
+                    name: hello1
+                    driver:
+                        id: DUMMY
+                        api_key: dummykey
+                        secret: dummysecret
+                    image: ubuntu
+                    size: big
+                    key: foo
+
+                resources:
+                   - File:
+                       name: /etc/hearbeat.conf
+                       template_args:
+                           ip: {{ container2.server.public_ip }}
+
+            container2:
+                new Compute as server:
+                    name: hello2
+                    driver:
+                        id: DUMMY
+                        api_key: dummykey
+                        secret: dummysecret
+                    image: ubuntu
+                    size: big
+                    key: foo
+
+                resources:
+                   - File:
+                       name: /etc/hearbeat.conf
+                       template_args:
+                           ip: {{ container1.server.public_ip }}
+            """)
+        nodes = self.driver.list_nodes()
+        self.assertEqual(len(nodes), 2)
+        self.assertEqual(set(n.name for n in nodes), set(("hello1", "hello2")))
 
