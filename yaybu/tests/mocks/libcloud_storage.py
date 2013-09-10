@@ -46,8 +46,14 @@ class MockStorageDriver(DummyStorageDriver):
         return obj.blocks
 
     @classmethod
-    def install(self, test_case):
-        StaticContainer.extra_drivers['DUMMY'] = MockStorageDriver
+    def install(cls, test_case):
+        StaticContainer.extra_drivers['DUMMY'] = cls
         test_case.addCleanup(StaticContainer.extra_drivers.pop, 'DUMMY', None)
         test_case.addCleanup(setattr, MockStorageDriver, "_containers", {})
+
+
+class MockStorageDriverArgless(MockStorageDriver):
+
+    def __init__(self):
+        pass
 

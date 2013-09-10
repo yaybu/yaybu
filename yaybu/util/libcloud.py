@@ -31,6 +31,8 @@ def args_from_expression(func, expression, ignore=(), kwargs=()):
         if arg in ignore:
             continue
         try:
+            if not expression:
+                raise KeyError
             node = expression.get_key(arg)
         except KeyError:
             if default == _MARKER:
@@ -52,7 +54,16 @@ def args_from_expression(func, expression, ignore=(), kwargs=()):
 
 
 def get_driver_from_expression(expression, get_driver, provider, extra_drivers, ignore=()):
-    driver_id = expression.id.as_string()
+    try:
+        driver_id = expression.as_string()
+        driver_id_expr = expression
+        expression = None
+        has_params = False
+    except errors.TypeError:
+        driver_id = expression.id.as_string()
+        driver_id_expr = expression.id
+        has_params = True
+
     if driver_id in extra_drivers:
         Driver = extra_drivers[driver_id]
     else:
@@ -67,6 +78,6 @@ def get_driver_from_expression(expression, get_driver, provider, extra_drivers, 
             possible = difflib.get_close_matches(driver_id, all_drivers)
             if possible:
                 msg.append("The closest valid drivers are: %s" % "/".join(possible))
-            raise error.ValueError('\n'.join(msg), anchor=expression.id.expand().anchor)
+            raise error.ValueError('\n'.join(msg), anchor=driver_id_expr.expand().anchor)
     driver = Driver(**args_from_expression(Driver, expression, ignore=ignore))
     return driver

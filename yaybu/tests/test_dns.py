@@ -16,7 +16,7 @@ from libcloud.dns.types import RecordType
 
 from yaybu import error
 from yaybu.tests.base import TestCase
-from yaybu.tests.mocks.libcloud_dns import MockDNSDriver
+from yaybu.tests.mocks.libcloud_dns import MockDNSDriver, MockDNSDriverArgless
 from yaybu.tests.mocks.libcloud_compute import MockNodeDriver
 
 
@@ -150,4 +150,25 @@ class TestZoneWithCompute(TestCase):
         self.assertEqual(len(records), 1)
         self.assertEqual(records[0].name, "www")
         self.assertEqual(records[0].data, "127.0.0.1")
+
+
+class TestZoneArglessDriver(TestCase):
+
+    def setUp(self):
+        MockDNSDriverArgless.install(self)
+        self.driver = MockDNSDriverArgless()
+
+    def test_empty_records_list(self):
+        self.assertEqual(len(self.driver.list_zones()), 0)
+        self.up("""
+            new Zone as myzone:
+                    driver: DUMMY
+                    domain: example.com
+                    records: []
+            """)
+        zones = self.driver.list_zones()
+        self.assertEqual(len(zones), 1)
+        # FIXME: Investigate rstrip...
+        self.assertEqual(zones[0].domain.rstrip("."), "example.com")
+        self.assertEqual(zones[0].list_records(), [])
 

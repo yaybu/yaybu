@@ -14,7 +14,7 @@
 
 from yaybu import error
 from yaybu.tests.base import TestCase
-from yaybu.tests.mocks.libcloud_storage import MockStorageDriver
+from yaybu.tests.mocks.libcloud_storage import MockStorageDriver, MockStorageDriverArgless
 
 
 class TestStaticContainer(TestCase):
@@ -71,6 +71,30 @@ class TestStaticContainer(TestCase):
                     id: DUMMY
                     api_key: dummykey
                     secret: dummysecret
+                    container: destination
+            """)
+
+        self.assertEqual(len(self.driver.list_containers()), 2)
+
+
+class TestStaticContainerArgless(TestCase):
+
+    def setUp(self):
+        MockStorageDriverArgless.install(self)
+        self.driver = MockStorageDriverArgless()
+        self.driver.create_container("source")
+
+    def test_empty_source(self):
+        self.assertEqual(len(self.driver.list_containers()), 1)
+
+        self.up("""
+            new StaticContainer as mystorage:
+                source:
+                    id: DUMMY
+                    container: source
+
+                destination:
+                    id: DUMMY
                     container: destination
             """)
 

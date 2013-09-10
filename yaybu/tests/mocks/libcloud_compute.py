@@ -65,8 +65,14 @@ class MockNodeDriver(DummyNodeDriver):
         return n
 
     @classmethod
-    def install(self, test_case):
-        Compute.extra_drivers['DUMMY'] = MockNodeDriver
+    def install(cls, test_case):
+        Compute.extra_drivers['DUMMY'] = cls
         test_case.addCleanup(Compute.extra_drivers.pop, 'DUMMY', None)
         test_case.addCleanup(setattr, MockNodeDriver, "nl", [])
+
+
+class MockNodeDriverArgless(MockNodeDriver):
+
+    def __init__(self):
+        pass
 

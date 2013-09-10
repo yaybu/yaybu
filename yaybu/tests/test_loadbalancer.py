@@ -16,7 +16,7 @@ from libcloud.loadbalancer.base import Algorithm, Member
 
 from yaybu import error
 from yaybu.tests.base import TestCase
-from yaybu.tests.mocks.libcloud_loadbalancer import MockLoadBalancer
+from yaybu.tests.mocks.libcloud_loadbalancer import MockLoadBalancer, MockLoadBalancerArgless
 
 
 class TestLoadBalancer(TestCase):
@@ -233,4 +233,29 @@ class TestLoadBalancer(TestCase):
 
         members = self.driver.get_balancer(balancer.id).list_members()
         self.assertEqual(len(members), 0)
+
+
+class TestLoadBalancerArgless(TestCase):
+
+    def setUp(self):
+        MockLoadBalancerArgless.install(self)
+        self.driver = MockLoadBalancerArgless()
+
+    def test_empty_records_list(self):
+        self.assertEqual(self.driver.list_balancers(), [])
+
+        self.up("""
+            new LoadBalancer as mylb:
+                name: my_test_loadbalancer
+                driver: DUMMY
+                port: 80
+                protocol: http
+                algorithm: random
+                members: []
+            """)
+
+        balancers = self.driver.list_balancers()
+        self.assertEqual(len(balancers), 1)
+        self.assertEqual(balancers[0].name, "my_test_loadbalancer")
+        self.assertEqual(balancers[0].port, 80)
 

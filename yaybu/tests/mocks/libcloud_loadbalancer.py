@@ -29,7 +29,7 @@ class MockLoadBalancer(Driver):
         testcase.addCleanup(setattr, MockLoadBalancer, "next_id", 0)
         testcase.addCleanup(setattr, MockLoadBalancer, "balancers", {})
 
-        LoadBalancer.extra_drivers['DUMMY'] = MockLoadBalancer
+        LoadBalancer.extra_drivers['DUMMY'] = cls
         testcase.addCleanup(LoadBalancer.extra_drivers.pop, 'DUMMY', None)
 
     def __init__(self, key, secret):
@@ -91,4 +91,10 @@ class MockLoadBalancer(Driver):
 
     def balancer_list_members(self, balancer):
         return list(balancer._members)
+
+
+class MockLoadBalancerArgless(MockLoadBalancer):
+
+    def __init__(self):
+        pass
 

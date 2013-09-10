@@ -14,7 +14,7 @@
 
 from yaybu import error
 from yaybu.tests.base import TestCase
-from yaybu.tests.mocks.libcloud_compute import MockNodeDriver
+from yaybu.tests.mocks.libcloud_compute import MockNodeDriver, MockNodeDriverArgless
 
 
 class TestCompute(TestCase):
@@ -151,4 +151,25 @@ class TestComputeCluster(TestCase):
         nodes = self.driver.list_nodes()
         self.assertEqual(len(nodes), 2)
         self.assertEqual(set(n.name for n in nodes), set(("hello1", "hello2")))
+
+
+class TestComputeArgless(TestCase):
+
+    def setUp(self):
+        MockNodeDriverArgless.install(self)
+        self.driver = MockNodeDriverArgless()
+
+    def test_empty_compute_node(self):
+        self.assertEqual(len(self.driver.list_nodes()), 0)
+        self.up("""
+            new Compute as myserver:
+                name: hello
+                driver: DUMMY
+                image: ubuntu
+                size: big
+                key: foo
+            """)
+        nodes = self.driver.list_nodes()
+        self.assertEqual(len(nodes), 1)
+        self.assertEqual(nodes[0].name, "hello")
 

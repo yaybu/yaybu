@@ -15,6 +15,14 @@ Changelog for yaybu
   suggest the closest driver id where possible. E.g. for ``ROUTE52`` suggest
   ``ROUTE53``.
 
+- You can now pass a driver id directly as the driver parameter if no
+  additional arguments are required. E.g. for vmware::
+
+      new Compute as myinstance:
+          name: test1234
+          driver: VMWARE
+          <snip>
+
 
 3.0 (2013-09-04)
 ----------------

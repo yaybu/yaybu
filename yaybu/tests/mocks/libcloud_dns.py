@@ -30,8 +30,14 @@ class MockDNSDriver(DummyDNSDriver):
         pass
 
     @classmethod
-    def install(self, test_case):
-        Zone.extra_drivers['DUMMY'] = MockDNSDriver
+    def install(cls, test_case):
+        Zone.extra_drivers['DUMMY'] = cls
         test_case.addCleanup(Zone.extra_drivers.pop, 'DUMMY', None)
         test_case.addCleanup(setattr, MockDNSDriver, "_zones", {})
+
+
+class MockDNSDriverArgless(MockDNSDriver):
+
+    def __init__(self):
+        pass
 
