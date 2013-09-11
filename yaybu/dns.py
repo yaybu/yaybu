@@ -173,7 +173,7 @@ class Zone(base.GraphExternalAction):
     @property
     @memoized
     def driver(self):
-        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers)
+        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers, self.root)
 
     def test(self):
         with self.root.ui.throbber("Testing DNS credentials/connectivity") as throbber:

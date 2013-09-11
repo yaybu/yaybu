@@ -65,7 +65,7 @@ class Compute(base.GraphExternalAction):
     @property
     @memoized
     def driver(self):
-        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers)
+        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers, self.root)
 
     @property
     @memoized

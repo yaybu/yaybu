@@ -53,7 +53,7 @@ def args_from_expression(func, expression, ignore=(), kwargs=()):
     return result
 
 
-def get_driver_from_expression(expression, get_driver, provider, extra_drivers, ignore=()):
+def get_driver_from_expression(expression, get_driver, provider, extra_drivers, context, ignore=()):
     try:
         driver_id = expression.as_string()
         driver_id_expr = expression
@@ -80,4 +80,5 @@ def get_driver_from_expression(expression, get_driver, provider, extra_drivers, 
                 msg.append("The closest valid drivers are: %s" % "/".join(possible))
             raise error.ValueError('\n'.join(msg), anchor=driver_id_expr.expand().anchor)
     driver = Driver(**args_from_expression(Driver, expression, ignore=ignore))
+    driver.yaybu_context = context
     return driver

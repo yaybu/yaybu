@@ -129,7 +129,7 @@ class LoadBalancer(base.GraphExternalAction):
     @property
     @memoized
     def driver(self):
-        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers)
+        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers, self.root)
 
     def _find_balancer(self):
         if "balancer_id" in self.state:

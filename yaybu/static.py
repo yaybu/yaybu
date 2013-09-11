@@ -49,7 +49,7 @@ class StaticContainer(base.GraphExternalAction):
         try:
             return self._get_source_container_from_string()
         except errors.TypeError:
-            driver = get_driver_from_expression(self.params.source, get_driver, Provider, self.extra_drivers, ignore=("container", ))
+            driver = get_driver_from_expression(self.params.source, get_driver, Provider, self.extra_drivers, self.root, ignore=("container", ))
             container = driver.get_container(self.params.source.container.as_string())
             return container
 
@@ -60,7 +60,7 @@ class StaticContainer(base.GraphExternalAction):
         return driver.get_container(os.path.basename(directory))
 
     def _get_destination_container(self):
-        driver = get_driver_from_expression(self.params.destination, get_driver, Provider, self.extra_drivers, ignore=("container", ))
+        driver = get_driver_from_expression(self.params.destination, get_driver, Provider, self.extra_drivers, self.root, ignore=("container", ))
 
         container_name = self.params.destination.container.as_string()
         changed = False
