@@ -6,6 +6,9 @@ python:
 install: pip install -r requirements.txt
 script: nose2 --plugin nose2_cov yaybu
 
+after_success:
+  - coveralls
+
 notifications:
     irc: "irc.oftc.net#yaybu"
     on_success: change
