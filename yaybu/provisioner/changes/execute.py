@@ -15,15 +15,9 @@
 import posixpath
 import shlex
 
-from yay import String
 from yay.ast import AST
 
 from yaybu import error, changes
-
-
-class Command(String):
-    """ Horrible horrible cludge """
-    pass
 
 
 class ShellCommand(changes.Change):
@@ -55,11 +49,7 @@ class ShellCommand(changes.Change):
     def apply(self, ctx, renderer):
         transport = ctx.transport
 
-        if isinstance(self.command, Command):
-            raise NotImplementedError
-        elif isinstance(self.command, String):
-            raise NotImplementedError
-        elif isinstance(self.command, list):
+        if isinstance(self.command, list):
             command = []
             for c in self.command:
                 if isinstance(c, AST):
