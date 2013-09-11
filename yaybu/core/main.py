@@ -49,16 +49,6 @@ def _main():
         opts.logfile = "-"
         opts.verbose = 2
 
-    if sys.platform == "darwin":
-        # CA certs on darwin are in the system keyring - they can be readily accessed with commands like:
-        #   security export -k /System/Library/Keychains/SystemCACertificates.keychain -t certs
-        # However i'm not sure how libcloud/python can take a stream of certs - it looks like the certs have to exist on disk!!
-        # For now, turning cert verification off on Macs.
-        import libcloud.security
-        libcloud.security.VERIFY_SSL_CERT = False
-        libcloud.security.VERIFY_SSL_CERT_STRICT = False
-
-
     logging.getLogger("paramiko.transport").setLevel(logging.CRITICAL)
 
     atexit.register(logging.shutdown)
