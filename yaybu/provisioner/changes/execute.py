@@ -78,10 +78,7 @@ class ShellCommand(changes.Change):
 
         if self.env:
             for key, item in self.env.iteritems():
-                if isinstance(item, String):
-                    env[key] = item.unprotected.encode("UTF-8")
-                else:
-                    env[key] = item
+                env[key] = item
 
         if ctx.simulate:
             self.returncode = 0
