@@ -1,5 +1,6 @@
 nose2
 nose2-cov
+python-coveralls
 unittest2
 mock
 fakechroot
