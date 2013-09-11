@@ -132,18 +132,7 @@ class Config(BaseConfig):
 
         super(Config, self).__init__(searchpath=searchpath, config=config)
 
-        import yaybu
-        self.builtins = {
-            "Compute": ast.PythonClassFactory(Compute),
-            "Provisioner": ast.PythonClassFactory(Provision),
-            "LoadBalancer": ast.PythonClassFactory(LoadBalancer),
-            "Zone": ast.PythonClassFactory(Zone),
-            "Heroku": ast.PythonClassFactory(Heroku),
-            "StaticContainer": ast.PythonClassFactory(StaticContainer),
-            "GitChangeSource": ast.PythonClassFactory(GitChangeSource),
-            "GitHubChangeSource": ast.PythonClassFactory(GitHubChangeSource),
-            "Printer": ast.PythonClassFactory(Printer),
-            }
+        self.setup_builtins()
 
         if hostname:
             self.set_hostname(hostname)
@@ -161,6 +150,19 @@ class Config(BaseConfig):
     def setup_openers(self, searchpath):
         self.add({"yaybu": {"searchpath": searchpath or []}})
         self.openers = Openers(searchpath=SearchpathFromGraph(self.yaybu.searchpath))
+
+    def setup_builtins(self):
+        self.builtins = {
+            "Compute": ast.PythonClassFactory(Compute),
+            "Provisioner": ast.PythonClassFactory(Provision),
+            "LoadBalancer": ast.PythonClassFactory(LoadBalancer),
+            "Zone": ast.PythonClassFactory(Zone),
+            "Heroku": ast.PythonClassFactory(Heroku),
+            "StaticContainer": ast.PythonClassFactory(StaticContainer),
+            "GitChangeSource": ast.PythonClassFactory(GitChangeSource),
+            "GitHubChangeSource": ast.PythonClassFactory(GitHubChangeSource),
+            "Printer": ast.PythonClassFactory(Printer),
+            }
 
     def set_arguments(self, **arguments):
         parser = YaybuArgParser()

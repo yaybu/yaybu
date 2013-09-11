@@ -23,6 +23,7 @@ import pprint
 import yay
 import yay.errors
 from yaybu.core import error, util
+from yaybu.core.config import Config
 from yaybu.compute.vmware import VMBoxImage
 
 logger = logging.getLogger("yaybu.core.command")
@@ -147,6 +148,7 @@ class YaybuCmd(OptionParsingCmd):
 
     prompt = "yaybu> "
     interactive_shell = True
+    Config = Config
 
     def __init__(self, config=None, ypath=(), verbose=2, logfile=None, debug=False):
         """ Global options are provided on the command line, before the
@@ -181,8 +183,7 @@ class YaybuCmd(OptionParsingCmd):
         print ""
 
     def _get_graph(self, opts, args):
-        from yaybu.core.config import Config
-        graph = Config()
+        graph = self.Config()
         graph.simulate = getattr(opts, "simulate", True)
         graph.resume = getattr(opts, "resume", False)
         graph.no_resume = getattr(opts, "no_resume", False)

@@ -17,11 +17,14 @@ import os
 import tempfile
 import unittest2
 
+from yaybu.core.config import Config
 from yaybu.core.command import YaybuCmd
 from yaybu import error
 
 
 class TestCase(unittest2.TestCase):
+
+    Config = Config
 
     def _config(self, contents):
         f = tempfile.NamedTemporaryFile(delete=False)
@@ -36,6 +39,7 @@ class TestCase(unittest2.TestCase):
         config_dir = os.path.dirname(config_file)
         p = OptionParser()
         y = YaybuCmd(config_file, ypath=(config_dir, ))
+        y.Config = self.Config
         y.verbose = 2
         y.debug = True
         getattr(y, "opts_" + action)(p)

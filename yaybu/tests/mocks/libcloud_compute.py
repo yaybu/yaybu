@@ -29,7 +29,7 @@ class MockNodeDriver(DummyNodeDriver):
 
     nl = []
 
-    def __init__(self, api_key, secret):
+    def __init__(self, api_key, secret, a=1, b="foo", c=4.5):
         pass
 
     def create_node(self, **kwargs):

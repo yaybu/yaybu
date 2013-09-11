@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from yay import errors
 from yaybu import error
 from yaybu.tests.base import TestCase
 from yaybu.tests.mocks.libcloud_compute import MockNodeDriver, MockNodeDriverArgless
@@ -31,6 +32,62 @@ class TestCompute(TestCase):
                     id: DUMMYY
                     api_key: dummykey
                     secret: dummysecret
+                image: ubuntu
+                size: big
+                key: foo
+            """)
+
+    def test_passing_int_to_driver(self):
+        self.up("""
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    a: 55
+                image: ubuntu
+                size: big
+                key: foo
+            """)
+
+    def test_passing_int_to_driver_exception(self):
+        self.assertRaises(errors.TypeError, self.up, """
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    a: penguin
+                image: ubuntu
+                size: big
+                key: foo
+            """)
+
+    def test_passing_str_to_driver(self):
+        self.up("""
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    b: penguin
+                image: ubuntu
+                size: big
+                key: foo
+            """)
+
+    def test_passing_str_to_driver_exception(self):
+        self.assertRaises(errors.TypeError, self.up, """
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    b: []
                 image: ubuntu
                 size: big
                 key: foo
