@@ -8,6 +8,9 @@ Changelog for yaybu
   DNS zone's that it didn't create. If it is ``False`` then it will remove any
   records that arent declared in your configuration.
 
+- Add support for ``MINIDNS`` (a simple local DNS server for developing
+  against).
+
 - ``LoadBalancer`` part has better validation - and more useful errors if you
   provide an incorrect value for an enum.
 
