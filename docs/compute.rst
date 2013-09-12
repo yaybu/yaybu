@@ -152,9 +152,7 @@ Now your ``Yaybufile`` looks like this::
 
     new Compute as server:
         name: mytest vm
-
-        driver:
-            id: VMWARE
+        driver: VMWARE
 
         image:
             id: ~/vmware/ubuntu/ubuntu.vmx
