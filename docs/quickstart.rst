@@ -44,6 +44,7 @@ Amazon EC2, BigV and Gandi DNS all from the same deployment::
                 secret: yourpassword
 
             image: ami-57afb223
+            size: m1.micro
             name: test_at_ec2
 
             user: root
