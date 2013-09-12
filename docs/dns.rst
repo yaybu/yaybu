@@ -51,6 +51,19 @@ Supported services
 
 Using ``libcloud`` to implement this part allows us to support a number of DNS services. Some of these receive more extensive real world testing than others and are listed in this section.
 
+minidns
+-------
+
+`minidns <https://pypi.python.org/pypi/minidns>`_ is a simple DNS server with a REST API for supporting local development. If you want to use it with Yaybu the driver id is ``MINIDNS``::
+
+    new Zone as dns:
+        driver: MINIDNS
+        domain: example.com
+        records:
+          - name: www
+            data: 192.168.0.1
+
+
 Gandi
 -----
 
