@@ -19,13 +19,13 @@ from yaybu.core import error
 class TestEvents(TestCase):
 
     def test_nochange(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - Directory:
                   name: /etc/wibble
             """)
 
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
               - Directory:
                   name: /etc/wibble
@@ -39,7 +39,7 @@ class TestEvents(TestCase):
             """)
 
     def test_recover(self):
-        self.assertRaises(error.PathComponentMissing, self.chroot.apply, """
+        self.assertRaises(error.PathComponentMissing, self.apply, """
             resources:
               - Directory:
                   name: /etc/somedir
@@ -55,7 +55,7 @@ class TestEvents(TestCase):
                          on: Directory[/etc/somedir]
             """)
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - Directory:
                   name: /etc/somedir

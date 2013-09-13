@@ -319,7 +319,7 @@ class TestResourceBundle(unittest.TestCase):
 class TestWatched(TestCase):
 
     def test_watched(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Execute:
                     name: test_watched

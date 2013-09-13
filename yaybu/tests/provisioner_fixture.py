@@ -33,16 +33,22 @@ class YaybuFakeChroot(unittest2.FakeChroot):
 
     Exception = SkipTest
 
+
+class TestCase(unittest2.TestCase):
+
+    FakeChroot = YaybuFakeChroot
+    location = os.path.join(os.path.dirname(__file__), "..", "..", "..")
+
     def yaybu(self, configfile, *args):
         from yaybu.provisioner.transports import FakechrootTransport
-        FakechrootTransport.env = self.get_env()
-        FakechrootTransport.chroot_path = self.chroot_path
-        FakechrootTransport.overlay_dir = self.overlay_dir
+        FakechrootTransport.env = self.chroot.get_env()
+        FakechrootTransport.chroot_path = self.chroot.chroot_path
+        FakechrootTransport.overlay_dir = self.chroot.overlay_dir
 
         from yaybu.provisioner import Provision
         Provision.Transport = FakechrootTransport
 
-        filespath = os.path.join(self.chroot_path, "/tmp", "files")
+        filespath = os.path.join(self.chroot.chroot_path, "/tmp", "files")
         from yaybu.core.command import YaybuCmd
         from optparse import OptionParser
 
@@ -55,8 +61,8 @@ class YaybuFakeChroot(unittest2.FakeChroot):
         return y.do_up(*p.parse_args(list(args)))
 
     def apply(self, contents, *args):
-        path = self.write_temporary_file(contents)[0]
-        path2 = self.write_temporary_file(
+        path = self.chroot.write_temporary_file(contents)[0]
+        path2 = self.chroot.write_temporary_file(
             """
             include "%s"
             main:
@@ -85,9 +91,4 @@ class YaybuFakeChroot(unittest2.FakeChroot):
 
         raise CalledProcessError("Change still outstanding")
 
-
-class TestCase(unittest2.TestCase):
-
-    FakeChroot = YaybuFakeChroot
-    location = os.path.join(os.path.dirname(__file__), "..", "..", "..")
 

@@ -18,14 +18,14 @@ from yaybu import error
 class TestPackageInstallation(TestCase):
 
     def test_already_installed(self):
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
               - Package:
                   name: python
             """)
 
     def test_installation(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - Package:
                   name: hello
@@ -33,7 +33,7 @@ class TestPackageInstallation(TestCase):
 
     def test_nonexistent_package(self):
         """ Try to install a package that does not exist. """
-        self.assertRaises(error.AptError, self.chroot.apply, """
+        self.assertRaises(error.AptError, self.apply, """
             resources:
               - Package:
                   name: zzzz
@@ -54,21 +54,21 @@ class TestPackageInstallation(TestCase):
                   policy: uninstall
             """
 
-        self.chroot.check_apply(hello_install)
-        self.chroot.check_apply(hello_remove)
-        self.chroot.check_apply(hello_install)
+        self.check_apply(hello_install)
+        self.check_apply(hello_remove)
+        self.check_apply(hello_install)
 
 
 class TestPackageRemoval(TestCase):
 
     def test_installed(self):
         """ Try removing a package that is installed. """
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - Package:
                   name: zip
             """)
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - Package:
                   name: zip

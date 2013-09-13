@@ -19,7 +19,7 @@ from yaybu import error
 class TestGroup(TestCase):
 
     def test_simple_group(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Group:
                     name: test
@@ -28,7 +28,7 @@ class TestGroup(TestCase):
         self.failUnless(self.chroot.get_group("test"))
 
     def test_group_with_gid(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Group:
                     name: test
@@ -42,7 +42,7 @@ class TestGroup(TestCase):
 
         self.failUnless(self.chroot.get_group("users"))
 
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
                 - Group:
                     name: users
@@ -52,7 +52,7 @@ class TestGroup(TestCase):
 
     def test_existing_gid(self):
         """ Test creating a group whose specified gid already exists. """
-        self.assertRaises(error.InvalidGroup, self.chroot.apply, """
+        self.assertRaises(error.InvalidGroup, self.apply, """
             resources:
                 - Group:
                     name: test
@@ -61,7 +61,7 @@ class TestGroup(TestCase):
         self.failUnlessRaises(KeyError, self.chroot.get_group, "test")
 
     def test_add_group_and_use_it(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Group:
                     name: test
@@ -82,7 +82,7 @@ class TestGroupRemove(TestCase):
     def test_remove_existing(self):
         self.failUnless(self.chroot.get_group("users"))
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Group:
                     name: users
@@ -94,7 +94,7 @@ class TestGroupRemove(TestCase):
     def test_remove_non_existing(self):
         self.failUnlessRaises(KeyError, self.chroot.get_group, "zzidontexistzz")
 
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
                 - Group:
                     name: zzidontexistzz

@@ -19,20 +19,20 @@ from yaybu.core import error
 class TestUser(TestCase):
 
     def test_simple_user(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
             """)
 
     def test_disabled_login(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     - name: test
                       disabled_login: True
             """)
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
                 - User:
                     - name: test
@@ -40,7 +40,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_home(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -48,7 +48,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_impossible_home(self):
-        self.assertRaises(error.UserAddError, self.chroot.apply, """
+        self.assertRaises(error.UserAddError, self.apply, """
             resources:
                 - User:
                     name: test
@@ -56,7 +56,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_uid(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -64,7 +64,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_gid(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Group:
                     name: testgroup
@@ -75,7 +75,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_fullname(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -83,7 +83,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_password(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -91,7 +91,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_group(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -99,7 +99,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_groups(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -108,7 +108,7 @@ class TestUser(TestCase):
             """)
 
     def test_user_with_groups_replace(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: test
@@ -123,7 +123,7 @@ class TestUserRemove(TestCase):
     def test_remove_existing(self):
         self.failUnless(self.chroot.get_user("nobody"))
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - User:
                     name: nobody
@@ -135,7 +135,7 @@ class TestUserRemove(TestCase):
     def test_remove_non_existing(self):
         self.failUnlessRaises(KeyError, self.chroot.get_user, "zzidontexistzz")
 
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
                 - User:
                     name: zzidontexistzz

@@ -25,7 +25,7 @@ def sibpath(filename):
 class TestFileApply(TestCase):
 
     def test_create_missing_component(self):
-        self.assertRaises(error.PathComponentMissing, self.chroot.apply, """
+        self.assertRaises(error.PathComponentMissing, self.apply, """
             resources:
               - File:
                   name: /etc/missing/filename
@@ -36,14 +36,14 @@ class TestFileApply(TestCase):
         Right now we treat missing directories as a warning in simulate mode, as other outside processes might have created them.
         Later on we might not generate warnings for resources we can see will be created
         """
-        self.chroot.apply("""
+        self.apply("""
             resources:
               - File:
                   name: /etc/missing/filename
             """, "--simulate")
 
     def test_create_file(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - File:
                   name: /etc/somefile
@@ -54,7 +54,7 @@ class TestFileApply(TestCase):
         self.failUnlessExists("/etc/somefile")
 
     def test_attributes(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - File:
                   name: /etc/somefile2
@@ -70,7 +70,7 @@ class TestFileApply(TestCase):
         self.assertEqual(mode, 0666)
 
     def test_create_file_template(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - File:
                     name: /etc/templated
@@ -84,7 +84,7 @@ class TestFileApply(TestCase):
         self.failUnlessExists("/etc/templated")
 
     def test_create_file_template_with_extends(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - File:
                     name: /etc/templated
@@ -103,7 +103,7 @@ class TestFileApply(TestCase):
         with self.chroot.open("/etc/test_modify_file", "w") as fp:
             fp.write("foo\nbar\nbaz")
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - File:
                     name: /etc/test_modify_file
@@ -114,12 +114,12 @@ class TestFileApply(TestCase):
             """)
 
     def test_remove_file(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - File:
                   name: /etc/toremove
             """)
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - File:
                   name: /etc/toremove
@@ -132,7 +132,7 @@ class TestFileApply(TestCase):
         with self.chroot.open("/etc/foo", "w") as fp:
             fp.write("foo")
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - File:
                     name: /etc/foo
@@ -143,7 +143,7 @@ class TestFileApply(TestCase):
             fp.write("")
         os.chmod(self.chroot._enpathinate("/etc/foo"), 0644)
 
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
                 - File:
                     name: /etc/foo
@@ -155,7 +155,7 @@ class TestFileApply(TestCase):
             fp.write("foo\n")
         os.chmod(self.chroot._enpathinate("/etc/test_carriage_returns"), 0644)
 
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
                 - File:
                     name: /etc/test_carriage_returns
@@ -168,7 +168,7 @@ class TestFileApply(TestCase):
             fp.write("foo\n")
         os.chmod(self.chroot._enpathinate("/etc/test_carriage_returns2"), 0644)
 
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
                 - File:
                     name: /etc/test_carriage_returns2
@@ -176,11 +176,11 @@ class TestFileApply(TestCase):
             """)
 
     def test_unicode(self):
-        self.chroot.check_apply(open(sibpath("assets/unicode1.yay")).read())
+        self.check_apply(open(sibpath("assets/unicode1.yay")).read())
 
     def test_static(self):
         """ Test setting the contents to that of a static file. """
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - File:
                     name: /etc/foo
@@ -188,7 +188,7 @@ class TestFileApply(TestCase):
             """)
 
     def test_static_empty(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - File:
                     name: /etc/foo
@@ -197,7 +197,7 @@ class TestFileApply(TestCase):
 
     def test_missing(self):
         """ Test trying to use a file that isn't in the yaybu path """
-        self.assertRaises(error.MissingAsset, self.chroot.apply, """
+        self.assertRaises(error.MissingAsset, self.apply, """
             resources:
                 - File:
                     name: /etc/foo
@@ -212,7 +212,7 @@ class TestFileRemove(TestCase):
         with self.chroot.open("/etc/bar","w") as fp:
             fp.write("")
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - File:
                     name: /etc/bar
@@ -222,7 +222,7 @@ class TestFileRemove(TestCase):
     def test_remove_missing(self):
         """ Test removing a file that does not exist. """
         self.failIfExists("/etc/baz")
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
                 - File:
                     name: /etc/baz
@@ -232,7 +232,7 @@ class TestFileRemove(TestCase):
     def test_remove_notafile(self):
         """ Test removing something that is not a file. """
         self.chroot.mkdir("/etc/qux")
-        self.assertRaises(error.InvalidProvider, self.chroot.apply, """
+        self.assertRaises(error.InvalidProvider, self.apply, """
             resources:
                 - File:
                     name: /etc/qux

@@ -28,7 +28,7 @@ def sibpath(filename):
 class TestDirectory(TestCase):
 
     def test_create_directory(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - Directory:
                   name: /etc/somedir
@@ -38,7 +38,7 @@ class TestDirectory(TestCase):
         self.failUnless(self.chroot.isdir("/etc/somedir"))
 
     def test_create_directory_and_parents(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Directory:
                     name: /etc/foo/bar/baz
@@ -48,7 +48,7 @@ class TestDirectory(TestCase):
 
     def test_remove_directory(self):
         self.chroot.mkdir("/etc/somedir")
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - Directory:
                   name: /etc/somedir
@@ -58,7 +58,7 @@ class TestDirectory(TestCase):
     def test_remove_directory_recursive(self):
         self.chroot.mkdir("/etc/somedir")
         self.chroot.touch("/etc/somedir/child")
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Directory:
                     name: /etc/somedir
@@ -68,11 +68,11 @@ class TestDirectory(TestCase):
 
     def test_unicode(self):
         utf8 = "/etc/£££££" # this is utf-8 encoded
-        self.chroot.check_apply(open(sibpath("assets/directory_unicode1.yay")).read())
+        self.check_apply(open(sibpath("assets/directory_unicode1.yay")).read())
         self.failUnlessExists(utf8)
 
     def test_attributes(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - Directory:
                   name: /etc/somedir2

@@ -19,7 +19,7 @@ from yaybu.core.error import MissingDependency
 class SubversionMissingTest(TestCase):
 
     def test_missing_svn(self):
-        self.assertRaises(MissingDependency, self.chroot.apply, """
+        self.assertRaises(MissingDependency, self.apply, """
            resources:
                - Checkout:
                    scm: subversion

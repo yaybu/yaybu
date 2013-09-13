@@ -60,7 +60,7 @@ class TestSimpleService(TestCase):
             fp.write(simpleservice)
 
     def test_start(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Service:
                     name: test
@@ -77,7 +77,7 @@ class TestSimpleService(TestCase):
     def test_stop(self):
         self.chroot.call(["python", "/bin/simple_daemon"])
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Service:
                     name: test
@@ -87,7 +87,7 @@ class TestSimpleService(TestCase):
             """)
 
     def test_restart(self):
-        self.chroot.apply("""
+        self.apply("""
             resources:
                 - Service:
                     name: test
@@ -100,7 +100,7 @@ class TestSimpleService(TestCase):
         self.failUnlessExists("/foo")
 
     def test_running_true(self):
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
                 - Service:
                     name: test
@@ -109,7 +109,7 @@ class TestSimpleService(TestCase):
             """)
 
     def test_running_false(self):
-        self.chroot.apply("""
+        self.apply("""
             resources:
                 - Service:
                     name: test

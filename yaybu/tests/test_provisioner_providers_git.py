@@ -32,7 +32,7 @@ class GitTest(TestCase):
 
     def test_clone(self):
         CLONED_REPO = "/tmp/test_clone"
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -51,7 +51,7 @@ class GitTest(TestCase):
         CLONED_REPO = "/tmp/test_change_branch"
 
         # Do the initial checkout
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -65,7 +65,7 @@ class GitTest(TestCase):
         )
 
         # Change to another ref
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -86,7 +86,7 @@ class GitTest(TestCase):
         CLONED_REPO = "/tmp/test_checkout_tag"
         TAG = "0.1.0"
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -138,9 +138,9 @@ class GitTest(TestCase):
             "branch_or_tag": TAG,
         }
 
-        self.chroot.check_apply(branch)
-        self.chroot.check_apply(tag)
-        self.chroot.check_apply(branch)
+        self.check_apply(branch)
+        self.check_apply(tag)
+        self.check_apply(branch)
 
     def test_change_repo(self):
         """Test for the edge-case where a different repository must be checked
@@ -148,7 +148,7 @@ class GitTest(TestCase):
 
         CLONED_REPO = "/tmp/test_change_repo"
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -161,7 +161,7 @@ class GitTest(TestCase):
             }
         )
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Checkout:
                     scm: git
@@ -179,7 +179,7 @@ class GitTest(TestCase):
 
         CLONED_REPO = "/tmp/test_checkout_revision"
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Checkout:
                     scm: git

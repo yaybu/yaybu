@@ -19,7 +19,7 @@ from yaybu.core import error
 class TestArgumentParser(TestCase):
 
     def test_invalid_param(self):
-        self.assertRaises(error.ParseError, self.chroot.apply, """
+        self.assertRaises(error.ParseError, self.apply, """
             resources:
                 - Execute:
                     name: test_invalid_param
@@ -27,7 +27,7 @@ class TestArgumentParser(TestCase):
             """)
 
     def test_missing_arg(self):
-        self.assertRaises(error.NoMatching, self.chroot.apply, """
+        self.assertRaises(error.NoMatching, self.apply, """
             resources:
                 - Execute:
                     name: test_missing_arg
@@ -35,7 +35,7 @@ class TestArgumentParser(TestCase):
             """)
 
     def test_incorrect_policy(self):
-        self.assertRaises(error.ParseError, self.chroot.apply, """
+        self.assertRaises(error.ParseError, self.apply, """
             resources:
                 - Execute:
                     name: test_incorrect_policy
@@ -44,7 +44,7 @@ class TestArgumentParser(TestCase):
             """)
 
     def test_incorrect_policy_collection(self):
-        self.assertRaises(error.ParseError, self.chroot.apply, """
+        self.assertRaises(error.ParseError, self.apply, """
             resources:
                 - File:
                     name: /tmp/wibble
@@ -59,7 +59,7 @@ class TestArgumentParser(TestCase):
             """)
 
     def test_incorrect_policy_collection_type(self):
-        self.assertRaises(error.ParseError, self.chroot.apply, """
+        self.assertRaises(error.ParseError, self.apply, """
             resources:
                 - File:
                     name: /tmp/wibble
@@ -74,7 +74,7 @@ class TestArgumentParser(TestCase):
             """)
 
     def test_incorrect_policy_collection_bind(self):
-        self.assertRaises(error.BindingError, self.chroot.apply, """
+        self.assertRaises(error.BindingError, self.apply, """
             resources:
                 - File:
                     name: /tmp/wibble

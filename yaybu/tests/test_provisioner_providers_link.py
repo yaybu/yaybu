@@ -24,7 +24,7 @@ def sibpath(filename):
 class TestLink(TestCase):
 
     def test_create_link(self):
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
               - Link:
                   name: /etc/somelink
@@ -37,7 +37,7 @@ class TestLink(TestCase):
 
     def test_remove_link(self):
         self.chroot.symlink("/", "/etc/toremovelink")
-        rv = self.chroot.check_apply("""
+        rv = self.check_apply("""
             resources:
               - Link:
                   name: /etc/toremovelink
@@ -47,7 +47,7 @@ class TestLink(TestCase):
 
     def test_already_exists(self):
         self.chroot.symlink("/", "/etc/existing")
-        self.assertRaises(error.NothingChanged, self.chroot.apply, """
+        self.assertRaises(error.NothingChanged, self.apply, """
             resources:
               - Link:
                   name: /etc/existing
@@ -62,7 +62,7 @@ class TestLink(TestCase):
         with self.chroot.open("/foo", "w") as fp:
             fp.write("")
 
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Link:
                     name: /bar_notalink
@@ -76,7 +76,7 @@ class TestLink(TestCase):
         self.chroot.touch("/baz")
         self.chroot.touch("/foo")
         self.chroot.symlink("/baz", "/bar_elsewhere")
-        self.chroot.check_apply("""
+        self.check_apply("""
             resources:
                 - Link:
                     name: /bar_elsewhere
@@ -85,7 +85,7 @@ class TestLink(TestCase):
         self.failUnlessEqual(self.chroot.readlink("/bar_elsewhere"), "/foo")
 
     def test_dangling(self):
-        self.assertRaises(error.DanglingSymlink, self.chroot.apply, """
+        self.assertRaises(error.DanglingSymlink, self.apply, """
         resources:
              - Link:
                  name: /etc/test_dangling
@@ -93,5 +93,5 @@ class TestLink(TestCase):
         """)
 
     def test_unicode(self):
-        self.chroot.check_apply(open(sibpath("assets/link_unicode1.yay")).read())
+        self.check_apply(open(sibpath("assets/link_unicode1.yay")).read())
 
