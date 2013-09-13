@@ -20,6 +20,7 @@ import unittest2
 from yaybu.core.config import Config
 from yaybu.core.command import YaybuCmd
 from yaybu import error
+import yaybu
 
 
 class TestCase(unittest2.TestCase):
