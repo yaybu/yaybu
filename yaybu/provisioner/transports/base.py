@@ -26,11 +26,11 @@ class Transport(object):
     env_passthrough = []
 
     def __init__(self, context, verbose=0, simulate=False):
-        self.simulate = context.simulate
-        self.verbose = context.verbose
+        self.simulate = simulate
+        self.verbose = verbose
         self.context = context
 
-    def execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
+    def _execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
         # No need to change user if we are already the right one
         if not user:
             user = self.whoami()
@@ -89,5 +89,7 @@ class Transport(object):
             ])
 
         full_command.extend(["sh", "-c", "; ".join(parts)])
-        return self._execute(full_command, stdin, stdout, stderr)
+        return self._execute_impl(full_command, stdin, stdout, stderr)
+
+    execute = _execute
 

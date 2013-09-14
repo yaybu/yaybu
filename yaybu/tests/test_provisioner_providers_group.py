@@ -25,7 +25,7 @@ class TestGroup(TestCase):
                     name: test
             """)
 
-        self.failUnless(self.chroot.get_group("test"))
+        self.failUnless(self.transport.getgrnam("test"))
 
     def test_group_with_gid(self):
         self.check_apply("""
@@ -35,12 +35,12 @@ class TestGroup(TestCase):
                     gid: 1111
             """)
 
-        self.failUnless(self.chroot.get_group("test"))
+        self.failUnless(self.transport.getgrnam("test"))
 
     def test_existing_group(self):
         """ Test creating a group whose name already exists. """
 
-        self.failUnless(self.chroot.get_group("users"))
+        self.failUnless(self.transport.getgrnam("users"))
 
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
@@ -48,7 +48,7 @@ class TestGroup(TestCase):
                     name: users
             """)
 
-        self.failUnless(self.chroot.get_group("users"))
+        self.failUnless(self.transport.getgrnam("users"))
 
     def test_existing_gid(self):
         """ Test creating a group whose specified gid already exists. """
@@ -58,7 +58,7 @@ class TestGroup(TestCase):
                     name: test
                     gid: 100
             """)
-        self.failUnlessRaises(KeyError, self.chroot.get_group, "test")
+        self.failUnlessRaises(KeyError, self.transport.getgrnam, "test")
 
     def test_add_group_and_use_it(self):
         self.check_apply("""
@@ -74,13 +74,13 @@ class TestGroup(TestCase):
                     creates: /etc/test2
                     group: test
             """)
-        self.failUnlessEqual(self.chroot.open("/etc/test2").read(), "test")
+        self.failUnlessEqual(self.transport.get("/etc/test2"), "test")
 
 
 class TestGroupRemove(TestCase):
 
     def test_remove_existing(self):
-        self.failUnless(self.chroot.get_group("users"))
+        self.failUnless(self.transport.getgrnam("users"))
 
         self.check_apply("""
             resources:
@@ -89,10 +89,10 @@ class TestGroupRemove(TestCase):
                     policy: remove
             """)
 
-        self.failUnlessRaises(KeyError, self.chroot.get_group, "users")
+        self.failUnlessRaises(KeyError, self.transport.getgrnam, "users")
 
     def test_remove_non_existing(self):
-        self.failUnlessRaises(KeyError, self.chroot.get_group, "zzidontexistzz")
+        self.failUnlessRaises(KeyError, self.transport.getgrnam, "zzidontexistzz")
 
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
@@ -101,6 +101,6 @@ class TestGroupRemove(TestCase):
                     policy: remove
             """)
 
-        self.failUnlessRaises(KeyError, self.chroot.get_group, "zzidontexistzz")
+        self.failUnlessRaises(KeyError, self.transport.getgrnam, "zzidontexistzz")
 
 

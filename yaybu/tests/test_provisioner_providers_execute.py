@@ -31,9 +31,8 @@ touch /etc/test_execute_touches
 class TestExecute(TestCase):
 
     def test_execute_on_path(self):
-        with self.chroot.open("/usr/bin/test_execute_on_path.sh", "w") as fp:
-            fp.write(test_execute_on_path)
-        self.chroot.chmod("/usr/bin/test_execute_on_path.sh", 0755)
+        self.transport.put("/usr/bin/test_execute_on_path.sh", test_execute_on_path)
+        self.transport.execute(["chmod", "0755", "/usr/bin/test_execute_on_path.sh"])
 
         self.check_apply("""
             resources:
@@ -45,9 +44,8 @@ class TestExecute(TestCase):
 
     def test_execute_touches(self):
         """ test that command works as expected """
-        with self.chroot.open("/usr/bin/test_touches.sh", "w") as fp:
-            fp.write(test_touches)
-        self.chroot.chmod("/usr/bin/test_touches.sh", 0755)
+        self.transport.put("/usr/bin/test_touches.sh", test_touches)
+        self.transport.execute(["chmod", "755", "/usr/bin/test_touches.sh"])
 
         self.check_apply("""
             resources:
@@ -147,9 +145,7 @@ class TestExecute(TestCase):
                     creates: /foo
             """)
 
-        with self.chroot.open("/foo") as fp:
-            check_file = fp.read().split()
-
+        check_file = self.transport.get("/foo").split()
         self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_group(self):
@@ -163,8 +159,7 @@ class TestExecute(TestCase):
                     creates: /foo
         """)
 
-        with self.chroot.open("/foo") as fp:
-            check_file = fp.read().split()
+        check_file = self.transport.get("/foo").split()
         self.failUnlessEqual(["65534"] * 2, check_file)
 
     def test_user_and_group(self):
@@ -179,14 +174,13 @@ class TestExecute(TestCase):
                     creates: /foo
         """)
 
-        with self.chroot.open("/foo") as fp:
-            check_file = fp.read().split()
+        check_file = self.transport.get("/foo").split()
         self.failUnlessEqual(["65534"] * 4, check_file)
 
     def test_creates(self):
         """ test that the execute will not happen if the creates parameter
         specifies an existing file. """
-        self.chroot.touch("/existing-file")
+        self.transport.put("/existing-file", "")
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
               - Execute:
@@ -208,7 +202,7 @@ class TestExecute(TestCase):
 
     def test_touch_present(self):
         """ test that we do not execute if the touched file exists. """
-        self.chroot.touch("/touched-file")
+        self.transport.put("/touched-file", "")
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
              - Execute:
@@ -268,7 +262,7 @@ class TestExecute(TestCase):
             """)
         self.failUnlessExists("/test_umask_022")
 
-        mode = stat.S_IMODE(self.chroot.stat("/test_umask_022").st_mode)
+        mode = stat.S_IMODE(self.transport.stat("/test_umask_022").st_mode)
         self.failUnlessEqual(mode, 0644)
 
     def test_umask_002(self):
@@ -282,7 +276,7 @@ class TestExecute(TestCase):
             """)
         self.failUnlessExists("/test_umask_002")
 
-        mode = stat.S_IMODE(self.chroot.stat("/test_umask_002").st_mode)
+        mode = stat.S_IMODE(self.transport.stat("/test_umask_002").st_mode)
         self.failUnlessEqual(mode, 0664)
 
     def test_missing_binary(self):
@@ -318,5 +312,4 @@ class TestExecute(TestCase):
             """)
 
         self.failUnlessExists("/test_missing_user")
-
 

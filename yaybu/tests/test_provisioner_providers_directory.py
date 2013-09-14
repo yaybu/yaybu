@@ -35,7 +35,7 @@ class TestDirectory(TestCase):
                   owner: root
                   group: root
             """)
-        self.failUnless(self.chroot.isdir("/etc/somedir"))
+        self.failUnless(self.transport.isdir("/etc/somedir"))
 
     def test_create_directory_and_parents(self):
         self.check_apply("""
@@ -44,10 +44,10 @@ class TestDirectory(TestCase):
                     name: /etc/foo/bar/baz
                     parents: True
             """)
-        self.failUnless(self.chroot.isdir("/etc/foo/bar/baz"))
+        self.failUnless(self.transport.isdir("/etc/foo/bar/baz"))
 
     def test_remove_directory(self):
-        self.chroot.mkdir("/etc/somedir")
+        self.transport.makedirs("/etc/somedir")
         self.check_apply("""
             resources:
               - Directory:
@@ -56,8 +56,8 @@ class TestDirectory(TestCase):
         """)
 
     def test_remove_directory_recursive(self):
-        self.chroot.mkdir("/etc/somedir")
-        self.chroot.touch("/etc/somedir/child")
+        self.transport.makedirs("/etc/somedir")
+        self.transport.put("/etc/somedir/child", "")
         self.check_apply("""
             resources:
                 - Directory:
@@ -81,9 +81,9 @@ class TestDirectory(TestCase):
                   mode: 0777
             """)
         self.failUnlessExists("/etc/somedir2")
-        st = self.chroot.stat("/etc/somedir2")
-        self.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
-        self.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')
+        st = self.transport.stat("/etc/somedir2")
+        self.assertEqual(self.transport.getpwuid(st.st_uid)[0], 'nobody')
+        self.assertEqual(self.transport.getgrgid(st.st_gid)[0], 'nogroup')
         mode = stat.S_IMODE(st.st_mode)
         self.assertEqual(mode, 0777)
 

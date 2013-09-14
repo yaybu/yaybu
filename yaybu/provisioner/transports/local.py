@@ -109,7 +109,7 @@ class LocalExecute(object):
 
         return returncode, stdout.output, stderr.output
 
-    def _execute(self, command, stdin=None, stdout=None, stderr=None):
+    def _execute_impl(self, command, stdin=None, stdout=None, stderr=None):
         #print command
         p = subprocess.Popen(command,
                              stdin=subprocess.PIPE,
@@ -169,7 +169,7 @@ class LocalTransport(LocalExecute, base.Transport):
         os.unlink(path)
 
     def getgrall(self):
-        return grp.getgrall()
+        return list(grp.getgrall())
 
     def getgrnam(self, name):
         return grp.getgrnam(name)
@@ -178,7 +178,7 @@ class LocalTransport(LocalExecute, base.Transport):
         return grp.getgrgid(gid)
 
     def getpwall(self):
-        return pwd.getpwall()
+        return list(pwd.getpwall())
 
     def getpwnam(self, name):
         return pwd.getpwnam(name)
@@ -187,7 +187,7 @@ class LocalTransport(LocalExecute, base.Transport):
         return pwd.getpwuid(uid)
 
     def getspall(self):
-        return spwd.getspall()
+        return list(spwd.getspall())
 
     def getspnam(self, name):
         return spwd.getspnam(name)

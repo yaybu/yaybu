@@ -1,0 +1,47 @@
+{
+  "yaybu.tests.test_provisioner_providers_subversion.SubversionMissingTest.test_missing_svn": [
+    [
+      "connect", 
+      null, 
+      null
+    ], 
+    [
+      "exists", 
+      false, 
+      null
+    ], 
+    [
+      "makedirs", 
+      [
+        0, 
+        "", 
+        ""
+      ], 
+      null
+    ], 
+    [
+      "exists", 
+      false, 
+      null
+    ], 
+    [
+      "makedirs", 
+      [
+        0, 
+        "", 
+        ""
+      ], 
+      null
+    ], 
+    [
+      "exists", 
+      false, 
+      null
+    ], 
+    [
+      "exists", 
+      false, 
+      null
+    ]
+  ]
+}

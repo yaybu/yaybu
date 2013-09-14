@@ -34,7 +34,7 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
     def connect(self):
         pass
 
-    def _execute(self, command, stdin=None, stdout=None, stderr=None):
+    def _execute_impl(self, command, stdin=None, stdout=None, stderr=None):
         paths = [self.overlay_dir]
         if self.env and "PATH" in self.env:
             paths.extend(os.path.join(self.env["FAKECHROOT_BASE"], p.lstrip("/")) for p in self.env["PATH"].split(":"))
@@ -44,7 +44,7 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
                 command[0] = path
                 break
 
-        return super(FakechrootTransport, self)._execute(
+        return super(FakechrootTransport, self)._execute_impl(
             command,
             stdin = stdin,
             stdout = stdout,

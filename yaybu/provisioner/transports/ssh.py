@@ -86,7 +86,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
     def whoami(self):
         return self.connect().get_transport().get_username()
 
-    def _execute(self, command, stdin, stdout, stderr):
+    def _execute_impl(self, command, stdin, stdout, stderr):
         client = self.connect() # This should be done once per context object
         transport = client.get_transport()
 

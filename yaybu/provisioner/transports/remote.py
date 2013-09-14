@@ -39,19 +39,19 @@ struct_spwd = collections.namedtuple("struct_spwd", \
 class RemoteTransport(object):
 
     def exists(self, path):
-        return self.execute(["test", "-e", path])[0] == 0
+        return self._execute(["test", "-e", path])[0] == 0
 
     def isfile(self, path):
-        return self.execute(["test", "-f", path])[0] == 0
+        return self._execute(["test", "-f", path])[0] == 0
 
     def isdir(self, path):
-        return self.execute(["test", "-d", path])[0] == 0
+        return self._execute(["test", "-d", path])[0] == 0
 
     def islink(self, path):
-        return self.execute(["test", "-L", path])[0] == 0
+        return self._execute(["test", "-L", path])[0] == 0
 
     def stat(self, path):
-        returncode, stdout, stderr = self.execute(["stat", "-L", "-t", path])
+        returncode, stdout, stderr = self._execute(["stat", "-L", "-t", path])
         if returncode != 0:
             raise OSError
         data = stdout.split(" ")
@@ -69,7 +69,7 @@ class RemoteTransport(object):
             )
 
     def lstat(self, path):
-        returncode, stdout, stderr = self.execute(["stat", "-t", path])
+        returncode, stdout, stderr = self._execute(["stat", "-t", path])
         if returncode != 0:
             raise OSError
         data = stdout.split(" ")
@@ -88,29 +88,30 @@ class RemoteTransport(object):
 
     def lexists(self, path):
         # stat command uses lstat syscall by default
-        return self.execute(["stat", path])[0] == 0
+        return self._execute(["stat", path])[0] == 0
 
     def readlink(self, path):
-        returncode, stdout, stderr = self.execute(["readlink", path])
+        returncode, stdout, stderr = self._execute(["readlink", path])
         if returncode != 0:
             raise OSError
         return stdout.split("\n")[0].strip()
 
-    def get(self, path):
-        return self.execute(["cat", path])[1]
+    def _get(self, path):
+        return self._execute(["cat", path])[1]
+    get = _get
 
     def put(self, path, contents, chmod=0o644):
         umask = 0o777 - chmod
-        return self.execute("umask %o && tee %s > /dev/null" % (umask, path), stdin=contents)
+        return self._execute("umask %o && tee %s > /dev/null" % (umask, path), stdin=contents)
 
     def makedirs(self, path):
-        return self.execute(["mkdir", "-p", path])
+        return self._execute(["mkdir", "-p", path])
 
     def unlink(self, path):
-        return self.execute(["rm", "-f", path])
+        return self._execute(["rm", "-f", path])
 
-    def getgrall(self):
-        groups = self.get("/etc/group")
+    def _getgrall(self):
+        groups = self._get("/etc/group")
         for line in groups.split("\n"):
             if not line.strip():
                 continue
@@ -122,20 +123,23 @@ class RemoteTransport(object):
                 tup[3].split(","),
                 )
 
+    def getgrall(self):
+        return list(self._getgrall())
+
     def getgrnam(self, name):
-        for group in self.getgrall():
+        for group in self._getgrall():
             if group.gr_name == name:
                 return group
         raise KeyError(name)
 
     def getgrgid(self, gid):
-        for group in self.getgrall():
-            if gr.gr_gid == gid:
+        for group in self._getgrall():
+            if group.gr_gid == gid:
                 return group
         raise KeyError(gid)
 
-    def getpwall(self):
-        users = self.get("/etc/passwd")
+    def _getpwall(self):
+        users = self._get("/etc/passwd")
         for line in users.split("\n"):
             if not line.strip():
                 continue
@@ -150,27 +154,33 @@ class RemoteTransport(object):
                 tup[6]
                 )
 
+    def getpwall(self):
+        return list(self._getpwall())
+
     def getpwnam(self, name):
-        for user in self.getpwall():
+        for user in self._getpwall():
             if user.pw_name == name:
                 return user
         raise KeyError(name)
 
     def getpwuid(self, uid):
-        for user in self.getpwall():
+        for user in self._getpwall():
             if user.pw_uid == uid:
                 return user
         raise KeyError(uid)
 
-    def getspall(self):
-        susers = self.get("/etc/shadow")
+    def _getspall(self):
+        susers = self._get("/etc/shadow")
         for line in susers.split("\n"):
             if not line.strip():
                 continue
             yield struct_spwd(*line.split(":"))
 
+    def getspall(self):
+        return list(self._getspall())
+
     def getspnam(self, name):
-        for suser in self.getspall():
+        for suser in self._getspall():
             if suser.sp_nam == name:
                 return suser
         raise KeyError(name)

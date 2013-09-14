@@ -121,7 +121,7 @@ class TestUser(TestCase):
 class TestUserRemove(TestCase):
 
     def test_remove_existing(self):
-        self.failUnless(self.chroot.get_user("nobody"))
+        self.failUnless(self.transport.getpwnam("nobody"))
 
         self.check_apply("""
             resources:
@@ -130,10 +130,10 @@ class TestUserRemove(TestCase):
                     policy: remove
             """)
 
-        self.failUnlessRaises(KeyError, self.chroot.get_user, "nobody")
+        self.failUnlessRaises(KeyError, self.transport.getpwnam, "nobody")
 
     def test_remove_non_existing(self):
-        self.failUnlessRaises(KeyError, self.chroot.get_user, "zzidontexistzz")
+        self.failUnlessRaises(KeyError, self.transport.getpwnam, "zzidontexistzz")
 
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
@@ -142,5 +142,5 @@ class TestUserRemove(TestCase):
                     policy: remove
             """)
 
-        self.failUnlessRaises(KeyError, self.chroot.get_user, "zzidontexistzz")
+        self.failUnlessRaises(KeyError, self.transport.getpwnam, "zzidontexistzz")
 

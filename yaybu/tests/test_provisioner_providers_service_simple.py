@@ -55,9 +55,7 @@ class TestSimpleService(TestCase):
 
     def setUp(self):
         super(TestSimpleService, self).setUp()
-
-        with self.chroot.open("/bin/simple_daemon", "w") as fp:
-            fp.write(simpleservice)
+        self.transport.put("/bin/simple_daemon", simpleservice)
 
     def test_start(self):
         self.check_apply("""
@@ -69,13 +67,11 @@ class TestSimpleService(TestCase):
                     pidfile: /simple_daemon.pid
             """)
 
-        with self.chroot.open("/simple_daemon.pid") as fp:
-            pid = int(fp.read())
-
-        os.kill(pid, signal.SIGTERM)
+        pid = int(self.transport.get("/simple_daemon.pid"))
+        self.transport.execute(["kill", str(pid)])
 
     def test_stop(self):
-        self.chroot.call(["python", "/bin/simple_daemon"])
+        self.transport.execute(["python", "/bin/simple_daemon"])
 
         self.check_apply("""
             resources:

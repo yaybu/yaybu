@@ -23,6 +23,9 @@ def sibpath(filename):
 
 class TestLink(TestCase):
 
+    def symlink(self, a, b):
+        self.transport.execute(["ln", "-s", a, b])
+
     def test_create_link(self):
         self.check_apply("""
             resources:
@@ -36,7 +39,7 @@ class TestLink(TestCase):
         self.failUnlessExists("/etc/somelink")
 
     def test_remove_link(self):
-        self.chroot.symlink("/", "/etc/toremovelink")
+        self.symlink("/", "/etc/toremovelink")
         rv = self.check_apply("""
             resources:
               - Link:
@@ -46,21 +49,19 @@ class TestLink(TestCase):
         self.failIfExists("/etc/toremovelink")
 
     def test_already_exists(self):
-        self.chroot.symlink("/", "/etc/existing")
+        self.symlink("/", "/etc/existing")
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
               - Link:
                   name: /etc/existing
                   to: /
         """)
-        self.failUnlessEqual(self.chroot.readlink("/etc/existing"), "/")
+        self.failUnlessEqual(self.transport.readlink("/etc/existing"), "/")
 
     def test_already_exists_notalink(self):
         """ Test for the path already existing but is not a link. """
-        with self.chroot.open("/bar_notalink", "w") as fp:
-            fp.write("")
-        with self.chroot.open("/foo", "w") as fp:
-            fp.write("")
+        self.transport.put("/bar_notalink", "")
+        self.transport.put("/foo", "")
 
         self.check_apply("""
             resources:
@@ -69,20 +70,20 @@ class TestLink(TestCase):
                     to: /foo
             """)
 
-        self.failUnlessEqual(self.chroot.readlink("/bar_notalink"), "/foo")
+        self.failUnlessEqual(self.transport.readlink("/bar_notalink"), "/foo")
 
     def test_already_exists_pointing_elsewhere(self):
         """ Test for the path already existing but being a link to somewhere else. """
-        self.chroot.touch("/baz")
-        self.chroot.touch("/foo")
-        self.chroot.symlink("/baz", "/bar_elsewhere")
+        self.transport.put("/baz", "")
+        self.transport.put("/foo", "")
+        self.symlink("/baz", "/bar_elsewhere")
         self.check_apply("""
             resources:
                 - Link:
                     name: /bar_elsewhere
                     to: /foo
             """)
-        self.failUnlessEqual(self.chroot.readlink("/bar_elsewhere"), "/foo")
+        self.failUnlessEqual(self.transport.readlink("/bar_elsewhere"), "/foo")
 
     def test_dangling(self):
         self.assertRaises(error.DanglingSymlink, self.apply, """

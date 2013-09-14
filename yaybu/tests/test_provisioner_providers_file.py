@@ -63,9 +63,9 @@ class TestFileApply(TestCase):
                   mode: 0666
             """)
         self.failUnlessExists("/etc/somefile2")
-        st = self.chroot.stat("/etc/somefile2")
-        self.failUnless(pwd.getpwuid(st.st_uid)[0] != 'nobody')
-        self.failUnless(grp.getgrgid(st.st_gid)[0] != 'nogroup')
+        st = self.transport.stat("/etc/somefile2")
+        self.assertEqual(self.transport.getpwuid(st.st_uid)[0], 'nobody')
+        self.assertEqual(self.transport.getgrgid(st.st_gid)[0], 'nogroup')
         mode = stat.S_IMODE(st.st_mode)
         self.assertEqual(mode, 0666)
 
@@ -96,12 +96,10 @@ class TestFileApply(TestCase):
                     group: root
                     """)
         self.failUnlessExists("/etc/templated")
-        with self.chroot.open("/etc/templated") as fp:
-            self.failUnless("this is foo" in fp.read())
+        self.failUnless("this is foo" in self.transport.get("/etc/templated"))
 
     def test_modify_file(self):
-        with self.chroot.open("/etc/test_modify_file", "w") as fp:
-            fp.write("foo\nbar\nbaz")
+        self.transport.put("/etc/test_modify_file", "foo\nbar\baz")
 
         self.check_apply("""
             resources:
@@ -129,9 +127,7 @@ class TestFileApply(TestCase):
 
 
     def test_empty(self):
-        with self.chroot.open("/etc/foo", "w") as fp:
-            fp.write("foo")
-
+        self.transport.put("/etc/foo", "foo")
         self.check_apply("""
             resources:
                 - File:
@@ -139,9 +135,8 @@ class TestFileApply(TestCase):
             """)
 
     def test_empty_nochange(self):
-        with self.chroot.open("/etc/foo", "w") as fp:
-            fp.write("")
-        os.chmod(self.chroot._enpathinate("/etc/foo"), 0644)
+        self.transport.put("/etc/foo", "")
+        self.transport.execute(["chmod", "644", "/etc/foo"])
 
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
@@ -151,9 +146,8 @@ class TestFileApply(TestCase):
 
     def test_carriage_returns(self):
         """ a template that does not end in \n will still result in a file ending in \n """
-        with self.chroot.open("/etc/test_carriage_returns", "w") as fp:
-            fp.write("foo\n")
-        os.chmod(self.chroot._enpathinate("/etc/test_carriage_returns"), 0644)
+        self.transport.put("/etc/test_carriage_returns", "foo\n")
+        self.transport.execute(["chmod", "644", "/etc/test_carriage_returns"])
 
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
@@ -164,9 +158,8 @@ class TestFileApply(TestCase):
 
     def test_carriage_returns2(self):
         """ a template that does end in \n will not gain an extra \n in the resulting file"""
-        with self.chroot.open("/etc/test_carriage_returns2", "w") as fp:
-            fp.write("foo\n")
-        os.chmod(self.chroot._enpathinate("/etc/test_carriage_returns2"), 0644)
+        self.transport.put("/etc/test_carriage_returns2", "foo\n")
+        self.transport.execute(["chmod", "644", "/etc/test_carriage_returns2"])
 
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
@@ -209,9 +202,7 @@ class TestFileRemove(TestCase):
 
     def test_remove(self):
         """ Test removing a file that exists. """
-        with self.chroot.open("/etc/bar","w") as fp:
-            fp.write("")
-
+        self.transport.put("/etc/bar", "")
         self.check_apply("""
             resources:
                 - File:
@@ -231,7 +222,7 @@ class TestFileRemove(TestCase):
 
     def test_remove_notafile(self):
         """ Test removing something that is not a file. """
-        self.chroot.mkdir("/etc/qux")
+        self.transport.makedirs("/etc/qux")
         self.assertRaises(error.InvalidProvider, self.apply, """
             resources:
                 - File:
