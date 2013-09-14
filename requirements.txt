@@ -4,7 +4,9 @@ coveralls
 unittest2
 mock
 fakechroot
-yay
+
+# yay
+-e git://github.com/yaybu/yay#egg=yay
 
 -e .
 
