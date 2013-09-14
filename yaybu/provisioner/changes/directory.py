@@ -32,7 +32,7 @@ class EnsureDirectory(changes.Change):
             command = ["/bin/mkdir"]
             if self.recursive:
                 command.append("-p")
-            command.append(self.path.decode("utf-8"))
+            command.append(self.path)
             context.change(ShellCommand(command))
             self.changed = True
 

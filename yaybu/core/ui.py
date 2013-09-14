@@ -30,7 +30,7 @@ class Section(object):
         if self.has_output:
             return
 
-        header = self.name.decode("utf-8")
+        header = self.name
 
         rl = len(header)
         if rl < self.ui.columns:

@@ -104,7 +104,7 @@ class ChangeLog:
         self.ui = context.root.ui
 
     def resource(self, resource):
-        return _IckyNastyStub(self, self.ctx.root.ui.section(str(resource)))
+        return _IckyNastyStub(self, self.ctx.root.ui.section(resource.id))
 
     def apply(self, change, ctx=None):
         """ Execute the change, passing it the appropriate renderer to use. """
