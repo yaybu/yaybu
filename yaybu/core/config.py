@@ -147,8 +147,8 @@ class Config(BaseConfig):
 
         self.changelog = changes.ChangeLog(self)
 
-    def setup_openers(self, searchpath):
-        self.add({"yaybu": {"searchpath": searchpath or []}})
+    def setup_openers(self):
+        self.add({"yaybu": {"searchpath": self.searchpath or []}})
         self.openers = Openers(searchpath=SearchpathFromGraph(self.yaybu.searchpath))
 
     def setup_builtins(self):
