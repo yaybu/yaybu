@@ -183,22 +183,3 @@ class TextFactory(object):
     def _clear(self):
         self.stdout.write('\r' + ' ' * self.columns + '\r')
 
-
-
-if __name__ == "__main__":
-    t = TextFactory()
-
-    import time
-
-    # with t.progress(100) as pg:
-    with t.throbber("Deploying to cloud...") as throbber:
-        i = 0
-        while True:
-            i += 1
-            with t.section("hello") as sec:
-                for j in range(5):
-                    sec.print(i * j)
-                    time.sleep(1)
-                    throbber.throb()
-            # pg.progress(i % 100)
-

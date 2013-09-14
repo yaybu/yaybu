@@ -1,3 +1,4 @@
+# coding=utf-8
 # Copyright 2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class CommandLineCheck(object):
 
-    def test(self):
-        pass
+import unittest
+import mock
 
+from yaybu.core import main
 
-class ViSudo(CommandLineCheck):
+class TestCommand(unittest.TestCase):
 
-    for_files = [
-        "/etc/sudoers",
-        "/etc/sudoers.d/*",
-        ]
-    commandline = ["visudo", "-c", "-f", "/dev/fd/0"]
+    def test_do_help(self):
+        self.assertRaises(SystemExit, main.main, ["help"])
 
+    def test_do_help_with_arg(self):
+        self.assertRaises(SystemExit, main.main, ["help", "vm"])
 
