@@ -5,6 +5,12 @@ Yaybu
 .. image:: https://travis-ci.org/yaybu/yaybu.png?branch=master
    :target: https://travis-ci.org/#!/yaybu/yaybu
 
+.. image:: https://coveralls.io/repos/yaybu/yaybu/badge.png?branch=master
+    :target: https://coveralls.io/r/yaybu/yaybu
+
+.. image:: https://pypip.in/v/Yaybu/badge.png
+    :target: https://crate.io/packages/Yaybu/
+
 Yaybu is a push based configuration management tool written in Python with the
 goal of helping you tame your servers. You describe your infrastructure in a
 simple and flexible YAML-like language and Yaybu works out what needs to happen
