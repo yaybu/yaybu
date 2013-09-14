@@ -143,7 +143,7 @@ class TestCase(unittest2.TestCase):
                 existing = json.load(open(self.path))
             existing[self.id()] = self.results
             with open(self.path, "w") as fp:
-                json.dump(existing, fp, indent=2)
+                json.dump(existing, fp)
 
         self.addCleanup(cleanup)
         self.Transport = TransportRecorder
