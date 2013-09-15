@@ -39,7 +39,7 @@ def _main(argv):
     parser.add_option("-l", "--logfile", default=None, help="The filename to write the audit log to, instead of syslog. Note: the standard console log will still be written to the console.")
     parser.add_option("-v", "--verbose", default=2, action="count", help="Write additional informational messages to the console log. repeat for even more verbosity.")
     parser.add_option("-C", "--config", default=None, action="store", help="Path to main yay config file")
-    opts, args = parser.parse_args(argv or sys.argv)
+    opts, args = parser.parse_args(argv or sys.argv[1:])
 
     # we need to revisit how logging is handled
     logging.basicConfig(format="%(asctime)s %(name)s %(levelname)s %(message)s")
