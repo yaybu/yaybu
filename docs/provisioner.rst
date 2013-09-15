@@ -214,7 +214,7 @@ synchronises::
         - Execute:
             name: base-image-{{bi}}
             policy:
-              apply:
+              execute:
                   when: sync
                   on: /var/local/checkouts/ci
             command: ./vmbuilder-{{bi}}
