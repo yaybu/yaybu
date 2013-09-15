@@ -26,6 +26,8 @@ Changelog for yaybu
           driver: VMWARE
           <snip>
 
+- Many bugfixes to the parsing of YAML-like multiline blocks
+
 
 3.0 (2013-09-04)
 ----------------
