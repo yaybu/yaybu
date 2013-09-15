@@ -91,6 +91,8 @@ class TransportPlayback(object):
 class CalledProcessError(Exception):
     pass
 
+class ChangeStillOutstanding(Exception):
+    pass
 
 class YaybuFakeChroot(unittest2.FakeChroot):
 
@@ -210,6 +212,6 @@ class TestCase(unittest2.TestCase):
         except error.NothingChanged:
             return
 
-        raise CalledProcessError("Change still outstanding")
+        raise ChangeStillOutstanding("Change still outstanding")
 
 
