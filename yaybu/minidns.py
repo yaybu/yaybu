@@ -80,4 +80,11 @@ class MiniDNSDriver(DNSDriver):
             return True
         return False
 
-
+    def get_record(self, zone_id, record_id):
+        response = self.connection.request("%s/%s" % (zone_id, record_id))
+        if response.status == 200:
+            type, data = response.body.split()
+            type_id = RecordType.__dict__[type]
+            zone = Zone(id=zone_id, domain=zone_id, type="master", ttl=0, driver=self)
+            record = Record(id=record_id, name=record_id, type=type_id, data=data, zone=zone, driver=self)
+            return record
