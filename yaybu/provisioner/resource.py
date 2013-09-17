@@ -20,7 +20,7 @@ from yaybu.core import ordereddict
 
 from yay import errors
 from yay.ast import bind, PythonicWrapper
-from yay.errors import LanguageError, get_exception_context
+from yay.errors import LanguageError
 
 
 class ResourceType(type):
@@ -282,8 +282,6 @@ class ResourceBundle(ordereddict.OrderedDict):
             raise
             p = error.ParseError()
             p.msg = str(exc)
-            if verbose_errors:
-                p.msg += "\n" + get_exception_context()
             if exc.anchor:
                 p.file = exc.anchor.source
                 p.line = exc.anchor.lineno
