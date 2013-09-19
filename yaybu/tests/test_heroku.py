@@ -55,3 +55,55 @@ class TestHeroku(TestCase):
                 password: penguin55
             """)
 
+    def test_add_addon(self):
+        self._up("""
+            new Heroku as myheroku:
+                application_id: foo-bar
+                username: freddy
+                password: penguin55
+                addons:
+                  - loggly:mole
+            """)
+
+    def test_add_configuration(self):
+        self._up("""
+            new Heroku as myheroku:
+                application_id: foo-bar
+                username: freddy
+                password: penguin55
+                config:
+                    DATABASE_URL: postgresql://username:password@localhost/db12346
+            """)
+
+    def test_set_scaling(self):
+        self._up("""
+            new Heroku as myheroku:
+                application_id: foo-bar
+                username: freddy
+                password: penguin55
+                scale:
+                    web: 5
+            """)
+
+    def test_add_domain(self):
+        self._up("""
+            new Heroku as myheroku:
+                application_id: foo-bar
+                username: freddy
+                password: penguin55
+                domains:
+                    - example.com
+            """)
+
+    def test_add_collaborator(self):
+        self._up("""
+            new Heroku as myheroku:
+                application_id: foo-bar
+                username: freddy
+                password: penguin55
+                collaborators:
+                    - nobody@example.com
+            """)
+
+
+

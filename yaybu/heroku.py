@@ -68,48 +68,48 @@ class Heroku(base.GraphExternalAction):
 
         self.apply_configuration()
         self.apply_scaling()
-        # self.apply_addons()
+        self.apply_addons()
 
         self.action("Leaving maintenance mode")
         if not self.root.simulate and self.app:
             self.app.maintenance(on=False)
 
-        # self.apply_domains()
+        self.apply_domains()
 
         # May generate e-mail so do it last - we don't want someone looking
         # half way through set up
-        # self.apply_collaborators()
+        self.apply_collaborators()
 
         self.root.changelog.changed = changed
 
     def apply_collaborators(self):
         collaborators = self.app.collaborators if self.app else []
         old_state = set(c.email for c in collaborators)
-        new_state = set(self.get('collaborators', []))
+        new_state = set(self.params.collaborators.as_iterable(default=[]))
 
         for collaborator in (new_state-old_state):
             self.action("Adding collaborator '%s'" % collaborator)
-            if not self.root.simulate:
-                self.collaborators.add(collaborator)
+            if self.app and not self.root.simulate:
+                self.app.collaborators.add(collaborator)
 
         for collaborator in (old_state-new_state):
             self.action("Removing collaborator '%s'" % collaborator)
-            if not self.root.simulate:
-                self.collaborators[collaborator].delete()
+            if self.app and not self.root.simulate:
+                self.app.collaborators[collaborator].delete()
 
     def apply_domains(self):
         domains = self.app.domain if self.app else []
         old_domains = set(d.domain for d in domains)
-        new_domains = set(self.get('domains', []))
+        new_domains = set(self.params.domains.as_iterable(default=[]))
 
         for domain in (new_domains - old_domains):
             self.action("Adding domain name '%s'" % domain)
-            if not self.root.simulate:
+            if self.app and not self.root.simulate:
                 self.app.domains.new(domain)
 
         for domain in (old_domains - new_domains):
             self.action("Removing domain name '%s'" % domain)
-            if not self.root.simulate:
+            if self.app and not self.root.simulate:
                 self.app.domains[domain].delete()
 
     def apply_addons(self):
@@ -125,12 +125,12 @@ class Heroku(base.GraphExternalAction):
         Because of this. currently this code assumes their won't be duplicate
         add-ons (e.g. foo:basic won't be present at same time as foo:advanced).
         """
-        old_addons = [a for a in addons]
+        old_addons = [a for a in self.app.addons]
         old_addons_by_type = dict((a.type, a.name) for a in old_addons)
-        assert len(old_addons) == len(old_addons_by_type)
+        # assert len(old_addons) == len(old_addons_by_type)
 
-        new_addons_by_type = dict((a.split(":",1)[0], a) for a in self.get('addons', []))
-        assert len(self.get('addons', [])) == len(new_addons_by_type)
+        new_addons_by_type = dict((a.split(":",1)[0], a) for a in self.params.addons.as_iterable(default=[]))
+        # assert len(self.get('addons', [])) == len(new_addons_by_type)
 
         old_state = set(old_addons_by_type.keys())
         new_state = set(new_addons_by_type.keys())
