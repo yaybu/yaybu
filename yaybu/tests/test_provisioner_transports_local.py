@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import mock
+import getpass
 
 from yaybu.tests.provisioner_fixture import TestCase
 from yaybu.core import error
@@ -29,6 +30,9 @@ class TestLocalTransport(TestCase):
 
         self.transport = LocalTransport(None)
 
+    def test_whoami(self):
+        self.assertEqual(self.transport.whoami(), getpass.getuser())
+
     def test_exists(self):
         self.os.path.exists.return_value = True
         self.assertEqual(self.transport.exists("/"), True)
@@ -40,34 +44,34 @@ class TestLocalTransport(TestCase):
         self.os.path.exists.assert_called_with("/")
 
     def test_isfile(self):
-        self.os.path.exists.return_value = True
-        self.assertEqual(self.transport.exists("/"), True)
-        self.os.path.exists.assert_called_with("/")
+        self.os.path.isfile.return_value = True
+        self.assertEqual(self.transport.isfile("/"), True)
+        self.os.path.isfile.assert_called_with("/")
 
     def test_not_isfile(self):
-        self.os.path.exists.return_value = False
-        self.assertEqual(self.transport.exists("/"), False)
-        self.os.path.exists.assert_called_with("/")
+        self.os.path.isfile.return_value = False
+        self.assertEqual(self.transport.isfile("/"), False)
+        self.os.isfile.exists.assert_called_with("/")
 
     def test_isdir(self):
-        self.os.path.exists.return_value = True
-        self.assertEqual(self.transport.exists("/"), True)
-        self.os.path.exists.assert_called_with("/")
+        self.os.path.isdir.return_value = True
+        self.assertEqual(self.transport.isdir("/"), True)
+        self.os.path.isdir.assert_called_with("/")
 
     def test_not_isdir(self):
-        self.os.path.exists.return_value = False
-        self.assertEqual(self.transport.exists("/"), False)
-        self.os.path.exists.assert_called_with("/")
+        self.os.path.isdir.return_value = False
+        self.assertEqual(self.transport.isdir("/"), False)
+        self.os.path.isdir.assert_called_with("/")
 
     def test_islink(self):
-        self.os.path.exists.return_value = True
-        self.assertEqual(self.transport.exists("/"), True)
-        self.os.path.exists.assert_called_with("/")
+        self.os.path.islink.return_value = True
+        self.assertEqual(self.transport.islink("/"), True)
+        self.os.path.islink.assert_called_with("/")
 
     def test_not_islink(self):
-        self.os.path.exists.return_value = False
-        self.assertEqual(self.transport.exists("/"), False)
-        self.os.path.exists.assert_called_with("/")
+        self.os.path.islink.return_value = False
+        self.assertEqual(self.transport.islink("/"), False)
+        self.os.path.islink.assert_called_with("/")
 
     def test_stat(self):
         self.os.stat.return_value = stat_result(0755, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -119,15 +123,15 @@ class TestLocalTransport(TestCase):
     #    self.transport.put("/foo", "hello\nworld")
     #    self.ex.assert_called_with("umask 133 && tee /foo > /dev/null", stdin="hello\nworld")
 
-    #def test_makedirs(self):
-    #    self.ex.return_value = [0, "", ""]
-    #    self.transport.makedirs("/foo")
-    #    self.ex.assert_called_with(["mkdir", "-p", "/foo"])
+    def test_makedirs(self):
+        self.os.makedirs.return_value = None
+        self.transport.makedirs("/foo")
+        self.os.makedirs.assert_called_with("/foo")
 
-    #def test_unlink(self):
-    #    self.ex.return_value = [0, "", ""]
-    #    self.transport.unlink("/foo")
-    #    self.ex.assert_called_with(["rm", "-f", "/foo"])
+    def test_unlink(self):
+        self.os.unlink.return_value = None
+        self.transport.unlink("/foo")
+        self.os.unlink.assert_called_with("/foo")
 
     #def test_getgrall(self):
     #    self.ex.return_value = [0, "mysql:x:144:", ""]
