@@ -27,3 +27,71 @@ if not hasattr(zipfile.ZipFile, "__exit__"): # pragma: no cover
 else:
     ZipFile = zipfile.ZipFile
 
+
+# Python didn't have OrderedDict build in until 2.7
+try:
+    from collections import OrderedDict
+except ImportError: # pragma: no cover
+    # Copyright (c) 2009 Raymond Hettinger
+    #
+    # Permission is hereby granted, free of charge, to any person
+    # obtaining a copy of this software and associated documentation files
+    # (the "Software"), to deal in the Software without restriction,
+    # including without limitation the rights to use, copy, modify, merge,
+    # publish, distribute, sublicense, and/or sell copies of the Software,
+    # and to permit persons to whom the Software is furnished to do so,
+    # subject to the following conditions:
+    #
+    #     The above copyright notice and this permission notice shall be
+    #     included in all copies or substantial portions of the Software.
+    #
+    #     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+    #     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+    #     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+    #     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+    #     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+    #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    #     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+    #     OTHER DEALINGS IN THE SOFTWARE.
+
+    from UserDict import DictMixin
+
+    class OrderedDict(dict, DictMixin):
+
+        def __init__(self, *args, **kwds):
+            if len(args) > 1:
+                raise TypeError('expected at most 1 arguments, got %d' % len(args))
+            try:
+                self.__end
+            except AttributeError:
+                self.clear()
+            self.update(*args, **kwds)
+
+        def clear(self):
+            self.__end = end = []
+            end += [None, end, end]         # sentinel node for doubly linked list
+            self.__map = {}                 # key --> [key, prev, next]
+            dict.clear(self)
+
+        def __setitem__(self, key, value):
+            if key not in self:
+                end = self.__end
+                curr = end[1]
+                curr[2] = end[1] = self.__map[key] = [key, curr, end]
+            dict.__setitem__(self, key, value)
+
+        def __iter__(self):
+            end = self.__end
+            curr = end[2]
+            while curr is not end:
+                yield curr[0]
+                curr = curr[2]
+
+        setdefault = DictMixin.setdefault
+        update = DictMixin.update
+        pop = DictMixin.pop
+        values = DictMixin.values
+        items = DictMixin.items
+        iterkeys = DictMixin.iterkeys
+        itervalues = DictMixin.itervalues
+        iteritems = DictMixin.iteritems

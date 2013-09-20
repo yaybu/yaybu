@@ -16,7 +16,7 @@ from yaybu.core.argument import Property, Argument, List, PolicyArgument, String
 from yaybu.core import policy
 from yaybu import error
 import collections
-from yaybu.core import ordereddict
+from yaybu.util.backports import OrderedDict
 
 from yay import errors
 from yay.ast import bind, PythonicWrapper
@@ -256,7 +256,7 @@ class Resource(object):
         return self.id
 
 
-class ResourceBundle(ordereddict.OrderedDict):
+class ResourceBundle(OrderedDict):
 
     """ An ordered, indexed collection of resources. Pass in a specification
     that consists of scalars, lists and dictionaries and this class will
