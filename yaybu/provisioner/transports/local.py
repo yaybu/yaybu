@@ -16,15 +16,15 @@ import subprocess
 import os, select
 try:
     import pwd
-except ImportError:
+except ImportError: # pragma: no cover
     pass
 try:
     import grp
-except ImportError:
+except ImportError: # pragma: no cover
     pass
 try:
     import spwd
-except ImportError:
+except ImportError: # pragma: no cover
     spwd = None
 
 from . import base
