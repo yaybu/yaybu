@@ -193,7 +193,7 @@ class TestCase(unittest2.TestCase):
                     server:
                         fqdn: fakechroot:///
                     resources: {{ resources }}
-            """ % path)
+            """ % path.replace("\'", "\\\\"))
 
         return self.yaybu(path2, *args)
 
