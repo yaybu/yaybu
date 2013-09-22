@@ -37,9 +37,9 @@ class TestVMBoxImage(unittest2.TestCase):
             ctx = Mock()
             vi.extract("/var/tmp/frob", ctx, {})
             vi._zcopy.assert_has_calls([
-                call('/var/tmp/frob/foo', zf().__enter__(), 'foo'),
-                call('/var/tmp/frob/bar', zf().__enter__(), 'bar'),
-                call('/var/tmp/frob/baz', zf().__enter__(), 'baz'),
+                call(os.path.join('/var/tmp/frob', 'foo'), zf().__enter__(), 'foo'),
+                call(os.path.join('/var/tmp/frob', 'bar'), zf().__enter__(), 'bar'),
+                call(os.path.join('/var/tmp/frob', 'baz'), zf().__enter__(), 'baz'),
                 ])
             vi._store_metadata.assert_has_calls([
                 call('/var/tmp/frob', {})
