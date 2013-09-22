@@ -22,7 +22,7 @@ from yay import ast
 from yaybu.core.error import ArgParseError
 from yaybu.core.util import memoized
 from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
-from yaybu.core.ui import TextFactory
+from yaybu.ui import TextFactory
 from yaybu import changes
 
 from yaybu.compute import Compute

@@ -15,6 +15,8 @@
 from __future__ import print_function
 import sys
 
+from yaybu.ui.console import get_console_width
+
 
 class Section(object):
 
@@ -149,8 +151,7 @@ class TextFactory(object):
 
     @property
     def columns(self):
-        #FIXME: Be cleverer
-        return 80
+        return get_console_width()
 
     def section(self, name):
         return Section(self, name)
