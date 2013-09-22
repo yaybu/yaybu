@@ -45,8 +45,8 @@ def get_console_width_windows():
     handle = ctypes.windll.kernel32.GetStdHandle(-11)
     screen = ConsoleScreenBufferInfo()
     if not ctypes.windll.kernel32.GetConsoleScreenBufferInfo(handle, ctypes.byref(screen)):
-        return 80
-    return screen.size_x
+        return 79
+    return screen.size_x - 1
 
 def get_console_width_posix():
     import termios, fcntl

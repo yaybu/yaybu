@@ -17,17 +17,16 @@
 import unittest
 import mock
 
-from yaybu.core import ui
+from yaybu.ui.widgets import *
 
 
 class TestUI(unittest.TestCase):
 
     def setUp(self):
-        self.ui = mock.Mock()
-        self.ui.columns = 80
+        self.ui = TextFactory()
 
     def test_progress_bar(self):
-        with ui.Progress(self.ui, 100) as p:
+        with self.ui.progress(100) as p:
             p.progress(50)
             p.progress(100)
 
