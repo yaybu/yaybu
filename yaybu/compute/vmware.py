@@ -538,7 +538,7 @@ class RemoteVMBox:
 
     def __init__(self, location, tempdir, context):
         if location.startswith("file://") and location[8] == ":":
-            location = location[:8] + "|" + location[9:]
+            location = location[:7] + "/" + location[7] + "|" + location[10:]
         self.location = location
         self._tempdir = tempdir
         self.context = context
