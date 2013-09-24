@@ -25,6 +25,13 @@ from mock import MagicMock as Mock, call, patch
 
 from yaybu.compute.vmware import VMBoxLibrary, RemoteVMBox, VMBoxImage
 
+def normpath(path):
+    # Windows paths need to be in the form:
+    #    file:///C|some\path\myvm.box
+    if path.startswith("file://") and path[8] == ":":
+        path = path[:7] + "/" + path[7] + "|" + path[10:]
+    return path
+
 
 class TestVMBoxImage(unittest2.TestCase):
 
@@ -79,7 +86,7 @@ class TestVMBoxImage(unittest2.TestCase):
 class TestRemoteVMBox(unittest2.TestCase):
 
     def _make_box(self, location):
-        return RemoteVMBox(location, None, None)
+        return RemoteVMBox(normpath(location), None, None)
 
     def test_hash_headers_header_present(self):
         with patch('yaybu.compute.vmware.urllib2') as ul2:
@@ -198,7 +205,7 @@ class TestVMBoxLibrary(unittest2.TestCase):
         with open(f.name + ".md5", "w") as fp:
             fp.write(h.hexdigest())
         context = Mock()
-        self.library.get("file://" + f.name, context, 'bar')
+        self.library.get(normpath("file://" + f.name), context, 'bar')
         dirs = os.listdir(self.librarydir)
         self.assertEqual(sorted(dirs), sorted([
             'ubuntu-12.04.2-amd64',
@@ -206,5 +213,6 @@ class TestVMBoxLibrary(unittest2.TestCase):
             'bar',
             ]))
         metadata = json.load(open(os.path.join(self.librarydir, 'bar', "VM-INFO")))
-        self.assertEqual(metadata['url'], "file://" + f.name)
+        self.assertEqual(metadata['url'], normpath("file://" + f.name))
         self.assertEqual(metadata['hash'], h.hexdigest())
+

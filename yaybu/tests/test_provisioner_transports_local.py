@@ -51,7 +51,7 @@ class TestLocalTransport(TestCase):
     def test_not_isfile(self):
         self.os.path.isfile.return_value = False
         self.assertEqual(self.transport.isfile("/"), False)
-        self.os.isfile.exists.assert_called_with("/")
+        self.os.isfile.assert_called_with("/")
 
     def test_isdir(self):
         self.os.path.isdir.return_value = True
