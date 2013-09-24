@@ -187,7 +187,7 @@ class TestCase(unittest2.TestCase):
         path = self._config(contents)
         path2 = self._config(
             """
-            include "%s"
+            include r"%s"
             main:
                 new Provisioner:
                     server:

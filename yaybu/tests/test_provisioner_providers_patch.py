@@ -14,10 +14,7 @@
 
 from yaybu.tests.provisioner_fixture import TestCase
 from yaybu.core import error
-import pwd
-import grp
 import os
-import stat
 
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)

@@ -1,5 +1,4 @@
-# coding=utf-8
-# Copyright 2013 Isotoma Limited
+# Copyright 2011-2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import unittest
-import mock
-
-from yaybu.core import ui
-
-
-class TestUI(unittest.TestCase):
-
-    def setUp(self):
-        self.ui = mock.Mock()
-        self.ui.columns = 80
-
-    def test_progress_bar(self):
-        with ui.Progress(self.ui, 100) as p:
-            p.progress(50)
-            p.progress(100)
-
+from yaybu.ui.widgets import TextFactory
 

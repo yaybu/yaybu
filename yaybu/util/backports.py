@@ -95,3 +95,42 @@ except ImportError: # pragma: no cover
         iterkeys = DictMixin.iterkeys
         itervalues = DictMixin.itervalues
         iteritems = DictMixin.iteritems
+
+
+# Support inet_pton on Windows, which is required for libcloud to function there
+# FIXME: Upstream this.
+
+import socket
+if not hasattr(socket, "inet_pton"): # pragma: no cover
+    import ctypes
+
+    WSAStringToAddressA = ctypes.windll.ws2_32.WSAStringToAddressA
+
+    class sockaddr(ctypes.Structure):
+        _fields_ = [
+            ("sa_family", ctypes.c_short),
+            ("__pad1", ctypes.c_ushort),
+            ("ipv4_addr", ctypes.c_byte * 4),
+            ("ipv6_addr", ctypes.c_byte * 16),
+            ("__pad2", ctypes.c_ulong)
+            ]
+
+
+    def inet_pton(address_family, ip_string):
+        addr = sockaddr()
+        addr.sa_family = address_family
+        addr_size = ctypes.c_int(ctypes.sizeof(addr))
+
+        if WSAStringToAddressA(ip_string, address_family, None, ctypes.byref(addr), ctypes.byref(addr_size)) != 0:
+            raise socket.error(ctypes.FormatError())
+
+        if address_family == socket.AF_INET:
+            return ctypes.string_at(addr.ipv4_addr, 4)
+        elif address_family == socket.AF_INET6:
+            return ctypes.string_at(addr.ipv6_addr, 16)
+        else:
+            raise socket.error('unknown address family')
+
+
+    setattr(socket, "inet_pton", inet_pton)
+

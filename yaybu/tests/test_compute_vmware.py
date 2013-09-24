@@ -37,9 +37,9 @@ class TestVMBoxImage(unittest2.TestCase):
             ctx = Mock()
             vi.extract("/var/tmp/frob", ctx, {})
             vi._zcopy.assert_has_calls([
-                call('/var/tmp/frob/foo', zf().__enter__(), 'foo'),
-                call('/var/tmp/frob/bar', zf().__enter__(), 'bar'),
-                call('/var/tmp/frob/baz', zf().__enter__(), 'baz'),
+                call(os.path.join('/var/tmp/frob', 'foo'), zf().__enter__(), 'foo'),
+                call(os.path.join('/var/tmp/frob', 'bar'), zf().__enter__(), 'bar'),
+                call(os.path.join('/var/tmp/frob', 'baz'), zf().__enter__(), 'baz'),
                 ])
             vi._store_metadata.assert_has_calls([
                 call('/var/tmp/frob', {})
@@ -116,28 +116,31 @@ class TestRemoteVMBox(unittest2.TestCase):
         h = hashlib.md5()
         progress = Mock()
         d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d)
         src = os.path.join(d, "src")
         dst = os.path.join(d, "dst")
-        open(src, "w").write("foo"*10000)
+        with open(src, "w") as fp:
+            fp.write("foo"*10000)
         h.update("foo"*10000)
-        open(src + ".md5", "w").write(h.hexdigest())
+        with open(src + ".md5", "w") as fp:
+            fp.write(h.hexdigest())
         r = self._make_box("file://" + src)
         r.download(dst, progress)
         self.assertEqual(open(dst).read(), "foo"*10000)
         progress.assert_has_calls([call(27), call(54), call(81), call(100)])
-        shutil.rmtree(d)
 
     def test_image_download_wrong_hash(self):
         progress = Mock()
         d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d)
         src = os.path.join(d, "src")
         dst = os.path.join(d, "dst")
-        open(src, "w").write("foo"*10000)
-        open(src + ".md5", "w").write("foo")
+        with open(src, "w") as fp:
+            fp.write("foo"*10000)
+        with open(src + ".md5", "w") as fp:
+            fp.write("foo")
         r = self._make_box("file://" + src)
         self.assertRaises(ValueError, r.download, dst, progress)
-        shutil.rmtree(d)
-
 
     def test_context_manager(self):
         ## TODO
@@ -156,10 +159,12 @@ class TestVMBoxLibrary(unittest2.TestCase):
 
     def setUp(self):
         self.root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.root)
         self.librarydir = os.path.join(self.root, "vmware", "library",)
         for f in fixture:
             d =  os.path.join(self.librarydir, f['name'])
             os.makedirs(d)
+            self.addCleanup(shutil.rmtree, d)
             mp = os.path.join(d, "VM-INFO")
             metadata = {
                 'url': f['url'],
@@ -168,10 +173,6 @@ class TestVMBoxLibrary(unittest2.TestCase):
             }
             json.dump(metadata, open(mp, "w"))
         self.library = VMBoxLibrary(self.root)
-
-    def tearDown(self):
-        """ delete the cache dir """
-        shutil.rmtree(self.librarydir)
 
     def test_scan(self):
         self.assertEqual(self.library.library, {
@@ -194,7 +195,8 @@ class TestVMBoxLibrary(unittest2.TestCase):
         z.close()
         h = hashlib.md5()
         h.update(open(f.name).read())
-        open(f.name + ".md5", "w").write(h.hexdigest())
+        with open(f.name + ".md5", "w") as fp:
+            fp.write(h.hexdigest())
         context = Mock()
         self.library.get("file://" + f.name, context, 'bar')
         dirs = os.listdir(self.librarydir)
