@@ -24,14 +24,17 @@ from yaybu.provisioner.transports.remote import stat_result
 class TestLocalTransport(TestCase):
 
     def setUp(self):
-        patcher = mock.patch("yaybu.provisioner.transports.local.os")
-        self.addCleanup(patcher.stop)
-        self.os = patcher.start()
+        for modname in ("os", "pwd", "grp", "spwd"):
+            patcher = mock.patch("yaybu.provisioner.transports.local.%s" % modname)
+            self.addCleanup(patcher.stop)
+            setattr(self, modname, patcher.start())
 
         self.transport = LocalTransport(None)
 
     def test_whoami(self):
-        self.assertEqual(self.transport.whoami(), getpass.getuser())
+        self.pwd.getpwuid.return_value.pw_name = "root"
+        self.assertEqual(self.transport.whoami(), "root")
+        self.os.getuid.assert_called_with()
 
     def test_exists(self):
         self.os.path.exists.return_value = True
@@ -51,7 +54,7 @@ class TestLocalTransport(TestCase):
     def test_not_isfile(self):
         self.os.path.isfile.return_value = False
         self.assertEqual(self.transport.isfile("/"), False)
-        self.os.isfile.assert_called_with("/")
+        self.os.path.isfile.assert_called_with("/")
 
     def test_isdir(self):
         self.os.path.isdir.return_value = True
@@ -133,63 +136,63 @@ class TestLocalTransport(TestCase):
         self.transport.unlink("/foo")
         self.os.unlink.assert_called_with("/foo")
 
-    #def test_getgrall(self):
-    #    self.ex.return_value = [0, "mysql:x:144:", ""]
-    #    groups = self.transport.getgrall()
-    #    self.assertEqual(groups[0].gr_name, "mysql")
+    def test_getgrall(self):
+        self.grp.getgrall.return_value = ["mysql"]
+        groups = self.transport.getgrall()
+        self.assertEqual(groups[0], "mysql")
 
-    #def test_getgrnam(self):
-    #    self.ex.return_value = [0, "mysql:x:144:", ""]
-    #    group = self.transport.getgrnam("mysql")
-    #    self.assertEqual(group.gr_name, "mysql")
+    def test_getgrnam(self):
+        self.grp.getgrnam.return_value = "mysql"
+        group = self.transport.getgrnam("mysql")
+        self.assertEqual(group, "mysql")
 
-    #def test_getgrnam_miss(self):
-    #    self.ex.return_value = [0, "mysql:x:144:", ""]
-    #    self.assertRaises(KeyError, self.transport.getgrnam, "sqlite")
+    def test_getgrnam_miss(self):
+        self.grp.getgrnam.side_effect = KeyError
+        self.assertRaises(KeyError, self.transport.getgrnam, "sqlite")
 
-    #def test_getgrgid(self):
-    #    self.ex.return_value = [0, "mysql:x:144:", ""]
-    #    group = self.transport.getgrgid(144)
-    #    self.assertEqual(group.gr_name, "mysql")
+    def test_getgrgid(self):
+        self.grp.getgrgid.return_value = "mysql"
+        group = self.transport.getgrgid(0)
+        self.assertEqual(group, "mysql")
 
-    #def test_getgrgid_miss(self):
-    #    self.ex.return_value = [0, "mysql:x:144:", ""]
-    #    self.assertRaises(KeyError, self.transport.getgrgid, 129)
+    def test_getgrgid_miss(self):
+        self.grp.getgrgid.side_effect = KeyError
+        self.assertRaises(KeyError, self.transport.getgrgid, "sqlite")
 
-    #def test_getpwall(self):
-    #    self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
-    #    users = self.transport.getpwall()
-    #    self.assertEqual(users[0].pw_name, "mysql")
+    def test_getpwall(self):
+        self.pwd.getpwall.return_value = ["mysql"]
+        groups = self.transport.getpwall()
+        self.assertEqual(groups[0], "mysql")
 
-    #def test_getpwnam(self):
-    #    self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
-    #    user = self.transport.getpwnam("mysql")
-    #    self.assertEqual(user.pw_name, "mysql")
+    def test_getpwnam(self):
+        self.pwd.getpwnam.return_value = "mysql"
+        group = self.transport.getpwnam("mysql")
+        self.assertEqual(group, "mysql")
 
-    #def test_getpwnam_miss(self):
-    #    self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
-    #    self.assertRaises(KeyError, self.transport.getpwnam, "sqlite")
+    def test_getpwnam_miss(self):
+        self.pwd.getpwnam.side_effect = KeyError
+        self.assertRaises(KeyError, self.transport.getpwnam, "sqlite")
 
-    #def test_getpwuid(self):
-    #    self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
-    #    user = self.transport.getpwuid(129)
-    #    self.assertEqual(user.pw_name, "mysql")
+    def test_getpwuid(self):
+        self.pwd.getpwuid.return_value = "mysql"
+        group = self.transport.getpwuid(0)
+        self.assertEqual(group, "mysql")
 
-    #def test_getpwuid_miss(self):
-    #    self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
-    #    self.assertRaises(KeyError, self.transport.getpwuid, 144)
+    def test_getpwuid_miss(self):
+        self.pwd.getpwuid.side_effect = KeyError
+        self.assertRaises(KeyError, self.transport.getpwuid, "sqlite")
 
-    #def test_getspall(self):
-    #    self.ex.return_value = [0, "mysql:!:15958:0:99999:7:::", ""]
-    #    shadows = self.transport.getspall()
-    #    self.assertEqual(shadows[0].sp_nam, "mysql")
+    def test_getspall(self):
+        self.spwd.getspall.return_value = ["password"]
+        shadows = self.transport.getspall()
+        self.assertEqual(shadows[0], "password")
 
-    #def test_getspnam(self):
-    #    self.ex.return_value = [0, "mysql:!:15958:0:99999:7:::", ""]
-    #    shadow = self.transport.getspnam("mysql")
-    #    self.assertEqual(shadow.sp_nam, "mysql")
+    def test_getspnam(self):
+        self.spwd.getspnam.return_value = "password"
+        shadow = self.transport.getspnam("mysql")
+        self.assertEqual(shadow, "password")
 
-    #def test_getspnam_miss(self):
-    #    self.ex.return_value = [0, "mysql:!:15958:0:99999:7:::", ""]
-    #    self.assertRaises(KeyError, self.transport.getspnam, "sqlite")
+    def test_getspnam_miss(self):
+        self.spwd.getspnam.side_effect = KeyError
+        self.assertRaises(KeyError, self.transport.getspnam, "sqlite")
 
