@@ -17,11 +17,11 @@ import os, select
 try:
     import pwd
 except ImportError: # pragma: no cover
-    pass
+    pwd = None
 try:
     import grp
 except ImportError: # pragma: no cover
-    pass
+    grp = None
 try:
     import spwd
 except ImportError: # pragma: no cover
