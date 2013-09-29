@@ -1,3 +1,5 @@
+--find-links https://gevent.googlecode.com/files/gevent-1.0rc2.tar.gz#egg=gevent-1.0rc2
+
 nose2
 coverage
 coveralls
