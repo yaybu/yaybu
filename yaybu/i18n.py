@@ -17,6 +17,8 @@ import os
 import locale
 import gettext
 
+os.environ.setdefault("LANG", "en_GB.UTF-8")
+
 lc, encoding = locale.getdefaultlocale()
 
 mo_location = os.path.join(os.path.dirname(__file__), "i18n")
