@@ -1,5 +1,15 @@
 --find-links https://gevent.googlecode.com/files/gevent-1.0rc2.tar.gz#egg=gevent-1.0rc2
 
+Jinja2==2.7
+MarkupSafe==0.18
+apache-libcloud==0.13.0
+gevent==1.0rc2
+greenlet==0.4.1
+lockfile==0.9.1
+paramiko==1.11.0
+ply==3.4
+pycrypto==2.6
+
 nose2
 coverage
 coveralls
