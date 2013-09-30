@@ -22,7 +22,7 @@ class TestStaticContainer(TestCase):
     def setUp(self):
         MockStorageDriver.install(self)
         self.driver = MockStorageDriver("", "")
-        self.driver.create_container("source")
+        self.source = self.driver.create_container("source")
 
     def test_invalid_source_id(self):
         self.assertRaises(error.ValueError, self.up, """
@@ -75,6 +75,77 @@ class TestStaticContainer(TestCase):
             """)
 
         self.assertEqual(len(self.driver.list_containers()), 2)
+
+    def test_upload_file(self):
+        self.source.upload_object_via_stream([], "foo")
+
+        self.up("""
+            new StaticContainer as mystorage:
+                source:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: source
+
+                destination:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: destination
+            """)
+
+        c = self.driver.get_container("destination")
+        self.assertEqual(len(c.list_objects()), 2)
+        self.assertEqual((c.get_object("foo").as_stream()), [])
+
+    def test_delete_file(self):
+        d = self.driver.create_container("destination")
+        d.upload_object_via_stream([], "foo")
+        d.get_object("foo")
+
+        self.up("""
+            new StaticContainer as mystorage:
+                source:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: source
+
+                destination:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: destination
+            """)
+
+        self.assertEqual(len(d.list_objects()), 1)
+        d.get_object(".yaybu-manifest")
+        self.assertRaises(Exception, d.get_object, "foo")
+
+    def test_change_file(self):
+        self.source.upload_object_via_stream(["foo"], "foo")
+
+        d = self.driver.create_container("destination")
+        d.upload_object_via_stream(["bar"], "foo")
+
+        self.assertEqual(list(d.get_object("foo").as_stream()), ["bar"])
+
+        self.up("""
+            new StaticContainer as mystorage:
+                source:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: source
+
+                destination:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                    container: destination
+            """)
+
+        self.assertEqual(list(d.get_object("foo").as_stream()), ["foo"])
 
 
 class TestStaticContainerArgless(TestCase):

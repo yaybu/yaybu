@@ -35,6 +35,9 @@ class MockStorageDriver(DummyStorageDriver):
         for obj in self._containers[container.name]['objects'].values():
             yield obj
 
+    def list_container_objects(self, container):
+        return list(self.iterate_container_objects(container))
+
     def upload_object_via_stream(self, iterator, container, object_name, extra=None):
         blocks = [block for block in iterator]
         size = sum(len(block) for block in blocks)

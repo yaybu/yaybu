@@ -41,7 +41,7 @@ class ConsoleScreenBufferInfo(ctypes.Structure):
     ]
 
 
-def get_console_width_windows():
+def get_console_width_windows(): # pragma: no cover
     handle = ctypes.windll.kernel32.GetStdHandle(-11)
     screen = ConsoleScreenBufferInfo()
     if not ctypes.windll.kernel32.GetConsoleScreenBufferInfo(handle, ctypes.byref(screen)):
@@ -50,14 +50,15 @@ def get_console_width_windows():
 
 def get_console_width_posix():
     import termios, fcntl
-    if not sys.stdout.isatty():
-        return 80
-    size = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, "    ")
-    _, width = struct.unpack("HH", size)
-    return width or 80
+    if sys.stdout.isatty(): # pragma: no cover
+        size = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, "    ")
+        _, width = struct.unpack("HH", size)
+        if width:
+            return width
+    return 80
 
 
-if sys.platform[:3] == "win":
+if sys.platform[:3] == "win": # pragma: no cover
     get_console_width = get_console_width_windows
 else:
     get_console_width = get_console_width_posix

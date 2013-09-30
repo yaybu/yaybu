@@ -132,7 +132,7 @@ class StaticContainer(base.GraphExternalAction):
             if name in manifest and obj_s.hash == manifest[name]['source_hash']:
                 continue
 
-            if obj_s.size == obj_d.size and obj_s.hash == obj_d.hash:
+            if obj_s.size == obj_d.size and obj_s.hash and obj_s.hash == obj_d.hash:
                 continue
 
             with self.root.ui.throbber("Updating static file '%s'" % name):
