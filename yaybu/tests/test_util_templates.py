@@ -36,6 +36,16 @@ class TestTemplate(TestCase):
         fp.labels = labels or []
         self.paths[path] = fp
 
+    def assertRaises(self, exception_class, c, *args, **kwargs):
+        try:
+            c(*args, **kwargs)
+        except Exception as e:
+            assert isinstance(e, exception_class), "%r not an instance of %r" % (e, exception_class)
+            # Test that error can be formatted
+            str(e)
+            return e
+        raise AssertionError("Exception %r not raised" % exception_class)
+
     def test_simple_variable(self):
         args = {"hello": "world"}
         self.assertEqual(render_string(self.context, "{{ hello }}", args)[0].strip(), "world")
