@@ -307,7 +307,7 @@ Classes can be constructed on-the-fly::
         web:
             new Compute:
                 foo: bar
-                % for x in range(4)
+                for x in range(4):
                     baz: x
 
 Classes may have special side-effects, or provide additional data, at runtime.
