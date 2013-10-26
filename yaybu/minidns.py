@@ -1,4 +1,3 @@
-from . import dns
 from libcloud.common.base import Connection
 from libcloud.dns.base import DNSDriver, Zone, Record, RecordType
 
