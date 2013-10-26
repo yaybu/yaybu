@@ -21,10 +21,10 @@ from .attributes import AttributeChanger
 
 
 def binary_buffers(*buffers):
-
     """ Check all of the passed buffers to see if any of them are binary. If
     any of them are binary this will return True. """
-    check = lambda buff: len(buff) == sum(1 for c in buff if c in string.printable)
+    check = lambda buff: len(buff) == sum(
+        1 for c in buff if c in string.printable)
     for buff in buffers:
         if buff and not check(buff):
             return True
@@ -58,14 +58,16 @@ class EnsureFile(changes.Change):
             st = context.transport.stat(self.filename)
             if st.st_size != 0:
                 self.renderer.empty_file(self.filename)
-                context.change(ShellCommand(["cp", "/dev/null", self.filename]))
+                context.change(
+                    ShellCommand(["cp", "/dev/null", self.filename]))
                 self.changed = True
 
     def overwrite_existing_file(self, context):
         """ Change the content of an existing file """
         self.current = context.transport.get(self.filename)
         if self.current != self.contents:
-            self.renderer.changed_file(self.filename, self.current, self.contents, self.sensitive)
+            self.renderer.changed_file(
+                self.filename, self.current, self.contents, self.sensitive)
             if not context.simulate:
                 context.transport.put(self.filename, self.contents, self.mode)
             self.changed = True
@@ -117,7 +119,8 @@ class FileChangeTextRenderer(changes.TextRenderer):
 
     def diff(self, previous, replacement):
         if not binary_buffers(previous, replacement):
-            diff = "".join(difflib.unified_diff(previous.splitlines(1), replacement.splitlines(1)))
+            diff = "".join(difflib.unified_diff(
+                previous.splitlines(1), replacement.splitlines(1)))
             for l in diff.splitlines():
                 self.logger.info("    %s" % l)
         else:

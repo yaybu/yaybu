@@ -74,7 +74,6 @@ class TestEvents(TestCase):
                          on: Directory[/etc/somedir]
 
             """,
-               "--resume")
+                         "--resume")
 
         self.failUnlessExists("/frob/somedir/foo")
-

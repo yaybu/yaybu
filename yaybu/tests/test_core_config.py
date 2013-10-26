@@ -20,34 +20,34 @@ from yaybu.core.error import ArgParseError
 
 
 class TestYaybuArg(unittest.TestCase):
-    
+
     def test_string(self):
         arg = config.YaybuArg('foo')
         arg.set("hello")
         self.assertEqual(arg.get(), "hello")
-        
+
     def test_default(self):
         arg = config.YaybuArg('foo', default="hello")
         self.assertEqual(arg.get(), "hello")
-        
+
     def test_integer(self):
         arg = config.YaybuArg('foo', 'integer')
         arg.set("10")
         self.assertEqual(arg.get(), 10)
-        
+
     def test_boolean_default(self):
         arg = config.YaybuArg('foo', 'boolean', default=False)
         self.assertEqual(arg.get(), False)
-        
+
     def test_integer_default(self):
         arg = config.YaybuArg('foo', 'integer', default=20)
         self.assertEqual(arg.get(), 20)
-        
+
     def test_integer_bad(self):
         arg = config.YaybuArg('foo', 'integer', default=20)
         arg.set("boo")
         self.assertRaises(ArgParseError, arg.get)
-        
+
     def test_boolean(self):
         arg = config.YaybuArg('foo', 'boolean')
         arg.set("1")
@@ -64,11 +64,8 @@ class TestYaybuArg(unittest.TestCase):
         self.assertEqual(arg.get(), False)
         arg.set("false")
         self.assertEqual(arg.get(), False)
-    
+
     def test_unknown(self):
         arg = config.YaybuArg('foo', 'meh', default=20)
         arg.set("boo")
         self.assertRaises(ArgParseError, arg.get)
-        
-        
-        

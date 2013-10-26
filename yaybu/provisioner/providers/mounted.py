@@ -30,4 +30,3 @@ class Mounted(Provider):
                 context.change(ShellCommand(["touch", "-ac", w]))
 
         return True
-

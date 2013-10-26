@@ -48,6 +48,7 @@ class ResourceType(type):
     def clear(self):
         self.resources = {}
 
+
 class AvailableResourcePolicies(dict):
 
     """ A collection of the policies available for a resource, with some logic
@@ -178,7 +179,8 @@ class Resource(object):
         # Only allow keys that are in the schema
         for key in self.inner.keys():
             if not key in self.get_argument_names():
-                raise error.ParseError("'%s' is not a valid option for resource %s" % (key, self))
+                raise error.ParseError(
+                    "'%s' is not a valid option for resource %s" % (key, self))
 
         # Error if doesn't conform to policy
         for p in self.get_potential_policies():
@@ -216,7 +218,7 @@ class Resource(object):
     def fire_event(self, context, name):
         """ Apply the appropriate policies on the resources that are observing
         this resource for the firing of a policy. """
-        for resource, policy in  self.observers[name]:
+        for resource, policy in self.observers[name]:
             context.state.override(resource, policy)
 
     def bind(self, resources):
@@ -291,7 +293,8 @@ class ResourceBundle(OrderedDict):
         except error.ParseError as exc:
             raise
             if getattr(node, "anchor", None):
-                exc.msg += "\nFile %s, line %d, column %s" % (node.anchor.source, node.anchor.lineno, "unknown")
+                exc.msg += "\nFile %s, line %d, column %s" % (
+                    node.anchor.source, node.anchor.lineno, "unknown")
                 exc.file = node.anchor.source
                 exc.line = node.anchor.lineno
             exc.column = 0
@@ -303,7 +306,7 @@ class ResourceBundle(OrderedDict):
         """ Maps - to _ to make resource attribute name more pleasant. """
         for k, v in kw.items():
             k = k.replace("-", "_")
-            yield str(k),v
+            yield str(k), v
 
     def add_from_node(self, spec):
         try:
@@ -334,11 +337,13 @@ class ResourceBundle(OrderedDict):
         try:
             kls = ResourceType.resources[typename]
         except KeyError:
-            raise error.ParseError("There is no resource type of '%s'" % typename)
+            raise error.ParseError(
+                "There is no resource type of '%s'" % typename)
 
         resource = kls(instance)
         if resource.id in self:
-            raise error.ParseError("'%s' cannot be defined multiple times" % resource.id)
+            raise error.ParseError(
+                "'%s' cannot be defined multiple times" % resource.id)
 
         self[resource.id] = resource
 
@@ -363,10 +368,12 @@ class ResourceBundle(OrderedDict):
         for i, resource in enumerate(self.values()):
             for bound in resource.bind(self):
                 if bound == resource:
-                    raise error.BindingError("Attempt to bind %r to itself!" % resource)
+                    raise error.BindingError(
+                        "Attempt to bind %r to itself!" % resource)
                 j = self.values().index(bound)
                 if j > i:
-                    raise error.BindingError("Attempt to bind forwards on %r" % resource)
+                    raise error.BindingError(
+                        "Attempt to bind forwards on %r" % resource)
 
     def test(self, ctx):
         for resource in self.values():
@@ -387,13 +394,15 @@ class ResourceBundle(OrderedDict):
                 with ctx.changelog.resource(resource) as output:
                     if resource.apply(ctx, output):
                         something_changed = True
-                throbber.message = "Applying configuration... (%s/%s)" % (i, len(self.values()))
+                throbber.message = "Applying configuration... (%s/%s)" % (
+                    i, len(self.values()))
                 throbber.throb()
 
         return something_changed
 
 
 class Censored(object):
+
     def __init__(self, resource):
         self.resource = resource
         self.klass = resource.__class__
@@ -404,5 +413,4 @@ class Censored(object):
             raise AttributeError(key)
         if isinstance(attr, Argument):
             return attr.__get_censored__(self.resource)
-        return getattr(self,resource, key)
-
+        return getattr(self, resource, key)

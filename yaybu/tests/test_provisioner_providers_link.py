@@ -17,6 +17,7 @@ import os
 from yaybu.tests.provisioner_fixture import TestCase
 from yaybu.core import error
 
+
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
@@ -95,4 +96,3 @@ class TestLink(TestCase):
 
     def test_unicode(self):
         self.check_apply(open(sibpath("assets/link_unicode1.yay")).read())
-

@@ -133,7 +133,8 @@ class TestUserRemove(TestCase):
         self.failUnlessRaises(KeyError, self.transport.getpwnam, "nobody")
 
     def test_remove_non_existing(self):
-        self.failUnlessRaises(KeyError, self.transport.getpwnam, "zzidontexistzz")
+        self.failUnlessRaises(
+            KeyError, self.transport.getpwnam, "zzidontexistzz")
 
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
@@ -142,5 +143,5 @@ class TestUserRemove(TestCase):
                     policy: remove
             """)
 
-        self.failUnlessRaises(KeyError, self.transport.getpwnam, "zzidontexistzz")
-
+        self.failUnlessRaises(
+            KeyError, self.transport.getpwnam, "zzidontexistzz")

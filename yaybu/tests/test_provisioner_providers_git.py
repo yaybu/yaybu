@@ -16,6 +16,7 @@ from yaybu.tests.provisioner_fixture import TestCase
 
 
 class GitTest(TestCase):
+
     """
     Test the git checkout provider.
 
@@ -40,9 +41,9 @@ class GitTest(TestCase):
                     repository: %(repo_url)s
                     branch: master
             """ % {
-                "clone_dir": CLONED_REPO,
-                "repo_url": self.UPSTREAM_REPO,
-            }
+            "clone_dir": CLONED_REPO,
+            "repo_url": self.UPSTREAM_REPO,
+        }
         )
 
     def test_change_branch(self):
@@ -59,9 +60,9 @@ class GitTest(TestCase):
                     repository: %(repo_url)s
                     branch: master
             """ % {
-                "clone_dir": CLONED_REPO,
-                "repo_url": self.UPSTREAM_REPO,
-            }
+            "clone_dir": CLONED_REPO,
+            "repo_url": self.UPSTREAM_REPO,
+        }
         )
 
         # Change to another ref
@@ -73,10 +74,10 @@ class GitTest(TestCase):
                     repository: %(repo_url)s
                     branch: %(alt_ref)s
             """ % {
-                "clone_dir": CLONED_REPO,
-                "repo_url": self.UPSTREAM_REPO,
-                "alt_ref": self.OTHER_UPSTREAM_REF,
-            }
+            "clone_dir": CLONED_REPO,
+            "repo_url": self.UPSTREAM_REPO,
+            "alt_ref": self.OTHER_UPSTREAM_REF,
+        }
         )
 
     def test_checkout_tag(self):
@@ -94,12 +95,11 @@ class GitTest(TestCase):
                     repository: %(repo_url)s
                     tag: %(tag)s
             """ % {
-                "clone_dir": CLONED_REPO,
-                "repo_url": self.UPSTREAM_REPO_2,
-                "tag": TAG,
-            }
+            "clone_dir": CLONED_REPO,
+            "repo_url": self.UPSTREAM_REPO_2,
+            "tag": TAG,
+        }
         )
-
 
     def test_branch_to_tag(self):
         """Test checking out a branch, then changing to a tag, then back again"""
@@ -156,9 +156,9 @@ class GitTest(TestCase):
                     repository: %(repo_url)s
                     branch: master
             """ % {
-                "clone_dir": CLONED_REPO,
-                "repo_url": self.UPSTREAM_REPO,
-            }
+            "clone_dir": CLONED_REPO,
+            "repo_url": self.UPSTREAM_REPO,
+        }
         )
 
         self.check_apply("""
@@ -169,9 +169,9 @@ class GitTest(TestCase):
                     repository: %(repo_url)s
                     branch: master
             """ % {
-                "clone_dir": CLONED_REPO,
-                "repo_url": self.UPSTREAM_REPO_2,
-            }
+            "clone_dir": CLONED_REPO,
+            "repo_url": self.UPSTREAM_REPO_2,
+        }
         )
 
     def test_checkout_revision(self):
@@ -187,7 +187,7 @@ class GitTest(TestCase):
                     repository: %(repo_url)s
                     revision: e24b4af3710201b011ba19752176645dcd9b0edc
             """ % {
-                "clone_dir": CLONED_REPO,
-                "repo_url": self.UPSTREAM_REPO,
-            }
+            "clone_dir": CLONED_REPO,
+            "repo_url": self.UPSTREAM_REPO,
+        }
         )

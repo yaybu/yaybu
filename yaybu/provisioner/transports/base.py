@@ -70,7 +70,7 @@ class Transport(object):
             "LOGNAME": user,
             "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
             "SHELL": "/bin/sh",
-            })
+        })
 
         if env:
             newenv.update(env)
@@ -86,10 +86,9 @@ class Transport(object):
         parts.extend([
             "cd %s" % (cwd or "/"),
             command,
-            ])
+        ])
 
         full_command.extend(["sh", "-c", "; ".join(parts)])
         return self._execute_impl(full_command, stdin, stdout, stderr)
 
     execute = _execute
-

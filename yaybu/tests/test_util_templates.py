@@ -24,6 +24,7 @@ class TestTemplate(TestCase):
     def setUp(self):
         self.context = mock.Mock()
         self.paths = {}
+
         def _get_file(path):
             if path in self.paths:
                 return self.paths[path]
@@ -40,7 +41,8 @@ class TestTemplate(TestCase):
         try:
             c(*args, **kwargs)
         except Exception as e:
-            assert isinstance(e, exception_class), "%r not an instance of %r" % (e, exception_class)
+            assert isinstance(e, exception_class), "%r not an instance of %r" % (
+                e, exception_class)
             # Test that error can be formatted
             str(e)
             return e
@@ -48,17 +50,20 @@ class TestTemplate(TestCase):
 
     def test_simple_variable(self):
         args = {"hello": "world"}
-        self.assertEqual(render_string(self.context, "{{ hello }}", args)[0].strip(), "world")
+        self.assertEqual(
+            render_string(self.context, "{{ hello }}", args)[0].strip(), "world")
 
     def test_for_loop(self):
         contents = """
         {% for f in foo %}{{ f }},{% endfor %}
         """
-        args = {"foo": [1,2,3]}
-        self.assertEqual(render_string(self.context, contents, args)[0].strip(), "1,2,3,")
+        args = {"foo": [1, 2, 3]}
+        self.assertEqual(
+            render_string(self.context, contents, args)[0].strip(), "1,2,3,")
 
     def _assert_parse_error(self, contents, args=None):
-        self.assertRaises(error.ParseError, render_string, self.context, contents, args or {})
+        self.assertRaises(
+            error.ParseError, render_string, self.context, contents, args or {})
 
     def test_grammar_error(self):
         contents = """
@@ -69,7 +74,8 @@ class TestTemplate(TestCase):
         self._assert_parse_error(contents)
 
     def _assert_key_error(self, contents, args=None):
-        self.assertRaises(error.NoMatching, render_string, self.context, contents, args or {})
+        self.assertRaises(
+            error.NoMatching, render_string, self.context, contents, args or {})
 
     def test_strict_error_simple_variable(self):
         contents = """
@@ -91,7 +97,8 @@ class TestTemplate(TestCase):
         hello
         {% endif %}
         """
-        self.assertEqual(render_string(self.context, contents, {})[0].strip(), "")
+        self.assertEqual(
+            render_string(self.context, contents, {})[0].strip(), "")
 
     def test_allow_test_on_undefined_2(self):
         contents = """
@@ -99,14 +106,16 @@ class TestTemplate(TestCase):
         hello
         {% endif %}
         """
-        self.assertEqual(render_string(self.context, contents, {})[0].strip(), "hello")
+        self.assertEqual(
+            render_string(self.context, contents, {})[0].strip(), "hello")
 
     def test_includes_work(self):
         self.add_path("test1", "hello world")
         contents = """
         {% include "test1" %}
         """
-        self.assertEqual(render_string(self.context, contents, {})[0].strip(), "hello world")
+        self.assertEqual(
+            render_string(self.context, contents, {})[0].strip(), "hello world")
 
     def test_includes_can_access_vars(self):
         self.add_path("test1", "hello {{ name }}")
@@ -114,7 +123,8 @@ class TestTemplate(TestCase):
         {% include "test1" %}
         """
         args = {"name": "world"}
-        self.assertEqual(render_string(self.context, contents, args)[0].strip(), "hello world")
+        self.assertEqual(
+            render_string(self.context, contents, args)[0].strip(), "hello world")
 
     def test_includes_not_secret_by_default(self):
         self.add_path("test1", "hello: world\n")
@@ -134,11 +144,12 @@ class TestTemplate(TestCase):
         contents = """
         {% include "test1" %}
         """
-        self.assertRaises(error.MissingAsset, render_string, self.context, contents, {})
+        self.assertRaises(
+            error.MissingAsset, render_string, self.context, contents, {})
 
     def test_template_error(self):
         contents = """
         {{ 0 / 0 }}
         """
-        self.assertRaises(error.TemplateError, render_string, self.context, contents, {})
-
+        self.assertRaises(
+            error.TemplateError, render_string, self.context, contents, {})

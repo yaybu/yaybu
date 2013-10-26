@@ -13,7 +13,8 @@
 # limitations under the License.
 
 
-import os, signal
+import os
+import signal
 
 from yaybu.tests.provisioner_fixture import TestCase
 from yaybu import error
@@ -114,4 +115,3 @@ class TestSimpleService(TestCase):
             """)
 
         self.failUnlessExists("/test_running_false")
-

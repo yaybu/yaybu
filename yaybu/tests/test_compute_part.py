@@ -142,7 +142,8 @@ class TestCompute(TestCase):
             """)
         nodes = self.driver.list_nodes()
         self.assertEqual(len(nodes), 3)
-        nodes = filter(lambda n: n.name == "hello-im-another-node", self.driver.list_nodes())
+        nodes = filter(
+            lambda n: n.name == "hello-im-another-node", self.driver.list_nodes())
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0].name, "hello-im-another-node")
 
@@ -229,4 +230,3 @@ class TestComputeArgless(TestCase):
         nodes = self.driver.list_nodes()
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0].name, "hello")
-

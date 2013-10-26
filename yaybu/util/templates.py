@@ -22,10 +22,12 @@ from yaybu import error
 
 
 class JinjaTracebackAnchor(errors.Anchor):
+
     """
     Most Jinja2 exceptions have quite poor error information :-(
     One of the features is that the Jinja errors appear in the TB...
     """
+
     def __init__(self, template, tb):
         self.template = template
         self.tb = tb
@@ -35,15 +37,17 @@ class JinjaTracebackAnchor(errors.Anchor):
         while t.tb_next:
             t = t.tb_next
         f = t.tb_frame
-        yield "'%s' at line %d" % (self.template.name, f.f_lineno-1)
+        yield "'%s' at line %d" % (self.template.name, f.f_lineno - 1)
 
         if self.template.filename and self.template.filename != "<template>":
             template = self.template
-            source, t, _ = template.environment.loader.get_source(template.environment, template.filename)
-            yield "  " + source.splitlines()[f.f_lineno-1]
+            source, t, _ = template.environment.loader.get_source(
+                template.environment, template.filename)
+            yield "  " + source.splitlines()[f.f_lineno - 1]
 
 
 class JinjaSyntaxAnchor(errors.Anchor):
+
     """
     Provide something like a yay anchor so that Jinja errors have lots of context
     """
@@ -53,7 +57,7 @@ class JinjaSyntaxAnchor(errors.Anchor):
 
     def long_description_lines(self):
         e = self.orig_exception
-        yield "'%s' at line %d" % (e.filename or e.name, e.lineno) #, column 7
+        yield "'%s' at line %d" % (e.filename or e.name, e.lineno)  # , column 7
         if e.source is not None:
             try:
                 yield "  " + e.source.splitlines()[e.lineno - 1]
@@ -62,15 +66,18 @@ class JinjaSyntaxAnchor(errors.Anchor):
 
 
 class LessStrictUndefined(StrictUndefined):
+
     """
     Fail strictly if someone uses a variable that isn't defined in the context
     expression - but still allow boolean checks
     """
+
     def __nonzero__(self):
         return False
 
 
 class TemplateLoader(BaseLoader):
+
     """
     A template loader that searches for templates using the Yaybu openers sytem.
     This means that templates can be fetched over http and can even be
@@ -79,6 +86,7 @@ class TemplateLoader(BaseLoader):
     It tracks whether it has been used to open any encrypted templates and sets
     a taint flag if it has.
     """
+
     def __init__(self, ctx):
         self.ctx = ctx
         self.secret = False
@@ -106,7 +114,7 @@ def get_template_environment(context):
         loader=loader,
         line_statement_prefix='%',
         undefined=LessStrictUndefined,
-        )
+    )
     return env
 
 
@@ -125,10 +133,13 @@ def _call_render(template, *args, **kwargs):
         raise
     except UndefinedError as e:
         tb = sys.exc_info()[2]
-        raise error.NoMatching(str(e), anchor=JinjaTracebackAnchor(template, tb))
+        raise error.NoMatching(
+            str(e), anchor=JinjaTracebackAnchor(template, tb))
     except BaseException as e:
         tb = sys.exc_info()[2]
-        raise error.TemplateError("The template engine was unable to fill in your template and reported: '%s'" % str(e), anchor=JinjaTracebackAnchor(template, tb))
+        raise error.TemplateError(
+            "The template engine was unable to fill in your template and reported: '%s'" %
+            str(e), anchor=JinjaTracebackAnchor(template, tb))
 
 
 def render_string(context, contents, arguments):
@@ -161,4 +172,3 @@ def render_template(context, template, arguments):
     template = _call_get(env.get_template, template)
     rendered = _call_render(template, arguments) + "\n"
     return rendered, env.loader.secret
-

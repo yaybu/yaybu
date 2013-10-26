@@ -37,7 +37,7 @@ class Section(object):
         rl = len(header)
         if rl < self.ui.columns:
             total_minuses = (self.ui.columns - 3) - rl
-            minuses = total_minuses/2
+            minuses = total_minuses / 2
             leftover = total_minuses % 2
         else:
             minuses = 4
@@ -47,7 +47,7 @@ class Section(object):
             "-" * minuses,
             header,
             "-" * (minuses + leftover)
-            ))
+        ))
 
         self.has_output = True
 
@@ -69,7 +69,7 @@ class Section(object):
 
     def __exit__(self, type_, value, tb):
         if self.has_output:
-            self.ui.print("\\" + "-" * (self.ui.columns-1))
+            self.ui.print("\\" + "-" * (self.ui.columns - 1))
 
 
 class Progress(object):
@@ -85,18 +85,19 @@ class Progress(object):
 
     def progress(self, progress):
         scale = float(self.ui.columns - 2) / self.upperbound
-        pos = int(min(progress * scale, self.ui.columns-2))
+        pos = int(min(progress * scale, self.ui.columns - 2))
         if pos != self.pos:
             self.pos = pos
             self.draw()
 
     def draw(self):
         self.ui._clear()
-        self.ui.stdout.write("[%s%s]" % ("=" * self.pos, " " * ((self.ui.columns-2)-self.pos)))
+        self.ui.stdout.write(
+            "[%s%s]" % ("=" * self.pos, " " * ((self.ui.columns - 2) - self.pos)))
         self.ui.stdout.flush()
 
     def __exit__(self, type_, value, tb):
-        #self.progress(self.upperbound)
+        # self.progress(self.upperbound)
         self.ui._progress.remove(self)
         self.ui.print("")
 
@@ -107,7 +108,7 @@ class Throbber(object):
         0: "\\",
         1: "-",
         2: "/",
-        }
+    }
 
     def __init__(self, ui, message):
         self.ui = ui
@@ -129,7 +130,8 @@ class Throbber(object):
 
     def draw(self):
         self.ui._clear()
-        self.ui.stdout.write("[%s] %s" % (self.glyphs.get(self.state, " "), self.message))
+        self.ui.stdout.write("[%s] %s" %
+                             (self.glyphs.get(self.state, " "), self.message))
         self.ui.stdout.flush()
 
     def __exit__(self, type_, value, tb):
@@ -183,4 +185,3 @@ class TextFactory(object):
 
     def _clear(self):
         self.stdout.write('\r' + ' ' * self.columns + '\r')
-

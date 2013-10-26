@@ -20,6 +20,7 @@ from . import utils
 
 UpstartInfo = namedtuple('UpstartInfo', ['name', 'goal', 'status'])
 
+
 class _UpstartServiceMixin(utils._ServiceMixin):
 
     features = ["restart", ]
@@ -40,7 +41,7 @@ class _UpstartServiceMixin(utils._ServiceMixin):
             instance, status = status.split(") ", 1)
             instance = instance.lstrip("(")
         else:
-           instance = name
+            instance = name
         goal, status = status.split("/", 1)
         if "," in status:
             status, _ = status.split(",", 1)
@@ -67,7 +68,8 @@ class _UpstartServiceMixin(utils._ServiceMixin):
         try:
             rv, stdout, stderr = context.transport.execute(command)
         except error.SystemError as exc:
-            raise error.CommandError("Got exit code of %d whilst trying to determine status" % exc.returncode)
+            raise error.CommandError(
+                "Got exit code of %d whilst trying to determine status" % exc.returncode)
 
         if "Unknown job" in stderr:
             raise error.CommandError("Upstart does not know about this job")
@@ -75,15 +77,18 @@ class _UpstartServiceMixin(utils._ServiceMixin):
         statuses = list(self._parse_status_output(stdout))
 
         if len(statuses) == 0:
-            raise error.CommandError("Upstart returned no information for the job")
+            raise error.CommandError(
+                "Upstart returned no information for the job")
 
         if len(statuses) > 1:
-            raise error.CommandError("The job has multiple statuses. This is currently not supported in Yaybu recipes.")
+            raise error.CommandError(
+                "The job has multiple statuses. This is currently not supported in Yaybu recipes.")
 
         try:
             return dict(start="running", stop="not-running")[statuses[0].goal]
         except KeyError:
-            raise error.CommandError("The job has an unexpected goal of '%s'" % statuses[0].goal)
+            raise error.CommandError(
+                "The job has an unexpected goal of '%s'" % statuses[0].goal)
 
     @classmethod
     def isvalid(cls, policy, resource, context):
@@ -107,5 +112,3 @@ class Stop(_UpstartServiceMixin, utils._Stop, provider.Provider):
 
 class Restart(_UpstartServiceMixin, utils._Restart, provider.Provider):
     pass
-
-

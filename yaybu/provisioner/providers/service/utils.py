@@ -55,7 +55,8 @@ class _ServiceMixin(object):
         try:
             context.change(ShellCommand(self.get_command(action)))
         except error.SystemError as exc:
-            raise error.CommandError("%s failed with return code %d" % (action, exc.returncode))
+            raise error.CommandError(
+                "%s failed with return code %d" % (action, exc.returncode))
 
     def ensure_enabled(self, context):
         pass
@@ -112,5 +113,3 @@ class _Restart(object):
             self.do(context, "start")
 
         return True
-
-

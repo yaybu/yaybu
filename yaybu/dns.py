@@ -41,40 +41,40 @@ class ZoneSync(MetadataSync):
     def get_local_records(self):
         domain = self.expression.domain.as_string().rstrip(".") + "."
         yield domain, dict(
-            domain = domain,
-            type = self.expression.type.as_string("master"),
-            ttl = self.expression.ttl.as_int(0),
-            extra = self.expression.extra.as_dict({}),
-            )
+            domain=domain,
+            type=self.expression.type.as_string("master"),
+            ttl=self.expression.ttl.as_int(0),
+            extra=self.expression.extra.as_dict({}),
+        )
 
     def get_remote_records(self):
         if self.zone:
             yield self.zone.domain, dict(
-                domain = self.zone.domain,
-                type = self.zone.type,
-                ttl = self.zone.ttl or 0,
-                extra = self.zone.extra,
-                )
+                domain=self.zone.domain,
+                type=self.zone.type,
+                ttl=self.zone.ttl or 0,
+                extra=self.zone.extra,
+            )
 
     def add(self, record):
         self.driver.create_zone(
-            domain = record['domain'],
-            type = record['type'],
-            ttl = record['ttl'],
-            extra = record['extra'],
-            )
+            domain=record['domain'],
+            type=record['type'],
+            ttl=record['ttl'],
+            extra=record['extra'],
+        )
 
     def update(self, uid, record):
         try:
             self.driver.update_zone(
-                zone = self.zone,
-                domain = record['domain'],
-                type = record['type'],
-                ttl = record['ttl'],
-                extra = record['extra'],
-                )
+                zone=self.zone,
+                domain=record['domain'],
+                type=record['type'],
+                ttl=record['ttl'],
+                extra=record['extra'],
+            )
         except NotImplementedError:
-            #print "This zone's settings are immutable"
+            # print "This zone's settings are immutable"
             pass
 
     def delete(self, uid, record):
@@ -91,26 +91,28 @@ class RecordSync(MetadataSync):
 
     def get_local_records(self):
         for rec in self.expression.records:
-            # FIXME: Catch error and raise an error with line number information
-            type_enum = self.driver._string_to_record_type(rec.type.as_string('A'))
+            # FIXME: Catch error and raise an error with line number
+            # information
+            type_enum = self.driver._string_to_record_type(
+                rec.type.as_string('A'))
 
             rid = rec['name'].as_string()
             yield rid, dict(
-                name = rec['name'].as_string(),
-                type = type_enum,
-                data = rec['data'].as_string(),
-                extra = rec['extra'].as_dict({'ttl': 10800}),
-                )
+                name=rec['name'].as_string(),
+                type=type_enum,
+                data=rec['data'].as_string(),
+                extra=rec['extra'].as_dict({'ttl': 10800}),
+            )
 
     def get_remote_records(self):
         if self.zone:
             for rec in self.zone.list_records():
                 yield rec.id, dict(
-                    name = rec.name,
-                    type = rec.type,
-                    data = rec.data,
-                    extra = rec.extra or {'ttl': 10800},
-                    )
+                    name=rec.name,
+                    type=rec.type,
+                    data=rec.data,
+                    extra=rec.extra or {'ttl': 10800},
+                )
 
     def match_local_to_remote(self, local, remotes):
         for rid, remote in remotes.items():
@@ -123,26 +125,26 @@ class RecordSync(MetadataSync):
 
     def add(self, record):
         self.driver.create_record(
-            name = record['name'],
-            zone = self.zone,
-            type = record['type'],
-            data = record['data'],
-            extra = record['extra'],
-            )
+            name=record['name'],
+            zone=self.zone,
+            type=record['type'],
+            data=record['data'],
+            extra=record['extra'],
+        )
 
     def update(self, uid, record):
         self.driver.update_record(
-            record = self.driver.get_record(self.zone.id, uid),
-            name = record['name'],
-            type = record['type'],
-            data = record['data'],
-            extra = record['extra'],
-            )
+            record=self.driver.get_record(self.zone.id, uid),
+            name=record['name'],
+            type=record['type'],
+            data=record['data'],
+            extra=record['extra'],
+        )
 
     def delete(self, uid, record):
         self.driver.delete_record(
-            record = self.driver.get_record(self.zone.id, uid),
-            )
+            record=self.driver.get_record(self.zone.id, uid),
+        )
 
 
 class Zone(base.GraphExternalAction):
@@ -183,7 +185,8 @@ class Zone(base.GraphExternalAction):
         zones = [z for z in self.driver.list_zones() if z.domain == domain]
 
         if len(zones) > 1:
-            raise errors.Error("Found multiple zones that match domain name '%s'" % domain)
+            raise errors.Error(
+                "Found multiple zones that match domain name '%s'" % domain)
         elif len(zones) == 1:
             return zones[0]
 
@@ -198,9 +201,9 @@ class Zone(base.GraphExternalAction):
 
         zchange = self.root.changelog.apply(
             ZoneSync(
-                expression = self.params,
-                driver = driver,
-                zone = zone,
+                expression=self.params,
+                driver=driver,
+                zone=zone,
             ))
 
         if not zone:
@@ -211,11 +214,10 @@ class Zone(base.GraphExternalAction):
 
         rchange = self.root.changelog.apply(
             RecordSync(
-                expression = self.params,
-                driver = driver,
-                zone = zone,
-                purge_remote = not self.params.shared.as_bool(default=True),
+                expression=self.params,
+                driver=driver,
+                zone=zone,
+                purge_remote=not self.params.shared.as_bool(default=True),
             ))
 
         return zchange.changed or rchange.changed
-

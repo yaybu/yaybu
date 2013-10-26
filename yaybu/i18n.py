@@ -29,7 +29,7 @@ gettext.find("Yaybu", mo_location)
 gettext.textdomain("Yaybu")
 gettext.bind_textdomain_codeset("Yaybu", "UTF-8")
 
-language = gettext.translation("Yaybu", mo_location, languages=languages, fallback=True)
+language = gettext.translation(
+    "Yaybu", mo_location, languages=languages, fallback=True)
 
 _ = language.ugettext
-

@@ -22,7 +22,7 @@ from yaybu.core.argument import (
     Octal,
     Dict,
     List,
-    )
+)
 
 
 class Execute(Resource):
@@ -116,6 +116,5 @@ class ExecutePolicy(Policy):
     name = "execute"
     default = True
     signature = (Present("name"),
-        XOR(Present("command"), Present("commands")),
-        )
-
+                 XOR(Present("command"), Present("commands")),
+                 )

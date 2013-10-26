@@ -41,5 +41,5 @@ class TestBaseTransport(TestCase):
     def test_execute(self, subprocess):
         self.transport.overlay_dir = "/bin"
         self.transport.env = {"FAKECHROOT_BASE": "/tmp", "PATH": "/hello"}
-        self.assertEqual(self.transport.execute(["/usr/bin/whoami"]), (0, "hello", "goodbye"))
-
+        self.assertEqual(self.transport.execute(
+            ["/usr/bin/whoami"]), (0, "hello", "goodbye"))

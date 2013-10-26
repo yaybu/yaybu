@@ -25,6 +25,7 @@ from mock import MagicMock as Mock, call, patch
 
 from yaybu.compute.vmware import VMBoxLibrary, RemoteVMBox, VMBoxImage
 
+
 def normpath(path):
     # Windows paths need to be in the form:
     #    file:///C|some\path\myvm.box
@@ -44,19 +45,24 @@ class TestVMBoxImage(unittest2.TestCase):
             ctx = Mock()
             vi.extract("/var/tmp/frob", ctx, {})
             vi._zcopy.assert_has_calls([
-                call(os.path.join('/var/tmp/frob', 'foo'), zf().__enter__(), 'foo'),
-                call(os.path.join('/var/tmp/frob', 'bar'), zf().__enter__(), 'bar'),
-                call(os.path.join('/var/tmp/frob', 'baz'), zf().__enter__(), 'baz'),
-                ])
+                call(os.path.join('/var/tmp/frob', 'foo'),
+                     zf().__enter__(), 'foo'),
+                call(os.path.join('/var/tmp/frob', 'bar'),
+                     zf().__enter__(), 'bar'),
+                call(
+                    os.path.join(
+                        '/var/tmp/frob', 'baz'), zf().__enter__(), 'baz'),
+            ])
             vi._store_metadata.assert_has_calls([
                 call('/var/tmp/frob', {})
-                ])
-            ctx.ui.throbber.assert_called_once_with("Extracting virtual machine")
+            ])
+            ctx.ui.throbber.assert_called_once_with(
+                "Extracting virtual machine")
             ctx.ui.throbber().__enter__().throb.assert_has_calls([
                 call(),
                 call(),
                 call(),
-                ])
+            ])
 
     def test_extract_metadata(self):
         with patch('yaybu.compute.vmware.ZipFile') as zf:
@@ -68,7 +74,7 @@ class TestVMBoxImage(unittest2.TestCase):
             vi.extract("/var/tmp/frob", ctx, {"foo": "bar"})
             vi._store_metadata.assert_has_calls([
                 call('/var/tmp/frob', {"foo": "bar"})
-                ])
+            ])
 
     def test_extract_metadata_vminfo(self):
         with patch('yaybu.compute.vmware.ZipFile') as zf:
@@ -81,7 +87,8 @@ class TestVMBoxImage(unittest2.TestCase):
             vi.extract("/var/tmp/frob", ctx, {"foo": "bar"})
             vi._store_metadata.assert_has_calls([
                 call('/var/tmp/frob', {"foo": "bar", "baz": "quux"})
-                ])
+            ])
+
 
 class TestRemoteVMBox(unittest2.TestCase):
 
@@ -127,13 +134,13 @@ class TestRemoteVMBox(unittest2.TestCase):
         src = os.path.join(d, "src")
         dst = os.path.join(d, "dst")
         with open(src, "w") as fp:
-            fp.write("foo"*10000)
-        h.update("foo"*10000)
+            fp.write("foo" * 10000)
+        h.update("foo" * 10000)
         with open(src + ".md5", "w") as fp:
             fp.write(h.hexdigest())
         r = self._make_box("file://" + src)
         r.download(dst, progress)
-        self.assertEqual(open(dst).read(), "foo"*10000)
+        self.assertEqual(open(dst).read(), "foo" * 10000)
         progress.assert_has_calls([call(27), call(54), call(81), call(100)])
 
     def test_image_download_wrong_hash(self):
@@ -143,24 +150,25 @@ class TestRemoteVMBox(unittest2.TestCase):
         src = os.path.join(d, "src")
         dst = os.path.join(d, "dst")
         with open(src, "w") as fp:
-            fp.write("foo"*10000)
+            fp.write("foo" * 10000)
         with open(src + ".md5", "w") as fp:
             fp.write("foo")
         r = self._make_box("file://" + src)
         self.assertRaises(ValueError, r.download, dst, progress)
 
     def test_context_manager(self):
-        ## TODO
+        # TODO
         pass
 
 fixture = [
-    { 'url': 'https://yaybu.com/library/ubuntu-12.04.2-amd64',
-      'name': 'ubuntu-12.04.2-amd64',
-      },
-    { 'url': 'https://elsewhere.com/frob-14.7',
-      'name': 'frob',
-      },
+    {'url': 'https://yaybu.com/library/ubuntu-12.04.2-amd64',
+     'name': 'ubuntu-12.04.2-amd64',
+     },
+    {'url': 'https://elsewhere.com/frob-14.7',
+     'name': 'frob',
+     },
 ]
+
 
 class TestVMBoxLibrary(unittest2.TestCase):
 
@@ -169,7 +177,7 @@ class TestVMBoxLibrary(unittest2.TestCase):
         self.addCleanup(shutil.rmtree, self.root)
         self.librarydir = os.path.join(self.root, "vmware", "library",)
         for f in fixture:
-            d =  os.path.join(self.librarydir, f['name'])
+            d = os.path.join(self.librarydir, f['name'])
             os.makedirs(d)
             self.addCleanup(shutil.rmtree, d)
             mp = os.path.join(d, "VM-INFO")
@@ -198,7 +206,7 @@ class TestVMBoxLibrary(unittest2.TestCase):
     def test_get(self):
         f = tempfile.NamedTemporaryFile(delete=False)
         z = zipfile.ZipFile(f, "w", zipfile.ZIP_DEFLATED)
-        z.writestr("foo", "foo"*1000)
+        z.writestr("foo", "foo" * 1000)
         z.close()
         h = hashlib.md5()
         h.update(open(f.name).read())
@@ -211,8 +219,8 @@ class TestVMBoxLibrary(unittest2.TestCase):
             'ubuntu-12.04.2-amd64',
             'frob',
             'bar',
-            ]))
-        metadata = json.load(open(os.path.join(self.librarydir, 'bar', "VM-INFO")))
+        ]))
+        metadata = json.load(
+            open(os.path.join(self.librarydir, 'bar', "VM-INFO")))
         self.assertEqual(metadata['url'], normpath("file://" + f.name))
         self.assertEqual(metadata['hash'], h.hexdigest())
-

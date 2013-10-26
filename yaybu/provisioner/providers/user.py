@@ -22,6 +22,7 @@ import logging
 
 logger = logging.getLogger("provider")
 
+
 class User(provider.Provider):
 
     policies = (resources.user.UserApplyPolicy,)
@@ -67,10 +68,10 @@ class User(provider.Provider):
 
         if info['exists']:
             command = ['usermod']
-            changed = False # we may not change anything yet
+            changed = False  # we may not change anything yet
         else:
             command = ['useradd', '-N']
-            changed = True # we definitely make a change
+            changed = True  # we definitely make a change
 
         name = self.resource.name.as_string()
 
@@ -107,24 +108,28 @@ class User(provider.Provider):
                     gid = context.transport.getgrnam(group).gr_gid
                 except KeyError:
                     if not context.simulate:
-                        raise error.InvalidGroup("Group '%s' is not valid" % group)
-                    context.changelog.info("Group '%s' doesn't exist; assuming recipe already created it" % group)
+                        raise error.InvalidGroup(
+                            "Group '%s' is not valid" % group)
+                    context.changelog.info(
+                        "Group '%s' doesn't exist; assuming recipe already created it" % group)
                     gid = "GID_CURRENTLY_UNASSIGNED"
 
                 if gid != info["gid"]:
                     command.extend(["--gid", str(gid)])
                     changed = True
 
-        groups = self.resource.groups.resolve()  #as_list(default=[])
+        groups = self.resource.groups.resolve()  # as_list(default=[])
         if groups:
             desired_groups = set(groups)
-            current_groups = set(g.gr_name for g in context.transport.getgrall() if name in g.gr_mem)
+            current_groups = set(
+                g.gr_name for g in context.transport.getgrall() if name in g.gr_mem)
 
             append = self.resource.append.resolve()
             if append and len(desired_groups - current_groups) > 0:
                 if info["exists"]:
                     command.append("-a")
-                command.extend(["-G", ",".join(desired_groups - current_groups)])
+                command.extend(
+                    ["-G", ",".join(desired_groups - current_groups)])
                 changed = True
             elif not append and desired_groups != current_groups:
                 command.extend(["-G", ",".join(desired_groups)])
@@ -151,7 +156,8 @@ class User(provider.Provider):
             try:
                 context.change(ShellCommand(command))
             except error.SystemError as exc:
-                raise error.UserAddError("useradd returned error code %d" % exc.returncode)
+                raise error.UserAddError(
+                    "useradd returned error code %d" % exc.returncode)
         return changed
 
 
@@ -165,7 +171,8 @@ class UserRemove(provider.Provider):
 
     def apply(self, context, output):
         try:
-            existing = context.transport.getpwnam(self.resource.name.as_string().encode("utf-8"))
+            existing = context.transport.getpwnam(
+                self.resource.name.as_string().encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such user. This is good.
             return False
@@ -175,8 +182,7 @@ class UserRemove(provider.Provider):
         try:
             context.change(ShellCommand(command))
         except error.SystemError as exc:
-            raise error.UserAddError("Removing user %s failed with return code %d" % (self.resource, exc.returncode))
+            raise error.UserAddError(
+                "Removing user %s failed with return code %d" % (self.resource, exc.returncode))
 
         return True
-
-

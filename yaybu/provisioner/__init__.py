@@ -23,4 +23,3 @@ for ep in iter_entry_points(group='yaybu.resource', name=None):
 import yaybu.provisioner.providers
 for ep in iter_entry_points(group='yaybu.providers', name=None):
     ep.load()
-

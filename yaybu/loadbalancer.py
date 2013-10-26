@@ -51,10 +51,10 @@ class SyncMembers(MetadataSync):
         for m in self.expression:
             id = m.id.as_string()
             yield id, dict(
-                id = m.id.as_string(default='') or None,
-                ip = m.ip.as_string(default='') or None,
-                port = m.port.as_int(default=0) or None,
-                )
+                id=m.id.as_string(default='') or None,
+                ip=m.ip.as_string(default='') or None,
+                port=m.port.as_int(default=0) or None,
+            )
 
     def get_remote_records(self):
         if not self.balancer:
@@ -62,17 +62,17 @@ class SyncMembers(MetadataSync):
 
         for m in self.balancer.list_members():
             yield m.id, dict(
-                id = m.id,
-                ip = m.ip,
-                port = m.port,
-                )
+                id=m.id,
+                ip=m.ip,
+                port=m.port,
+            )
 
     def add(self, record):
         self.balancer.attach_member(Member(
-            id = record['id'],
-            ip = record['ip'],
-            port = record['port'],
-            ))
+            id=record['id'],
+            ip=record['ip'],
+            port=record['port'],
+        ))
 
     def update(self, record):
         self.delete(record)
@@ -80,10 +80,10 @@ class SyncMembers(MetadataSync):
 
     def delete(self, uid, record):
         self.balancer.detach_member(Member(
-            id = record['id'],
-            ip = record['ip'],
-            port = record['port'],
-            ))
+            id=record['id'],
+            ip=record['ip'],
+            port=record['port'],
+        ))
 
 
 class LoadBalancer(base.GraphExternalAction):
@@ -150,18 +150,24 @@ class LoadBalancer(base.GraphExternalAction):
 
         name = self.params.name.as_string()
         port = self.params.port.as_int()
-        if port <=0 or port > 65535:
-            raise error.ValueError("Port must be > 0 and <= 65535", anchor=self.params.port.anchor)
+        if port <= 0 or port > 65535:
+            raise error.ValueError(
+                "Port must be > 0 and <= 65535", anchor=self.params.port.anchor)
 
         protocols = self.driver.list_protocols()
         protocol = self.params.protocol.as_string(default=protocols[0])
         if not protocol in protocols:
-            raise error.ValueError("'%s' not a supported protocol\nExpected one of '%s'" % (protocol, ", ".join(protocols)), anchor=self.params.protocol.anchor)
+            raise error.ValueError(
+                "'%s' not a supported protocol\nExpected one of '%s'" %
+                (protocol, ", ".join(protocols)), anchor=self.params.protocol.anchor)
 
-        algorithms = [ALGORITHM_NAMES[aid] for aid in self.driver.list_supported_algorithms()]
+        algorithms = [ALGORITHM_NAMES[aid]
+                      for aid in self.driver.list_supported_algorithms()]
         algorithm = self.params.algorithm.as_string(default=algorithms[0])
         if not algorithm in algorithms:
-            raise error.ValueError("'%s' not a supported algorithm\nExpected one of '%s'" % (algorithm, ", ".join(algorithms)), anchor=self.params.algorithm.anchor)
+            raise error.ValueError(
+                "'%s' not a supported algorithm\nExpected one of '%s'" %
+                (algorithm, ", ".join(algorithms)), anchor=self.params.algorithm.anchor)
 
         lb = self._find_balancer()
         changed = False
@@ -170,12 +176,12 @@ class LoadBalancer(base.GraphExternalAction):
             with self.root.ui.throbber("Creating load balancer '%s'" % name) as throbber:
                 if not self.root.simulate:
                     lb = self.driver.create_balancer(
-                        name = name,
-                        port = port,
-                        protocol = protocol,
-                        algorithm = ALGORITHM_IDS[algorithm],
-                        members = [],
-                        )
+                        name=name,
+                        port=port,
+                        protocol=protocol,
+                        algorithm=ALGORITHM_IDS[algorithm],
+                        members=[],
+                    )
                 else:
                     lb = None
                 changed = True
@@ -188,29 +194,29 @@ class LoadBalancer(base.GraphExternalAction):
             if lb.port != port:
                 print "Requested port %s, current port %s" % (port, lb.port)
                 changed = True
-            #if lb.protocol != protocol:
+            # if lb.protocol != protocol:
             #    changed = True
-            #if lb.algorithm != algorithm:
+            # if lb.algorithm != algorithm:
             #    changed = True
 
             if changed:
                 with self.root.ui.throbber("Updating load balancer '%s'" % name) as throbber:
                     if not self.root.simulate:
                         self.driver.update_balancer(
-                            balancer = lb,
-                            name = name,
-                            port = port,
-                            protocol = protocol,
-                            algorithm = algorithm,
-                            )
+                            balancer=lb,
+                            name=name,
+                            port=port,
+                            protocol=protocol,
+                            algorithm=algorithm,
+                        )
                     self.root.changelog.changed = True
 
         self.root.changelog.apply(
             SyncMembers(
-                expression = self.params.members,
-                driver = self.driver,
-                balancer = lb,
-                ))
+                expression=self.params.members,
+                driver=self.driver,
+                balancer=lb,
+            ))
 
         if lb:
             self.state.update(balancer_id=lb.id)
@@ -223,4 +229,3 @@ class LoadBalancer(base.GraphExternalAction):
             return
         with self.root.ui.throbber("Destroying load balancer '%s'" % balancer.name) as throbber:
             balancer.destroy()
-

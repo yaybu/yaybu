@@ -104,10 +104,11 @@ def _inject_credentials(url, username=None, password=None):
             urllib.quote(username, ''),
             urllib.quote(password, ''),
             p.hostname,
-            )
+        )
         if p.port:
-           netloc += ":" + str(p.port)
-        url = urlparse.urlunparse((p.scheme,netloc,p.path,p.params,p.query,p.fragment))
+            netloc += ":" + str(p.port)
+        url = urlparse.urlunparse(
+            (p.scheme, netloc, p.path, p.params, p.query, p.fragment))
     return url
 
 
@@ -134,7 +135,7 @@ class Mercurial(Provider):
             self.get_hg_command(action, *args),
             user=self.resource.user.as_string(),
             cwd=self.resource.name.as_string(),
-            )
+        )
         return rc, stdout, stderr
 
     def action(self, context, action, *args):
@@ -142,13 +143,14 @@ class Mercurial(Provider):
             self.get_hg_command(action, *args),
             user=self.resource.user.as_string(),
             cwd=self.resource.name.as_string(),
-            ))
+        ))
 
     def apply(self, context, output):
         created = False
         changed = False
 
-        context.change(EnsureDirectory(self.resource.name.as_string(), self.resource.user.as_string(), self.resource.group.as_string(), 0755))
+        context.change(EnsureDirectory(self.resource.name.as_string(),
+                       self.resource.user.as_string(), self.resource.group.as_string(), 0755))
 
         if not context.transport.exists(os.path.join(self.resource.name.as_string(), ".hg")):
             try:
@@ -157,12 +159,14 @@ class Mercurial(Provider):
                 raise CheckoutError("Cannot initialise local repository.")
             created = True
 
-        url = _inject_credentials(self.resource.repository.as_string(), self.resource.scm_username.as_string(), self.resource.scm_password.as_string())
+        url = _inject_credentials(self.resource.repository.as_string(),
+                                  self.resource.scm_username.as_string(), self.resource.scm_password.as_string())
 
         try:
             f = context.change(EnsureFile(
                 os.path.join(self.resource.name.as_string(), ".hg", "hgrc"),
-                hgrc % {"repository": url, "path": self.resource.name.as_string()},
+                hgrc % {"repository": url, "path":
+                        self.resource.name.as_string()},
                 self.resource.user.as_string(),
                 self.resource.group.as_string(),
                 0600,
@@ -173,7 +177,8 @@ class Mercurial(Provider):
 
         try:
             f = context.change(EnsureFile(
-                os.path.join(self.resource.name.as_string(), ".hg", "should.py"),
+                os.path.join(
+                    self.resource.name.as_string(), ".hg", "should.py"),
                 mercurial_ext,
                 self.resource.user.as_string(),
                 self.resource.group.as_string(),
@@ -181,7 +186,8 @@ class Mercurial(Provider):
                 True))
             # changed = changed or f.changed
         except SystemError:
-            raise CheckoutError("Could not setup mercurial idempotence extension")
+            raise CheckoutError(
+                "Could not setup mercurial idempotence extension")
 
         should_args = []
         if self.resource.branch.as_string(default=''):
@@ -194,7 +200,8 @@ class Mercurial(Provider):
                 self.action(context, "pull", "--force")
                 changed = True
             except SystemError:
-                raise CheckoutError("Could not fetch changes from remote repository.")
+                raise CheckoutError(
+                    "Could not fetch changes from remote repository.")
 
         if created or self.info(context, "should-update", *should_args)[0] != 0:
             if self.resource.tag.as_string():
@@ -211,4 +218,3 @@ class Mercurial(Provider):
                 raise CheckoutError("Could not update working copy.")
 
         return created or changed
-

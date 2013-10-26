@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, logging
+import os
+import logging
 import re
 
 from yaybu.provisioner.provider import Provider
@@ -22,6 +23,7 @@ from yaybu.provisioner.changes import ShellCommand, EnsureDirectory
 
 
 log = logging.getLogger("git")
+
 
 class Git(Provider):
 
@@ -51,7 +53,7 @@ class Git(Provider):
             self.get_git_command(action, *args),
             user=self.resource.user.as_string(),
             cwd=self.resource.name.as_string(),
-            )
+        )
         return rc, stdout, stderr
 
     def action(self, context, action, *args):
@@ -59,14 +61,15 @@ class Git(Provider):
             self.get_git_command(action, *args),
             user=self.resource.user.as_string(),
             cwd=self.resource.name.as_string(),
-            ))
+        ))
 
     def action_clone(self, context):
         """Adds resource.repository as a remote, but unlike a
         typical clone, does not check it out
 
         """
-        context.change(EnsureDirectory(self.resource.name.as_string(), self.resource.user.as_string(), self.resource.group.as_string(), 0755))
+        context.change(EnsureDirectory(self.resource.name.as_string(),
+                       self.resource.user.as_string(), self.resource.group.as_string(), 0755))
 
         try:
             self.action(context, "init", self.resource.name.as_string())
@@ -77,7 +80,8 @@ class Git(Provider):
 
     def action_set_remote(self, context):
         try:
-            self.action(context, "remote", "add", self.REMOTE_NAME, self.resource.repository.as_string())
+            self.action(context, "remote", "add", self.REMOTE_NAME,
+                        self.resource.repository.as_string())
         except SystemError:
             raise CheckoutError("Could not set the remote repository.")
 
@@ -92,7 +96,8 @@ class Git(Provider):
                 try:
                     self.action(context, "remote", "rm", self.REMOTE_NAME)
                 except SystemError:
-                    raise CheckoutError("Could not delete remote '%s'" % self.REMOTE_NAME)
+                    raise CheckoutError(
+                        "Could not delete remote '%s'" % self.REMOTE_NAME)
                 self.action_set_remote(context)
                 return True
         else:
@@ -104,7 +109,8 @@ class Git(Provider):
         # Determine which SHA is currently checked out.
         if context.transport.exists(os.path.join(self.resource.name.as_string(), ".git")):
             try:
-                rv, stdout, stderr = self.info(context, "rev-parse", "--verify", "HEAD")
+                rv, stdout, stderr = self.info(
+                    context, "rev-parse", "--verify", "HEAD")
             except SystemError:
                 head_sha = '0' * 40
             else:
@@ -114,12 +120,13 @@ class Git(Provider):
             head_sha = '0' * 40
 
         try:
-            rv, stdout, stderr = context.transport.execute(["git", "ls-remote", self.resource.repository.as_string()], cwd="/tmp")
+            rv, stdout, stderr = context.transport.execute(
+                ["git", "ls-remote", self.resource.repository.as_string()], cwd="/tmp")
         except SystemError:
             raise CheckoutError("Could not query the remote repository")
 
         r = re.compile('([0-9a-f]{40})\t(.*)\n')
-        refs_to_shas = dict([(b,a) for (a,b) in r.findall(stdout)])
+        refs_to_shas = dict([(b, a) for (a, b) in r.findall(stdout)])
 
         # Revision takes precedent over branch
 
@@ -147,7 +154,8 @@ class Git(Provider):
         elif branch:
             as_branch = "refs/heads/%s" % branch
             if not as_branch in refs_to_shas.keys():
-                raise CheckoutError("Cannot find a branch called '%s'" % branch)
+                raise CheckoutError(
+                    "Cannot find a branch called '%s'" % branch)
             newref = "remotes/%s/%s" % (
                 self.REMOTE_NAME,
                 branch
@@ -155,13 +163,15 @@ class Git(Provider):
             if head_sha != refs_to_shas.get(as_branch):
                 return newref
         else:
-            raise CheckoutError("You must specify either a revision, tag or branch")
+            raise CheckoutError(
+                "You must specify either a revision, tag or branch")
 
     def action_checkout(self, context, newref):
         try:
             self.action(context, "fetch", self.REMOTE_NAME)
         except SystemError:
-            raise CheckoutError("Could not fetch '%s'" % self.resource.repository.as_string())
+            raise CheckoutError("Could not fetch '%s'" %
+                                self.resource.repository.as_string())
 
         try:
             self.action(context, "checkout", newref)
@@ -181,4 +191,3 @@ class Git(Provider):
             self.action_checkout(context, newref)
 
         return changed or newref
-

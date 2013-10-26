@@ -16,7 +16,7 @@
 from .base import Change
 
 
-#class Record(object):
+# class Record(object):
 #
 #    def __init__(self, id, metadata):
 #        self.id = id

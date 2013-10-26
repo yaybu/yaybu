@@ -18,10 +18,12 @@ import zipfile
 
 
 # Python2.7 introduced context manager support for ZipFile
-if not hasattr(zipfile.ZipFile, "__exit__"): # pragma: no cover
+if not hasattr(zipfile.ZipFile, "__exit__"):  # pragma: no cover
     class ZipFile(zipfile.ZipFile):
+
         def __enter__(self):
             return self
+
         def __exit__(self, type, value, traceback):
             self.close()
 else:
@@ -31,7 +33,7 @@ else:
 # Python didn't have OrderedDict build in until 2.7
 try:
     from collections import OrderedDict
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     # Copyright (c) 2009 Raymond Hettinger
     #
     # Permission is hereby granted, free of charge, to any person
@@ -60,7 +62,8 @@ except ImportError: # pragma: no cover
 
         def __init__(self, *args, **kwds):
             if len(args) > 1:
-                raise TypeError('expected at most 1 arguments, got %d' % len(args))
+                raise TypeError(
+                    'expected at most 1 arguments, got %d' % len(args))
             try:
                 self.__end
             except AttributeError:
@@ -69,7 +72,8 @@ except ImportError: # pragma: no cover
 
         def clear(self):
             self.__end = end = []
-            end += [None, end, end]         # sentinel node for doubly linked list
+            end += [None, end, end]
+                # sentinel node for doubly linked list
             self.__map = {}                 # key --> [key, prev, next]
             dict.clear(self)
 
@@ -101,7 +105,7 @@ except ImportError: # pragma: no cover
 # FIXME: Upstream this.
 
 import socket
-if not hasattr(socket, "inet_pton"): # pragma: no cover
+if not hasattr(socket, "inet_pton"):  # pragma: no cover
     import ctypes
 
     WSAStringToAddressA = ctypes.windll.ws2_32.WSAStringToAddressA
@@ -113,8 +117,7 @@ if not hasattr(socket, "inet_pton"): # pragma: no cover
             ("ipv4_addr", ctypes.c_byte * 4),
             ("ipv6_addr", ctypes.c_byte * 16),
             ("__pad2", ctypes.c_ulong)
-            ]
-
+        ]
 
     def inet_pton(address_family, ip_string):
         addr = sockaddr()
@@ -131,6 +134,4 @@ if not hasattr(socket, "inet_pton"): # pragma: no cover
         else:
             raise socket.error('unknown address family')
 
-
     setattr(socket, "inet_pton", inet_pton)
-

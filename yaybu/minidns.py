@@ -2,6 +2,7 @@ import dns
 from libcloud.common.base import Connection
 from libcloud.dns.base import DNSDriver, Zone, Record, RecordType
 
+
 class MiniDNSConnection(Connection):
 
     host = "localhost"
@@ -14,7 +15,6 @@ class MiniDNSConnection(Connection):
         pass
 
 
-
 class MiniDNSDriver(DNSDriver):
 
     """Driver for the local MiniDNS Service. See
@@ -22,11 +22,8 @@ class MiniDNSDriver(DNSDriver):
     https://github.com/yaybu/minidns
     """
 
-
     name = 'minidns'
     connectionCls = MiniDNSConnection
-
-
 
     def __init__(self):
         DNSDriver.__init__(self, None)
@@ -85,6 +82,8 @@ class MiniDNSDriver(DNSDriver):
         if response.status == 200:
             type, data = response.body.split()
             type_id = RecordType.__dict__[type]
-            zone = Zone(id=zone_id, domain=zone_id, type="master", ttl=0, driver=self)
-            record = Record(id=record_id, name=record_id, type=type_id, data=data, zone=zone, driver=self)
+            zone = Zone(
+                id=zone_id, domain=zone_id, type="master", ttl=0, driver=self)
+            record = Record(id=record_id, name=record_id,
+                            type=type_id, data=data, zone=zone, driver=self)
             return record

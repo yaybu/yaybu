@@ -41,7 +41,8 @@ class MockStorageDriver(DummyStorageDriver):
     def upload_object_via_stream(self, iterator, container, object_name, extra=None):
         blocks = [block for block in iterator]
         size = sum(len(block) for block in blocks)
-        o = self._add_object(container=container, object_name=object_name, size=size, extra=extra)
+        o = self._add_object(
+            container=container, object_name=object_name, size=size, extra=extra)
         o.blocks = blocks
         return o
 
@@ -59,4 +60,3 @@ class MockStorageDriverArgless(MockStorageDriver):
 
     def __init__(self):
         pass
-

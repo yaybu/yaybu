@@ -32,4 +32,3 @@ class TestMount(TestCase):
                   device: /bin
                   options: hello
             """)
-

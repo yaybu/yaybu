@@ -31,7 +31,8 @@ from yaybu.core.argument import (
     Octal,
     File,
     Dict,
-    )
+)
+
 
 class File(Resource):
 
@@ -148,4 +149,3 @@ class FileWatchedPolicy(Policy):
     name = "watched"
     default = False
     signature = FileRemovePolicy.signature
-

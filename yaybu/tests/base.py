@@ -61,7 +61,8 @@ class TestCase(unittest2.TestCase):
         try:
             self._up(config, *args)
         except error.NothingChanged:
-            raise RuntimeError("Either simulate wasn't read-only or simulate didn't detect change was required")
+            raise RuntimeError(
+                "Either simulate wasn't read-only or simulate didn't detect change was required")
 
         try:
             self._up(config, *args)
@@ -71,4 +72,3 @@ class TestCase(unittest2.TestCase):
 
     def destroy(self, config, *args):
         return self._do("destroy", config, *args)
-

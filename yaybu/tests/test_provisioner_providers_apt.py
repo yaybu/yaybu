@@ -15,6 +15,7 @@
 from yaybu.tests.provisioner_fixture import TestCase
 from yaybu import error
 
+
 class TestPackageInstallation(TestCase):
 
     def test_already_installed(self):
@@ -74,5 +75,3 @@ class TestPackageRemoval(TestCase):
                   name: zip
                   policy: uninstall
             """)
-
-

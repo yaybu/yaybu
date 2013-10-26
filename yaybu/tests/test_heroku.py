@@ -104,6 +104,3 @@ class TestHeroku(TestCase):
                 collaborators:
                     - nobody@example.com
             """)
-
-
-

@@ -21,7 +21,7 @@ from yaybu.core.argument import (
     Integer,
     Boolean,
     List,
-    )
+)
 
 
 class User(Resource):
@@ -72,7 +72,8 @@ class User(Resource):
     all groups the user is a member of. Thus if a process outside of yaybu adds you to a group,
     the next deployment would remove you again. """
 
-    system = Property(Boolean, default=True) # has no effect on modification, only creation
+    system = Property(Boolean, default=True)
+                      # has no effect on modification, only creation
     """ A boolean representing whether this user is a system user or not. This only takes effect on
     creation - a user cannot be changed into a system user once created
     without deleting and recreating the user. """
@@ -102,7 +103,7 @@ class UserApplyPolicy(Policy):
     signature = (
         Present("name"),
         NAND(Present("password"), Present("disabled_login")),
-        )
+    )
 
 
 class UserRemovePolicy(Policy):

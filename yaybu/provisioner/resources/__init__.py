@@ -25,5 +25,4 @@ from yaybu.provisioner.resources import (
     patch,
     user,
     service
-    )
-
+)

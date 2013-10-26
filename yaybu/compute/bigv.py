@@ -53,10 +53,11 @@ class BigVResponse(JsonResponse):
 
 
 #=======================================================================
-#FIXME: Remove this when there is a better way to do this
+# FIXME: Remove this when there is a better way to do this
 from libcloud.common.base import LoggingHTTPSConnection
 import socket
 import ssl
+
 
 class BigVHTTPSConnection(LoggingHTTPSConnection):
 
@@ -137,7 +138,8 @@ class BigVNodeDriver(NodeDriver):
 
         images = []
         for value in definitions['distributions']:
-            images.append(NodeImage(id=value, name=value, driver=self.connection.driver, extra={}))
+            images.append(
+                NodeImage(id=value, name=value, driver=self.connection.driver, extra={}))
 
         return images
 
@@ -145,7 +147,8 @@ class BigVNodeDriver(NodeDriver):
         return [NodeSize(id='default', name='default', ram=1024, disk=5120, bandwidth=0, price=0, driver=self)]
 
     def list_nodes(self):
-        result = self.connection.request(self.group_url+'?view=overview').object
+        result = self.connection.request(
+            self.group_url + '?view=overview').object
 
         nodes = []
         for value in result.get('virtual_machines', []):
@@ -156,16 +159,19 @@ class BigVNodeDriver(NodeDriver):
 
     def reboot_node(self, node):
         data = json.dumps({'power_on': False})
-        result = self.connection.request(self.group_url+'/virtual_machines/%s' % (node.id),
-                                         data=data, method='PUT')
+        result = self.connection.request(
+            self.group_url + '/virtual_machines/%s' % (node.id),
+            data=data, method='PUT')
 
         data = json.dumps({'power_on': True})
-        result = self.connection.request(self.group_url+'/virtual_machines/%s' % (node.id),
-                                         data=data, method='PUT')
+        result = self.connection.request(
+            self.group_url + '/virtual_machines/%s' % (node.id),
+            data=data, method='PUT')
 
     def destroy_node(self, node):
-        result = self.connection.request(self.group_url+'/virtual_machines/%s?purge=true' % (node.id),
-                                         method='DELETE')
+        result = self.connection.request(
+            self.group_url + '/virtual_machines/%s?purge=true' % (node.id),
+            method='DELETE')
         return result.status == httplib.NO_CONTENT
 
     def create_node(self, **kwargs):
@@ -201,13 +207,16 @@ class BigVNodeDriver(NodeDriver):
         }
 
         data = json.dumps(payload)
-        result = self.connection.request(self.group_url+'/vm_create', data=data,
-                                         method='POST')
+        result = self.connection.request(
+            self.group_url + '/vm_create', data=data,
+            method='POST')
         return self._to_node(result.object['virtual_machine'])
 
     def _iter_interfaces(self, id):
-        # Structure contains: label, vlan_num, mac, list of ips (including ipv6), extra_ips
-        result = self.connection.request(self.group_url+'/virtual_machines/%s/nics' % (id))
+        # Structure contains: label, vlan_num, mac, list of ips (including
+        # ipv6), extra_ips
+        result = self.connection.request(
+            self.group_url + '/virtual_machines/%s/nics' % (id))
         for row in result.object:
             yield row['ips'][0]
 

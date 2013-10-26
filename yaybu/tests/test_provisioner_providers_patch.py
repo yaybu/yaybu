@@ -16,8 +16,10 @@ from yaybu.tests.provisioner_fixture import TestCase
 from yaybu.core import error
 import os
 
+
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
+
 
 class TestPatchApply(TestCase):
 
@@ -53,4 +55,3 @@ class TestPatchApply(TestCase):
                   group: root
             """)
         self.failUnlessExists("/etc/somefile")
-

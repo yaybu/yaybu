@@ -17,12 +17,12 @@ from yaybu.core.policy import (
     Policy,
     Absent,
     Present,
-    )
+)
 from yaybu.core.argument import (
     Property,
     String,
     Boolean,
-    )
+)
 
 
 class Package(Resource):
@@ -64,7 +64,7 @@ class PackageInstallPolicy(Policy):
     signature = (
         Present("name"),
         Absent("purge"),
-        )
+    )
 
 
 class PackageUninstallPolicy(Policy):
@@ -77,5 +77,4 @@ class PackageUninstallPolicy(Policy):
     signature = (
         Present("name"),
         Absent("version"),
-        )
-
+    )

@@ -41,9 +41,8 @@ class EnsureDirectory(changes.Change):
             self.owner,
             self.group,
             self.mode
-            ))
+        ))
 
         self.changed = self.changed or ac.changed
 
         return self.changed
-

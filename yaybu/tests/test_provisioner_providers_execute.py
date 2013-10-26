@@ -31,8 +31,10 @@ touch /etc/test_execute_touches
 class TestExecute(TestCase):
 
     def test_execute_on_path(self):
-        self.transport.put("/usr/bin/test_execute_on_path.sh", test_execute_on_path)
-        self.transport.execute(["chmod", "0755", "/usr/bin/test_execute_on_path.sh"])
+        self.transport.put(
+            "/usr/bin/test_execute_on_path.sh", test_execute_on_path)
+        self.transport.execute(
+            ["chmod", "0755", "/usr/bin/test_execute_on_path.sh"])
 
         self.check_apply("""
             resources:
@@ -312,4 +314,3 @@ class TestExecute(TestCase):
             """)
 
         self.failUnlessExists("/test_missing_user")
-

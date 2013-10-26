@@ -40,4 +40,3 @@ class MockDNSDriverArgless(MockDNSDriver):
 
     def __init__(self):
         pass
-

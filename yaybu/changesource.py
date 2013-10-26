@@ -55,7 +55,7 @@ class GitChangeSource(base.GraphExternalAction):
 
     def poll_loop(self):
         import gevent
-        while True: # self.running:
+        while True:  # self.running:
             self.update_remotes()
             gevent.sleep(self.params["polling-interval"].as_int(default=60))
 
@@ -66,7 +66,8 @@ class GitChangeSource(base.GraphExternalAction):
 
     def update_remotes(self):
         cmd = ["git", "ls-remote", str(self.params.repository)]
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
 
         branches = {}
@@ -81,14 +82,14 @@ class GitChangeSource(base.GraphExternalAction):
                 branches[ref[11:]] = sha
             elif ref.startswith("refs/tags/"):
                 if ref.endswith("^{}"):
-                     continue
+                    continue
                 tags.append(ref[10:])
 
         # self.members.set("branches", branches)
         # self.members.set("tags", tags)
         self.members.set("master", branches["master"])
 
-        #FIXME: In both of the above cases we are quite broad with our change
+        # FIXME: In both of the above cases we are quite broad with our change
         # notification. It is raised by the container, which means more
         # activity could be generated than required. E.g. a new branch could
         # trigger stuff to happen even if we are only tracking tags.
@@ -97,7 +98,8 @@ class GitChangeSource(base.GraphExternalAction):
         # notifications.
 
     def test(self):
-        # FIXME: Test that git repository exists and that any credentials we have for it work
+        # FIXME: Test that git repository exists and that any credentials we
+        # have for it work
         pass
 
     def apply(self):
@@ -137,4 +139,3 @@ class GitHubChangeSource(base.GraphExternalAction):
         # https://help.github.com/articles/post-receive-hooks
         # Do we get push events for tags???
         return False
-

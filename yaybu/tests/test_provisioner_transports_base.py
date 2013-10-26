@@ -20,6 +20,7 @@ from yaybu.provisioner.transports.base import Transport
 
 
 class ATestTransport(Transport):
+
     def whoami(self):
         return "root"
 
@@ -33,28 +34,31 @@ class TestBaseTransport(TestCase):
     def test_simple(self):
         self.transport.execute(["foo"])
         self.transport._execute_impl.assert_called_with(
-            ['env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'SHELL=/bin/sh', 'LOGNAME=root', 'sh', '-c', 'cd /; foo'],
+            ['env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+                'SHELL=/bin/sh', 'LOGNAME=root', 'sh', '-c', 'cd /; foo'],
             None, None, None,
-            )
+        )
 
     def test_change_user(self):
         self.transport.execute(["foo"], user="doug")
         self.transport._execute_impl.assert_called_with(
-            ['sudo', '-u', 'doug', '--', 'env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'SHELL=/bin/sh', 'LOGNAME=doug', 'sh', '-c', 'cd /; foo'],
+            ['sudo', '-u', 'doug', '--', 'env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+                'SHELL=/bin/sh', 'LOGNAME=doug', 'sh', '-c', 'cd /; foo'],
             None, None, None
-            )
+        )
 
     def test_change_group(self):
         self.transport.execute(["foo"], group="staff")
         self.transport._execute_impl.assert_called_with(
-            ['sudo', '-g', 'staff', '--', 'env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'SHELL=/bin/sh', 'LOGNAME=root', 'sh', '-c', 'cd /; foo'],
+            ['sudo', '-g', 'staff', '--', 'env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+                'SHELL=/bin/sh', 'LOGNAME=root', 'sh', '-c', 'cd /; foo'],
             None, None, None
-            )
+        )
 
     def test_change_user_and_group(self):
         self.transport.execute(["foo"], user="doug", group="staff")
         self.transport._execute_impl.assert_called_with(
-            ['sudo', '-u', 'doug', '-g', 'staff', '--', 'env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'SHELL=/bin/sh', 'LOGNAME=doug', 'sh', '-c', 'cd /; foo'],
+            ['sudo', '-u', 'doug', '-g', 'staff', '--', 'env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+                'SHELL=/bin/sh', 'LOGNAME=doug', 'sh', '-c', 'cd /; foo'],
             None, None, None
-            )
-
+        )

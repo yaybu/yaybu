@@ -13,18 +13,19 @@
 # limitations under the License.
 
 import subprocess
-import os, select
+import os
+import select
 try:
     import pwd
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     pwd = None
 try:
     import grp
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     grp = None
 try:
     import spwd
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     spwd = None
 
 from . import base
@@ -110,7 +111,7 @@ class LocalExecute(object):
         return returncode, stdout.output, stderr.output
 
     def _execute_impl(self, command, stdin=None, stdout=None, stderr=None):
-        #print command
+        # print command
         p = subprocess.Popen(command,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
@@ -119,9 +120,9 @@ class LocalExecute(object):
                              env=self.env,
                              )
         returncode, stdout, stderr = self.communicate(p, stdin, stdout, stderr)
-        #print ">>", returncode
-        #print ">>", stdout
-        #print ">>", stderr
+        # print ">>", returncode
+        # print ">>", stdout
+        # print ">>", stderr
         return returncode, stdout, stderr
 
 
@@ -158,7 +159,7 @@ class LocalTransport(LocalExecute, base.Transport):
         return open(path).read()
 
     def put(self, path, contents, chmod=0o644):
-        fd = os.open(path, os.O_WRONLY|os.O_CREAT|os.O_SYNC, chmod)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_SYNC, chmod)
         os.write(fd, contents)
         os.close(fd)
 
@@ -191,5 +192,3 @@ class LocalTransport(LocalExecute, base.Transport):
 
     def getspnam(self, name):
         return spwd.getspnam(name)
-
-

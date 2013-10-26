@@ -64,8 +64,10 @@ class Link(provider.Provider):
 
         if not context.transport.exists(to):
             if not context.simulate:
-                raise error.DanglingSymlink("Destination of symlink %r does not exist" % to)
-            context.changelog.info("Destination of sylink %r does not exist" % to)
+                raise error.DanglingSymlink(
+                    "Destination of symlink %r does not exist" % to)
+            context.changelog.info(
+                "Destination of sylink %r does not exist" % to)
 
         owner = self._get_owner(context)
         group = self._get_group(context)
@@ -78,9 +80,11 @@ class Link(provider.Provider):
 
         if not isalink or linkto != to:
             if context.transport.lexists(name):
-                context.change(ShellCommand(["/bin/rm", "-rf", self.resource.name]))
+                context.change(
+                    ShellCommand(["/bin/rm", "-rf", self.resource.name]))
 
-            context.change(ShellCommand(["/bin/ln", "-s", self.resource.to, self.resource.name]))
+            context.change(
+                ShellCommand(["/bin/ln", "-s", self.resource.to, self.resource.name]))
             changed = True
 
         try:
@@ -90,17 +94,20 @@ class Link(provider.Provider):
             isalink = False
 
         if not isalink and not context.simulate:
-            raise error.OperationFailed("Did not create expected symbolic link")
+            raise error.OperationFailed(
+                "Did not create expected symbolic link")
 
         if isalink:
             uid, gid, mode = self._stat(context)
 
         if owner and owner != uid:
-            context.change(ShellCommand(["/bin/chown", "-h", self.resource.owner, self.resource.name]))
+            context.change(
+                ShellCommand(["/bin/chown", "-h", self.resource.owner, self.resource.name]))
             changed = True
 
         if group and group != gid:
-            context.change(ShellCommand(["/bin/chgrp", "-h", self.resource.group, self.resource.name]))
+            context.change(
+                ShellCommand(["/bin/chgrp", "-h", self.resource.group, self.resource.name]))
             changed = True
 
         return changed
@@ -119,8 +126,8 @@ class RemoveLink(provider.Provider):
 
         if context.transport.lexists(name):
             if not context.transport.islink(name):
-                raise error.InvalidProvider("%r: %s exists and is not a link" % (self, name))
+                raise error.InvalidProvider(
+                    "%r: %s exists and is not a link" % (self, name))
             context.change(ShellCommand(["/bin/rm", self.resource.name]))
             return True
         return False
-

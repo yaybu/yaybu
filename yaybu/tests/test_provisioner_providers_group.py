@@ -92,7 +92,8 @@ class TestGroupRemove(TestCase):
         self.failUnlessRaises(KeyError, self.transport.getgrnam, "users")
 
     def test_remove_non_existing(self):
-        self.failUnlessRaises(KeyError, self.transport.getgrnam, "zzidontexistzz")
+        self.failUnlessRaises(
+            KeyError, self.transport.getgrnam, "zzidontexistzz")
 
         self.assertRaises(error.NothingChanged, self.apply, """
             resources:
@@ -101,6 +102,5 @@ class TestGroupRemove(TestCase):
                     policy: remove
             """)
 
-        self.failUnlessRaises(KeyError, self.transport.getgrnam, "zzidontexistzz")
-
-
+        self.failUnlessRaises(
+            KeyError, self.transport.getgrnam, "zzidontexistzz")

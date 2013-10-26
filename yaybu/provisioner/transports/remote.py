@@ -20,20 +20,20 @@ for example, ssh or fakechroot
 import collections
 
 
-stat_result = collections.namedtuple("stat_result", \
-    ("st_mode", "st_ino", "st_dev", "st_nlink", "st_uid", "st_gid", \
-    "st_size", "st_atime", "st_mtime", "st_ctime"))
+stat_result = collections.namedtuple("stat_result",
+                                     ("st_mode", "st_ino", "st_dev", "st_nlink", "st_uid", "st_gid",
+                                      "st_size", "st_atime", "st_mtime", "st_ctime"))
 
-struct_group = collections.namedtuple("struct_group", \
-    ("gr_name", "gr_passwd", "gr_gid", "gr_mem"))
+struct_group = collections.namedtuple("struct_group",
+                                      ("gr_name", "gr_passwd", "gr_gid", "gr_mem"))
 
-struct_passwd = collections.namedtuple("struct_passwd", \
-    ("pw_name", "pw_passwd", "pw_uid", "pw_gid", "pw_gecos", "pw_dir", \
-    "pw_shell"))
+struct_passwd = collections.namedtuple("struct_passwd",
+                                       ("pw_name", "pw_passwd", "pw_uid", "pw_gid", "pw_gecos", "pw_dir",
+                                        "pw_shell"))
 
-struct_spwd = collections.namedtuple("struct_spwd", \
-    ("sp_nam", "sp_pwd", "sp_lastchg", "sp_min", "sp_max", "sp_warn", \
-    "sp_inact", "sp_expire", "sp_flag", ))
+struct_spwd = collections.namedtuple("struct_spwd",
+                                     ("sp_nam", "sp_pwd", "sp_lastchg", "sp_min", "sp_max", "sp_warn",
+                                      "sp_inact", "sp_expire", "sp_flag", ))
 
 
 class RemoteTransport(object):
@@ -56,17 +56,17 @@ class RemoteTransport(object):
             raise OSError
         data = stdout.split(" ")
         return stat_result(
-            int(data[3], 16), # st_mode
-            int(data[8]), #st_ino
-            int(data[7], 16), #st_dev
-            int(data[9]), # st_nlink
-            int(data[4]), # st_uid
-            int(data[5]), # st_gid
-            int(data[1]), # st_size
-            int(data[11]), # st_atime
-            int(data[12]), # st_mtime
-            int(data[13]), # st_ctime
-            )
+            int(data[3], 16),  # st_mode
+            int(data[8]),  # st_ino
+            int(data[7], 16),  # st_dev
+            int(data[9]),  # st_nlink
+            int(data[4]),  # st_uid
+            int(data[5]),  # st_gid
+            int(data[1]),  # st_size
+            int(data[11]),  # st_atime
+            int(data[12]),  # st_mtime
+            int(data[13]),  # st_ctime
+        )
 
     def lstat(self, path):
         returncode, stdout, stderr = self._execute(["stat", "-t", path])
@@ -74,17 +74,17 @@ class RemoteTransport(object):
             raise OSError
         data = stdout.split(" ")
         return stat_result(
-            int(data[3], 16), # st_mode
-            int(data[8]), #st_ino
-            int(data[7], 16), #st_dev
-            int(data[9]), # st_nlink
-            int(data[4]), # st_uid
-            int(data[5]), # st_gid
-            int(data[1]), # st_size
-            int(data[11]), # st_atime
-            int(data[12]), # st_mtime
-            int(data[13]), # st_ctime
-            )
+            int(data[3], 16),  # st_mode
+            int(data[8]),  # st_ino
+            int(data[7], 16),  # st_dev
+            int(data[9]),  # st_nlink
+            int(data[4]),  # st_uid
+            int(data[5]),  # st_gid
+            int(data[1]),  # st_size
+            int(data[11]),  # st_atime
+            int(data[12]),  # st_mtime
+            int(data[13]),  # st_ctime
+        )
 
     def lexists(self, path):
         # stat command uses lstat syscall by default
@@ -121,7 +121,7 @@ class RemoteTransport(object):
                 tup[1],
                 int(tup[2]),
                 tup[3].split(","),
-                )
+            )
 
     def getgrall(self):
         return list(self._getgrall())
@@ -152,7 +152,7 @@ class RemoteTransport(object):
                 tup[4],
                 tup[5],
                 tup[6]
-                )
+            )
 
     def getpwall(self):
         return list(self._getpwall())

@@ -18,12 +18,14 @@ from abc import ABCMeta, abstractmethod
 
 from yaybu.core import policy
 
+
 class ProviderType(ABCMeta):
 
     """ Registers the provider with the resource which it provides """
 
     def __new__(meta, class_name, bases, new_attrs):
-        cls = super(ProviderType, meta).__new__(meta, class_name, bases, new_attrs)
+        cls = super(ProviderType, meta).__new__(
+            meta, class_name, bases, new_attrs)
         for policy in cls.policies:
             policy.providers.append(cls)
         return cls
@@ -51,7 +53,7 @@ class Provider(object):
         return True
 
     def test(self, context):
-	""" Checks as much as possible is valid - allowing the config to fail
+        """ Checks as much as possible is valid - allowing the config to fail
         early """
 
     @abstractmethod
@@ -61,6 +63,7 @@ class Provider(object):
         changed anything, or False if it did not need to change anything (i.e.
         the Resource was already in the state the policy ensures). """
         return False
+
 
 class NullProvider(Provider):
     policies = [policy.NullPolicy]

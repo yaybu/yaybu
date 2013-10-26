@@ -15,6 +15,7 @@
 from yaybu import error
 from yay import errors
 
+
 class PolicyType(type):
 
     """ Registers the policy on the resource """
@@ -25,6 +26,7 @@ class PolicyType(type):
         if cls.resource is not None:
             cls.resource.policies[cls.name] = cls
         return cls
+
 
 class Policy(object):
 
@@ -66,22 +68,27 @@ class Policy(object):
         if a.test(resource):
             return
 
-        msg = ["The resource '%s' is using the policy '%s' but doesn't confirm to that policy" % (resource, self.name), ""]
+        msg = [
+            "The resource '%s' is using the policy '%s' but doesn't confirm to that policy" %
+            (resource, self.name), ""]
         msg.extend(a.describe(resource))
         raise error.NonConformingPolicy("\n".join(msg))
 
     def get_provider(self, context):
         """ Get the one and only one provider that is valid for this resource,
         policy and overall context """
-        valid = [p.isvalid(self, self.resource, context) for p in self.providers]
+        valid = [p.isvalid(self, self.resource, context)
+                 for p in self.providers]
         if valid.count(True) > 1:
             raise error.TooManyProviders()
         if valid.count(True) == 0:
             raise error.NoSuitableProviders()
         return self.providers[valid.index(True)]
 
+
 class NullPolicy(Policy):
     pass
+
 
 class ArgumentAssertion(object):
 
@@ -138,6 +145,7 @@ class AND(ArgumentAssertion):
                 yield "  " + msg
         yield ""
 
+
 class NAND(ArgumentAssertion):
 
     def __init__(self, *args):
@@ -175,7 +183,7 @@ class XOR(ArgumentAssertion):
         yield "Only one of the following conditions should be true:"
         for a in self.args:
             for msg in a.describe(resource):
-               yield "  " + msg
+                yield "  " + msg
         yield ""
 
 
@@ -195,6 +203,5 @@ class OR(ArgumentAssertion):
         yield "At least one of the following conditions should be true:"
         for a in self.args:
             for msg in a.describe(resource):
-               yield "  " + msg
+                yield "  " + msg
         yield ""
-

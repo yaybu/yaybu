@@ -18,6 +18,7 @@
 import unittest
 from yaybu.provisioner.providers.service.upstart import _UpstartServiceMixin
 
+
 class TestUpstartParser(unittest.TestCase):
 
     """ Tests our ability to handle output from /sbin/status """
@@ -32,7 +33,7 @@ class TestUpstartParser(unittest.TestCase):
             "network-interface-security (network-interface/eth0) start/running",
             "network-interface-security (network-interface/lo) start/running",
             "network-interface-security (networking) start/running",
-            ]
+        ]
         output = self.parse("\n".join(lines))
 
         self.assertEqual(len(output), 4)
@@ -41,7 +42,8 @@ class TestUpstartParser(unittest.TestCase):
         self.assertEqual(output[3].status, "running")
 
     def test_with_instance_name(self):
-        output = self.parse("network-interface-security (network-manager) start/running\n")
+        output = self.parse(
+            "network-interface-security (network-manager) start/running\n")
 
         self.assertEqual(len(output), 1)
         self.assertEqual(output[0].name, "network-manager")
@@ -63,4 +65,3 @@ class TestUpstartParser(unittest.TestCase):
         self.assertEqual(output[0].name, "hwclock")
         self.assertEqual(output[0].goal, "stop")
         self.assertEqual(output[0].status, "waiting")
-

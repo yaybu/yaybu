@@ -19,6 +19,7 @@ import abc
 
 
 class Change(object):
+
     """ Base class for changes """
 
     __metaclass__ = abc.ABCMeta
@@ -28,8 +29,11 @@ class Change(object):
         """ Apply the specified change. The supplied renderer will be
         instantiated as below. """
 
+
 class AttributeChange(Change):
+
     """ A change to one attribute of a file's metadata """
+
 
 class ChangeRendererType(type):
 
@@ -41,8 +45,10 @@ class ChangeRendererType(type):
     def __new__(meta, class_name, bases, new_attrs):
         cls = type.__new__(meta, class_name, bases, new_attrs)
         if cls.renderer_for is not None:
-            ChangeRendererType.renderers[(cls.renderer_type, cls.renderer_for)] = cls
+            ChangeRendererType.renderers[
+                (cls.renderer_type, cls.renderer_for)] = cls
         return cls
+
 
 class ChangeRenderer:
 
@@ -76,7 +82,8 @@ class TextRenderer(ChangeRenderer):
 
 class _IckyNastyStub(object):
 
-    # This is a temporary class whilst we refactor output to go through yaybu.core.ui
+    # This is a temporary class whilst we refactor output to go through
+    # yaybu.core.ui
 
     def __init__(self, changelog, obj):
         self.changelog = changelog
@@ -109,7 +116,8 @@ class ChangeLog:
     def apply(self, change, ctx=None):
         """ Execute the change, passing it the appropriate renderer to use. """
         renderers = []
-        text_class = ChangeRendererType.renderers.get(("text", change.__class__), TextRenderer)
+        text_class = ChangeRendererType.renderers.get(
+            ("text", change.__class__), TextRenderer)
         retval = change.apply(ctx or self.ctx, text_class(self, self.verbose))
         self.changed = self.changed or change.changed
         return retval

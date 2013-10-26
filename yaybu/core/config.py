@@ -63,7 +63,8 @@ class YaybuArg:
             try:
                 return int(value)
             except ValueError:
-                raise ArgParseError("Cannot convert %r to an int for argument %r" % (value, self.name))
+                raise ArgParseError(
+                    "Cannot convert %r to an int for argument %r" % (value, self.name))
         elif self.type == 'boolean':
             if type(value) == type(True):
                 # might already be boolean
@@ -72,9 +73,11 @@ class YaybuArg:
                 return False
             elif value.lower() in ('yes', '1', 'on', 'true'):
                 return True
-            raise ArgParseError("Cannot parse boolean from %r for argument %r" % (value, self.name))
+            raise ArgParseError(
+                "Cannot parse boolean from %r for argument %r" % (value, self.name))
         else:
-            raise ArgParseError("Don't understand %r as a type for argument %r" % (self.type, self.name))
+            raise ArgParseError(
+                "Don't understand %r as a type for argument %r" % (self.type, self.name))
 
 
 class YaybuArgParser:
@@ -86,13 +89,15 @@ class YaybuArgParser:
 
     def add(self, arg):
         if arg.name in self.args:
-            raise ArgParseError("Duplicate argument %r specified" % (arg.name,))
+            raise ArgParseError(
+                "Duplicate argument %r specified" % (arg.name,))
         self.args[arg.name] = arg
 
     def parse(self, **arguments):
         for name, value in arguments.items():
             if name not in self.args:
-                raise ArgParseError("Unexpected argument %r provided" % (name,))
+                raise ArgParseError(
+                    "Unexpected argument %r provided" % (name,))
             self.args[name].set(value)
         return dict(self.values())
 
@@ -126,9 +131,9 @@ class Config(BaseConfig):
             "openers": {
                 "packages": {
                     "cachedir": os.path.expanduser("~/.yaybu/packages"),
-                    },
                 },
-            }
+            },
+        }
 
         super(Config, self).__init__(searchpath=searchpath, config=config)
 
@@ -149,7 +154,8 @@ class Config(BaseConfig):
 
     def setup_openers(self):
         self.add({"yaybu": {"searchpath": self.searchpath or []}})
-        self.openers = Openers(searchpath=SearchpathFromGraph(self.yaybu.searchpath))
+        self.openers = Openers(
+            searchpath=SearchpathFromGraph(self.yaybu.searchpath))
 
     def setup_builtins(self):
         self.builtins = {
@@ -162,7 +168,7 @@ class Config(BaseConfig):
             "GitChangeSource": ast.PythonClassFactory(GitChangeSource),
             "GitHubChangeSource": ast.PythonClassFactory(GitHubChangeSource),
             "Printer": ast.PythonClassFactory(Printer),
-            }
+        }
 
     def set_arguments(self, **arguments):
         parser = YaybuArgParser()
@@ -178,21 +184,22 @@ class Config(BaseConfig):
                 arg.type.as_string('string'),
                 arg.default.as_string(None),
                 arg.help.as_string(None),
-                )
+            )
             parser.add(yarg)
 
         self.add({
             "yaybu": {
                 "argv": parser.parse(**arguments),
-                }
-            })
+            }
+        })
 
     def set_arguments_from_argv(self, argv):
         arguments = {}
         for arg in argv:
             name, value = arg.split("=", 1)
             if name in arguments:
-                raise ArgParseError("Duplicate argument %r specified" % (name,))
+                raise ArgParseError(
+                    "Duplicate argument %r specified" % (name,))
             arguments[name] = value
         self.set_arguments(**arguments)
 
@@ -200,8 +207,8 @@ class Config(BaseConfig):
         self.add({
             "yaybu": {
                 "host": hostname,
-                }
-            })
+            }
+        })
 
     @property
     @memoized
@@ -221,4 +228,3 @@ class Config(BaseConfig):
             state = SimulatedStateStorageAdaptor(state)
 
         return state
-

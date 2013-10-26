@@ -19,8 +19,8 @@ import mock
 
 from yaybu.core import main
 
+
 class TestYaybuArg(unittest.TestCase):
 
     def test_help(self):
         self.assertRaises(SystemExit, main.main, ["help"])
-

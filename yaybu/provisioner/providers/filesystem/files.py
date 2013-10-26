@@ -34,7 +34,7 @@ class File(provider.Provider):
         path = "/"
         for i in frags:
             path = os.path.join(path, i)
-            if not ctx.transport.exists(path): #FIXME
+            if not ctx.transport.exists(path):  # FIXME
                 if not simulate:
                     raise error.PathComponentMissing(path)
             elif not ctx.transport.isdir(path):
@@ -46,9 +46,11 @@ class File(provider.Provider):
 
         if template:
             template_args = self.resource.template_args.resolve()
-            contents, sensitive = render_template(context, template, template_args)
+            contents, sensitive = render_template(
+                context, template, template_args)
             if template_args:
-                 sensitive = sensitive or self.resource.template_args.contains_secrets()
+                sensitive = sensitive or self.resource.template_args.contains_secrets(
+                )
 
         elif static:
             s = None
@@ -63,7 +65,8 @@ class File(provider.Provider):
         return contents, sensitive
 
     def test(self, context):
-        # Validate that the file exists and any template values can be filled in
+        # Validate that the file exists and any template values can be filled
+        # in
         if self.resource.template.as_string():
             with context.root.ui.throbber("Testing '%s' exists and is a valid template..." % self.resource.template.as_string()):
                 self.get_file_contents(context)
@@ -97,11 +100,13 @@ class RemoveFile(provider.Provider):
         name = self.resource.name.as_string()
         if context.transport.exists(name):
             if not context.transport.isfile(name):
-                raise error.InvalidProvider("%s exists and is not a file" % name)
+                raise error.InvalidProvider(
+                    "%s exists and is not a file" % name)
             context.change(ShellCommand(["rm", self.resource.name]))
             changed = True
         else:
-            context.changelog.debug("File %s missing already so not removed" % name)
+            context.changelog.debug(
+                "File %s missing already so not removed" % name)
             changed = False
         return changed
 
@@ -112,4 +117,3 @@ class WatchFile(provider.Provider):
     def apply(self, context, output):
         """ Watched files don't have any policy applied to them """
         return self.resource.hash(context) != self.resource._original_hash
-

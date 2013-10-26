@@ -74,7 +74,7 @@ class ShellCommand(changes.Change):
 
         env = {
             "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-            }
+        }
 
         if self.env:
             for key, item in self.env.iteritems():
@@ -106,14 +106,17 @@ class ShellCommand(changes.Change):
 
         if not command_exists:
             if not ctx.simulate:
-                raise error.BinaryMissing("Command '%s' not found" % command[0])
-            renderer.stderr("Command '%s' not found; assuming this recipe will create it" % command[0])
+                raise error.BinaryMissing(
+                    "Command '%s' not found" % command[0])
+            renderer.stderr(
+                "Command '%s' not found; assuming this recipe will create it" % command[0])
             self.returncode = 0
             self.stdout = ""
             self.stderr = ""
             return
 
-        self.returncode, self.stdout, self.stderr = transport.execute(command, stdin=self.stdin, stdout=renderer.stdout, stderr=renderer.stderr, env=env, user=self.user, group=self.group, cwd=self.cwd, umask=self.umask)
+        self.returncode, self.stdout, self.stderr = transport.execute(
+            command, stdin=self.stdin, stdout=renderer.stdout, stderr=renderer.stderr, env=env, user=self.user, group=self.group, cwd=self.cwd, umask=self.umask)
         renderer.flush()
 
         if self.expected is not None and self.returncode != self.expected:

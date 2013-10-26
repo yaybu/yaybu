@@ -17,8 +17,10 @@ from yaybu.core import error
 import os
 import stat
 
+
 def sibpath(filename):
     return os.path.join(os.path.dirname(__file__), filename)
+
 
 class TestFileApply(TestCase):
 
@@ -123,7 +125,6 @@ class TestFileApply(TestCase):
             """)
         self.failIfExists("/etc/toremove")
 
-
     def test_empty(self):
         self.transport.put("/etc/foo", "foo")
         self.check_apply("""
@@ -227,4 +228,3 @@ class TestFileRemove(TestCase):
                     name: /etc/qux
                     policy: remove
             """)
-

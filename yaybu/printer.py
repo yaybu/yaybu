@@ -25,4 +25,3 @@ class Printer(base.GraphExternalAction):
     def apply(self):
         print str(self.params.message)
         return False
-

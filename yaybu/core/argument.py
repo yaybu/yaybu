@@ -26,9 +26,9 @@ from yay import errors, ast
 def get_unicode_glyphs():
     return ''.join(
         unichr(char)
-        for char in xrange(sys.maxunicode+1)
+        for char in xrange(sys.maxunicode + 1)
         if unicodedata.category(unichr(char))[0] in ('LMNPSZ')
-        )
+    )
 
 
 # we abuse urlparse for our parsing needs
@@ -94,9 +94,9 @@ class Boolean(Argument):
             return self.default
 
         if type(value) in types.StringTypes:
-           if value.lower() in ("1", "yes", "on", "true"):
+            if value.lower() in ("1", "yes", "on", "true"):
                 return True
-           return False
+            return False
 
         return bool(value)
 
@@ -123,7 +123,7 @@ class FullPath(Argument):
 
     def resolve(self):
         value = self.node.as_string(default=self.default)
-        #if not value.startswith("/"):
+        # if not value.startswith("/"):
         #    raise error.ParseError("%s is not a full path" % value)
         return value
 
@@ -147,7 +147,7 @@ class Integer(Argument):
 
     @classmethod
     def _generate_valid(self):
-        return random.randint(0,sys.maxint)
+        return random.randint(0, sys.maxint)
 
 
 class DateTime(Argument):
@@ -234,9 +234,11 @@ class PolicyTrigger:
 
     def bind(self, resources, target):
         if not self.on in resources:
-            raise error.BindingError("Cannot bind %r to missing resource named '%s'" % (target, self.on))
+            raise error.BindingError(
+                "Cannot bind %r to missing resource named '%s'" % (target, self.on))
         if not self.when in resources[self.on].policies:
-            raise error.BindingError("%r cannot bind to non-existant event %s on resource %r" % (target, self.when, resources[self.on]))
+            raise error.BindingError(
+                "%r cannot bind to non-existant event %s on resource %r" % (target, self.when, resources[self.on]))
         resources[self.on].register_observer(self.when, target, self.policy)
         return resources[self.on]
 
@@ -280,19 +282,21 @@ class PolicyArgument(Argument):
         try:
             value = self.node.resolve()
         except errors.NoMatching:
-            #return PolicyCollection(instance.policies.default())
+            # return PolicyCollection(instance.policies.default())
             return None
 
         if type(value) in types.StringTypes:
             if not value in instance.policies:
-                raise error.ParseError("'%s' is not a valid policy for %r" % (value, instance))
+                raise error.ParseError(
+                    "'%s' is not a valid policy for %r" % (value, instance))
             return PolicyCollection(StandardPolicy(value))
 
         if isinstance(value, dict):
             triggers = []
             for policy, conditions in value.items():
                 if not policy in instance.policies:
-                    raise error.ParseError("'%s' is not a valid policy for %r" % (policy, instance))
+                    raise error.ParseError(
+                        "'%s' is not a valid policy for %r" % (policy, instance))
                 if not isinstance(conditions, list):
                     conditions = [conditions]
                 for condition in conditions:
@@ -301,9 +305,9 @@ class PolicyArgument(Argument):
                             policy=policy,
                             when=str(condition['when']),
                             on=str(condition['on']),
-                            )
                         )
+                    )
             return PolicyCollection(triggers=triggers)
 
-        raise error.ParseError("Expected either a string literal or mapping as 'policy' argument for %r" % instance)
-
+        raise error.ParseError(
+            "Expected either a string literal or mapping as 'policy' argument for %r" % instance)

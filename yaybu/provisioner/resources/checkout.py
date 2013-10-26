@@ -19,9 +19,11 @@ from yaybu.core.argument import (
     FullPath,
     String,
     Octal,
-    )
+)
+
 
 class Checkout(Resource):
+
     """ This represents a "working copy" from a Source Code Management system.
     This could be provided by, for example, Subversion or Git remote
     repositories.
@@ -83,7 +85,7 @@ class CheckoutSyncPolicy(Policy):
     signature = (
         Present("name"),
         Present("repository"),
-        )
+    )
 
 
 class CheckoutExportPolicy(Policy):
@@ -98,5 +100,4 @@ class CheckoutExportPolicy(Policy):
     signature = (
         Present("name"),
         Present("repository"),
-        )
-
+    )

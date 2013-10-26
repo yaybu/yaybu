@@ -20,7 +20,7 @@ from yaybu.core.argument import (
     Property,
     FullPath,
     String,
-    )
+)
 
 
 class Mount(Resource):
@@ -47,5 +47,4 @@ class MountPolicy(Policy):
         Present("name"),
         Present("fs_type"),
         Present("device"),
-        )
-
+    )

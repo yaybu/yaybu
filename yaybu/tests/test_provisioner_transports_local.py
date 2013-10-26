@@ -25,7 +25,8 @@ class TestLocalTransport(TestCase):
 
     def setUp(self):
         for modname in ("os", "pwd", "grp", "spwd"):
-            patcher = mock.patch("yaybu.provisioner.transports.local.%s" % modname)
+            patcher = mock.patch(
+                "yaybu.provisioner.transports.local.%s" % modname)
             self.addCleanup(patcher.stop)
             setattr(self, modname, patcher.start())
 
@@ -77,7 +78,8 @@ class TestLocalTransport(TestCase):
         self.os.path.islink.assert_called_with("/")
 
     def test_stat(self):
-        self.os.stat.return_value = stat_result(0755, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        self.os.stat.return_value = stat_result(
+            0755, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         self.assertEqual(self.transport.stat("/").st_mode, 0755)
         self.os.stat.assert_called_with("/")
 
@@ -87,7 +89,8 @@ class TestLocalTransport(TestCase):
         self.os.stat.assert_called_with("/")
 
     def test_lstat(self):
-        self.os.lstat.return_value = stat_result(0755, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        self.os.lstat.return_value = stat_result(
+            0755, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         self.assertEqual(self.transport.lstat("/").st_mode, 0755)
         self.os.lstat.assert_called_with("/")
 
@@ -116,12 +119,12 @@ class TestLocalTransport(TestCase):
         self.assertRaises(OSError, self.transport.readlink, "/bar")
         self.os.readlink.assert_called_with("/bar")
 
-    #def test_get(self):
+    # def test_get(self):
     #    self.ex.return_value = [0, "hello\nhello\nhello\nhello\n", ""]
     #    self.assertEqual(self.transport.get("/proc/self/hello"), "hello\nhello\nhello\nhello\n")
     #    self.ex.assert_called_with(["cat", "/proc/self/hello"])
 
-    #def test_put(self):
+    # def test_put(self):
     #    self.ex.return_value = [0, "", ""]
     #    self.transport.put("/foo", "hello\nworld")
     #    self.ex.assert_called_with("umask 133 && tee /foo > /dev/null", stdin="hello\nworld")
@@ -195,4 +198,3 @@ class TestLocalTransport(TestCase):
     def test_getspnam_miss(self):
         self.spwd.getspnam.side_effect = KeyError
         self.assertRaises(KeyError, self.transport.getspnam, "sqlite")
-

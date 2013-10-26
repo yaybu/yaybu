@@ -39,9 +39,10 @@ class _SimulatedServiceMixin(utils._ServiceMixin):
 class Start(_SimulatedServiceMixin, utils._Start, provider.Provider):
     pass
 
+
 class Stop(_SimulatedServiceMixin, utils._Stop, provider.Provider):
     pass
 
+
 class Restart(_SimulatedServiceMixin, utils._Restart, provider.Provider):
     pass
-

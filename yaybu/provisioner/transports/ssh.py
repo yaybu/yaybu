@@ -52,12 +52,13 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
                 if self.context.password:
                     client.connect(hostname=self.context.host,
                                    username=self.context.user,
-                                   port = self.context.port,
-                                   password = self.context.password,
-                                   look_for_keys = False)
+                                   port=self.context.port,
+                                   password=self.context.password,
+                                   look_for_keys=False)
 
                 elif self.context.private_key:
-                    private_key = self.context.root.openers.open(self.context.private_key).read()
+                    private_key = self.context.root.openers.open(
+                        self.context.private_key).read()
 
                     client.connect(hostname=self.context.host,
                                    username=self.context.user,
@@ -72,14 +73,16 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
                 break
 
             except paramiko.PasswordRequiredException:
-                raise error.ConnectionError("Unable to authenticate with remote server")
+                raise error.ConnectionError(
+                    "Unable to authenticate with remote server")
 
             except (socket.error, EOFError):
                 # logger.warning("connection refused. retrying.")
                 time.sleep(tries + 1)
         else:
             client.close()
-            raise error.ConnectionError("Connection refused %d times, giving up." % self.connection_attempts)
+            raise error.ConnectionError(
+                "Connection refused %d times, giving up." % self.connection_attempts)
         self._client = client
         return client
 
@@ -87,7 +90,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         return self.connect().get_transport().get_username()
 
     def _execute_impl(self, command, stdin, stdout, stderr):
-        client = self.connect() # This should be done once per context object
+        client = self.connect()  # This should be done once per context object
         transport = client.get_transport()
 
         channel = transport.open_session()
@@ -114,18 +117,20 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
                 continue
 
             recvr(channel.recv_ready, channel.recv, stdout, stdout_buffer)
-            recvr(channel.recv_stderr_ready, channel.recv_stderr, stderr, stderr_buffer)
+            recvr(channel.recv_stderr_ready,
+                  channel.recv_stderr, stderr, stderr_buffer)
 
         while not channel.eof_received:
             recvr(channel.recv_ready, channel.recv, stdout, stdout_buffer)
-            recvr(channel.recv_stderr_ready, channel.recv_stderr, stderr, stderr_buffer)
+            recvr(channel.recv_stderr_ready,
+                  channel.recv_stderr, stderr, stderr_buffer)
 
         recvr(channel.recv_ready, channel.recv, stdout, stdout_buffer)
-        recvr(channel.recv_stderr_ready, channel.recv_stderr, stderr, stderr_buffer)
+        recvr(channel.recv_stderr_ready,
+              channel.recv_stderr, stderr, stderr_buffer)
 
         returncode = channel.recv_exit_status()
 
         channel.close()
 
         return returncode, ''.join(stdout_buffer), ''.join(stderr_buffer)
-

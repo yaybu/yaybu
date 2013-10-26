@@ -34,7 +34,7 @@ class Patch(provider.Provider):
         path = "/"
         for i in frags:
             path = os.path.join(path, i)
-            if not ctx.transport.exists(path): #FIXME
+            if not ctx.transport.exists(path):  # FIXME
                 if not simulate:
                     raise error.PathComponentMissing(path)
             elif not ctx.transport.isdir(path):
@@ -43,19 +43,23 @@ class Patch(provider.Provider):
     def get_patch(self, context):
         patch = context.get_file(self.resource.patch.as_string())
         data = patch.read()
-        #FIXME: Would be good to validate the patch here a bit
+        # FIXME: Would be good to validate the patch here a bit
         return data, "secret" in patch.labels
 
     def apply_patch(self, context):
         patch, sensitive = self.get_patch(context)
 
-        cmd = 'patch -t --dry-run -N --silent -r - -o - %s -' % self.resource.source.as_string()
-        returncode, stdout, stderr = context.transport.execute(cmd, stdin=patch)
+        cmd = 'patch -t --dry-run -N --silent -r - -o - %s -' % self.resource.source.as_string(
+        )
+        returncode, stdout, stderr = context.transport.execute(
+            cmd, stdin=patch)
 
         if returncode != 0:
             context.changelog.info("Patch does not apply cleanly")
-            context.changelog.info("Patch file used was %s" % self.resource.patch.as_string())
-            context.changelog.info("File to patch was %s" % self.resource.source.as_string())
+            context.changelog.info(
+                "Patch file used was %s" % self.resource.patch.as_string())
+            context.changelog.info(
+                "File to patch was %s" % self.resource.source.as_string())
 
             context.changelog.info("")
             context.changelog.info("Reported error was:")
@@ -66,7 +70,8 @@ class Patch(provider.Provider):
         return stdout, sensitive
 
     def test(self, context):
-        # Validate that the file exists and any template values can be filled in
+        # Validate that the file exists and any template values can be filled
+        # in
         with context.root.ui.throbber("Testing '%s' exists..." % self.resource.patch.as_string()):
             self.get_patch(context)
 
@@ -82,7 +87,8 @@ class Patch(provider.Provider):
             contents, secret = render_string(context, contents, template_args)
             sensitive = sensitive or secret
 
-        fc = EnsureFile(name, contents, self.resource.owner.as_string(), self.resource.group.as_string(), self.resource.mode.resolve(), sensitive)
+        fc = EnsureFile(name, contents, self.resource.owner.as_string(),
+                        self.resource.group.as_string(), self.resource.mode.resolve(), sensitive)
         context.change(fc)
 
         return fc.changed

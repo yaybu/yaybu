@@ -25,7 +25,7 @@ from yaybu.core.argument import (
     String,
     Octal,
     Boolean,
-    )
+)
 
 
 class Directory(Resource):
@@ -92,6 +92,7 @@ class DirectoryRemovedPolicy(Policy):
                  Absent("mode"),
                  )
 
+
 class DirectoryRemovedRecursivePolicy(Policy):
 
     """ If a directory described by this resource exists then remove it and
@@ -109,5 +110,3 @@ class DirectoryRemovedRecursivePolicy(Policy):
                  Absent("group"),
                  Absent("mode"),
                  )
-
-

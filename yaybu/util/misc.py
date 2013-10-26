@@ -25,4 +25,3 @@ def sibpath(path, sibling):
     resource files.
     """
     return os.path.join(os.path.dirname(os.path.abspath(path)), sibling)
-

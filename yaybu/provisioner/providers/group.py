@@ -26,7 +26,8 @@ class Group(provider.Provider):
         fields = ("name", "passwd", "gid", "members",)
 
         try:
-            info_tuple = context.transport.getgrnam(self.resource.name.as_string().encode("utf-8"))
+            info_tuple = context.transport.getgrnam(
+                self.resource.name.as_string().encode("utf-8"))
         except KeyError:
             info = dict((f, None) for f in fields)
             info["exists"] = False
@@ -60,7 +61,8 @@ class Group(provider.Provider):
         try:
             context.change(ShellCommand(command))
         except error.SystemError as exc:
-            raise error.InvalidGroup("%s on %s failed with return code %d" % (command[0], self.resource, exc.returncode))
+            raise error.InvalidGroup("%s on %s failed with return code %d" %
+                                     (command[0], self.resource, exc.returncode))
 
         return True
 
@@ -71,7 +73,8 @@ class GroupRemove(provider.Provider):
 
     def apply(self, context, output):
         try:
-            existing = context.transport.getgrnam(self.resource.name.as_string().encode("utf-8"))
+            existing = context.transport.getgrnam(
+                self.resource.name.as_string().encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such group. This is good.
             return False
@@ -81,6 +84,7 @@ class GroupRemove(provider.Provider):
         try:
             context.change(ShellCommand(command))
         except error.SystemError as exc:
-            raise error.InvalidGroup("groupdel on %s failed with return code %d" % (self.resource, exc.returncode))
+            raise error.InvalidGroup(
+                "groupdel on %s failed with return code %d" % (self.resource, exc.returncode))
 
         return True

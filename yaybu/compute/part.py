@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class Compute(base.GraphExternalAction):
+
     """
     This creates a physical node based on our node record.
 
@@ -55,7 +56,7 @@ class Compute(base.GraphExternalAction):
         "VMWARE": VMWareDriver,
         "BIGV": BigVNodeDriver,
         "DOCKER": DockerNodeDriver,
-        }
+    }
 
     def __init__(self, node):
         super(Compute, self).__init__(node)
@@ -88,11 +89,14 @@ class Compute(base.GraphExternalAction):
 
     def _find_node(self, name):
         try:
-            existing = [n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
+            existing = [
+                n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
         except InvalidCredsError:
-            raise error.InvalidCredsError("Credentials invalid - unable to check/create '%s'" % self.params.name.as_string(), anchor=None)
+            raise error.InvalidCredsError(
+                "Credentials invalid - unable to check/create '%s'" % self.params.name.as_string(), anchor=None)
         if len(existing) > 1:
-            raise LibcloudError(_("There are already multiple nodes called '%s'") % name)
+            raise LibcloudError(
+                _("There are already multiple nodes called '%s'") % name)
         elif not existing:
             return None
         node = existing[0]
@@ -102,8 +106,10 @@ class Compute(base.GraphExternalAction):
                 logger.debug("Starting node")
                 ex_start(node)
             else:
-                raise LibcloudError(_("The node is not running and cannot be started"))
-        logger.debug("Node '%s' already running - not creating new node" % (name, ))
+                raise LibcloudError(
+                    _("The node is not running and cannot be started"))
+        logger.debug(
+            "Node '%s' already running - not creating new node" % (name, ))
         return node
 
     def _get_image(self):
@@ -114,11 +120,11 @@ class Compute(base.GraphExternalAction):
 
         id = str(self.params.image.id)
         return NodeImage(
-            id = id,
-            name = self.params.image.name.as_string(default=id),
-            extra = self.params.image.extra.as_dict(default={}),
-            driver = self.driver,
-            )
+            id=id,
+            name=self.params.image.name.as_string(default=id),
+            extra=self.params.image.extra.as_dict(default={}),
+            driver=self.driver,
+        )
 
     def _get_size(self):
         try:
@@ -130,14 +136,14 @@ class Compute(base.GraphExternalAction):
 
         id = str(self.params.size.id)
         return NodeSize(
-            id = id,
-            name = self.params.size.name.as_string(default=id),
-            ram = self.params.size.ram.as_int(default=0),
-            disk = self.params.size.disk.as_int(default=0),
-            bandwidth = self.params.bandwidth.as_int(default=0),
-            price = self.params.size.price.as_int(default=0),
-            driver = self.driver,
-            )
+            id=id,
+            name=self.params.size.name.as_string(default=id),
+            ram=self.params.size.ram.as_int(default=0),
+            disk=self.params.size.disk.as_int(default=0),
+            bandwidth=self.params.bandwidth.as_int(default=0),
+            price=self.params.size.price.as_int(default=0),
+            driver=self.driver,
+        )
 
     def _get_auth(self):
         username = self.params.user.as_string(default=getpass.getuser())
@@ -159,7 +165,7 @@ class Compute(base.GraphExternalAction):
         """ Return a dictionary of information about this node """
         n = self.libcloud_node
 
-        self.state.update(their_name = n.name)
+        self.state.update(their_name=n.name)
 
         if n.public_ips:
             self.members.set('public_ip', n.public_ips[0])
@@ -171,7 +177,7 @@ class Compute(base.GraphExternalAction):
         if 'dns_name' in n.extra:
             self.members.set('hostname', n.extra['dns_name'].split(".")[0])
             self.members.set('fqdn', n.extra['dns_name'])
-            self.members.set('domain', n.extra['dns_name'].split(".",1)[1])
+            self.members.set('domain', n.extra['dns_name'].split(".", 1)[1])
 
     def _fake_node_info(self):
         self.members.set('public_ip', '0.0.0.0')
@@ -183,7 +189,8 @@ class Compute(base.GraphExternalAction):
             try:
                 self.driver.list_nodes()
             except InvalidCredsError:
-                raise error.InvalidCredError("Unable to login to compute service", anchor=self.params.driver.id.anchor)
+                raise error.InvalidCredError(
+                    "Unable to login to compute service", anchor=self.params.driver.id.anchor)
 
     def apply(self):
         if self.libcloud_node:
@@ -198,7 +205,8 @@ class Compute(base.GraphExternalAction):
             self.libcloud_node = self._find_node(self.full_name)
 
         if self.libcloud_node:
-            logger.debug("Applying to node %r at %r/%r" % (self.libcloud_node.name, self.libcloud_node.public_ip, self.libcloud_node.private_ip))
+            logger.debug("Applying to node %r at %r/%r" %
+                         (self.libcloud_node.name, self.libcloud_node.public_ip, self.libcloud_node.private_ip))
             self._update_node_info()
             return
 
@@ -212,7 +220,8 @@ class Compute(base.GraphExternalAction):
             logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
 
             with self.root.ui.throbber(_("Creating node '%r'...") % (self.full_name, )) as throbber:
-                kwargs = args_from_expression(self.driver.create_node, self.params, ignore=("name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
+                kwargs = args_from_expression(self.driver.create_node, self.params, ignore=(
+                    "name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
                 kwargs['auth'] = self._get_auth()
 
                 if self.root.simulate:
@@ -225,7 +234,7 @@ class Compute(base.GraphExternalAction):
                     image=self._get_image(),
                     size=self._get_size(),
                     **kwargs
-                    )
+                )
 
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
 
@@ -234,11 +243,13 @@ class Compute(base.GraphExternalAction):
                     try:
                         import time
                         old_sleep = time.sleep
+
                         def sleep(amt):
                             throbber.throb()
                             old_sleep(amt)
                         time.sleep = sleep
-                        self.libcloud_node, self.ip_addresses = self.driver.wait_until_running([node], wait_period=1, timeout=600)[0]
+                        self.libcloud_node, self.ip_addresses = self.driver.wait_until_running(
+                            [node], wait_period=1, timeout=600)[0]
                     finally:
                         time.sleep = old_sleep
 
@@ -249,12 +260,14 @@ class Compute(base.GraphExternalAction):
                 return
 
             except LibcloudError, e:
-                logger.warning("Node %r did not start before timeout. retrying." % self.full_name)
+                logger.warning(
+                    "Node %r did not start before timeout. retrying." % self.full_name)
                 node.destroy()
                 continue
 
             except Exception, e:
-                logger.warning("Node %r had an unexpected error %s - node will be cleaned up and processing will stop" % (self.full_name, e))
+                logger.warning(
+                    "Node %r had an unexpected error %s - node will be cleaned up and processing will stop" % (self.full_name, e))
                 node.destroy()
                 raise
                 return
@@ -274,4 +287,3 @@ class Compute(base.GraphExternalAction):
 
         with self.root.ui.throbber(_("Destroying node '%r'") % self.full_name) as throbber:
             self.libcloud_node.destroy()
-

@@ -171,4 +171,3 @@ class TestZoneArglessDriver(TestCase):
         # FIXME: Investigate rstrip...
         self.assertEqual(zones[0].domain.rstrip("."), "example.com")
         self.assertEqual(zones[0].list_records(), [])
-

@@ -34,14 +34,17 @@ class F(resource.Resource):
     foo = argument.Property(argument.String, default="42")
     bar = argument.Property(argument.String)
 
+
 class G(resource.Resource):
     foo = argument.Property(argument.String)
     bar = argument.Property(argument.String)
+
 
 class H(resource.Resource):
     foo = argument.Property(argument.Integer)
     bar = argument.Property(argument.DateTime)
     baz = argument.Property(argument.File)
+
 
 class TestResource(unittest.TestCase):
 
@@ -50,7 +53,7 @@ class TestResource(unittest.TestCase):
             'name': 'test',
             'foo': u'42',
             'bar': u'20100501',
-            }))
+        }))
         self.assertEqual(h.foo.as_int(), 42)
         self.assertEqual(h.bar.resolve(), datetime.datetime(2010, 05, 01))
 
@@ -81,6 +84,7 @@ class TestArgumentAssertion(unittest.TestCase):
     def test_present(self):
         class P(policy.Policy):
             signature = [policy.Present("foo")]
+
         class Q(policy.Policy):
             signature = [policy.Present("bar")]
         f = F(bind(dict(name="test", foo="bar")))
@@ -90,6 +94,7 @@ class TestArgumentAssertion(unittest.TestCase):
     def test_absent(self):
         class P(policy.Policy):
             signature = [policy.Absent("foo")]
+
         class Q(policy.Policy):
             signature = [policy.Absent("bar")]
         f = F(bind(dict(name="test", foo="bar")))
@@ -107,9 +112,9 @@ class TestArgumentAssertion(unittest.TestCase):
     def test_xor(self):
         class P(policy.Policy):
             signature = [policy.XOR(
-                              policy.Present("foo"),
-                              policy.Present("bar"),
-                         )]
+                policy.Present("foo"),
+                policy.Present("bar"),
+            )]
         g = G(bind(dict(name="test")))
         self.assertEqual(P.conforms(g), False)
         g = G(bind(dict(name="test", foo="yes")))
@@ -123,17 +128,21 @@ class TestArgumentAssertion(unittest.TestCase):
 class Ev1(resource.Resource):
     pass
 
+
 class Ev1FooPolicy(policy.Policy):
     name = "foo"
     resource = Ev1
+
 
 class Ev1BarPolicy(policy.Policy):
     name = "bar"
     resource = Ev1
 
+
 class Ev1BazPolicy(policy.Policy):
     name = "baz"
     resource = Ev1
+
 
 class Ev1Provider(provider.Provider):
     policies = (Ev1FooPolicy, Ev1BarPolicy, Ev1BazPolicy)
@@ -144,17 +153,21 @@ class Ev1Provider(provider.Provider):
         Ev1Provider.applied += 1
         return True
 
+
 class TestResourceBundle(unittest.TestCase):
 
     def setUp(self):
         self.overrides = {}
+
         def override(resource, policy):
             self.overrides[resource.id] = policy
+
         def overridden_policy(resource):
             p = self.overrides.get(resource.id, None)
             if p:
                 return resource.policies[p]
             return None
+
         def clear_override(resource):
             if resource.id in self.overrides:
                 del self.overrides[resource.id]
@@ -169,25 +182,25 @@ class TestResourceBundle(unittest.TestCase):
             {"File": [{
                 "name": "/etc/foo",
                 "mode": "666",
-                }]
-             }])
+            }]
+            }])
         self.assertEqual(resources["File[/etc/foo]"].mode.as_int(), 438)
 
     def test_firing(self):
         Ev1Provider.applied = 0
         resources = resource.ResourceBundle.create_from_list([
             {"Ev1": [
-                { "name": "e1",
-                  "policy": "foo",
-                }, {
-                  "name": "e2",
-                  "policy":
-                      {"baz": [{
-                          "when": "foo",
-                          "on": "Ev1[e1]",
-                          }],
-                       },
-                  },
+                {"name": "e1",
+                 "policy": "foo",
+                 }, {
+                    "name": "e2",
+                    "policy":
+                    {"baz": [{
+                        "when": "foo",
+                        "on": "Ev1[e1]",
+                    }],
+                    },
+                },
             ]}])
 
         e1 = resources['Ev1[e1]']
@@ -211,17 +224,17 @@ class TestResourceBundle(unittest.TestCase):
         Ev1Provider.applied = 0
         resources = resource.ResourceBundle.create_from_list([
             {"Ev1": [
-                { "name": "e1",
-                  "policy": "foo",
-                }, {
-                  "name": "e2",
-                  "policy":
-                      {"baz": [{
-                          "when": "baz",
-                          "on": "Ev1[e1]",
-                          }],
-                       },
-                  },
+                {"name": "e1",
+                 "policy": "foo",
+                 }, {
+                    "name": "e2",
+                    "policy":
+                    {"baz": [{
+                        "when": "baz",
+                        "on": "Ev1[e1]",
+                    }],
+                    },
+                },
             ]}])
         e1 = resources['Ev1[e1]']
         e2 = resources['Ev1[e2]']
@@ -244,17 +257,17 @@ class TestResourceBundle(unittest.TestCase):
         Ev1Provider.applied = 0
         resources = resource.ResourceBundle.create_from_list([
             {"Ev1": [
-                { "name": "e1",
-                  "policy":
-                      {"baz": [{
-                          "when": "baz",
-                          "on": "Ev1[e2]",
-                          }],
-                       },
-                }, {
-                  "name": "e2",
-                  "policy": "foo",
-                  }
+                {"name": "e1",
+                 "policy":
+                 {"baz": [{
+                     "when": "baz",
+                     "on": "Ev1[e2]",
+                 }],
+                 },
+                 }, {
+                    "name": "e2",
+                    "policy": "foo",
+                }
             ]}])
         e1 = resources['Ev1[e1]']
         e2 = resources['Ev1[e2]']
@@ -262,11 +275,11 @@ class TestResourceBundle(unittest.TestCase):
 
     def test_structure(self):
         e1 = Ev1(bind(dict(name="e1",
-                policy = {
-                    'foo': {
-                        'when': 'bar',
-                        'on': 'e2'},
-                    })))
+                           policy={
+                               'foo': {
+                                   'when': 'bar',
+                                   'on': 'e2'},
+                           })))
         e2 = Ev1(bind(dict(name="e2")))
         resources = {'e1': e1, 'e2': e2}
         e1.bind(resources)
@@ -274,22 +287,22 @@ class TestResourceBundle(unittest.TestCase):
         self.assertEqual(len(e1.observers), 0)
         self.assertEqual(dict(e2.observers), {
             'bar': [(e1, 'foo')]
-            })
+        })
 
     def test_multiple(self):
         e1 = Ev1(bind(dict(name="e1",
-                policy = {
-                    'foo': [{
-                        'when': 'bar',
-                        'on': 'e2'}],
-                    'bar': [{
-                        'when': 'foo',
-                        'on': 'e3'}],
-                    'baz': [{
-                        'when': 'baz',
-                        'on': 'e2',
-                        }]
-                    })))
+                           policy={
+                               'foo': [{
+                                   'when': 'bar',
+                                   'on': 'e2'}],
+                               'bar': [{
+                                   'when': 'foo',
+                                   'on': 'e3'}],
+                               'baz': [{
+                                   'when': 'baz',
+                                   'on': 'e2',
+                               }]
+                           })))
         e2 = Ev1(bind(dict(name="e2")))
         e3 = Ev1(bind(dict(name="e3")))
         resources = {'e1': e1, 'e2': e2, 'e3': e3}
@@ -299,18 +312,18 @@ class TestResourceBundle(unittest.TestCase):
         self.assertEqual(dict(e2.observers), {
             'bar': [(e1, 'foo')],
             'baz': [(e1, 'baz')],
-            })
+        })
         self.assertEqual(dict(e3.observers), {
             'foo': [(e1, 'bar')],
-            })
+        })
 
     def test_missing(self):
         e1 = Ev1(bind(dict(name="e1",
-                policy = {
-                    'foo': [{
-                        'when': 'bar',
-                        'on': 'missing'}],
-                    })))
+                           policy={
+                               'foo': [{
+                                   'when': 'bar',
+                                   'on': 'missing'}],
+                           })))
         e2 = Ev1(bind(dict(name="e2")))
         resources = {'e1': e1, 'e2': e2}
         self.assertRaises(error.BindingError, e1.bind, resources)
@@ -337,4 +350,3 @@ class TestWatched(TestCase):
                             on: File[/watched-file]
             """)
         self.failUnlessExists("/event-triggered")
-

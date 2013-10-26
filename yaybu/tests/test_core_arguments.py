@@ -87,4 +87,3 @@ class TestArgumentParser(TestCase):
                         - when: appply
                           on: File[/tmp/wibble]
             """)
-

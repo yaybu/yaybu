@@ -24,6 +24,7 @@ from fakechroot import unittest2
 from yaybu.provisioner.transports.remote import stat_result, \
     struct_group, struct_passwd, struct_spwd
 
+
 class TransportRecorder(object):
 
     # path =...
@@ -37,6 +38,7 @@ class TransportRecorder(object):
         attr = getattr(self.inner, function_name)
         if function_name.startswith("_"):
             return attr
+
         def _(*args, **kwargs):
             e = None
             try:
@@ -67,12 +69,12 @@ class TransportPlayback(object):
         f, results, exception = self.results.pop(0)
         assert function_name == f, "'%s' != '%s'" % (function_name, f)
 
-        def  _(*args, **kwargs):
+        def _(*args, **kwargs):
             if exception:
                 raise {
                     "KeyError": KeyError,
                     "OSError": OSError,
-                    }[exception]()
+                }[exception]()
             return {
                 "stat": lambda x: stat_result(*x),
                 "lstat": lambda x: stat_result(*x),
@@ -84,15 +86,17 @@ class TransportPlayback(object):
                 "getpwuid": lambda x: struct_passwd(*x),
                 "getspall": lambda x: [struct_spwd(*y) for y in x],
                 "getspnam": lambda x: struct_spwd(*x),
-                }.get(f, lambda x: x)(results)
+            }.get(f, lambda x: x)(results)
         return _
 
 
 class CalledProcessError(Exception):
     pass
 
+
 class ChangeStillOutstanding(Exception):
     pass
+
 
 class YaybuFakeChroot(unittest2.FakeChroot):
 
@@ -213,5 +217,3 @@ class TestCase(unittest2.TestCase):
             return
 
         raise ChangeStillOutstanding("Change still outstanding")
-
-

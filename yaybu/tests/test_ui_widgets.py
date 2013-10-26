@@ -29,5 +29,3 @@ class TestUI(unittest.TestCase):
         with self.ui.progress(100) as p:
             p.progress(50)
             p.progress(100)
-
-

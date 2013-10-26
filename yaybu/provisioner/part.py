@@ -53,7 +53,8 @@ class Provision(base.GraphExternalAction):
         logger.info("Updating node %r" % hostname)
 
         self.host = hostname
-        self.user = self.params.server.user.as_string(default=getpass.getuser())
+        self.user = self.params.server.user.as_string(
+            default=getpass.getuser())
         self.port = self.params.server.port.as_int(default=22)
         self.password = self.params.server.password.as_string(default="")
         self.private_key = self.params.server.private_key.as_string(default="")
@@ -72,9 +73,9 @@ class Provision(base.GraphExternalAction):
 
         self.transport = self.Transport(
             context=self,
-            verbose = root.verbose,
-            simulate = root.simulate,
-            )
+            verbose=root.verbose,
+            simulate=root.simulate,
+        )
 
         with root.ui.throbber("Connecting to '%s'" % hostname) as throbber:
             self.transport.connect()
@@ -90,7 +91,8 @@ class Provision(base.GraphExternalAction):
         self.state.transport = self.transport
 
         if not self.simulate:
-            save_parent = os.path.realpath(os.path.join(self.state.save_file, os.path.pardir))
+            save_parent = os.path.realpath(
+                os.path.join(self.state.save_file, os.path.pardir))
             if not self.transport.exists(save_parent):
                 self.transport.makedirs(save_parent)
 
@@ -102,10 +104,12 @@ class Provision(base.GraphExternalAction):
                     self.transport.unlink(self.state.save_file)
                 self.state.loaded = True
             else:
-                raise error.SavedEventsAndNoInstruction("There is a saved events file - you need to specify --resume or --no-resume")
+                raise error.SavedEventsAndNoInstruction(
+                    "There is a saved events file - you need to specify --resume or --no-resume")
 
         # Actually apply the configuration
-        bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources, verbose_errors=self.verbose>2)
+        bundle = resource.ResourceBundle.create_from_yay_expression(
+            self.params.resources, verbose_errors=self.verbose > 2)
         bundle.bind()
 
         bundle.apply(self, None)
@@ -113,7 +117,8 @@ class Provision(base.GraphExternalAction):
             self.transport.unlink(self.state.save_file)
 
     def test(self):
-        bundle = resource.ResourceBundle.create_from_yay_expression(self.params.resources)
+        bundle = resource.ResourceBundle.create_from_yay_expression(
+            self.params.resources)
         bundle.bind()
         bundle.test(self)
 

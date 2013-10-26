@@ -97,4 +97,3 @@ class MockLoadBalancerArgless(MockLoadBalancer):
 
     def __init__(self):
         pass
-

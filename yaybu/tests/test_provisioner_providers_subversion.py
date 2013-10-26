@@ -78,4 +78,3 @@ class TestSubversion(TestCase):
     def test_change_tag_to_tag(self):
         self.test_checkout_tag()
         self.test_checkout_tag("3.1.6")
-

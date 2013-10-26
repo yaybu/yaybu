@@ -52,7 +52,7 @@ class OptionParsingCmd(cmd.Cmd):
         if cmd is None:
             return self.default(line)
         self.lastcmd = line
-        if line == 'EOF' :
+        if line == 'EOF':
             self.lastcmd = ''
         if cmd == '':
             return self.default(line)
@@ -90,7 +90,7 @@ class OptionParsingCmd(cmd.Cmd):
     def aligned_docstring(self, arg):
         """ Return a docstring for a function, aligned properly to the left """
         try:
-            doc=getattr(self, 'do_' + arg).__doc__
+            doc = getattr(self, 'do_' + arg).__doc__
             if doc:
                 return "\n".join([x.strip() for x in str(doc).splitlines()])
             else:
@@ -118,7 +118,7 @@ class OptionParsingCmd(cmd.Cmd):
             help = {}
             for name in names:
                 if name[:5] == 'help_':
-                    help[name[5:]]=1
+                    help[name[5:]] = 1
             names.sort()
             # There can be duplicates if routines overridden
             prevname = ''
@@ -127,7 +127,7 @@ class OptionParsingCmd(cmd.Cmd):
                     if name == prevname:
                         continue
                     prevname = name
-                    cmd=name[3:]
+                    cmd = name[3:]
                     if cmd in help:
                         cmds_doc.append(cmd)
                         del help[cmd]
@@ -135,13 +135,13 @@ class OptionParsingCmd(cmd.Cmd):
                         cmds_doc.append(cmd)
                     else:
                         cmds_undoc.append(cmd)
-            self.stdout.write("%s\n"%str(self.doc_leader))
-            self.print_topics(self.doc_header,   cmds_doc,   15,80)
-            self.print_topics(self.misc_header,  help.keys(),15,80)
-            self.print_topics(self.undoc_header, cmds_undoc, 15,80)
+            self.stdout.write("%s\n" % str(self.doc_leader))
+            self.print_topics(self.doc_header,   cmds_doc,   15, 80)
+            self.print_topics(self.misc_header,  help.keys(), 15, 80)
+            self.print_topics(self.undoc_header, cmds_undoc, 15, 80)
 
     def simple_help(self, command):
-        self.do_help((),(command,))
+        self.do_help((), (command,))
 
 
 class YaybuCmd(OptionParsingCmd):
@@ -176,7 +176,8 @@ class YaybuCmd(OptionParsingCmd):
         if os.path.exists("/Yaybufile"):
             return "/Yaybufile"
 
-        raise error.MissingAsset("Could not find Yaybufile in '%s' or any of its parents" % os.getcwd())
+        raise error.MissingAsset(
+            "Could not find Yaybufile in '%s' or any of its parents" % os.getcwd())
 
     def preloop(self):
         print util.version()
@@ -233,7 +234,7 @@ class YaybuCmd(OptionParsingCmd):
             if len(args) == 3:
                 image_path = args[1]
                 dest = args[2]
-                print "Extracting VM in", image_path,"to", dest
+                print "Extracting VM in", image_path, "to", dest
                 image = VMBoxImage(image_path)
                 image.extract(dest)
             else:
@@ -242,7 +243,6 @@ class YaybuCmd(OptionParsingCmd):
         else:
             self.do_help((), ("vm",))
             return
-
 
     def do_expand(self, opts, args):
         """
@@ -274,9 +274,12 @@ class YaybuCmd(OptionParsingCmd):
         return 0
 
     def opts_up(self, parser):
-        parser.add_option("-s", "--simulate", default=False, action="store_true")
-        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
-        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
+        parser.add_option(
+            "-s", "--simulate", default=False, action="store_true")
+        parser.add_option("--resume", default=False, action="store_true",
+                          help="Resume from saved events if terminated abnormally")
+        parser.add_option("--no-resume", default=False, action="store_true",
+                          help="Clobber saved event files if present and do not resume")
 
     def do_up(self, opts, args):
         """
@@ -302,9 +305,12 @@ class YaybuCmd(OptionParsingCmd):
         return 0
 
     def opts_destroy(self, parser):
-        parser.add_option("-s", "--simulate", default=False, action="store_true")
-        parser.add_option("--resume", default=False, action="store_true", help="Resume from saved events if terminated abnormally")
-        parser.add_option("--no-resume", default=False, action="store_true", help="Clobber saved event files if present and do not resume")
+        parser.add_option(
+            "-s", "--simulate", default=False, action="store_true")
+        parser.add_option("--resume", default=False, action="store_true",
+                          help="Resume from saved events if terminated abnormally")
+        parser.add_option("--no-resume", default=False, action="store_true",
+                          help="Clobber saved event files if present and do not resume")
 
     def do_destroy(self, opts, args):
         """
@@ -325,7 +331,7 @@ class YaybuCmd(OptionParsingCmd):
         SSH to the node specified (with foo/bar/0 notation)
         """
         if len(args) < 1:
-            self.do_help((),("ssh",))
+            self.do_help((), ("ssh",))
             return
 
         graph = self._get_graph(opts, args[1:])
@@ -348,7 +354,7 @@ class YaybuCmd(OptionParsingCmd):
             "-o", "StrictHostKeyChecking=no",
             "-o", "UserKnownHostsFile=/dev/null",
             "%s@%s" % (username, hostname),
-            ]
+        ]
 
         if self.interactive_shell:
             import subprocess
@@ -364,7 +370,8 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
-        raise NotImplementedError("I don't know how to find nodes in the graph yet")
+        raise NotImplementedError(
+            "I don't know how to find nodes in the graph yet")
 
     def do_run(self, opts, args):
         """
@@ -373,14 +380,15 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.start_listening()
-        #FIXME: This API doesn't exist - we'll need to collect any greenlets if
+        # FIXME: This API doesn't exist - we'll need to collect any greenlets if
         # we want to block on them with gevent.joinall..
         import gevent
         gevent.run()
 
     def opts_shell(self, parser):
         parser.add_option("-c", "--command", default=None, action="store")
-        parser.add_option("-i", "--interactive", default=False, action="store_true")
+        parser.add_option(
+            "-i", "--interactive", default=False, action="store_true")
 
     def do_shell(self, opts, args):
         """
@@ -391,7 +399,7 @@ class YaybuCmd(OptionParsingCmd):
 
         if "--" in args:
             graph_args = args[:args.index("--")]
-            script_args = args[args.index("--")+1:]
+            script_args = args[args.index("--") + 1:]
         else:
             graph_args = args
             script_args = []
@@ -415,7 +423,8 @@ class YaybuCmd(OptionParsingCmd):
             try:
                 import readline
                 import rlcompleter
-                readline.set_completer(rlcompleter.Completer(mylocals).complete)
+                readline.set_completer(
+                    rlcompleter.Completer(mylocals).complete)
                 readline.parse_and_bind("tab:complete")
             except ImportError:
                 pass
@@ -430,5 +439,3 @@ class YaybuCmd(OptionParsingCmd):
         """ Exit yaybu """
         print
         self.do_exit()
-
-

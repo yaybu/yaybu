@@ -43,24 +43,24 @@ class MockNodeDriver(DummyNodeDriver):
             bandwidth=None,
             price=0.0,
             driver=self,
-            ))
+        ))
 
         image = kwargs.get('image', NodeImage(
             id='i2',
             name='image',
             driver=self,
-            ))
+        ))
 
         n = Node(id=l,
-            name=kwargs.get('name', 'dummy-%d' % l),
-            state=NodeState.RUNNING,
-            public_ips=['127.0.0.%d' % l],
-            private_ips=[],
-            driver=self,
-            size=size,
-            image=image,
-            extra=kwargs.get('extra', {}),
-            )
+                 name=kwargs.get('name', 'dummy-%d' % l),
+                 state=NodeState.RUNNING,
+                 public_ips=['127.0.0.%d' % l],
+                 private_ips=[],
+                 driver=self,
+                 size=size,
+                 image=image,
+                 extra=kwargs.get('extra', {}),
+                 )
         self.nl.append(n)
         return n
 
@@ -75,4 +75,3 @@ class MockNodeDriverArgless(MockNodeDriver):
 
     def __init__(self):
         pass
-

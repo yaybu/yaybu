@@ -15,6 +15,7 @@
 from . import local, remote, base
 import os
 
+
 class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExecute):
 
     env_passthrought = [
@@ -26,7 +27,7 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
         "FAKEROOTKEY",
         "LD_PRELOAD",
         "LD_LIBRARY_PATH",
-        ]
+    ]
 
     def whoami(self):
         return "root"
@@ -37,7 +38,8 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
     def _execute_impl(self, command, stdin=None, stdout=None, stderr=None):
         paths = [self.overlay_dir]
         if self.env and "PATH" in self.env:
-            paths.extend(os.path.join(self.env["FAKECHROOT_BASE"], p.lstrip("/")) for p in self.env["PATH"].split(":"))
+            paths.extend(os.path.join(self.env["FAKECHROOT_BASE"], p.lstrip("/"))
+                         for p in self.env["PATH"].split(":"))
         for p in paths:
             path = os.path.join(p, command[0])
             if os.path.exists(path):
@@ -46,7 +48,7 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
 
         return super(FakechrootTransport, self)._execute_impl(
             command,
-            stdin = stdin,
-            stdout = stdout,
-            stderr = stderr,
-            )
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+        )

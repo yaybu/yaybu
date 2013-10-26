@@ -25,4 +25,4 @@ from . import (
     subversion,
     patch,
     user,
-    )
+)

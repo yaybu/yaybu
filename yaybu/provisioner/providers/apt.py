@@ -28,7 +28,8 @@ def is_installed(context, resource):
         if exc.returncode == 1:
             return False
         # if the return code is anything but zero or one, we have a problem
-        raise error.DpkgError("%s search failed with return code %s" % (resource, exc.returncode))
+        raise error.DpkgError(
+            "%s search failed with return code %s" % (resource, exc.returncode))
 
     # if the return code is 0, dpkg is aware of the package
     if "install ok installed" in stdout:
@@ -47,15 +48,18 @@ class AptInstall(provider.Provider):
 
         env = {
             "DEBIAN_FRONTEND": "noninteractive",
-            }
+        }
 
-        # the search returned 1, package is not installed, continue and install it
-        command = ["apt-get", "install", "-q", "-y", self.resource.name.as_string()]
+        # the search returned 1, package is not installed, continue and install
+        # it
+        command = ["apt-get", "install", "-q",
+                   "-y", self.resource.name.as_string()]
 
         try:
             context.change(ShellCommand(command, env=env))
         except error.SystemError as exc:
-            raise error.AptError("%s failed with return code %d" % (self.resource, exc.returncode))
+            raise error.AptError(
+                "%s failed with return code %d" % (self.resource, exc.returncode))
 
         return True
 
@@ -70,7 +74,7 @@ class AptUninstall(provider.Provider):
 
         env = {
             "DEBIAN_FRONTEND": "noninteractive",
-            }
+        }
 
         command = ["apt-get", "remove", "-q", "-y"]
         if self.resource.purge.as_bool():
@@ -80,6 +84,7 @@ class AptUninstall(provider.Provider):
         try:
             context.change(ShellCommand(command, env=env))
         except error.SystemError as exc:
-            raise error.AptError("%s failed to uninstall with return code %d" % (self.resource, exc.returncode))
+            raise error.AptError(
+                "%s failed to uninstall with return code %d" % (self.resource, exc.returncode))
 
         return True

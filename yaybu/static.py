@@ -49,8 +49,10 @@ class StaticContainer(base.GraphExternalAction):
         try:
             return self._get_source_container_from_string()
         except errors.TypeError:
-            driver = get_driver_from_expression(self.params.source, get_driver, Provider, self.extra_drivers, self.root, ignore=("container", ))
-            container = driver.get_container(self.params.source.container.as_string())
+            driver = get_driver_from_expression(
+                self.params.source, get_driver, Provider, self.extra_drivers, self.root, ignore=("container", ))
+            container = driver.get_container(
+                self.params.source.container.as_string())
             return container
 
     def _get_source_container_from_string(self):
@@ -60,7 +62,8 @@ class StaticContainer(base.GraphExternalAction):
         return driver.get_container(os.path.basename(directory))
 
     def _get_destination_container(self):
-        driver = get_driver_from_expression(self.params.destination, get_driver, Provider, self.extra_drivers, self.root, ignore=("container", ))
+        driver = get_driver_from_expression(
+            self.params.destination, get_driver, Provider, self.extra_drivers, self.root, ignore=("container", ))
 
         container_name = self.params.destination.container.as_string()
         changed = False
@@ -72,7 +75,8 @@ class StaticContainer(base.GraphExternalAction):
             with self.root.ui.throbber("Creating container '%s'" % container_name):
                 if self.root.simulate:
                     return True, None
-                container = driver.create_container(container_name=container_name)
+                container = driver.create_container(
+                    container_name=container_name)
                 changed = True
         return changed, container
 
@@ -87,7 +91,8 @@ class StaticContainer(base.GraphExternalAction):
 
     def _set_manifest(self, container, manifest):
         if not self.root.simulate:
-            container.upload_object_via_stream(StringIO.StringIO(json.dumps(manifest)), ".yaybu-manifest")
+            container.upload_object_via_stream(
+                StringIO.StringIO(json.dumps(manifest)), ".yaybu-manifest")
 
     def test(self):
         with self.root.ui.throbber("Testing storage credentials/connectivity") as throbber:
@@ -109,8 +114,10 @@ class StaticContainer(base.GraphExternalAction):
         else:
             destination = {}
 
-        source_set = frozenset(source.keys()) - frozenset((".yaybu-manifest", ))
-        destination_set = frozenset(destination.keys()) - frozenset((".yaybu-manifest", ))
+        source_set = frozenset(
+            source.keys()) - frozenset((".yaybu-manifest", ))
+        destination_set = frozenset(
+            destination.keys()) - frozenset((".yaybu-manifest", ))
 
         to_add = source_set - destination_set
         to_check = source_set.intersection(destination_set)

@@ -17,13 +17,13 @@ from yaybu.core.policy import (
     Policy,
     Absent,
     Present,
-    )
+)
 from yaybu.core.argument import (
     Property,
     String,
     Integer,
     Boolean,
-    )
+)
 
 
 class Group(Resource):
@@ -61,7 +61,8 @@ class GroupApplyPolicy(Policy):
     default = True
     signature = (
         Present("name"),
-        )
+    )
+
 
 class GroupRemovePolicy(Policy):
 
@@ -77,5 +78,4 @@ class GroupRemovePolicy(Policy):
         Absent("gid"),
         Absent("system"),
         Absent("password"),
-        )
-
+    )

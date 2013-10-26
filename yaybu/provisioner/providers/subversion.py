@@ -22,6 +22,7 @@ from yaybu.provisioner.changes import ShellCommand, EnsureDirectory
 
 log = logging.getLogger("subversion")
 
+
 class Svn(Provider):
 
     policies = (resources.checkout.CheckoutSyncPolicy,)
@@ -71,12 +72,15 @@ class Svn(Provider):
         info = self.info(context, self.resource.name)
         repo_info = self.info(context, self.url)
 
-        # If the 'Repository Root' is different between the checkout and the repo, switch --relocated
+        # If the 'Repository Root' is different between the checkout and the
+        # repo, switch --relocated
         old_repo_root = info["Repository Root"]
         new_repo_root = repo_info["Repository Root"]
         if old_repo_root != new_repo_root:
-            log.info("Switching repository root from '%s' to '%s'" % (old_repo_root, new_repo_root))
-            self.svn(context, "switch", "--relocate", old_repo_root, new_repo_root, self.resource.name)
+            log.info("Switching repository root from '%s' to '%s'" %
+                     (old_repo_root, new_repo_root))
+            self.svn(context, "switch", "--relocate",
+                     old_repo_root, new_repo_root, self.resource.name)
             changed = True
 
         # If we have changed branch, switch
@@ -88,11 +92,13 @@ class Svn(Provider):
             changed = True
 
         # If we have changed revision, svn up
-        # FIXME: Eventually we might want revision to be specified in the resource?
+        # FIXME: Eventually we might want revision to be specified in the
+        # resource?
         current_rev = info["Last Changed Rev"]
         target_rev = repo_info["Last Changed Rev"]
         if current_rev != target_rev:
-            log.info("Switching revision from %s to %s" % (current_rev, target_rev))
+            log.info("Switching revision from %s to %s" %
+                     (current_rev, target_rev))
             self.svn(context, "up", "-r", target_rev, self.resource.name)
             changed = True
 
@@ -135,4 +141,3 @@ class Svn(Provider):
         sc = ShellCommand(command, user=self.resource.user.as_string())
         context.change(sc)
         return sc.returncode, sc.stdout, sc.stderr
-

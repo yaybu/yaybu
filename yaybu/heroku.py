@@ -29,7 +29,8 @@ class Heroku(base.GraphExternalAction):
         super(Heroku, self).__init__(params)
 
         if not heroku:
-            raise errors.TypeError("Dependency 'heroku' is required and not available", anchor=self.anchor)
+            raise errors.TypeError(
+                "Dependency 'heroku' is required and not available", anchor=self.anchor)
 
         try:
             self.cloud = heroku.from_key(self.params.key.as_string())
@@ -38,7 +39,8 @@ class Heroku(base.GraphExternalAction):
                 username = self.params.username.as_string()
                 password = self.params.password.as_string()
             except errors.NoMatching:
-                raise errors.TypeError("Must specify key or username and password", anchor=self.params.anchor)
+                raise errors.TypeError(
+                    "Must specify key or username and password", anchor=self.params.anchor)
             self.cloud = heroku.from_pass(username, password)
 
     def action(self, msg):
@@ -87,12 +89,12 @@ class Heroku(base.GraphExternalAction):
         old_state = set(c.email for c in collaborators)
         new_state = set(self.params.collaborators.as_iterable(default=[]))
 
-        for collaborator in (new_state-old_state):
+        for collaborator in (new_state - old_state):
             self.action("Adding collaborator '%s'" % collaborator)
             if self.app and not self.root.simulate:
                 self.app.collaborators.add(collaborator)
 
-        for collaborator in (old_state-new_state):
+        for collaborator in (old_state - new_state):
             self.action("Removing collaborator '%s'" % collaborator)
             if self.app and not self.root.simulate:
                 self.app.collaborators[collaborator].delete()
@@ -129,7 +131,8 @@ class Heroku(base.GraphExternalAction):
         old_addons_by_type = dict((a.type, a.name) for a in old_addons)
         # assert len(old_addons) == len(old_addons_by_type)
 
-        new_addons_by_type = dict((a.split(":",1)[0], a) for a in self.params.addons.as_iterable(default=[]))
+        new_addons_by_type = dict((a.split(":", 1)[0], a)
+                                  for a in self.params.addons.as_iterable(default=[]))
         # assert len(self.get('addons', [])) == len(new_addons_by_type)
 
         old_state = set(old_addons_by_type.keys())
@@ -140,19 +143,20 @@ class Heroku(base.GraphExternalAction):
             new_addon = new_addons_by_type[addon_type]
             old_addon = old_addons_by_type[addon_type]
             if new_addon != old_addon:
-                self.action("Upgrading addon from '%s' to '%s'" % (old_addon, new_addon))
+                self.action("Upgrading addon from '%s' to '%s'" %
+                            (old_addon, new_addon))
                 if not self.root.simulate:
                     self.app.addons[old_addon].upgrade(new_addon)
 
         # Add new addons
-        for addon_type in (new_state-old_state):
+        for addon_type in (new_state - old_state):
             addon = new_addons_by_type[addon_type]
             self.action("Adding new add-on '%s'" % addon)
             if not self.root.simulate:
                 self.app.addons.add(addon)
 
         # Remove old addons
-        for addon_type in (old_state-new_state):
+        for addon_type in (old_state - new_state):
             addon = old_addons_by_type[addon_type]
             self.action("Removing add-on '%s'" % addon)
             if not self.root.simulate:
@@ -166,20 +170,24 @@ class Heroku(base.GraphExternalAction):
 
         for dyno in after:
             if not self.app or not dyno in self.app.processes:
-                raise ExecutionError("Tried to configure dyno '%s' but it doesn't exist in the app" % dyno)
+                raise ExecutionError(
+                    "Tried to configure dyno '%s' but it doesn't exist in the app" % dyno)
 
         for dyno in after:
             scale = self.params.dynos[dyno].as_int()
             current_scale = len(self.app.processes[dyno])
             if current_scale != scale:
-                self.action("Scaling dyno '%s' from %d workers to %d workers" % (dyno, current_scale, scale))
+                self.action("Scaling dyno '%s' from %d workers to %d workers" %
+                            (dyno, current_scale, scale))
                 if self.app and not self.root.simulate:
                     self.app.processes.scale(scale)
 
-        current_dynos = self.app.releases[-1].pstable.keys() if self.app else []
+        current_dynos = self.app.releases[
+            -1].pstable.keys() if self.app else []
         for dyno in current_dynos:
             if dyno not in after:
-                self.action("Stopping all dyno for '%s' as not known by Yaybu" % dyno)
+                self.action(
+                    "Stopping all dyno for '%s' as not known by Yaybu" % dyno)
                 if self.app and not self.root.simulate:
                     self.app.processes.scale(0)
 
@@ -187,9 +195,9 @@ class Heroku(base.GraphExternalAction):
         config = self.app.config.data.keys() if self.app else []
         before = set(config)
         try:
-             current = set(self.params.config.keys())
+            current = set(self.params.config.keys())
         except errors.NoMatching:
-             current = set()
+            current = set()
 
         # Check for modifications
         for key in before.intersection(current):
@@ -209,5 +217,3 @@ class Heroku(base.GraphExternalAction):
         # don't know if its something an addon put there
         # for var in (before - current):
         #     log.warning("Config variable '%s' present on Heroku but not configuration managed")
-
-

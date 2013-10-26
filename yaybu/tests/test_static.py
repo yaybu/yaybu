@@ -170,4 +170,3 @@ class TestStaticContainerArgless(TestCase):
             """)
 
         self.assertEqual(len(self.driver.list_containers()), 2)
-

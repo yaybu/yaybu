@@ -65,7 +65,7 @@ class TestDirectory(TestCase):
         self.failIfExists("/etc/somedir")
 
     def test_unicode(self):
-        utf8 = "/etc/£££££" # this is utf-8 encoded
+        utf8 = "/etc/£££££"  # this is utf-8 encoded
         self.check_apply(open(sibpath("assets/directory_unicode1.yay")).read())
         self.failUnlessExists(utf8)
 
@@ -84,4 +84,3 @@ class TestDirectory(TestCase):
         self.assertEqual(self.transport.getgrgid(st.st_gid)[0], 'nogroup')
         mode = stat.S_IMODE(st.st_mode)
         self.assertEqual(mode, 0777)
-

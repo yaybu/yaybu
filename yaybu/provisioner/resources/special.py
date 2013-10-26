@@ -25,7 +25,8 @@ from yaybu.core.argument import (
     String,
     Integer,
     Octal,
-    )
+)
+
 
 class Special(Resource):
 
@@ -98,4 +99,3 @@ class SpecialRemovedPolicy(Policy):
                  Absent("major"),
                  Absent("minor"),
                  )
-

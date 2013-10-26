@@ -22,7 +22,7 @@ from yaybu.core.argument import (
     Octal,
     File,
     Dict,
-    )
+)
 
 
 class Patch(Resource):
@@ -83,4 +83,3 @@ class PatchApplyPolicy(Policy):
     default = True
     signature = (Present("name"),
                  )
-

@@ -22,7 +22,6 @@ class EventState(object):
     save_file = "events.saved"
     """ The file to save to.  This is touched by the runner. """
 
-
     overrides = {}
     """ A mapping of resource ids to the overridden policy name for that
     resource, if there is one. """
@@ -64,4 +63,3 @@ class EventState(object):
         if not self.simulate:
             data = json.dumps(self.overrides)
             self.transport.put(self.save_file, data)
-

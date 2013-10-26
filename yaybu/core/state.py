@@ -30,6 +30,7 @@ from yaybu.core.util import memoized
 
 logger = logging.getLogger(__name__)
 
+
 class PartState(object):
 
     def __init__(self, state, partid):
@@ -68,7 +69,8 @@ class StateStorageType(ABCMeta):
     types = {}
 
     def __new__(meta, class_name, bases, new_attrs):
-        cls = super(StateStorageType, meta).__new__(meta, class_name, bases, new_attrs)
+        cls = super(StateStorageType, meta).__new__(
+            meta, class_name, bases, new_attrs)
         if new_attrs.get("concrete", True):
             meta.types[new_attrs.get("name", class_name.lower())] = cls
         if "concrete" in new_attrs:
@@ -135,12 +137,12 @@ class FileStateStorage(StateStorage):
             'version': self.version,
             'timestamp': str(datetime.datetime.now()),
             'parts': self.data,
-            }
+        }
         return StringIO.StringIO(json.dumps(d, indent=4))
 
     def store(self):
-        ### TODO: fetch it first and check it hasn't changed since we last fetched it
-        ### TODO: consider supporting merging in of changes
+        # TODO: fetch it first and check it hasn't changed since we last fetched it
+        # TODO: consider supporting merging in of changes
         self.store_stream(self.as_stream())
 
     def load_2(self, data):
@@ -156,11 +158,13 @@ class FileStateStorage(StateStorage):
         data = json.load(self.get_stream())
 
         if not 'version' in data:
-            raise RuntimeError("State file has no version metadata - possible corrupt")
+            raise RuntimeError(
+                "State file has no version metadata - possible corrupt")
 
-        loader = getattr(self, "load_"+str(data['version']), None)
+        loader = getattr(self, "load_" + str(data['version']), None)
         if not loader:
-            raise RuntimeError("State file version not supported by this version of Yaybu")
+            raise RuntimeError(
+                "State file version not supported by this version of Yaybu")
 
         self.data = data.get('parts', {})
 
@@ -216,5 +220,4 @@ class CloudFileStateStorage(FileStateStorage):
             stream,
             self.cluster.name,
             {'content_type': 'application/json'}
-            )
-
+        )

@@ -23,7 +23,7 @@ from yaybu.core.argument import (
     FullPath,
     String,
     Integer,
-    )
+)
 
 
 class Service(Resource):
@@ -89,7 +89,7 @@ class ServiceStartPolicy(Policy):
     signature = (
         Present("name"),
         NAND(Present("running"), Present("pidfile")),
-        )
+    )
 
 
 class ServiceStopPolicy(Policy):
@@ -101,7 +101,7 @@ class ServiceStopPolicy(Policy):
     signature = (
         Present("name"),
         NAND(Present("running"), Present("pidfile")),
-        )
+    )
 
 
 class ServiceRestartPolicy(Policy):
@@ -116,7 +116,7 @@ class ServiceRestartPolicy(Policy):
     signature = (
         Present("name"),
         NAND(Present("running"), Present("pidfile")),
-        )
+    )
 
 
 class ServiceReloadPolicy(Policy):
@@ -131,5 +131,4 @@ class ServiceReloadPolicy(Policy):
     signature = (
         Present("name"),
         NAND(Present("running"), Present("pidfile")),
-        )
-
+    )

@@ -46,4 +46,3 @@ class TestChangeSource(TestCase):
             new Printer as myprinter:
                 message: {{ mychangesource.master }}
             """)
-

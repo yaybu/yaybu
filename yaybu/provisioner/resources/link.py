@@ -24,7 +24,7 @@ from yaybu.core.argument import (
     Property,
     FullPath,
     String,
-    )
+)
 
 
 class Link(Resource):
@@ -68,7 +68,7 @@ class LinkAppliedPolicy(Policy):
     signature = (
         Present("name"),
         Present("to"),
-        )
+    )
 
 
 class LinkRemovedPolicy(Policy):
@@ -78,5 +78,4 @@ class LinkRemovedPolicy(Policy):
     signature = (
         Present("name"),
         Absent("to"),
-        )
-
+    )

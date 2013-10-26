@@ -66,7 +66,8 @@ class TestRemoteTransport(TestCase):
         self.ex.assert_called_with(["test", "-L", "/"])
 
     def test_stat(self):
-        self.ex.return_value = [0, "/ 4096 8 41ed 0 0 900 2 24 0 0 1379142318 1373968419 1373968419 0 4096", ""]
+        self.ex.return_value = [
+            0, "/ 4096 8 41ed 0 0 900 2 24 0 0 1379142318 1373968419 1373968419 0 4096", ""]
         s = self.transport.stat("/")
         self.ex.assert_called_with(["stat", "-L", "-t", "/"])
         # self.assertEqual(s.st_mode, 0755)
@@ -77,7 +78,8 @@ class TestRemoteTransport(TestCase):
         self.ex.assert_called_with(["stat", "-L", "-t", "/"])
 
     def test_lstat(self):
-        self.ex.return_value = [0, "/ 4096 8 41ed 0 0 900 2 24 0 0 1379142318 1373968419 1373968419 0 4096", ""]
+        self.ex.return_value = [
+            0, "/ 4096 8 41ed 0 0 900 2 24 0 0 1379142318 1373968419 1373968419 0 4096", ""]
         s = self.transport.lstat("/")
         self.ex.assert_called_with(["stat", "-t", "/"])
         # self.assertEqual(s.st_mode, 0755)
@@ -109,13 +111,15 @@ class TestRemoteTransport(TestCase):
 
     def test_get(self):
         self.ex.return_value = [0, "hello\nhello\nhello\nhello\n", ""]
-        self.assertEqual(self.transport.get("/proc/self/hello"), "hello\nhello\nhello\nhello\n")
+        self.assertEqual(
+            self.transport.get("/proc/self/hello"), "hello\nhello\nhello\nhello\n")
         self.ex.assert_called_with(["cat", "/proc/self/hello"])
 
     def test_put(self):
         self.ex.return_value = [0, "", ""]
         self.transport.put("/foo", "hello\nworld")
-        self.ex.assert_called_with("umask 133 && tee /foo > /dev/null", stdin="hello\nworld")
+        self.ex.assert_called_with(
+            "umask 133 && tee /foo > /dev/null", stdin="hello\nworld")
 
     def test_makedirs(self):
         self.ex.return_value = [0, "", ""]
@@ -151,26 +155,31 @@ class TestRemoteTransport(TestCase):
         self.assertRaises(KeyError, self.transport.getgrgid, 129)
 
     def test_getpwall(self):
-        self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
+        self.ex.return_value = [
+            0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
         users = self.transport.getpwall()
         self.assertEqual(users[0].pw_name, "mysql")
 
     def test_getpwnam(self):
-        self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
+        self.ex.return_value = [
+            0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
         user = self.transport.getpwnam("mysql")
         self.assertEqual(user.pw_name, "mysql")
 
     def test_getpwnam_miss(self):
-        self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
+        self.ex.return_value = [
+            0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
         self.assertRaises(KeyError, self.transport.getpwnam, "sqlite")
 
     def test_getpwuid(self):
-        self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
+        self.ex.return_value = [
+            0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
         user = self.transport.getpwuid(129)
         self.assertEqual(user.pw_name, "mysql")
 
     def test_getpwuid_miss(self):
-        self.ex.return_value = [0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
+        self.ex.return_value = [
+            0, "mysql:x:129:144:MySQL Server,,,:/nonexistent:/bin/false", ""]
         self.assertRaises(KeyError, self.transport.getpwuid, 144)
 
     def test_getspall(self):
@@ -186,4 +195,3 @@ class TestRemoteTransport(TestCase):
     def test_getspnam_miss(self):
         self.ex.return_value = [0, "mysql:!:15958:0:99999:7:::", ""]
         self.assertRaises(KeyError, self.transport.getspnam, "sqlite")
-

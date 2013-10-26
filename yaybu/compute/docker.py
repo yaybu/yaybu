@@ -67,7 +67,8 @@ class DockerNodeDriver(NodeDriver):
         """
         @inherits: L{NodeDriver.__init__}
         """
-        super(DockerNodeDriver, self).__init__(key, secret, secure=False, host="localhost", port=4243)
+        super(DockerNodeDriver, self).__init__(
+            key, secret, secure=False, host="localhost", port=4243)
 
     def list_images(self):
         result = self.connection.request('/images/json').object
@@ -75,15 +76,15 @@ class DockerNodeDriver(NodeDriver):
         images = []
         for image in result:
             images.append(NodeImage(
-                id = image["Id"],
-                name = "%s/%s" % (image["Repository"], image["Tag"]),
-                driver = self.connection.driver,
-                extra = {
+                id=image["Id"],
+                name="%s/%s" % (image["Repository"], image["Tag"]),
+                driver=self.connection.driver,
+                extra={
                     "created": image["Created"],
                     "size": image["Size"],
                     "virtual_size": image["VirtualSize"],
-                    },
-                ))
+                },
+            ))
 
         return images
 
@@ -103,18 +104,20 @@ class DockerNodeDriver(NodeDriver):
                 'command': value['Command'],
                 'sizerw': value['SizeRw'],
                 'sizerootfs': value['SizeRootFs'],
-                }
+            }
 
             nodes.append(Node(id=value['Id'], name=value['Id'],
-                state=NodeState.RUNNING, public_ips=[], private_ips=[],
-                driver=self.connection.driver, extra=extra))
+                              state=NodeState.RUNNING, public_ips=[
+                              ], private_ips=[],
+                              driver=self.connection.driver, extra=extra))
 
         return nodes
 
     def reboot_node(self, node):
         data = json.dumps({'t': 10})
-        result = self.connection.request(self.group_url+'/containers/%s/restart' % (node.id),
-                                         data=data, method='POST')
+        result = self.connection.request(
+            self.group_url + '/containers/%s/restart' % (node.id),
+            data=data, method='POST')
 
     def destroy_node(self, node):
         result = self.connection.request('/containers/%s/kill' % (node.id),
@@ -144,7 +147,7 @@ class DockerNodeDriver(NodeDriver):
             'Image': 'base',
             #'Volumes': None,
             #'VolumesFrom': None,
-            }
+        }
 
         data = json.dumps(payload)
         result = self.connection.request('/containers/create', data=data,
@@ -157,10 +160,10 @@ class DockerNodeDriver(NodeDriver):
         }
 
         data = json.dumps(payload)
-        result = self.connection.request('/containers/%s/start' % id_, data=data,
-                                         method='POST')
+        result = self.connection.request(
+            '/containers/%s/start' % id_, data=data,
+            method='POST')
 
         return Node(id=id_, name=id_, state=NodeState.RUNNING,
                     public_ips=[], private_ips=[],
                     driver=self.connection.driver, extra={})
-

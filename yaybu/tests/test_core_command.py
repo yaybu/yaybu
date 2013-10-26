@@ -19,6 +19,7 @@ import mock
 
 from yaybu.core import main
 
+
 class TestCommand(unittest.TestCase):
 
     def test_do_help(self):
@@ -26,4 +27,3 @@ class TestCommand(unittest.TestCase):
 
     def test_do_help_with_arg(self):
         self.assertRaises(SystemExit, main.main, ["help", "vm"])
-

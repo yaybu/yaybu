@@ -71,7 +71,6 @@ class TestLoadBalancer(TestCase):
                 members: []
             """)
 
-
     def test_validate_port_too_big(self):
         self.assertRaises(error.ValueError, self.up, """
             new LoadBalancer as mylb:
@@ -188,7 +187,8 @@ class TestLoadBalancer(TestCase):
         self.assertEqual(members[0].id, "member1")
 
     def test_add_member_to_existing(self):
-        balancer = self.driver.create_balancer("my_existing_balancer", 80, "http", Algorithm.RANDOM, [])
+        balancer = self.driver.create_balancer(
+            "my_existing_balancer", 80, "http", Algorithm.RANDOM, [])
 
         self.up("""
             new LoadBalancer as mylb:
@@ -213,7 +213,8 @@ class TestLoadBalancer(TestCase):
 
     def test_remove_member_from_existing(self):
         member1 = Member(id="member1", ip="127.0.0.1", port=80)
-        balancer = self.driver.create_balancer("my_existing_balancer", 80, "http", Algorithm.RANDOM, [member1])
+        balancer = self.driver.create_balancer(
+            "my_existing_balancer", 80, "http", Algorithm.RANDOM, [member1])
 
         self.up("""
             new LoadBalancer as mylb:
@@ -258,4 +259,3 @@ class TestLoadBalancerArgless(TestCase):
         self.assertEqual(len(balancers), 1)
         self.assertEqual(balancers[0].name, "my_test_loadbalancer")
         self.assertEqual(balancers[0].port, 80)
-

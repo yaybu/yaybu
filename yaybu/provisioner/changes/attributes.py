@@ -51,11 +51,13 @@ class AttributeChanger(changes.Change):
             except KeyError:
                 if not context.simulate:
                     raise error.InvalidUser("User '%s' not found" % self.user)
-                context.changelog.info("User '%s' not found; assuming this recipe will create it" % self.user)
+                context.changelog.info(
+                    "User '%s' not found; assuming this recipe will create it" % self.user)
                 owner = None
 
             if not owner or owner.pw_uid != uid:
-                context.change(ShellCommand(["/bin/chown", self.user, self.filename]))
+                context.change(
+                    ShellCommand(["/bin/chown", self.user, self.filename]))
                 self.changed = True
 
         if self.group is not None:
@@ -64,26 +66,30 @@ class AttributeChanger(changes.Change):
             except KeyError:
                 if not context.simulate:
                     raise error.InvalidGroup("No such group '%s'" % self.group)
-                context.changelog.info("Group '%s' not found; assuming this recipe will create it" % self.group) #FIXME
+                context.changelog.info(
+                    "Group '%s' not found; assuming this recipe will create it" % self.group)  # FIXME
                 group = None
 
             if not group or group.gr_gid != gid:
-                context.change(ShellCommand(["/bin/chgrp", self.group, self.filename]))
+                context.change(
+                    ShellCommand(["/bin/chgrp", self.group, self.filename]))
                 self.changed = True
 
         if self.mode is not None and mode is not None:
             if mode != self.mode:
-                context.change(ShellCommand(["/bin/chmod", "%o" % self.mode, self.filename]))
+                context.change(
+                    ShellCommand(["/bin/chmod", "%o" % self.mode, self.filename]))
 
                 # Clear the user and group bits
                 # We don't need to set them as chmod will *set* this bits with an octal
                 # but won't clear them without a symbolic mode
                 if mode & stat.S_ISGID and not self.mode & stat.S_ISGID:
-                    context.change(ShellCommand(["/bin/chmod", "g-s", self.filename]))
+                    context.change(
+                        ShellCommand(["/bin/chmod", "g-s", self.filename]))
                 if mode & stat.S_ISUID and not self.mode & stat.S_ISUID:
-                    context.change(ShellCommand(["/bin/chmod", "u-s", self.filename]))
+                    context.change(
+                        ShellCommand(["/bin/chmod", "u-s", self.filename]))
 
                 self.changed = True
 
         return self
-

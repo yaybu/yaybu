@@ -71,14 +71,17 @@ def get_driver_from_expression(expression, get_driver, provider, extra_drivers, 
             Driver = get_driver(getattr(provider, driver_id))
         except AttributeError:
             msg = ["'%s' is not a valid driver" % driver_id]
-            all_drivers = list(v for v in vars(provider) if not v.startswith("_"))
+            all_drivers = list(
+                v for v in vars(provider) if not v.startswith("_"))
             all_drivers.extend(extra_drivers.keys())
             all_drivers = list(set(all_drivers))
             all_drivers.sort()
             possible = difflib.get_close_matches(driver_id, all_drivers)
             if possible:
-                msg.append("The closest valid drivers are: %s" % "/".join(possible))
-            raise error.ValueError('\n'.join(msg), anchor=driver_id_expr.expand().anchor)
+                msg.append("The closest valid drivers are: %s" %
+                           "/".join(possible))
+            raise error.ValueError(
+                '\n'.join(msg), anchor=driver_id_expr.expand().anchor)
     driver = Driver(**args_from_expression(Driver, expression, ignore=ignore))
     driver.yaybu_context = context
     return driver
