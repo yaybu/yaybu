@@ -60,12 +60,17 @@ class AptInstall(provider.Provider):
         except error.SystemError as exc:
             if exc.returncode == 100:
                 try:
-                    context.change(ShellCommand(["apt-get", "update", "-q", "-y"], env=env))
+                    context.change(
+                        ShellCommand(["apt-get", "update", "-q", "-y"], env=env))
                     context.change(ShellCommand(command, env=env))
                 except error.SystemError as exc:
-                    raise error.AptError("%s with what looked like a recoverable error, but it wasn't (return code %d)" % (self.resource, exc.returncode))
+                    raise error.AptError(
+                        "%s with what looked like a recoverable error, but it wasn't (return code %d)" %
+                        (self.resource, exc.returncode))
             else:
-                raise error.AptError("%s failed with return code %d" % (self.resource, exc.returncode))
+                raise error.AptError(
+                    "%s failed with return code %d" %
+                    (self.resource, exc.returncode))
 
         return True
 
