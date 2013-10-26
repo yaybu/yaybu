@@ -85,7 +85,7 @@ class LocalExecute(object):
                 # one second so that we can poll (below) and check the process
                 # hasn't disappeared.
                 rlist, wlist, xlist = select.select(readlist, [], [], 1)
-            except select.error, e:
+            except select.error as e:
                 if e.args[0] == errno.EINTR:
                     continue
                 raise
@@ -96,7 +96,7 @@ class LocalExecute(object):
             # select loop will continue until the child process goes away, which
             # is undesirable when starting a daemon process.
             if not rlist and not wlist and not xlist:
-                if p.poll() != None:
+                if p.poll() is not None:
                     break
 
             # Read from all handles that select told us can be read from

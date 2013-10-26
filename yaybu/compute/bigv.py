@@ -111,7 +111,14 @@ class BigVNodeDriver(NodeDriver):
     connectionCls = BigVConnection
     features = {'create_node': ['password']}
 
-    def __init__(self, key, secret, account, group='default', location=DEFAULT_LOCATION, **kwargs):
+    def __init__(
+        self,
+        key,
+        secret,
+        account,
+        group='default',
+        location=DEFAULT_LOCATION,
+            **kwargs):
         """
         @inherits: L{NodeDriver.__init__}
 
@@ -144,7 +151,16 @@ class BigVNodeDriver(NodeDriver):
         return images
 
     def list_sizes(self):
-        return [NodeSize(id='default', name='default', ram=1024, disk=5120, bandwidth=0, price=0, driver=self)]
+        return (
+            [NodeSize(
+                id='default',
+                name='default',
+                ram=1024,
+                disk=5120,
+                bandwidth=0,
+                price=0,
+                driver=self)]
+        )
 
     def list_nodes(self):
         result = self.connection.request(
@@ -237,9 +253,9 @@ class BigVNodeDriver(NodeDriver):
             'hostname': data['hostname'],
         }
 
-        if data['power_on'] == True:
+        if data['power_on']:
             state = NodeState.RUNNING
-        elif data['deleted'] == True:
+        elif data['deleted']:
             state = NodeState.TERMINATED
         else:
             state = NodeState.UNKNOWN

@@ -30,7 +30,19 @@ class Transport(object):
         self.verbose = verbose
         self.context = context
 
-    def _execute(self, command, user="root", group=None, stdin=None, env=None, shell=False, cwd=None, umask=None, expected=0, stdout=None, stderr=None):
+    def _execute(
+        self,
+        command,
+        user="root",
+        group=None,
+        stdin=None,
+        env=None,
+        shell=False,
+        cwd=None,
+        umask=None,
+        expected=0,
+        stdout=None,
+            stderr=None):
         # No need to change user if we are already the right one
         if not user:
             user = self.whoami()
@@ -68,7 +80,8 @@ class Transport(object):
         newenv.update({
             #"HOME": "/home/" + self.user,
             "LOGNAME": user,
-            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "PATH":
+            "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
             "SHELL": "/bin/sh",
         })
 

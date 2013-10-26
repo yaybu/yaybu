@@ -83,4 +83,4 @@ class TestDirectory(TestCase):
         self.assertEqual(self.transport.getpwuid(st.st_uid)[0], 'nobody')
         self.assertEqual(self.transport.getgrgid(st.st_gid)[0], 'nogroup')
         mode = stat.S_IMODE(st.st_mode)
-        self.assertEqual(mode, 0777)
+        self.assertEqual(mode, 0o777)

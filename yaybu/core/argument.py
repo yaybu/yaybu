@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import error
+from . import error
 import datetime
 import dateutil.parser
 import types
@@ -147,7 +147,7 @@ class Integer(Argument):
 
     @classmethod
     def _generate_valid(self):
-        return random.randint(0, sys.maxint)
+        return random.randint(0, sys.maxsize)
 
 
 class DateTime(Argument):
@@ -163,7 +163,7 @@ class DateTime(Argument):
 
     @classmethod
     def _generate_valid(self):
-        return datetime.datetime.fromtimestamp(random.randint(0, sys.maxint))
+        return datetime.datetime.fromtimestamp(random.randint(0, sys.maxsize))
 
 
 class Octal(Integer):
@@ -182,7 +182,7 @@ class Octal(Integer):
 
     @classmethod
     def _generate_valid(self):
-        return random.choice([0755, 0644, 0777])
+        return random.choice([0o755, 0o644, 0o777])
 
 
 class Dict(Argument):

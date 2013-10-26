@@ -128,9 +128,9 @@ class Provision(base.GraphExternalAction):
     def get_file(self, filename, etag=None):
         try:
             return self.root.openers.open(filename, etag)
-        except NotModified, e:
+        except NotModified as e:
             raise UnmodifiedAsset(str(e))
-        except NotFound, e:
+        except NotFound as e:
             raise MissingAsset(str(e))
 
     def get_data_path(self, path=None):

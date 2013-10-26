@@ -150,7 +150,7 @@ class Mercurial(Provider):
         changed = False
 
         context.change(EnsureDirectory(self.resource.name.as_string(),
-                       self.resource.user.as_string(), self.resource.group.as_string(), 0755))
+                       self.resource.user.as_string(), self.resource.group.as_string(), 0o755))
 
         if not context.transport.exists(os.path.join(self.resource.name.as_string(), ".hg")):
             try:
@@ -169,7 +169,7 @@ class Mercurial(Provider):
                         self.resource.name.as_string()},
                 self.resource.user.as_string(),
                 self.resource.group.as_string(),
-                0600,
+                0o600,
                 True))
             # changed = changed or f.changed
         except SystemError:
@@ -182,7 +182,7 @@ class Mercurial(Provider):
                 mercurial_ext,
                 self.resource.user.as_string(),
                 self.resource.group.as_string(),
-                0600,
+                0o600,
                 True))
             # changed = changed or f.changed
         except SystemError:

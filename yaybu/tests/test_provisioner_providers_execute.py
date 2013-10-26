@@ -265,7 +265,7 @@ class TestExecute(TestCase):
         self.failUnlessExists("/test_umask_022")
 
         mode = stat.S_IMODE(self.transport.stat("/test_umask_022").st_mode)
-        self.failUnlessEqual(mode, 0644)
+        self.failUnlessEqual(mode, 0o644)
 
     def test_umask_002(self):
         self.check_apply("""
@@ -279,7 +279,7 @@ class TestExecute(TestCase):
         self.failUnlessExists("/test_umask_002")
 
         mode = stat.S_IMODE(self.transport.stat("/test_umask_002").st_mode)
-        self.failUnlessEqual(mode, 0664)
+        self.failUnlessEqual(mode, 0o664)
 
     def test_missing_binary(self):
         self.assertRaises(error.BinaryMissing, self.apply, """

@@ -274,7 +274,11 @@ class VMWareDriver(NodeDriver):
         capture_output = kwargs.get('capture_output', True)
         command = [self.vmrun, "-T", self.hosttype] + list(params)
         logger.debug("Executing %r" % (" ".join(command),))
-        return self.connection.request(command, capture_output=capture_output).body
+        return (
+            self.connection.request(
+                command,
+                capture_output=capture_output).body
+        )
 
     def _guest_action(self, target, command, *params):
         self._action("-gu", target.username, "-gp", target.password,

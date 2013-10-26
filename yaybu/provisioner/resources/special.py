@@ -41,7 +41,7 @@ class Special(Resource):
     group = Property(String, default="root")
     """ The unix group who should own this special file. """
 
-    mode = Property(Octal, default=0644)
+    mode = Property(Octal, default=0o644)
     """ The octal representation of the permissions for this special file. """
 
     type = Property(String, default="fifo")

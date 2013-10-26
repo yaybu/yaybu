@@ -57,7 +57,8 @@ class JinjaSyntaxAnchor(errors.Anchor):
 
     def long_description_lines(self):
         e = self.orig_exception
-        yield "'%s' at line %d" % (e.filename or e.name, e.lineno)  # , column 7
+        # , column 7
+        yield "'%s' at line %d" % (e.filename or e.name, e.lineno)
         if e.source is not None:
             try:
                 yield "  " + e.source.splitlines()[e.lineno - 1]

@@ -96,7 +96,12 @@ class _UpstartServiceMixin(utils._ServiceMixin):
             return False
         if getattr(resource, policy.name):
             return False
-        return context.transport.exists("/sbin/start") and context.transport.exists("/etc/init/%s.conf" % resource.name)
+        return (
+            context.transport.exists(
+                "/sbin/start") and context.transport.exists(
+                "/etc/init/%s.conf" %
+                resource.name)
+        )
 
     def get_command(self, action):
         return ["/sbin/" + action, self.resource.name]

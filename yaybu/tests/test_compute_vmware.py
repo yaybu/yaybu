@@ -191,7 +191,8 @@ class TestVMBoxLibrary(unittest2.TestCase):
 
     def test_scan(self):
         self.assertEqual(self.library.library, {
-            'https://yaybu.com/library/ubuntu-12.04.2-amd64': 'ubuntu-12.04.2-amd64',
+            'https://yaybu.com/library/ubuntu-12.04.2-amd64':
+            'ubuntu-12.04.2-amd64',
             'https://elsewhere.com/frob-14.7': 'frob',
         })
 

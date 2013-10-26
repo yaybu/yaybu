@@ -79,8 +79,8 @@ class TestLocalTransport(TestCase):
 
     def test_stat(self):
         self.os.stat.return_value = stat_result(
-            0755, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        self.assertEqual(self.transport.stat("/").st_mode, 0755)
+            0o755, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        self.assertEqual(self.transport.stat("/").st_mode, 0o755)
         self.os.stat.assert_called_with("/")
 
     def test_stat_not_exists(self):
@@ -90,8 +90,8 @@ class TestLocalTransport(TestCase):
 
     def test_lstat(self):
         self.os.lstat.return_value = stat_result(
-            0755, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        self.assertEqual(self.transport.lstat("/").st_mode, 0755)
+            0o755, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        self.assertEqual(self.transport.lstat("/").st_mode, 0o755)
         self.os.lstat.assert_called_with("/")
 
     def test_lstat_not_exists(self):

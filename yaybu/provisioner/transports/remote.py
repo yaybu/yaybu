@@ -102,7 +102,11 @@ class RemoteTransport(object):
 
     def put(self, path, contents, chmod=0o644):
         umask = 0o777 - chmod
-        return self._execute("umask %o && tee %s > /dev/null" % (umask, path), stdin=contents)
+        return (
+            self._execute(
+                "umask %o && tee %s > /dev/null" %
+                (umask, path), stdin=contents)
+        )
 
     def makedirs(self, path):
         return self._execute(["mkdir", "-p", path])

@@ -136,8 +136,8 @@ class OptionParsingCmd(cmd.Cmd):
                     else:
                         cmds_undoc.append(cmd)
             self.stdout.write("%s\n" % str(self.doc_leader))
-            self.print_topics(self.doc_header,   cmds_doc,   15, 80)
-            self.print_topics(self.misc_header,  help.keys(), 15, 80)
+            self.print_topics(self.doc_header, cmds_doc, 15, 80)
+            self.print_topics(self.misc_header, help.keys(), 15, 80)
             self.print_topics(self.undoc_header, cmds_undoc, 15, 80)
 
     def simple_help(self, command):
@@ -150,7 +150,13 @@ class YaybuCmd(OptionParsingCmd):
     interactive_shell = True
     Config = Config
 
-    def __init__(self, config=None, ypath=(), verbose=2, logfile=None, debug=False):
+    def __init__(
+        self,
+        config=None,
+        ypath=(),
+        verbose=2,
+        logfile=None,
+            debug=False):
         """ Global options are provided on the command line, before the
         command """
         cmd.Cmd.__init__(self)

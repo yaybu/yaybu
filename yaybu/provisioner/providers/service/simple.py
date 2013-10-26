@@ -31,7 +31,14 @@ class _SimpleServiceMixin(utils._ServiceMixin):
         return True
 
     def get_command(self, action):
-        return shlex.split(getattr(self.resource, action).as_string().encode("UTF-8"))
+        return (
+            shlex.split(
+                getattr(
+                    self.resource,
+                    action).as_string(
+                ).encode(
+                    "UTF-8"))
+        )
 
 
 class Start(_SimpleServiceMixin, utils._Start, provider.Provider):

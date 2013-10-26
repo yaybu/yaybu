@@ -49,7 +49,7 @@ class Svn(Provider):
         user = self.resource.user.as_string()
         group = self.resource.group.as_string()
 
-        context.change(EnsureDirectory(name, user, group, 0755))
+        context.change(EnsureDirectory(name, user, group, 0o755))
 
         self.svn(context, "co", self.url, self.resource.name)
         return True

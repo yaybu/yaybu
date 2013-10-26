@@ -89,7 +89,16 @@ class DockerNodeDriver(NodeDriver):
         return images
 
     def list_sizes(self):
-        return [NodeSize(id='default', name='default', ram=1024, disk=5120, bandwidth=0, price=0, driver=self)]
+        return (
+            [NodeSize(
+                id='default',
+                name='default',
+                ram=1024,
+                disk=5120,
+                bandwidth=0,
+                price=0,
+                driver=self)]
+        )
 
     def list_nodes(self):
         result = self.connection.request("/containers/ps").object

@@ -1,4 +1,4 @@
-import dns
+from . import dns
 from libcloud.common.base import Connection
 from libcloud.dns.base import DNSDriver, Zone, Record, RecordType
 
@@ -46,13 +46,27 @@ class MiniDNSDriver(DNSDriver):
         domain = zone_id.rstrip(".")
         response = self.connection.request(domain, method="GET")
         if response.status == 200:
-            return Zone(id=domain, domain=domain, type="master", ttl=0, driver=self)
+            return (
+                Zone(
+                    id=domain,
+                    domain=domain,
+                    type="master",
+                    ttl=0,
+                    driver=self)
+            )
 
     def create_zone(self, domain, type="master", ttl=None, extra=None):
         domain = domain.rstrip(".")
         response = self.connection.request(domain, method="PUT")
         if response.status in (200, 201):
-            return Zone(id=domain, domain=domain, type="master", ttl=0, driver=self)
+            return (
+                Zone(
+                    id=domain,
+                    domain=domain,
+                    type="master",
+                    ttl=0,
+                    driver=self)
+            )
 
     def update_zone(self, zone, domain, type="master", ttl=None, extra=None):
         return self.create_zone(domain, type, ttl, extra)
@@ -65,7 +79,15 @@ class MiniDNSDriver(DNSDriver):
         uri = "%s/%s" % (domain, name)
         response = self.connection.request(uri, data=payload, method="PUT")
         if response.status == 201:
-            return Record(id=name, name=name, type=type, data=data, zone=zone, driver=self)
+            return (
+                Record(
+                    id=name,
+                    name=name,
+                    type=type,
+                    data=data,
+                    zone=zone,
+                    driver=self)
+            )
 
     def update_record(self, record, name, type, data, extra=None):
         return self.create_record(name, record.zone, type, data, extra)

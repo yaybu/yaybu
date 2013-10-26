@@ -55,7 +55,7 @@ class TestResource(unittest.TestCase):
             'bar': u'20100501',
         }))
         self.assertEqual(h.foo.as_int(), 42)
-        self.assertEqual(h.bar.resolve(), datetime.datetime(2010, 05, 01))
+        self.assertEqual(h.bar.resolve(), datetime.datetime(2010, 0o5, 0o1))
 
 
 class TestArgument(unittest.TestCase):

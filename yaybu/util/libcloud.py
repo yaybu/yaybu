@@ -53,7 +53,13 @@ def args_from_expression(func, expression, ignore=(), kwargs=()):
     return result
 
 
-def get_driver_from_expression(expression, get_driver, provider, extra_drivers, context, ignore=()):
+def get_driver_from_expression(
+    expression,
+    get_driver,
+    provider,
+    extra_drivers,
+    context,
+        ignore=()):
     try:
         driver_id = expression.as_string()
         driver_id_expr = expression
@@ -74,8 +80,7 @@ def get_driver_from_expression(expression, get_driver, provider, extra_drivers, 
             all_drivers = list(
                 v for v in vars(provider) if not v.startswith("_"))
             all_drivers.extend(extra_drivers.keys())
-            all_drivers = list(set(all_drivers))
-            all_drivers.sort()
+            all_drivers = sorted(set(all_drivers))
             possible = difflib.get_close_matches(driver_id, all_drivers)
             if possible:
                 msg.append("The closest valid drivers are: %s" %

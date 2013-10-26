@@ -26,7 +26,17 @@ class ShellCommand(changes.Change):
 
     changed = True
 
-    def __init__(self, command, shell=None, stdin=None, cwd=None, env=None, user="root", group=None, umask=None, expected=0):
+    def __init__(
+        self,
+        command,
+        shell=None,
+        stdin=None,
+        cwd=None,
+        env=None,
+        user="root",
+        group=None,
+        umask=None,
+            expected=0):
         self.command = command
         self.shell = shell
         self.stdin = stdin
@@ -41,7 +51,7 @@ class ShellCommand(changes.Change):
     def _tounicode(self, l):
         """ Ensure all elements of the list are unicode """
         def uni(x):
-            if type(x) is type(u""):
+            if isinstance(x, type(u"")):
                 return x
             return unicode(x, "utf-8")
         return map(uni, l)
@@ -73,7 +83,8 @@ class ShellCommand(changes.Change):
         renderer.command(logas)
 
         env = {
-            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "PATH":
+            "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
         }
 
         if self.env:

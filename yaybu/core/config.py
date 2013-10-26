@@ -66,7 +66,7 @@ class YaybuArg:
                 raise ArgParseError(
                     "Cannot convert %r to an int for argument %r" % (value, self.name))
         elif self.type == 'boolean':
-            if type(value) == type(True):
+            if isinstance(value, type(True)):
                 # might already be boolean
                 return value
             if value.lower() in ('no', '0', 'off', 'false'):

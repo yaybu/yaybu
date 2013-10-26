@@ -66,7 +66,14 @@ class Compute(base.GraphExternalAction):
     @property
     @memoized
     def driver(self):
-        return get_driver_from_expression(self.params.driver, get_driver, Provider, self.extra_drivers, self.root)
+        return (
+            get_driver_from_expression(
+                self.params.driver,
+                get_driver,
+                Provider,
+                self.extra_drivers,
+                self.root)
+        )
 
     @property
     @memoized
@@ -259,13 +266,13 @@ class Compute(base.GraphExternalAction):
                 self.root.changelog.changed = True
                 return
 
-            except LibcloudError, e:
+            except LibcloudError as e:
                 logger.warning(
                     "Node %r did not start before timeout. retrying." % self.full_name)
                 node.destroy()
                 continue
 
-            except Exception, e:
+            except Exception as e:
                 logger.warning(
                     "Node %r had an unexpected error %s - node will be cleaned up and processing will stop" % (self.full_name, e))
                 node.destroy()

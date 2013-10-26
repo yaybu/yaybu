@@ -69,7 +69,7 @@ class Git(Provider):
 
         """
         context.change(EnsureDirectory(self.resource.name.as_string(),
-                       self.resource.user.as_string(), self.resource.group.as_string(), 0755))
+                       self.resource.user.as_string(), self.resource.group.as_string(), 0o755))
 
         try:
             self.action(context, "init", self.resource.name.as_string())
