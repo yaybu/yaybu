@@ -13,9 +13,7 @@
 # limitations under the License.
 
 
-import os
 from yaybu.tests.provisioner_fixture import TestCase, ChangeStillOutstanding
-from yaybu.core import error
 
 
 class TestMount(TestCase):

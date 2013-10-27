@@ -56,7 +56,6 @@ class Link(provider.Provider):
         changed = False
         name = self.resource.name.as_string()
         to = self.resource.to.as_string()
-        exists = False
         uid = None
         gid = None
         mode = None

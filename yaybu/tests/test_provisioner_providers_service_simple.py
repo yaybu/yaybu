@@ -13,9 +13,6 @@
 # limitations under the License.
 
 
-import os
-import signal
-
 from yaybu.tests.provisioner_fixture import TestCase
 from yaybu import error
 

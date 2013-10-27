@@ -14,8 +14,6 @@
 
 import mock
 
-from libcloud.dns.types import RecordType
-
 from yaybu import error
 from yaybu.tests.base import TestCase
 

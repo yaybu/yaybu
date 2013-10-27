@@ -53,7 +53,6 @@ class File(provider.Provider):
                 )
 
         elif static:
-            s = None
             fp = context.get_file(static)
             contents = fp.read()
             sensitive = "secret" in fp.labels

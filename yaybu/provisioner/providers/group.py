@@ -73,7 +73,7 @@ class GroupRemove(provider.Provider):
 
     def apply(self, context, output):
         try:
-            existing = context.transport.getgrnam(
+            context.transport.getgrnam(
                 self.resource.name.as_string().encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such group. This is good.

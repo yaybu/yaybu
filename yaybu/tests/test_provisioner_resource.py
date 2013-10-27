@@ -269,8 +269,6 @@ class TestResourceBundle(unittest.TestCase):
                     "policy": "foo",
                 }
             ]}])
-        e1 = resources['Ev1[e1]']
-        e2 = resources['Ev1[e2]']
         self.assertRaises(error.BindingError, resources.bind)
 
     def test_structure(self):

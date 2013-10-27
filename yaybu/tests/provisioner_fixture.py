@@ -169,7 +169,6 @@ class TestCase(unittest2.TestCase):
         assert not self.transport.exists(path), "%s does exist" % path
 
     def yaybu(self, configfile, *args):
-        import inspect
         self.Transport.path = self.path
         self.Transport.id = self.id()
 

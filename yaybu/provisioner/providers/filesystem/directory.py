@@ -46,7 +46,6 @@ class Directory(provider.Provider):
     def apply(self, context, output):
         name = self.resource.name.as_string()
 
-        changed = False
         self.check_path(context, os.path.dirname(name))
 
         return context.change(EnsureDirectory(

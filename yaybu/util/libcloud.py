@@ -64,11 +64,9 @@ def get_driver_from_expression(
         driver_id = expression.as_string()
         driver_id_expr = expression
         expression = None
-        has_params = False
     except errors.TypeError:
         driver_id = expression.id.as_string()
         driver_id_expr = expression.id
-        has_params = True
 
     if driver_id in extra_drivers:
         Driver = extra_drivers[driver_id]

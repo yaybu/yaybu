@@ -15,7 +15,6 @@
 import mock
 
 from yaybu.tests.provisioner_fixture import TestCase
-from yaybu.core import error
 from yaybu.provisioner.transports.remote import RemoteTransport
 
 
@@ -68,7 +67,7 @@ class TestRemoteTransport(TestCase):
     def test_stat(self):
         self.ex.return_value = [
             0, "/ 4096 8 41ed 0 0 900 2 24 0 0 1379142318 1373968419 1373968419 0 4096", ""]
-        s = self.transport.stat("/")
+        self.transport.stat("/")
         self.ex.assert_called_with(["stat", "-L", "-t", "/"])
         # self.assertEqual(s.st_mode, 0755)
 
@@ -80,7 +79,7 @@ class TestRemoteTransport(TestCase):
     def test_lstat(self):
         self.ex.return_value = [
             0, "/ 4096 8 41ed 0 0 900 2 24 0 0 1379142318 1373968419 1373968419 0 4096", ""]
-        s = self.transport.lstat("/")
+        self.transport.lstat("/")
         self.ex.assert_called_with(["stat", "-t", "/"])
         # self.assertEqual(s.st_mode, 0755)
 

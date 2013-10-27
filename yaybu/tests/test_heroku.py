@@ -16,7 +16,6 @@ import mock
 
 from yay import errors
 
-from yaybu import error
 from yaybu.tests.base import TestCase
 
 

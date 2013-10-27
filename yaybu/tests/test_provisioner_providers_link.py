@@ -41,7 +41,7 @@ class TestLink(TestCase):
 
     def test_remove_link(self):
         self.symlink("/", "/etc/toremovelink")
-        rv = self.check_apply("""
+        self.check_apply("""
             resources:
               - Link:
                   name: /etc/toremovelink

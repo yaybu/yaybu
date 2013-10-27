@@ -15,7 +15,6 @@
 
 
 import unittest
-import mock
 
 from yaybu.ui.widgets import *
 

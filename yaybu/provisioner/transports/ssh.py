@@ -37,7 +37,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
             try:
                 fp = StringIO.StringIO(data)
                 return KeyClass.from_private_key(fp)
-            except SSHException as e:
+            except SSHException:
                 pass
         raise RuntimeError("Invalid private_key")
 

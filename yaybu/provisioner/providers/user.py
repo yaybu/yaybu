@@ -146,7 +146,7 @@ class User(provider.Provider):
             changed = True
 
         system = self.resource.system.resolve()
-        if info["exists"] == False and system:
+        if not info["exists"] and system:
             command.extend(["--system"])
             changed = True
 
@@ -171,7 +171,7 @@ class UserRemove(provider.Provider):
 
     def apply(self, context, output):
         try:
-            existing = context.transport.getpwnam(
+            context.transport.getpwnam(
                 self.resource.name.as_string().encode("utf-8"))
         except KeyError:
             # If we get a key errror then there is no such user. This is good.

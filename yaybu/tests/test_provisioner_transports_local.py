@@ -13,10 +13,8 @@
 # limitations under the License.
 
 import mock
-import getpass
 
 from yaybu.tests.provisioner_fixture import TestCase
-from yaybu.core import error
 from yaybu.provisioner.transports.local import LocalTransport
 from yaybu.provisioner.transports.remote import stat_result
 

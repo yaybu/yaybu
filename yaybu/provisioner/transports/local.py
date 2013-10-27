@@ -15,6 +15,7 @@
 import subprocess
 import os
 import select
+import errno
 try:
     import pwd
 except ImportError:  # pragma: no cover
