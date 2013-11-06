@@ -152,6 +152,6 @@ Additionally the file ``~/.yaybu/defaults.yay.gpg`` is automatically loaded
 when Yaybu starts. This is useful for storing your credentials/tokens outside
 of your code repository and easily injected them into multiple projects.
 
-For vim users, `vim-gnupg <https://github.com/jamessan/vim-gnupg>`_ is a gret
+For vim users, `vim-gnupg <https://github.com/jamessan/vim-gnupg>`_ is a great
 way to transparently edit your GPG armored configuration files.
 
