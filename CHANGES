@@ -28,6 +28,9 @@ Changelog for yaybu
 
 - Many bugfixes to the parsing of YAML-like multiline blocks
 
+- If you install a package and your index is out of date Yaybu will implicitly
+  ``apt-get update`` and retry the install before giving up.
+
 
 3.0 (2013-09-04)
 ----------------

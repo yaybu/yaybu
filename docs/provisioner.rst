@@ -338,6 +338,10 @@ The available parameters are:
 ``purge``
     When removing a package, whether to purge it or not.
 
+When installing a package ``apt-get`` may give a ``404`` error if your local
+apt cache is stale. If Yaybu thinks this might be the cause it will ``apt-get
+update`` and retry before giving up.
+
 
 User
 ----
