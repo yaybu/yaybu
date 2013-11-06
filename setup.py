@@ -23,7 +23,7 @@ setup(name='Yaybu',
       install_requires=[
           'setuptools',
           'jinja2',
-          'yay > 3.0.1',
+          'yay > 3.1.0',
           'python-dateutil < 2.0',
           'apache-libcloud >= 0.12.1',
           'paramiko >= 1.8.0',
