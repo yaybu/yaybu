@@ -55,7 +55,7 @@ You can use the IP from a :ref:`Compute <compute>` part in other parts just by u
 Create and provision interdependent cloud servers
 =================================================
 
-You can refer to server A from the configuration for server B and vice versa and Yaybu will satisfy the dependcies automatically::
+You can refer to server A from the configuration for server B and vice versa and Yaybu will satisfy the dependencies automatically::
 
     new Provisioner as vm1:
         new Compute as server:
