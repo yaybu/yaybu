@@ -38,7 +38,7 @@ Use the ``driver`` argument to configure a libcloud driver for your hosting serv
 You can choose an base image using the ``image`` argument. For the common case an image id is enough::
 
     new Compute as server:
-        image: ami-f7445d83
+        image: ami-000cea77
 
 You can choose an instance ``size`` by passing a size name::
 
@@ -123,15 +123,21 @@ You'll need something like this in your ``Yaybufile``::
             secret: mysecret
 
         size: t1.micro
-        image: ami-4f504f3b
+        image: ami-000cea77
 
         user: ubuntu
         ex_keyname: mykey
         private_key: mykey.pem
 
+The driver ``id`` can currently be set to one of:
+
+ * ``EC2_EU_WEST`` for ``eu-west-1``
+ * ``EC2_US_EAST``
+ * ``EC2_US_WEST`` for ``us-west-1``
+ * ``EC2_US_WEST_OREGON`` for ``us-west-2``
 
 ``ex_keyname`` is the name of the SSH key pair in the amazon console.
-``private_key`` is the corresponding private key.
+``private_key`` is the corresponding private key. If you don't specify a ``private_key`` Yaybu will try the keys in your SSH agent.
 
 We recently merged a patch upstream to do away with ``ex_keyname``. In future Yaybu will be able to automatically upload a ``public_key`` for you in the same way it can for other backends.
 

@@ -49,7 +49,7 @@ class Compute(base.GraphExternalAction):
                 secret: your-amazon-secret
 
             key: example_key       # This key must be defined in AWS control panel to be able to SSH in
-            image: ami-ca1a14be    # Ubuntu 10.04 LTS 64bit EBS
+            image: ami-000cea77
             size: t1.micro         # Smallest AWS size
     """
 

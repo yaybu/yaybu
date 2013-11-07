@@ -95,7 +95,7 @@ To deploy on commit you can use a ``Yaybufile`` like this::
                 secret: mysecret
 
             size: t1.micro
-            image: ami-4f504f3b
+            image: ami-000cea77
 
             ex_keyname: mysshkey
             name: myexample
