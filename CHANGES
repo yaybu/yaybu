@@ -1,7 +1,7 @@
 Changelog for yaybu
 ===================
 
-3.1.1 (unreleased)
+3.1.1 (2013-11-07)
 ------------------
 
 - Add validation for ``image`` paramter of ``Compute``. Validation is only
