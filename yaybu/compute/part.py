@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import difflib
 import logging
 import getpass
 
@@ -87,12 +88,12 @@ class Compute(base.GraphExternalAction):
     @property
     @memoized
     def images(self):
-        return dict((i.id, i) for i in self.driver.list_images())
+        return dict((str(i.id), i) for i in self.driver.list_images())
 
     @property
     @memoized
     def sizes(self):
-        return dict((s.id, s) for s in self.driver.list_sizes())
+        return dict((str(s.id), s) for s in self.driver.list_sizes())
 
     def _find_node(self, name):
         try:
@@ -119,11 +120,37 @@ class Compute(base.GraphExternalAction):
             "Node '%s' already running - not creating new node" % (name, ))
         return node
 
+    def _get_image_from_id(self, image_id):
+        try:
+            return self.images[image_id]
+        except KeyError:
+            raise error.ValueError('Cannot find image "%s" at this host/location' % image_id, anchor=self.params.image.inner.anchor)
+        except NotImplementedError:
+            return NodeImage(
+                id=image_id,
+                name=image_id,
+                extra={},
+                driver=self.driver,
+            )
+
     def _get_image(self):
         try:
             image = self.params.image.as_dict()
+
+        except errors.NoMatching:
+            try:
+                return self._get_image_from_id('default')
+            except error.ValueError:
+                pass
+            except:
+                raise
+
+            # If the backend doesnt support a 'default' image then raise the
+            # original NoMatching exception
+            raise
+
         except errors.TypeError:
-            return self.images.get(self.params.image.as_string(), None)
+            return self._get_image_from_id(self.params.image.as_string())
 
         id = str(self.params.image.id)
         return NodeImage(
@@ -133,13 +160,40 @@ class Compute(base.GraphExternalAction):
             driver=self.driver,
         )
 
+    def _get_size_from_id(self, size_id):
+        try:
+            return self.sizes[size_id]
+        except KeyError:
+            msg = ['Node size "%s"  not supported by this host/location' % size_id]
+            all_sizes = list(self.sizes.keys())
+            all_sizes.sort()
+            possible = difflib.get_close_matches(size_id, all_sizes)
+            if possible:
+                msg.append('did you mean "%s"?' % possible[0])
+            raise error.ValueError(" - ".join(msg), anchor=self.params.size.inner.anchor)
+        except NotImplementedError:
+            # If backend raises NotImplemented then it doesnt support
+            # enumeration.
+            return NodeSize(id=size_id, name=size_id, ram=0, disk=0, bandwidth=0, price=0, driver=self.driver)
+
     def _get_size(self):
         try:
             size = self.params.size.as_dict()
+
         except errors.NoMatching:
-            return self.sizes.get('default', None)
+            try:
+                return self._get_size_from_id('default')
+            except error.ValueError:
+                pass
+            except:
+                raise
+
+            # If the backend doesn't suport a 'default' size then raise the
+            # original NoMatching exception
+            raise
+
         except errors.TypeError:
-            return self.sizes.get(self.params.size.as_string(), None)
+            return self._get_size_from_id(self.params.size.as_string())
 
         id = str(self.params.size.id)
         return NodeSize(

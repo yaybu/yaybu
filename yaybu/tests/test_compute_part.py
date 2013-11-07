@@ -32,8 +32,8 @@ class TestCompute(TestCase):
                     id: DUMMYY
                     api_key: dummykey
                     secret: dummysecret
-                image: ubuntu
-                size: big
+                image: 1
+                size: 2
                 key: foo
             """)
 
@@ -46,8 +46,8 @@ class TestCompute(TestCase):
                     api_key: dummykey
                     secret: dummysecret
                     a: 55
-                image: ubuntu
-                size: big
+                image: 1
+                size: 2
                 key: foo
             """)
 
@@ -60,8 +60,8 @@ class TestCompute(TestCase):
                     api_key: dummykey
                     secret: dummysecret
                     a: penguin
-                image: ubuntu
-                size: big
+                image: 1
+                size: 2
                 key: foo
             """)
 
@@ -74,8 +74,8 @@ class TestCompute(TestCase):
                     api_key: dummykey
                     secret: dummysecret
                     b: penguin
-                image: ubuntu
-                size: big
+                image: 1
+                size: 2
                 key: foo
             """)
 
@@ -88,8 +88,8 @@ class TestCompute(TestCase):
                     api_key: dummykey
                     secret: dummysecret
                     b: []
-                image: ubuntu
-                size: big
+                image: 1
+                size: 2
                 key: foo
             """)
 
@@ -102,8 +102,8 @@ class TestCompute(TestCase):
                     id: DUMMY
                     api_key: dummykey
                     secret: dummysecret
-                image: ubuntu
-                size: big
+                image: 1
+                size: 2
                 key: foo
             """)
         nodes = self.driver.list_nodes()
@@ -121,8 +121,8 @@ class TestCompute(TestCase):
                     api_key: dummykey
                     secret: dummysecret
                 image: ubuntu
-                size: big
-                key: foo
+                size: 1
+                key: 2
             """)
 
     def test_another_compute_node(self):
@@ -136,8 +136,8 @@ class TestCompute(TestCase):
                     id: DUMMY
                     api_key: dummykey
                     secret: dummysecret
-                image: ubuntu
-                size: big
+                image: 1
+                size: 2
                 key: foo
             """)
         nodes = self.driver.list_nodes()
@@ -156,8 +156,8 @@ class TestCompute(TestCase):
                     id: DUMMY
                     api_key: dummykey
                     secret: dummysecret
-                image: ubuntu
-                size: big
+                image: 1
+                size: 2
                 key: foo
             """)
         self.assertEqual(len(self.driver.list_nodes()), 0)
@@ -179,8 +179,8 @@ class TestComputeCluster(TestCase):
                         id: DUMMY
                         api_key: dummykey
                         secret: dummysecret
-                    image: ubuntu
-                    size: big
+                    image: 1
+                    size: 2
                     key: foo
 
                 resources:
@@ -196,8 +196,8 @@ class TestComputeCluster(TestCase):
                         id: DUMMY
                         api_key: dummykey
                         secret: dummysecret
-                    image: ubuntu
-                    size: big
+                    image: 1
+                    size: 2
                     key: foo
 
                 resources:
@@ -223,8 +223,8 @@ class TestComputeArgless(TestCase):
             new Compute as myserver:
                 name: hello
                 driver: DUMMY
-                image: ubuntu
-                size: big
+                image: 1
+                size: 2
                 key: foo
             """)
         nodes = self.driver.list_nodes()

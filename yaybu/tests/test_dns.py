@@ -130,7 +130,8 @@ class TestZoneWithCompute(TestCase):
                     id: DUMMY
                     api_key: dummy
                     secret: dummy
-                image: foo
+                image: 1
+                size: 2
 
             new Zone as myzone:
                     driver:
