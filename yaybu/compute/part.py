@@ -133,7 +133,25 @@ class Compute(base.GraphExternalAction):
                 driver=self.driver,
             )
 
-    def _get_image(self):
+    def _get_location(self):
+        # This will bail out with a NotImplementedError for some drivers
+        #  Caller needs to consider this
+        locations = dict((str(l.id), l) for l in self.driver.list_locations())
+
+        location_id = self.params.location.as_string()
+
+        try:
+            locations[location_id]
+        except KeyError:
+            msg = ['Location "%s"  not supported by this host' % location_id]
+            all_locations = list(locations.keys())
+            all_locations.sort()
+            possible = difflib.get_close_matches(location_id, all_locations)
+            if possible:
+                msg.append('did you mean "%s"?' % possible[0])
+            raise error.ValueError(" - ".join(msg), anchor=self.params.location.inner.anchor)
+
+    def _get_image(self, location):
         try:
             image = self.params.image.as_dict()
 
@@ -176,7 +194,7 @@ class Compute(base.GraphExternalAction):
             # enumeration.
             return NodeSize(id=size_id, name=size_id, ram=0, disk=0, bandwidth=0, price=0, driver=self.driver)
 
-    def _get_size(self):
+    def _get_size(self, location):
         try:
             size = self.params.size.as_dict()
 
@@ -283,6 +301,13 @@ class Compute(base.GraphExternalAction):
             with self.root.ui.throbber(_("Creating node '%r'...") % (self.full_name, )) as throbber:
                 kwargs = args_from_expression(self.driver.create_node, self.params, ignore=(
                     "name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
+                try:
+                    location = kwargs['location'] = self._get_location()
+                except NotImplementedError:
+                    location = None
+
+                kwargs['image'] = self._get_image(location)
+                kwargs['size'] = self._get_size(location)
                 kwargs['auth'] = self._get_auth()
 
                 if self.root.simulate:
@@ -292,8 +317,6 @@ class Compute(base.GraphExternalAction):
 
                 node = self.driver.create_node(
                     name=self.full_name,
-                    image=self._get_image(),
-                    size=self._get_size(),
                     **kwargs
                 )
 

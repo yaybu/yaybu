@@ -132,6 +132,7 @@ class TestZoneWithCompute(TestCase):
                     secret: dummy
                 image: 1
                 size: 2
+                location: 1
 
             new Zone as myzone:
                     driver:

@@ -34,6 +34,7 @@ class TestCompute(TestCase):
                     secret: dummysecret
                 image: 1
                 size: 2
+                location: 1
                 key: foo
             """)
 
@@ -48,6 +49,7 @@ class TestCompute(TestCase):
                     a: 55
                 image: 1
                 size: 2
+                location: 1
                 key: foo
             """)
 
@@ -62,6 +64,7 @@ class TestCompute(TestCase):
                     a: penguin
                 image: 1
                 size: 2
+                location: 1
                 key: foo
             """)
 
@@ -76,6 +79,7 @@ class TestCompute(TestCase):
                     b: penguin
                 image: 1
                 size: 2
+                location: 1
                 key: foo
             """)
 
@@ -90,6 +94,7 @@ class TestCompute(TestCase):
                     b: []
                 image: 1
                 size: 2
+                location: 1
                 key: foo
             """)
 
@@ -104,6 +109,7 @@ class TestCompute(TestCase):
                     secret: dummysecret
                 image: 1
                 size: 2
+                location: 1
                 key: foo
             """)
         nodes = self.driver.list_nodes()
@@ -122,6 +128,7 @@ class TestCompute(TestCase):
                     secret: dummysecret
                 image: ubuntu
                 size: 1
+                location: 1
                 key: 2
             """)
 
@@ -138,6 +145,7 @@ class TestCompute(TestCase):
                     secret: dummysecret
                 image: 1
                 size: 2
+                location: 1
                 key: foo
             """)
         nodes = self.driver.list_nodes()
@@ -158,6 +166,7 @@ class TestCompute(TestCase):
                     secret: dummysecret
                 image: 1
                 size: 2
+                location: 1
                 key: foo
             """)
         self.assertEqual(len(self.driver.list_nodes()), 0)
@@ -181,6 +190,7 @@ class TestComputeCluster(TestCase):
                         secret: dummysecret
                     image: 1
                     size: 2
+                    location: 1
                     key: foo
 
                 resources:
@@ -198,6 +208,7 @@ class TestComputeCluster(TestCase):
                         secret: dummysecret
                     image: 1
                     size: 2
+                    location: 1
                     key: foo
 
                 resources:
@@ -225,6 +236,7 @@ class TestComputeArgless(TestCase):
                 driver: DUMMY
                 image: 1
                 size: 2
+                location: 1
                 key: foo
             """)
         nodes = self.driver.list_nodes()
