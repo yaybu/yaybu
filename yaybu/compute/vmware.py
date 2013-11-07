@@ -290,19 +290,21 @@ class VMWareDriver(NodeDriver):
         # list the template images from the cache
         # provide friendly names somehow, perhaps deduping on leafname or
         # something
-        if not location:
-            location = self.vm_library
-        locs = []
-        for match in glob.glob(os.path.join(location, "*", "*.vmx")):
-            locs.append(NodeImage(id=match, name="VMWare Image", driver=self))
-        return locs
+        raise NotImplementedError
+        #if not location:
+        #    location = self.vm_library
+        #locs = []
+        #for match in glob.glob(os.path.join(location, "*", "*.vmx")):
+        #    locs.append(NodeImage(id=match, name="VMWare Image", driver=self))
+        #return locs
 
     def list_sizes(self, location=None):
-        return [
-            NodeSize("small", "small", 1024, 0, 0, 0, self),
-            NodeSize("medium", "medium", 4096, 0, 0, 0, self),
-            NodeSize("large", "large", 8192, 0, 0, 0, self),
-        ]
+        raise NotImplementedError
+        #return [
+        #    NodeSize("small", "small", 1024, 0, 0, 0, self),
+        #    NodeSize("medium", "medium", 4096, 0, 0, 0, self),
+        #    NodeSize("large", "large", 8192, 0, 0, 0, self),
+        #]
 
     def list_locations(self):
         return []
