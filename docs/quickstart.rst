@@ -39,11 +39,11 @@ Amazon EC2, BigV and Gandi DNS all from the same deployment::
     new Provisioner as instance2:
         new Compute as server:
             driver:
-                id: EC2
+                id: EC2_EU
                 key: yourusername
                 secret: yourpassword
 
-            image: ami-57afb223
+            image: ami-000cea77
             size: t1.micro
             name: test_at_ec2
 
