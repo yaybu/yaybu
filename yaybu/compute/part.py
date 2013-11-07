@@ -137,17 +137,15 @@ class Compute(base.GraphExternalAction):
         try:
             image = self.params.image.as_dict()
 
-        except errors.NoMatching:
+        except errors.NoMatching as e:
             try:
                 return self._get_image_from_id('default')
             except error.ValueError:
                 pass
-            except:
-                raise
 
             # If the backend doesnt support a 'default' image then raise the
             # original NoMatching exception
-            raise
+            raise e
 
         except errors.TypeError:
             return self._get_image_from_id(self.params.image.as_string())
@@ -180,17 +178,15 @@ class Compute(base.GraphExternalAction):
         try:
             size = self.params.size.as_dict()
 
-        except errors.NoMatching:
+        except errors.NoMatching as e:
             try:
                 return self._get_size_from_id('default')
             except error.ValueError:
                 pass
-            except:
-                raise
 
             # If the backend doesn't suport a 'default' size then raise the
             # original NoMatching exception
-            raise
+            raise e
 
         except errors.TypeError:
             return self._get_size_from_id(self.params.size.as_string())

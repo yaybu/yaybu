@@ -110,6 +110,56 @@ class TestCompute(TestCase):
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0].name, "hello")
 
+    def test_no_image(self):
+        self.assertRaises(error.NoMatching, self.up, """
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                size: 2
+                key: foo
+            """)
+
+    def test_invalid_image(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                image: 58
+                size: 2
+                key: foo
+            """)
+
+    def test_no_size(self):
+        self.assertRaises(error.NoMatching, self.up, """
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                image: 1
+                key: foo
+            """)
+
+    def test_invalid_size(self):
+        self.assertRaises(error.ValueError, self.up, """
+            new Compute as myserver:
+                name: hello
+                driver:
+                    id: DUMMY
+                    api_key: dummykey
+                    secret: dummysecret
+                image: 1
+                size: 85
+                key: foo
+            """)
+
     def test_node_already_exists(self):
         self.assertEqual(len(self.driver.list_nodes()), 0)
         self.driver.create_node(name="dummy-1")
