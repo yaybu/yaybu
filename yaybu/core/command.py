@@ -334,7 +334,7 @@ class YaybuCmd(OptionParsingCmd):
     def do_ssh(self, opts, args):
         """
         usage: ssh <name>
-        SSH to the node specified (with foo/bar/0 notation)
+        SSH to the node specified.
         """
         if len(args) < 1:
             self.do_help((), ("ssh",))
