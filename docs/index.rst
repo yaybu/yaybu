@@ -13,6 +13,7 @@ Contents:
 
    installation
    quickstart
+   tutorial/index
    command_line
    defining_arguments
    compute
