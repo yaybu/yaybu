@@ -4,9 +4,6 @@ Changelog for yaybu
 3.2 (unreleased)
 ----------------
 
-- Remove the codepath for ``yaybu ssh`` that uses ``os.execvp`` as it ssems to
-  fail on OSX.
-
 - When establishing an SSH connection to deploy configuration various self-test
   steps are performed. The motivation here is that after #123 we know Amazon
   have AMI's that don't respect the SSH protocol. They accept an SSH connection
@@ -18,6 +15,9 @@ Changelog for yaybu
 - Use libcloud 0.14.x. This has a bunch of bug fixes that improve how libcloud
   interacts with Yaybu, including better support for using custom SSH keys with
   AWS.
+
+- Implement 'yaybu ssh' without needing ssh binary - this means we don't need
+  to let encrypted stuff touch the disk!
 
 
 3.1.1 (2013-11-07)
