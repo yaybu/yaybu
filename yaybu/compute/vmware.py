@@ -138,7 +138,6 @@ class Connection(object):
 #=========================================================================
 
 import os
-import glob
 import logging
 import shutil
 import uuid

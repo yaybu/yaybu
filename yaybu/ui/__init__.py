@@ -13,3 +13,7 @@
 # limitations under the License.
 
 from yaybu.ui.widgets import TextFactory
+
+__all__ = [
+    "TextFactory",
+]

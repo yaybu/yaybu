@@ -26,3 +26,18 @@ from . import (
     patch,
     user,
 )
+
+__all__ = [
+    "apt",
+    "execute",
+    "filesystem",
+    "git",
+    "group",
+    "mercurial",
+    "mount",
+    "mounted",
+    "service",
+    "subversion",
+    "patch",
+    "user",
+]

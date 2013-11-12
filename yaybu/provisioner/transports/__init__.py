@@ -16,3 +16,10 @@ from .local import LocalTransport
 from .remote import RemoteTransport
 from .ssh import SSHTransport
 from .fakechroot import FakechrootTransport
+
+__all__ = [
+    "LocalTransport",
+    "RemoteTransport",
+    "SSHTransport",
+    "FakechrootTransport",
+]

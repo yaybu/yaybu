@@ -111,6 +111,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
 
         channel = transport.open_session()
 
+        print ' '.join([pipes.quote(c) for c in command])
         channel.exec_command(' '.join([pipes.quote(c) for c in command]))
 
         if stdin:

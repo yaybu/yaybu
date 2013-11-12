@@ -14,6 +14,7 @@
 
 from yaybu.provisioner.provider import Provider
 from yaybu.provisioner import resources
+from yaybu.provisioner.changes import ShellCommand
 
 
 class Mounted(Provider):

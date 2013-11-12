@@ -185,7 +185,7 @@ class Zone(base.GraphExternalAction):
         )
 
     def test(self):
-        with self.root.ui.throbber("Testing DNS credentials/connectivity") as throbber:
+        with self.root.ui.throbber("Testing DNS credentials/connectivity"):
             self.driver.list_zones()
 
     def _get_zone_by_domain(self, domain):

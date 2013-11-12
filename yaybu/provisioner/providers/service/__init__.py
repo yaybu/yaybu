@@ -18,3 +18,10 @@ from . import (
     simple,
     simulated,
 )
+
+__all__ = [
+    "lsb",
+    "upstart",
+    "simple",
+    "simulated",
+]

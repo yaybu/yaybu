@@ -16,10 +16,15 @@ from pkg_resources import iter_entry_points
 
 from .part import Provision
 
-import yaybu.provisioner.resources
+import yaybu.provisioner.resources  # NOQA
 for ep in iter_entry_points(group='yaybu.resource', name=None):
     ep.load()
 
-import yaybu.provisioner.providers
+import yaybu.provisioner.providers  # NOQA
 for ep in iter_entry_points(group='yaybu.providers', name=None):
     ep.load()
+
+
+__all__ = [
+    "Provision",
+]

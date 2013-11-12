@@ -32,7 +32,7 @@ based on our interpretation of the failure mode they represent. Resources will
 define the errors they may return. """
 
 import errno
-from yay.errors import ParseError, NoMatching, EvaluationError # noqa
+from yay.errors import ParseError, NoMatching, EvaluationError  # noqa
 
 ParseError.returncode = 128
 
