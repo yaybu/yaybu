@@ -19,7 +19,7 @@ from yay.errors import NoMatching
 from yay.config import Config as BaseConfig
 from yay import ast
 
-from yaybu.core.error import ArgParseError
+from yaybu.error import ArgParseError
 from yaybu.core.util import memoized
 from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
 from yaybu.ui import TextFactory

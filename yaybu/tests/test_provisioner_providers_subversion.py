@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from yaybu.tests.provisioner_fixture import TestCase
-from yaybu.core.error import MissingDependency
+from yaybu.error import MissingDependency
 
 
 class TestSubversion(TestCase):

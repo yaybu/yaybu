@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import error
 import datetime
 import dateutil.parser
 import types
@@ -21,6 +20,7 @@ import sys
 import unicodedata
 import random
 from yay import errors, ast
+from yaybu import error
 
 
 def get_unicode_glyphs():

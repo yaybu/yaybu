@@ -15,7 +15,7 @@
 import stat
 
 from yaybu.tests.provisioner_fixture import TestCase
-from yaybu.core import error
+from yaybu import error
 
 test_execute_on_path = """
 #!/bin/sh

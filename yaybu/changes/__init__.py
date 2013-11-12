@@ -13,10 +13,12 @@
 # limitations under the License.
 
 
-from .base import *
+from .base import ChangeLog, Change, TextRenderer
 from .metadata import MetadataSync
 
 __all__ = [
     'ChangeLog',
+    'Change',
+    'TextRenderer',
     'MetadataSync',
 ]

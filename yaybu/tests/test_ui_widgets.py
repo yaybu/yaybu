@@ -16,7 +16,7 @@
 
 import unittest
 
-from yaybu.ui.widgets import *
+from yaybu.ui.widgets import TextFactory
 
 
 class TestUI(unittest.TestCase):

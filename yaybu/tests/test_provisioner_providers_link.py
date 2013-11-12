@@ -15,7 +15,7 @@
 
 import os
 from yaybu.tests.provisioner_fixture import TestCase
-from yaybu.core import error
+from yaybu import error
 
 
 def sibpath(filename):

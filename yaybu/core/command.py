@@ -22,7 +22,8 @@ import pprint
 
 import yay
 import yay.errors
-from yaybu.core import error, util
+from yaybu import error
+from yaybu.core import util
 from yaybu.core.config import Config
 from yaybu.compute.vmware import VMBoxImage
 

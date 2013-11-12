@@ -16,7 +16,7 @@
 
 import unittest
 from yaybu.core import config
-from yaybu.core.error import ArgParseError
+from yaybu.error import ArgParseError
 
 
 class TestYaybuArg(unittest.TestCase):

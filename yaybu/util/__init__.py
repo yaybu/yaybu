@@ -12,7 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .backports import *
-from .libcloud import *
-from .templates import *
-from .misc import *
+from .backports import ZipFile, OrderedDict
+from .libcloud import get_driver_from_expression, args_from_expression
+from .templates import render_string, render_template
+from .misc import sibpath
+
+__all__ = [
+    'ZipFile',
+    'OrderedDict',
+    'get_driver_from_expression',
+    'args_from_expression',
+    'render_string',
+    'render_template',
+    'sibpath',
+]
