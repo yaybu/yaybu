@@ -84,22 +84,22 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
             raise error.ConnectionError(
                 "Connection refused %d times, giving up." % self.connection_attempts)
 
-        self.verify_transport()
+        self.verify_transport(client.get_transport())
 
         self._client = client
         return client
 
-    def verify_transport(self):
-        ret, out, err = self._execute_impl("whoami", None, None, None)
+    def verify_transport(self, transport):
+        ret, out, err = self._execute_impl(["whoami"], None, None, None, transport=transport)
         if ret != 0:
             raise error.ConnectionError(
                 "Got unusable SSH connection: 'whoami' failed")
 
         if out.strip() != self.context.user:
             raise error.ConnectionError(
-                "Got unusable SSH connection: Expected %s, but 'whoami' returned: " % (self.context.user, out.strip()))
+                "Got unusable SSH connection: Expected %s, but 'whoami' returned: %s" % (self.context.user, out.strip()))
 
-        ret, out, err = self._execute_impl("false", None, None, None)
+        ret, out, err = self._execute_impl(["false"], None, None, None, transport=transport)
         if ret == 0:
             raise error.ConnectionError(
                 "Got unusable SSH connection: 'false' has exit code 0, same as 'true'!"
@@ -108,13 +108,11 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
     def whoami(self):
         return self.connect().get_transport().get_username()
 
-    def _execute_impl(self, command, stdin, stdout, stderr):
-        client = self.connect()  # This should be done once per context object
-        transport = client.get_transport()
+    def _execute_impl(self, command, stdin, stdout, stderr, transport=None):
+        transport = transport or self.connect().get_transport()
 
         channel = transport.open_session()
 
-        print ' '.join([pipes.quote(c) for c in command])
         channel.exec_command(' '.join([pipes.quote(c) for c in command]))
 
         if stdin:
