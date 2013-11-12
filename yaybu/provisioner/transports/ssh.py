@@ -83,6 +83,9 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
             client.close()
             raise error.ConnectionError(
                 "Connection refused %d times, giving up." % self.connection_attempts)
+
+        self.verify_transport()
+
         self._client = client
         return client
 
@@ -99,7 +102,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         ret, out, err = self._execute_impl("false", None, None, None)
         if ret == 0:
             raise error.ConnectionError(
-                "Got unusable SSH connection: 'false' has exit code 0, same as 'true'!
+                "Got unusable SSH connection: 'false' has exit code 0, same as 'true'!"
                 )
 
     def whoami(self):
