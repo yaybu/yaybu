@@ -175,12 +175,12 @@ class BigVNodeDriver(NodeDriver):
 
     def reboot_node(self, node):
         data = json.dumps({'power_on': False})
-        result = self.connection.request(
+        self.connection.request(
             self.group_url + '/virtual_machines/%s' % (node.id),
             data=data, method='PUT')
 
         data = json.dumps({'power_on': True})
-        result = self.connection.request(
+        self.connection.request(
             self.group_url + '/virtual_machines/%s' % (node.id),
             data=data, method='PUT')
 

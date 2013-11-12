@@ -77,7 +77,7 @@ class Provision(base.GraphExternalAction):
             simulate=root.simulate,
         )
 
-        with root.ui.throbber("Connecting to '%s'" % hostname) as throbber:
+        with root.ui.throbber("Connecting to '%s'" % hostname):
             self.transport.connect()
 
         if not self.simulate and not self.transport.exists(self.get_data_path()):

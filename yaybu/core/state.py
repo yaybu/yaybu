@@ -108,7 +108,7 @@ class SimulatedStateStorageAdaptor(StateStorage):
         s = self.data.get(part_name, None)
         if not s:
             return self.child.get_state(part_name)
-        return x
+        return s
 
     def set_state(self, part_name, state):
         pass

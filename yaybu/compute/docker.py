@@ -124,7 +124,7 @@ class DockerNodeDriver(NodeDriver):
 
     def reboot_node(self, node):
         data = json.dumps({'t': 10})
-        result = self.connection.request(
+        self.connection.request(
             self.group_url + '/containers/%s/restart' % (node.id),
             data=data, method='POST')
 
@@ -134,11 +134,11 @@ class DockerNodeDriver(NodeDriver):
         return result.status == httplib.NO_CONTENT
 
     def create_node(self, **kwargs):
-        name = kwargs['name']
-        size = kwargs['size']
-        image = kwargs['image']
+        # name = kwargs['name']
+        # size = kwargs['size']
+        # image = kwargs['image']
 
-        auth = kwargs.get('auth', None)
+        # auth = kwargs.get('auth', None)
 
         payload = {
             #'Hostname': None,

@@ -95,7 +95,7 @@ class StaticContainer(base.GraphExternalAction):
                 StringIO.StringIO(json.dumps(manifest)), ".yaybu-manifest")
 
     def test(self):
-        with self.root.ui.throbber("Testing storage credentials/connectivity") as throbber:
+        with self.root.ui.throbber("Testing storage credentials/connectivity"):
             self._get_source_container()
             self._get_destination_container()
 

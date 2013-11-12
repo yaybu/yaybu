@@ -115,7 +115,6 @@ class ChangeLog:
 
     def apply(self, change, ctx=None):
         """ Execute the change, passing it the appropriate renderer to use. """
-        renderers = []
         text_class = ChangeRendererType.renderers.get(
             ("text", change.__class__), TextRenderer)
         retval = change.apply(ctx or self.ctx, text_class(self, self.verbose))

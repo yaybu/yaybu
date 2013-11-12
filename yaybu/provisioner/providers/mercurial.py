@@ -163,7 +163,7 @@ class Mercurial(Provider):
                                   self.resource.scm_username.as_string(), self.resource.scm_password.as_string())
 
         try:
-            f = context.change(EnsureFile(
+            context.change(EnsureFile(
                 os.path.join(self.resource.name.as_string(), ".hg", "hgrc"),
                 hgrc % {"repository": url, "path":
                         self.resource.name.as_string()},
@@ -176,7 +176,7 @@ class Mercurial(Provider):
             raise CheckoutError("Could not set the remote repository.")
 
         try:
-            f = context.change(EnsureFile(
+            context.change(EnsureFile(
                 os.path.join(
                     self.resource.name.as_string(), ".hg", "should.py"),
                 mercurial_ext,

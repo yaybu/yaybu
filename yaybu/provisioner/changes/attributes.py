@@ -33,13 +33,11 @@ class AttributeChanger(changes.Change):
         """ Apply the changes """
 
         transport = context.transport
-        exists = False
         uid = None
         gid = None
         mode = None
 
         if transport.exists(self.filename):
-            exists = True
             st = transport.stat(self.filename)
             uid = st.st_uid
             gid = st.st_gid

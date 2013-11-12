@@ -102,8 +102,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         ret, out, err = self._execute_impl(["false"], None, None, None, transport=transport)
         if ret == 0:
             raise error.ConnectionError(
-                "Got unusable SSH connection: 'false' has exit code 0, same as 'true'!"
-                )
+                "Got unusable SSH connection: 'false' has exit code 0, same as 'true'!")
 
     def whoami(self):
         return self.connect().get_transport().get_username()

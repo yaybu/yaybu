@@ -135,7 +135,7 @@ class Compute(base.GraphExternalAction):
 
     def _get_image(self):
         try:
-            image = self.params.image.as_dict()
+            self.params.image.as_dict()
 
         except errors.NoMatching as e:
             try:
@@ -176,7 +176,7 @@ class Compute(base.GraphExternalAction):
 
     def _get_size(self):
         try:
-            size = self.params.size.as_dict()
+            self.params.size.as_dict()
 
         except errors.NoMatching as e:
             try:
@@ -342,5 +342,5 @@ class Compute(base.GraphExternalAction):
             if not self.libcloud_node:
                 return
 
-        with self.root.ui.throbber(_("Destroying node '%r'") % self.full_name) as throbber:
+        with self.root.ui.throbber(_("Destroying node '%r'") % self.full_name):
             self.libcloud_node.destroy()

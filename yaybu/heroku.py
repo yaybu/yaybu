@@ -23,6 +23,10 @@ except ImportError:
     heroku = None
 
 
+class ExecutionError(Exception):
+    pass
+
+
 class Heroku(base.GraphExternalAction):
 
     def __init__(self, params):

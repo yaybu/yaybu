@@ -137,14 +137,11 @@ class Connection(object):
 
 #=========================================================================
 
-import os
-import logging
 import shutil
-import uuid
 import hashlib
 
 from libcloud.common.types import LibcloudError
-from libcloud.compute.base import NodeDriver, Node, NodeSize, NodeImage
+from libcloud.compute.base import NodeDriver, Node
 from libcloud.compute.base import NodeState
 from libcloud.compute.types import Provider
 
@@ -261,7 +258,7 @@ class VMWareDriver(NodeDriver):
         for hosttype in default_hosttypes:
             command = [self.vmrun, "-T", hosttype, "list"]
             try:
-                resp = self.connection.request(command)
+                self.connection.request(command)
             except LibcloudError:
                 continue
             else:
@@ -446,7 +443,7 @@ class VMWareDriver(NodeDriver):
         hope that they know what the fastest and most efficient way to clone
         an image is. But if that fails we can just copy the entire image
         directory. """
-        with self.yaybu_context.ui.throbber("Cloning template VM") as t:
+        with self.yaybu_context.ui.throbber("Cloning template VM"):
             try:
                 self._action("clone", source, target.vmx)
             except LibcloudError:
@@ -581,7 +578,7 @@ class RemoteVMBox:
         """
         self.dir = tempfile.mkdtemp(dir=self._tempdir)
         self.image = os.path.join(self.dir, "image")
-        with self.context.ui.throbber("Downloading packed VM") as t:
+        with self.context.ui.throbber("Downloading packed VM"):
             pass
         with self.context.ui.progress(100) as p:
             self.download(self.image, p.progress)

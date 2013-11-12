@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import logging
 
 from libcloud.loadbalancer.base import Member, Algorithm
-from libcloud.loadbalancer.types import Provider, State
+from libcloud.loadbalancer.types import Provider
 from libcloud.loadbalancer.providers import get_driver
 
 from yaybu.core.util import memoized
@@ -180,7 +180,7 @@ class LoadBalancer(base.GraphExternalAction):
         changed = False
 
         if not lb:
-            with self.root.ui.throbber("Creating load balancer '%s'" % name) as throbber:
+            with self.root.ui.throbber("Creating load balancer '%s'" % name):
                 if not self.root.simulate:
                     lb = self.driver.create_balancer(
                         name=name,
@@ -207,7 +207,7 @@ class LoadBalancer(base.GraphExternalAction):
             #    changed = True
 
             if changed:
-                with self.root.ui.throbber("Updating load balancer '%s'" % name) as throbber:
+                with self.root.ui.throbber("Updating load balancer '%s'" % name):
                     if not self.root.simulate:
                         self.driver.update_balancer(
                             balancer=lb,
@@ -234,5 +234,5 @@ class LoadBalancer(base.GraphExternalAction):
         balancer = self._find_balancer()
         if not balancer:
             return
-        with self.root.ui.throbber("Destroying load balancer '%s'" % balancer.name) as throbber:
+        with self.root.ui.throbber("Destroying load balancer '%s'" % balancer.name):
             balancer.destroy()

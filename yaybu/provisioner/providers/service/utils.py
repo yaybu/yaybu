@@ -100,7 +100,7 @@ class _Restart(object):
     policies = (resources.service.ServiceRestartPolicy,)
 
     def apply(self, context, output):
-        changed = self.ensure_enabled(context)
+        self.ensure_enabled(context)
 
         if self.status(context) == "not-running":
             self.do(context, "start")

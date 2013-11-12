@@ -21,14 +21,11 @@ for more information on a command:
 
 def _main(argv):
     # We do the imports here so that Ctrl+C doesn't show any ugly traceback
-    import os
     import sys
     import optparse
     import logging
     import atexit
-    import signal
 
-    from yaybu import util
     from yaybu.core.util import version
     from yaybu.core import command
 
@@ -58,7 +55,7 @@ def _main(argv):
         opts.logfile = "-"
         opts.verbose = 2
 
-    # logging.getLogger("paramiko.transport").setLevel(logging.CRITICAL)
+    logging.getLogger("paramiko.transport").setLevel(logging.CRITICAL)
 
     atexit.register(logging.shutdown)
 

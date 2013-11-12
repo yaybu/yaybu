@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yaybu.core.argument import Property, Argument, List, PolicyArgument, String
+from yaybu.core.argument import Property, List, PolicyArgument, String
 from yaybu.core import policy
 from yaybu import error
 import collections
@@ -187,7 +187,7 @@ class Resource(object):
             p.validate(self)
 
             # throws an exception if there is not oneandonlyone provider
-            Provider = p.get_provider(context)
+            p.get_provider(context)
 
         return True
 
@@ -267,7 +267,6 @@ class ResourceBundle(OrderedDict):
     @classmethod
     def create_from_list(cls, specification):
         """ Given a list of types and parameters, build a resource bundle """
-        from yay.ast import bind
         nodes = bind(specification)
         return cls.create_from_yay_expression(nodes)
 
@@ -399,18 +398,3 @@ class ResourceBundle(OrderedDict):
                 throbber.throb()
 
         return something_changed
-
-
-class Censored(object):
-
-    def __init__(self, resource):
-        self.resource = resource
-        self.klass = resource.__class__
-
-    def __getattr__(self, key):
-        attr = getattr(self.klass, key, None)
-        if not attr:
-            raise AttributeError(key)
-        if isinstance(attr, Argument):
-            return attr.__get_censored__(self.resource)
-        return getattr(self, resource, key)
