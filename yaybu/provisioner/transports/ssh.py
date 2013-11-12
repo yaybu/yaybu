@@ -86,6 +86,22 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         self._client = client
         return client
 
+    def verify_transport(self):
+        ret, out, err = self._execute_impl("whoami", None, None, None)
+        if ret != 0:
+            raise error.ConnectionError(
+                "Got unusable SSH connection: 'whoami' failed")
+
+        if out.strip() != self.context.user:
+            raise error.ConnectionError(
+                "Got unusable SSH connection: Expected %s, but 'whoami' returned: " % (self.context.user, out.strip()))
+
+        ret, out, err = self._execute_impl("false", None, None, None)
+        if ret == 0:
+            raise error.ConnectionError(
+                "Got unusable SSH connection: 'false' has exit code 0, same as 'true'!
+                )
+
     def whoami(self):
         return self.connect().get_transport().get_username()
 
