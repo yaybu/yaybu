@@ -363,12 +363,9 @@ class YaybuCmd(OptionParsingCmd):
             "%s@%s" % (username, hostname),
         ]
 
-        if self.interactive_shell:
-            import subprocess
-            p = subprocess.Popen(cmd)
-            p.wait()
-        else:
-            os.execvp(cmd[0], cmd)
+        import subprocess
+        p = subprocess.Popen(cmd)
+        p.wait()
 
     def do_status(self, opts, args):
         """

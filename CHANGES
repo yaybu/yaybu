@@ -4,6 +4,9 @@ Changelog for yaybu
 3.2 (unreleased)
 ----------------
 
+- Remove the codepath for ``yaybu ssh`` that uses ``os.execvp`` as it ssems to
+  fail on OSX.
+
 - When establishing an SSH connection to deploy configuration various self-test
   steps are performed. The motivation here is that after #123 we know Amazon
   have AMI's that don't respect the SSH protocol. They accept an SSH connection
