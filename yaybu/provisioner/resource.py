@@ -195,9 +195,8 @@ class Resource(object):
         """ Apply the provider for the selected policy, and then fire any
         events that are being observed. """
         for policy in self.get_potential_policies():
-            Provider = policy.get_provider(context)
-            p = Provider(self)
-            p.test(context)
+            for Provider in policy.providers:
+                Provider(self).test(context)
 
     def apply(self, context, output=None, policy=None):
         """ Apply the provider for the selected policy, and then fire any
@@ -376,7 +375,7 @@ class ResourceBundle(OrderedDict):
 
     def test(self, ctx):
         for resource in self.values():
-            resource.validate(ctx)
+            # resource.validate(ctx)
             resource.test(ctx)
 
     def apply(self, ctx, config):

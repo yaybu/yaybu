@@ -15,6 +15,8 @@ Changelog for yaybu
   matches the ``user`` config option we can be more confident we are connected
   to a functioning SSH server.
 
+- Support installing (and removing) yum packages (#104).
+
 
 3.1.1 (2013-11-07)
 ------------------

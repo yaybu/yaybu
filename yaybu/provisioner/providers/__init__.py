@@ -25,6 +25,7 @@ from . import (
     subversion,
     patch,
     user,
+    yum,
 )
 
 __all__ = [
@@ -40,4 +41,5 @@ __all__ = [
     "subversion",
     "patch",
     "user",
+    "yum",
 ]

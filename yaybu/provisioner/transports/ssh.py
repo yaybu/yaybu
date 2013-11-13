@@ -104,6 +104,12 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
             raise error.ConnectionError(
                 "Got unusable SSH connection: 'false' has exit code 0, same as 'true'!")
 
+        if self.context.user != 'root':
+            ret, out, err = self._execute_impl(["sudo", "whoami"], None, None, None, transport=transport)
+            if ret != 0 or out.strip() != 'root':
+                raise error.ConnectionError(
+                    "Got unusable SSH connection: 'sudo' isn't working. Right now yaybu requires passwordless sudo - so check your sudoers file!")
+
     def whoami(self):
         return self.connect().get_transport().get_username()
 

@@ -42,6 +42,10 @@ class AptInstall(provider.Provider):
 
     policies = (resources.package.PackageInstallPolicy,)
 
+    @classmethod
+    def isvalid(self, policy, resource, context):
+        return context.transport.exists("/usr/bin/dpkg")
+
     def apply(self, context, output):
         if is_installed(context, self.resource):
             return False
@@ -78,6 +82,10 @@ class AptInstall(provider.Provider):
 class AptUninstall(provider.Provider):
 
     policies = (resources.package.PackageUninstallPolicy,)
+
+    @classmethod
+    def isvalid(self, policy, resource, context):
+        return context.transport.exists("/usr/bin/dpkg")
 
     def apply(self, context, output):
         if not is_installed(context, self.resource):

@@ -82,7 +82,7 @@ class Policy(object):
         if valid.count(True) > 1:
             raise error.TooManyProviders()
         if valid.count(True) == 0:
-            raise error.NoSuitableProviders()
+            raise error.NoSuitableProviders("Could not find a provider to setup %s" % self.resource)
         return self.providers[valid.index(True)]
 
 

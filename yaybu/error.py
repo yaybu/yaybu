@@ -59,11 +59,23 @@ class DpkgError(ExecutionError):
     """ returns error code 131 to the invoking environment. """
 
 
+class RpmError(ExecutionError):
+
+    """ rpm returned something other than 0 or 1 """
+    returncode = 131
+
+
 class AptError(ExecutionError):
 
     """ An apt command failed unrecoverably. """
     returncode = 132
     """ returns error code 132 to the invoking environment. """
+
+
+class YumError(ExecutionError):
+
+    """ yum returned something other than 0 or 1 """
+    returncode = 132
 
 
 class CommandError(ExecutionError):
