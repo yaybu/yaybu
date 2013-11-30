@@ -26,6 +26,11 @@ Changelog for yaybu
 - Implement 'yaybu ssh' without needing ssh binary - this means we don't need
   to let encrypted stuff touch the disk!
 
+- Add experimental support for AWS services that we don't support via libcloud:
+
+   * CacheCluster (+ CacheSecurityGroup/CacheSecurityGroupIngress)
+   * DBInstance (+ DBSecurityGroup/DBSecurityGroupIngress)
+
 
 3.1.1 (2013-11-07)
 ------------------
