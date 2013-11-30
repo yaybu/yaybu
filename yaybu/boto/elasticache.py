@@ -14,7 +14,11 @@
 
 from __future__ import absolute_import
 
+import time
+
 import boto.elasticache
+from boto.exceptions import EC2ResponseError, BotoServerError
+
 from yaybu.boto.base import BotoResource
 
 
@@ -41,7 +45,7 @@ class CacheSecurityGroup(BotoResource):
         name = self.params.name.as_string()
         try:
             groups = self.connection.describe_cache_security_groups(name)
-        except BotoServerError:
+        except BotoServerError as e:
             if e.status != 404:
                 raise
             return self.create_group()
@@ -55,6 +59,8 @@ class CacheSecurityGroupIngress(BotoResource):
         from boto.ec2 import connect_to_region
         c = connect_to_region('eu-west-1')
 
+        ec2_group = self.params["from"].as_string()
+
         try:
             groups = c.get_all_security_groups(groupnames=[ec2_group])
         except EC2ResponseError:
@@ -62,6 +68,8 @@ class CacheSecurityGroupIngress(BotoResource):
             return
 
         ec2_group = groups[0]
+
+        cache_group_name = self.params.to.as_string()
 
         try:
             response = self.connection.describe_cache_security_groups(cache_group_name)
@@ -85,21 +93,22 @@ class CacheCluster(BotoResource):
     def create(self):
         # FIXME: Actually get theses settings from self.params
         response = self.connection.create_cache_cluster(
-            cache_cluster_id = id,
-            num_cache_nodes = 1,
-            cache_node_type = 'cache.t1.micro',
-            engine = 'redis',
-            port = 6379,
-            cache_security_group_names=cache_security_group_names or [],
-            )
+            cache_cluster_id=id,
+            num_cache_node=1,
+            cache_node_type='cache.t1.micro',
+            engine='redis',
+            port=6379,
+            cache_security_group_names=[],
+        )
         return response['CreateCacheClusterResponse']['CreateCacheClusterResult']['CacheCluster']
 
     def update(self, existing):
         # FIXME: Update cache cluster settings here
+        pass
 
     def apply(self):
         try:
-            response = c.describe_cache_clusters(cache_cluster_id=id, show_cache_node_info=True)
+            response = self.connection.describe_cache_clusters(cache_cluster_id=id, show_cache_node_info=True)
             result = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters'][0]
         except BotoServerError as e:
             if e.status != 404:
@@ -111,10 +120,9 @@ class CacheCluster(BotoResource):
         if result['CacheClusterStatus'] != 'available':
             # FIXME: Add throbber here
             while result['CacheClusterStatus'] != 'available':
-                response = c.describe_cache_clusters(cache_cluster_id=id, show_cache_node_info=True)
+                response = self.connection.describe_cache_clusters(cache_cluster_id=id, show_cache_node_info=True)
                 result = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters'][0]
                 time.sleep(1)
                 # throbber.throb()
 
         # FIXME: Extract Endpoint and other outputs and place in graph
-

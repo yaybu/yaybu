@@ -14,7 +14,11 @@
 
 from __future__ import absolute_import
 
+import time
+
 import boto.rds
+from boto.exceptions import EC2ResponseError, BotoServerError
+
 from yaybu.boto.base import BotoResource
 
 
@@ -56,6 +60,8 @@ class DBSecurityGroupIngress(BotoResource):
         from boto.ec2 import connect_to_region
         c = connect_to_region('eu-west-1')
 
+        ec2_group = self.params["from"].as_string()
+
         try:
             groups = c.get_all_security_groups(groupnames=[ec2_group])
         except EC2ResponseError:
@@ -63,6 +69,8 @@ class DBSecurityGroupIngress(BotoResource):
             return
 
         ec2_group = groups[0]
+
+        db_group_name = self.params.to.as_string()
 
         try:
             groups = c.get_all_dbsecurity_groups(groupname=db_group_name)
@@ -72,7 +80,7 @@ class DBSecurityGroupIngress(BotoResource):
                 return
             raise
 
-        if filter(lambda x: x.EC2SecurityGroupId==ec2_group.id, groups[0].ec2_groups):
+        if filter(lambda x: x.EC2SecurityGroupId == ec2_group.id, groups[0].ec2_groups):
             return
 
         print "Creating DBSecurityGroup"
@@ -80,7 +88,7 @@ class DBSecurityGroupIngress(BotoResource):
             db_group_name,
             ec2_security_group_name=ec2_group.name,
             ec2_security_group_owner_id=ec2_group.owner_id
-            )
+        )
 
         # FIXME: Ideally wait for Status to shift from Status=='authorizing' to Status=='authorized'
 
@@ -90,14 +98,16 @@ class DBInstance(BotoResource):
     module = boto.rds
 
     def create(self):
-        #FIXM: Fetch these settings from self.params and validate.
-        instance self.connection.create_dbinstance(
-            db_name, 5, 'db.t1.micro', 'root', 'bototestpw')
+        name = self.params.name.as_string()
+        instance = self.connection.create_dbinstance(
+            name, 5, 'db.t1.micro', 'root', 'bototestpw')
         return instance
 
     def apply(self):
+        name = self.params.name.as_string()
+
         try:
-            instances = c.get_all_dbinstances(db_name)
+            instances = self.connection.get_all_dbinstances(name)
             instance = instances[0]
         except BotoServerError as e:
             if e.status != 404:
@@ -111,7 +121,7 @@ class DBInstance(BotoResource):
             # FIXME: add throbber
             while instance.status != 'available':
                 time.sleep(1)
-                instances = c.get_all_dbinstances(db_name)
+                instances = self.connection.get_all_dbinstances(name)
                 instance = instances[0]
 
         return changed

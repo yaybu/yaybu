@@ -15,7 +15,8 @@
 
 from yaybu.base import GraphExternalAction
 
-class BotoResource(base.GraphExternalAction):
+
+class BotoResource(GraphExternalAction):
 
     @property
     def connection(self):
