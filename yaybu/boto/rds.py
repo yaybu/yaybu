@@ -19,6 +19,8 @@ import time
 import boto.rds
 from boto.exceptions import EC2ResponseError, BotoServerError
 
+from yay import errors
+
 from yaybu.boto.base import BotoResource
 
 
@@ -26,11 +28,32 @@ class DBSecurityGroup(BotoResource):
 
     module = boto.rds
 
+    def clean_allowed(self):
+        from boto.ec2 import connect_to_region
+        c = connect_to_region('eu-west-1')
+
+        allowed = []
+        for group in self.params.allowed.get_iterable():
+            try:
+                name = group.as_string()
+            except errors.TypeError:
+                name = group.name.as_string()
+
+            try:
+                groups = c.get_all_security_groups(groupnames=[name])
+                g = groups[0]
+            except EC2ResponseError:
+                # FIXME: Don't raise if simulating
+                raise TypeError("No such EC2 SecurityGroup '%s'" % name)
+
+            allowed.append((g.name, g.owner_id))
+
+        return allowed
+
     def create(self):
         name = self.params.name.as_string()
         description = self.params.description.as_string(default=name)
-        self.connection.create_dbsecurity_group(name, description)
-        return True
+        return self.connection.create_dbsecurity_group(name, description)
 
     def update(self, existing):
         name = self.params.name.as_string()
@@ -45,52 +68,33 @@ class DBSecurityGroup(BotoResource):
         name = self.params.name.as_string()
         try:
             groups = self.connection.get_all_security_groups(groupnames=[name])
+            group = groups[0]
         except EC2ResponseError:
             #FIXME: Check that this is actually a 'does not exist'
-            return self.create()
+            group = self.create()
+            changed = True
         else:
-            return self.update(groups[0])
+            changed = self.update(group)
 
+        current = set(self.clean_allowed())
+        next = set([g.EC2SecurityGroupId for g in group.ec2_groups])
 
-class DBSecurityGroupIngress(BotoResource):
+        for group in (next - current):
+            with self.root.ui.throbber("Authorizing ingress (%s -> %s)" % (group[0], name)):
+                self.connection.authorize_dbsecurity_group(
+                    name,
+                    ec2_security_group_name=group[0],
+                    ec2_security_group_owner_id=group[1],
+                )
 
-    module = boto.rds
+                # FIXME: Ideally wait for Status to shift from Status=='authorizing' to Status=='authorized'
+                changed = True
 
-    def apply(self):
-        from boto.ec2 import connect_to_region
-        c = connect_to_region('eu-west-1')
+        for group in (current - next):
+            with self.root.ui.throbber("Deauthorizing ingress (%s -> %s)" % (group[0], name)):
+                changed = True
 
-        ec2_group = self.params["from"].as_string()
-
-        try:
-            groups = c.get_all_security_groups(groupnames=[ec2_group])
-        except EC2ResponseError:
-            print "No such EC2 Security Group"
-            return
-
-        ec2_group = groups[0]
-
-        db_group_name = self.params.to.as_string()
-
-        try:
-            groups = c.get_all_dbsecurity_groups(groupname=db_group_name)
-        except BotoServerError as e:
-            if e.status == 404:
-                print "No such DBSecurityGroup '%s'" % db_group_name
-                return
-            raise
-
-        if filter(lambda x: x.EC2SecurityGroupId == ec2_group.id, groups[0].ec2_groups):
-            return
-
-        print "Creating DBSecurityGroup"
-        c.authorize_dbsecurity_group(
-            db_group_name,
-            ec2_security_group_name=ec2_group.name,
-            ec2_security_group_owner_id=ec2_group.owner_id
-        )
-
-        # FIXME: Ideally wait for Status to shift from Status=='authorizing' to Status=='authorized'
+        return changed
 
 
 class DBInstance(BotoResource):
