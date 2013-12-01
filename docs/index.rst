@@ -21,6 +21,7 @@ Contents:
    loadbalancer
    dns
    sync
+   boto
    combining_parts
    language
    encryption

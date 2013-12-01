@@ -18,10 +18,8 @@ ingress to allow your EC2 instances to access it::
 
     new CacheSecurityGroup as elasticache_security:
         name: {{ yaybu.args.instance_name }}-cache
-
-    new CacheIngressRule as elasticache_ingress:
-        from: {{ ec2_security }}
-        to: {{ elasticache_security }}
+        allowed:
+          - {{ ec2_security }}
 
     new CacheCluster as elasticache_queue:
         name: {{ yaybu.args.instance_name }}-queue
@@ -42,10 +40,10 @@ your EC2 instances::
 
     new DBSecurityGroup as rds_security:
         name: {{ yaybu.args.instance_name }}-db
-
-    new DBSecurityGroupIngress as rds_ingress:
-        from: {{ ec2_security }}
-         to: {{ rds_security }}
+        allowed:
+          - {{ ec2_security }}
+          - cidr: 192.168.0.1
+            port: 80
 
     new DBCluster as rds_cluster:
         name: {{ yaybu.args.instance_name }}-db
