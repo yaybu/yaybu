@@ -121,7 +121,7 @@ class Git(Provider):
 
         try:
             rv, stdout, stderr = context.transport.execute(
-                ["git", "ls-remote", self.resource.repository.as_string()], cwd="/tmp")
+                ["git", "ls-remote", self.resource.repository.as_string()], user=self.resource.user.as_string(), cwd="/tmp")
         except SystemError:
             raise CheckoutError("Could not query the remote repository")
 
