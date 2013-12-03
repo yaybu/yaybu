@@ -15,6 +15,10 @@ Changelog for yaybu
   matches the ``user`` config option we can be more confident we are connected
   to a functioning SSH server.
 
+- Use libcloud 0.14.x. This has a bunch of bug fixes that improve how libcloud
+  interacts with Yaybu, including better support for using custom SSH keys with
+  AWS.
+
 
 3.1.1 (2013-11-07)
 ------------------

@@ -108,9 +108,6 @@ EC2
 ---
 
 Provisioning of AWS instances is supported out of the box using libcloud.
-You will need to have set up an SSH key in the Amazon control panel and either
-have the path to the private part of that key or have added it to your
-ssh-agent.
 
 You'll need something like this in your ``Yaybufile``::
 
@@ -126,7 +123,7 @@ You'll need something like this in your ``Yaybufile``::
         image: ami-000cea77
 
         user: ubuntu
-        ex_keyname: mykey
+        public_key: mykey.pub
         private_key: mykey.pem
 
 The driver ``id`` can currently be set to one of:
@@ -136,10 +133,14 @@ The driver ``id`` can currently be set to one of:
  * ``EC2_US_WEST`` for ``us-west-1``
  * ``EC2_US_WEST_OREGON`` for ``us-west-2``
 
-``ex_keyname`` is the name of the SSH key pair in the amazon console.
-``private_key`` is the corresponding private key. If you don't specify a ``private_key`` Yaybu will try the keys in your SSH agent.
+Instead of ``public_key`` you can provide ``ex_keyname``. This EC2 specific
+extension is the name of the SSH key pair in the amazon console.
+``private_key`` is the corresponding private key. If you don't specify a
+``private_key`` Yaybu will try the keys in your SSH agent.
 
-We recently merged a patch upstream to do away with ``ex_keyname``. In future Yaybu will be able to automatically upload a ``public_key`` for you in the same way it can for other backends.
+If you want to assign a Compute node to a specific security group set the
+``ex_securitygroup`` option. You can also set ``ex_iamprofile`` to the name of
+an IAM Instance Profile or an ``arn``.
 
 
 VMWare

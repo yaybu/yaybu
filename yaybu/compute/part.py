@@ -279,7 +279,12 @@ class Compute(base.GraphExternalAction):
             with self.root.ui.throbber(_("Creating node '%r'...") % (self.full_name, )) as throbber:
                 kwargs = args_from_expression(self.driver.create_node, self.params, ignore=(
                     "name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
-                kwargs['auth'] = self._get_auth()
+
+                if not 'ex_keyname' in kwargs:
+                    kwargs['auth'] = self._get_auth()
+
+                if 'ex_iamprofile' in kwargs:
+                    kwargs['ex_iamprofile'] = kwargs['ex_iamprofile'].encode("utf-8")
 
                 if self.root.simulate:
                     self._fake_node_info()
