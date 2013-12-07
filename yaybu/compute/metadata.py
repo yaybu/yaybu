@@ -1,13 +1,13 @@
 
-from libcloud.compute.drivers.ec2 import EC2NodeDriver
+from libcloud.compute.drivers import ec2
 
-EC2NodeDriver.create_node_kwargs = [
+ec2.API_VERSION = "2013-10-15"
+
+ec2.EC2NodeDriver.create_node_kwargs = [
     'ex_securitygroup',
     'ex_keyname',
     'ex_userdata',
     'ex_clienttoken',
     'ex_blockdevicemappings',
+    'ex_iamprofile',
 ]
-
-# see https://issues.apache.org/jira/browse/LIBCLOUD-367
-EC2NodeDriver.features['create_node'] = []
