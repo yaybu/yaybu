@@ -8,6 +8,8 @@ paramiko==1.12.0
 ply==3.4
 pycrypto==2.6.1
 
+boto
+
 nose2
 coverage
 coveralls
