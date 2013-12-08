@@ -15,12 +15,12 @@
 from __future__ import absolute_import
 
 import boto.ec2
-from boto.exceptions import BotoServerError
+from boto.exception import BotoServerError
 
 from yaybu.boto.base import BotoResource
 
 
-class SecurityGroup(BotoResource):
+class EC2SecurityGroup(BotoResource):
 
     module = boto.ec2
 
@@ -44,7 +44,7 @@ class SecurityGroup(BotoResource):
     def apply(self):
         name = self.params.name.as_string()
         try:
-            groups = self.connection.get_all_security_groups(groupname=name)
+            groups = self.connection.get_all_security_groups(groupnames=name)
         except BotoServerError as e:
             if e.status != 404:
                 raise

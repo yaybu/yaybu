@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import inspect
 
 from yay.openers.base import Openers, SearchpathFromGraph
 from yay.errors import NoMatching
@@ -24,6 +25,7 @@ from yaybu.core.util import memoized
 from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
 from yaybu.ui import TextFactory
 
+from yaybu.boto import AWS
 from yaybu.compute import Compute
 from yaybu.provisioner import Provision
 from yaybu.loadbalancer import LoadBalancer
@@ -167,6 +169,7 @@ class Config(BaseConfig):
             "GitChangeSource": ast.PythonClassFactory(GitChangeSource),
             "GitHubChangeSource": ast.PythonClassFactory(GitHubChangeSource),
             "Printer": ast.PythonClassFactory(Printer),
+            "AWS": ast.bind(AWS),
         }
 
     def set_arguments(self, **arguments):
@@ -230,3 +233,7 @@ class Config(BaseConfig):
 
     def changed(self, changed=True):
         self._changed = self._changed or changed
+
+
+#FIXME: Upstream this
+ast.bindings.append((lambda v: ast.PythonClass in inspect.getmro(v), ast.PythonClassFactory))

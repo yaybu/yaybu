@@ -17,7 +17,7 @@ from __future__ import absolute_import
 import time
 
 import boto.elasticache
-from boto.exceptions import EC2ResponseError, BotoServerError
+from boto.exception import EC2ResponseError, BotoServerError
 
 from yaybu.boto.base import BotoResource
 

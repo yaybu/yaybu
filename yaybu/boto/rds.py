@@ -17,7 +17,7 @@ from __future__ import absolute_import
 import time
 
 import boto.rds
-from boto.exceptions import EC2ResponseError, BotoServerError
+from boto.exception import EC2ResponseError, BotoServerError
 
 from yay import errors
 
@@ -43,7 +43,7 @@ class DBSecurityGroup(BotoResource):
                 groups = c.get_all_security_groups(groupnames=[name])
                 g = groups[0]
             except EC2ResponseError:
-                # FIXME: Don't raise if simulating
+                # FIXME: Don't raise if simulating
                 raise TypeError("No such EC2 SecurityGroup '%s'" % name)
 
             allowed.append((g.name, g.owner_id))
