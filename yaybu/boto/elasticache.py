@@ -19,6 +19,8 @@ import time
 import boto.elasticache
 from boto.exception import EC2ResponseError, BotoServerError
 
+from yay import errors
+
 from yaybu.boto.base import BotoResource
 
 
@@ -26,68 +28,108 @@ class CacheSecurityGroup(BotoResource):
 
     module = boto.elasticache
 
+    def clean_allowed(self):
+        from boto.ec2 import connect_to_region
+        c = connect_to_region('eu-west-1')
+
+        allowed = []
+
+        try:
+            groups = self.params.allowed.get_iterable()
+        except errors.NoMatching:
+            groups = []
+
+        for group in groups:
+            try:
+                name = group.as_string()
+            except errors.TypeError:
+                name = group.get_key("name").as_string()
+
+            try:
+                groups = c.get_all_security_groups(groupnames=[name])
+                g = groups[0]
+            except EC2ResponseError:
+                # FIXME: Don't raise if simulating
+                raise TypeError("No such EC2 SecurityGroup '%s'" % name)
+
+            allowed.append((g.name, g.owner_id))
+
+        return allowed
+
     def create(self):
         name = self.params.name.as_string()
         description = self.params.description.as_string(default=name)
         with self.root.ui.throbber("Creating CacheSecurityGroup '%s'" % name):
-            self.connection.create_dbsecurity_group(name, description)
-        return True
+            response = self.connection.create_cache_security_group(name, description)
+            result = response['CreateCacheSecurityGroupResponse']['CreateCacheSecurityGroupResult']['CacheSecurityGroup']
+        return result
 
     def update(self, existing):
         name = self.params.name.as_string()
         description = self.params.description.as_string(default=name)
-        if existing.description != description:
+        changed = False
+        if existing['Description'] != description:
             changed = True
         if changed:
             with self.root.ui.throbber("Updating CacheSecurityGroup '%s'" % name):
-                self.connection.update_dbsecurity_group(name, description)
+                self.connection.update_cache_security_group(name, description)
         return changed
 
     def apply(self):
+        if self.root.readonly:
+            return
+
         name = self.params.name.as_string()
         try:
-            groups = self.connection.describe_cache_security_groups(name)
+            response = self.connection.describe_cache_security_groups(name)
         except BotoServerError as e:
             if e.status != 404:
                 raise
-            return self.create_group()
+            group = self.create()
+            changed = True
         else:
-            return self.update_group(groups[0])
+            group = response['DescribeCacheSecurityGroupsResponse']['DescribeCacheSecurityGroupsResult']['CacheSecurityGroups'][0]
+            changed = self.update(group)
 
+        current = set(self.clean_allowed())
+        next = set([(g['EC2SecurityGroupName'], g['EC2SecurityGroupOwnerId']) for g in group['EC2SecurityGroups']])
 
-class CacheSecurityGroupIngress(BotoResource):
+        for group in (current - next):
+            with self.root.ui.throbber("Authorizing ingress (%s -> %s)" % (group[0], name)):
+                if not self.root.simulate:
+                    self.connection.authorize_cache_security_group_ingress(
+                        name, 
+                        group[0],
+                        group[1],
+                    )
 
-    def apply(self):
-        from boto.ec2 import connect_to_region
-        c = connect_to_region('eu-west-1')
+                # FIXME: Ideally wait for Status to shift from Status=='authorizing' to Status=='authorized'
+                changed = True
 
-        ec2_group = self.params["from"].as_string()
+        for group in (next - current):
+            with self.root.ui.throbber("Deauthorizing ingress (%s -> %s)" % (group[0], name)):
+                if not self.root.simulate:
+                    self.connection.revoke_cache_security_group(
+                        name,
+                        ec2_security_group_name=group[0],
+                        ec2_security_group_owner_id=group[1],
+                    )
+                #FIXME: Wait for it to disappear from output
+                changed = True
 
+        return changed
+
+    def destroy(self):
+        name = self.params.name.as_string()
         try:
-            groups = c.get_all_security_groups(groupnames=[ec2_group])
-        except EC2ResponseError:
-            print "No such EC2 Security Group"
-            return
-
-        ec2_group = groups[0]
-
-        cache_group_name = self.params.to.as_string()
-
-        try:
-            response = self.connection.describe_cache_security_groups(cache_group_name)
-            result = response['DescribeCacheSecurityGroupsResponse']['DescribeCacheSecurityGroupsResult']['CacheSecurityGroups'][0]
+            response = self.connection.describe_cache_security_groups(name)
         except BotoServerError as e:
-            if e.status != 404:
-                print "No such CacheSecurityGroup '%s'" % cache_group_name
+            if e.status == 404:
                 return
             raise
 
-        if filter(lambda x: x['EC2SecurityGroupName'] == ec2_group.name, result['EC2SecurityGroups']):
-            return
-
-        with self.root.ui.throbber("Creating CacheSecurityGroupIngress ('%s' -> '%s')" % (ec2_group.name, cache_group_name)):
-            self.connection.authorize_cache_security_group_ingress(cache_group_name, ec2_group.name, ec2_group.owner_id)
-            # FIXME: Ideally wait for Status to shift from Status=='authorizing' to Status=='authorized'
+        with self.root.ui.throbber("Deleting CacheSecurityGroup '%s'" % name):
+            self.connection.delete_cache_security_group(name)
 
 
 class CacheCluster(BotoResource):
