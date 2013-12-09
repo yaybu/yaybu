@@ -27,7 +27,7 @@ class EC2SecurityGroup(BotoResource):
     def create(self):
         name = self.params.name.as_string()
         description = self.params.description.as_string(default=name)
-        with self.root.ui.throbber("Creating SecurityGroup '%s'" % name):
+        with self.root.ui.throbber("Creating EC2SecurityGroup '%s'" % name):
             if not self.root.simulate:
                 self.connection.create_security_group(name, description)
         return True
@@ -39,7 +39,7 @@ class EC2SecurityGroup(BotoResource):
         if existing.description != description:
             changed = True
         if changed:
-            with self.root.ui.throbber("Updating SecurityGroup '%s'" % name):
+            with self.root.ui.throbber("Updating EC2SecurityGroup '%s'" % name):
                 if not self.root.simulate:
                     self.connection.update_security_group(name, description)
         return changed
@@ -75,5 +75,5 @@ class EC2SecurityGroup(BotoResource):
                 return
             raise
 
-        with self.root.ui.throbber("Deleting SecurityGroup '%s'" % name):
+        with self.root.ui.throbber("Deleting EC2SecurityGroup '%s'" % name):
             self.connection.delete_security_group(name)

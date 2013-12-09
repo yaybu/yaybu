@@ -33,11 +33,17 @@ class DBSecurityGroup(BotoResource):
         c = connect_to_region('eu-west-1')
 
         allowed = []
-        for group in self.params.allowed.get_iterable():
+
+        try:
+            groups = self.params.allowed.get_iterable()
+        except errors.NoMatching:
+            groups = []
+
+        for group in groups:
             try:
                 name = group.as_string()
             except errors.TypeError:
-                name = group.name.as_string()
+                name = group.get_key("name").as_string()
 
             try:
                 groups = c.get_all_security_groups(groupnames=[name])
@@ -53,48 +59,76 @@ class DBSecurityGroup(BotoResource):
     def create(self):
         name = self.params.name.as_string()
         description = self.params.description.as_string(default=name)
-        return self.connection.create_dbsecurity_group(name, description)
-
+        with self.root.ui.throbber("Creating DBSecurityGroup '%s'" % name):
+            return self.connection.create_dbsecurity_group(name, description)
+        
     def update(self, existing):
         name = self.params.name.as_string()
         description = self.params.description.as_string(default=name)
+        changed = False
         if existing.description != description:
             changed = True
         if changed:
-            self.connection.update_dbsecurity_group(name, description)
+            with self.root.ui.throbber("Updating DBSecurityGroup '%s'" % name):
+                self.connection.update_dbsecurity_group(name, description)
         return changed
 
     def apply(self):
+        if self.root.readonly:
+            return
+
         name = self.params.name.as_string()
         try:
-            groups = self.connection.get_all_security_groups(groupnames=[name])
+            groups = self.connection.get_all_dbsecurity_groups(groupname=name)
             group = groups[0]
-        except EC2ResponseError:
-            #FIXME: Check that this is actually a 'does not exist'
+        except BotoServerError as e:
+            if e.status != 404:
+                raise
             group = self.create()
             changed = True
         else:
             changed = self.update(group)
 
         current = set(self.clean_allowed())
-        next = set([g.EC2SecurityGroupId for g in group.ec2_groups])
+        next = set([(g.name, g.owner_id) for g in group.ec2_groups])
 
-        for group in (next - current):
+        for group in (current - next):
             with self.root.ui.throbber("Authorizing ingress (%s -> %s)" % (group[0], name)):
-                self.connection.authorize_dbsecurity_group(
-                    name,
-                    ec2_security_group_name=group[0],
-                    ec2_security_group_owner_id=group[1],
-                )
+                if not self.root.simulate:
+                    self.connection.authorize_dbsecurity_group(
+                        name,
+                        ec2_security_group_name=group[0],
+                        ec2_security_group_owner_id=group[1],
+                    )
 
                 # FIXME: Ideally wait for Status to shift from Status=='authorizing' to Status=='authorized'
                 changed = True
 
-        for group in (current - next):
+        for group in (next - current):
             with self.root.ui.throbber("Deauthorizing ingress (%s -> %s)" % (group[0], name)):
+                if not self.root.simulate:
+                    self.connection.revoke_dbsecurity_group(
+                        name,
+                        ec2_security_group_name=group[0],
+                        ec2_security_group_owner_id=group[1],
+                    )
+                #FIXME: Wait for it to disappear from output
                 changed = True
 
         return changed
+
+    def destroy(self):
+        name = self.params.name.as_string()
+
+        try:
+            self.connection.get_all_dbsecurity_groups(groupname=name)
+        except BotoServerError as e:
+            if e.status == 404:
+                return
+            raise
+
+        with self.root.ui.throbber("Deleting DBSecurityGroup '%s'" % name):
+            self.connection.delete_dbsecurity_group(name)
 
 
 class DBInstance(BotoResource):
