@@ -109,7 +109,7 @@ class CacheSecurityGroup(BotoResource):
         for group in (next - current):
             with self.root.ui.throbber("Deauthorizing ingress (%s -> %s)" % (group[0], name)):
                 if not self.root.simulate:
-                    self.connection.revoke_cache_security_group(
+                    self.connection.revoke_cache_security_group_ingress(
                         name,
                         ec2_security_group_name=group[0],
                         ec2_security_group_owner_id=group[1],
