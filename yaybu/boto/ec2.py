@@ -28,7 +28,8 @@ class EC2SecurityGroup(BotoResource):
         name = self.params.name.as_string()
         description = self.params.description.as_string(default=name)
         with self.root.ui.throbber("Creating SecurityGroup '%s'" % name):
-            self.connection.create_security_group(name, description)
+            if not self.root.simulate:
+                self.connection.create_security_group(name, description)
         return True
 
     def update(self, existing):
@@ -39,10 +40,14 @@ class EC2SecurityGroup(BotoResource):
             changed = True
         if changed:
             with self.root.ui.throbber("Updating SecurityGroup '%s'" % name):
-                self.connection.update_security_group(name, description)
+                if not self.root.simulate:
+                    self.connection.update_security_group(name, description)
         return changed
 
     def apply(self):
+        if self.root.readonly:
+            return
+
         name = self.params.name.as_string()
         try:
             groups = self.connection.get_all_security_groups(groupnames=name)
@@ -54,6 +59,9 @@ class EC2SecurityGroup(BotoResource):
         else:
             group = groups[0]
             changed = self.update(group)
+
+        # FIXME: This needs to suck less
+        self.root.changelog.changed = self.root.changelog.changed or True
 
         return changed
 

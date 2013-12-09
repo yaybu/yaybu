@@ -59,6 +59,7 @@ def _main(argv):
         opts.verbose = 2
 
     logging.getLogger("paramiko.transport").setLevel(logging.CRITICAL)
+    logging.getLogger("boto").setLevel(logging.CRITICAL)
 
     atexit.register(logging.shutdown)
 
