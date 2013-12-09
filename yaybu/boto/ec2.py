@@ -15,7 +15,7 @@
 from __future__ import absolute_import
 
 import boto.ec2
-from boto.exception import BotoServerError
+from boto.exception import EC2ResponseError
 
 from yaybu.boto.base import BotoResource
 
@@ -34,6 +34,7 @@ class EC2SecurityGroup(BotoResource):
     def update(self, existing):
         name = self.params.name.as_string()
         description = self.params.description.as_string(default=name)
+        changed = False
         if existing.description != description:
             changed = True
         if changed:
@@ -45,9 +46,26 @@ class EC2SecurityGroup(BotoResource):
         name = self.params.name.as_string()
         try:
             groups = self.connection.get_all_security_groups(groupnames=name)
-        except BotoServerError as e:
-            if e.status != 404:
+        except EC2ResponseError as e:
+            if e.error_code != "InvalidGroup.NotFound":
                 raise
-            return self.create_group()
+            group = self.create()
+            changed = True
         else:
-            return self.update_group(groups[0])
+            group = groups[0]
+            changed = self.update(group)
+
+        return changed
+
+    def destroy(self):
+        name = self.params.name.as_string()
+
+        try:
+            groups = self.connection.get_all_security_groups(groupnames=name)
+        except EC2ResponseError as e:
+            if e.error_code == "InvalidGroup.NotFound":
+                return
+            raise
+
+        with self.root.ui.throbber("Deleting SecurityGroup '%s'" % name):
+            self.connection.delete_security_group(name)
