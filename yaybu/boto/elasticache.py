@@ -98,7 +98,7 @@ class CacheSecurityGroup(BotoResource):
             with self.root.ui.throbber("Authorizing ingress (%s -> %s)" % (group[0], name)):
                 if not self.root.simulate:
                     self.connection.authorize_cache_security_group_ingress(
-                        name, 
+                        name,
                         group[0],
                         group[1],
                     )
@@ -122,7 +122,7 @@ class CacheSecurityGroup(BotoResource):
     def destroy(self):
         name = self.params.name.as_string()
         try:
-            response = self.connection.describe_cache_security_groups(name)
+            self.connection.describe_cache_security_groups(name)
         except BotoServerError as e:
             if e.status == 404:
                 return
