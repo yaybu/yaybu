@@ -61,7 +61,7 @@ class EC2SecurityGroup(BotoResource):
         name = self.params.name.as_string()
 
         try:
-            groups = self.connection.get_all_security_groups(groupnames=name)
+            self.connection.get_all_security_groups(groupnames=name)
         except EC2ResponseError as e:
             if e.error_code == "InvalidGroup.NotFound":
                 return
