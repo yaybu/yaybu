@@ -61,7 +61,7 @@ class DBSecurityGroup(BotoResource):
         description = self.params.description.as_string(default=name)
         with self.root.ui.throbber("Creating DBSecurityGroup '%s'" % name):
             return self.connection.create_dbsecurity_group(name, description)
-        
+    
     def update(self, existing):
         name = self.params.name.as_string()
         description = self.params.description.as_string(default=name)
