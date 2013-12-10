@@ -18,7 +18,9 @@ from yaybu.base import GraphExternalAction
 
 class BotoResource(GraphExternalAction):
 
+    default_region = 'eu-west-1'
+
     @property
     def connection(self):
         # FIXME: This will read the region from self.params eventually
-        return self.module.connect_to_region('eu-west-1')
+        return self.module.connect_to_region(self.default_region)
