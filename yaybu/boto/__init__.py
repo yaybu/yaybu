@@ -14,7 +14,7 @@
 
 from .ec2 import EC2SecurityGroup
 from .elasticache import CacheSecurityGroup, CacheCluster
-from .iam import IAMRole
+from .iam import IAMInstanceProfile, IAMRole
 from .rds import DBSecurityGroup, DBInstance
 
 
@@ -24,5 +24,6 @@ AWS = {
     "DBInstance": DBInstance,
     "DBSecurityGroup": DBSecurityGroup,
     "EC2SecurityGroup": EC2SecurityGroup,
+    "IAMInstanceProfile": IAMInstanceProfile,
     "IAMRole": IAMRole,
 }

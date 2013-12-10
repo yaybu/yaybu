@@ -86,3 +86,60 @@ class IAMRole(BotoResource):
 
         with self.root.ui.throbber("Deleting IAMRole '%s'" % name):
             self.connection.delete_role(name)
+
+
+class IAMInstanceProfile(BotoResource):
+
+    default_region = 'universal'
+    module = boto.iam
+
+    def create(self):
+        name = self.params.name.as_string()
+        with self.root.ui.throbber("Creating IAMInstanceProfile '%s'" % name):
+            if not self.root.simulate:
+                return self.connection.create_instance_profile(
+                    name,
+                )['create_instance_profile_response']['create_instance_profile_result']['instance_profile']
+
+    def apply(self):
+        if self.root.readonly:
+            return
+
+        name = self.params.name.as_string()
+        changed = False
+
+        profiles = [p for p in self.connection.list_instance_profiles()['list_instance_profiles_response']['list_instance_profiles_result']['instance_profiles'] if p['instance_profile_name'] == name]
+        if not profiles:
+            profile = self.create()
+            changed = True
+        else:
+            profile = profiles[0]
+
+        existing_roles = set(r['role_name'] for r in profile['roles'].values())
+        try:
+            new_roles = set(self.params.roles.as_list())
+        except errors.NoMatching:
+            new_roles = set()
+
+        for role in (existing_roles - new_roles):
+            with self.root.ui.throbber("Removing role '%s'" % role):
+                self.connection.remove_role_from_instance_profile(name, role)
+                changed = True
+
+        for role in (new_roles - existing_roles):
+            with self.root.ui.throbber("Adding role '%s'" % role):
+                self.connection.add_role_to_instance_profile(name, role)
+                changed = True
+
+        self.root.changelog.changed = self.root.changelog.changed or changed
+
+        return changed
+
+    def destroy(self):
+        name = self.params.name.as_string()
+        profiles = [p for p in self.connection.list_instance_profiles()['list_instance_profiles_response']['list_instance_profiles_result']['instance_profiles'] if p['instance_profile_name'] == name]
+        if not profiles:
+            return
+
+        with self.root.ui.throbber("Deleting IAMInstanceProfile '%s'" % name):
+            self.connection.delete_instance_profile(name)
