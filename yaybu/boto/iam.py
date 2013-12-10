@@ -17,7 +17,6 @@ from __future__ import absolute_import
 import json
 
 import boto.iam
-from boto.exception import EC2ResponseError
 
 from yay import errors
 from yaybu.boto.base import BotoResource
@@ -34,7 +33,7 @@ class IAMRole(BotoResource):
             if not self.root.simulate:
                 return self.connection.create_role(
                     name
-                    )['create_role_response']['create_role_result']['role']
+                )['create_role_response']['create_role_result']['role']
 
         # A dummy for simulate mode
         return {'list_roles_response': {'list_roles_result': {'roles': [{'role_name': name}]}}}
