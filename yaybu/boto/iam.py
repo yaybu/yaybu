@@ -116,8 +116,13 @@ class IAMInstanceProfile(BotoResource):
             profile = profiles[0]
 
         existing_roles = set(r['role_name'] for r in profile['roles'].values())
+        new_roles = set()
         try:
-            new_roles = set(self.params.roles.as_list())
+            for role in self.params.roles.get_iterable():
+                try:
+                    new_roles.add(role.as_string())
+                except errors.TypeError:
+                    new_roles.add(role.get_key('name').as_string())
         except errors.NoMatching:
             new_roles = set()
 
@@ -140,6 +145,10 @@ class IAMInstanceProfile(BotoResource):
         profiles = [p for p in self.connection.list_instance_profiles()['list_instance_profiles_response']['list_instance_profiles_result']['instance_profiles'] if p['instance_profile_name'] == name]
         if not profiles:
             return
+
+        for role in profiles[0]['roles'].values():
+            with self.root.ui.throbber("Removing role '%s'" % role['role_name']):
+                self.connection.remove_role_from_instance_profile(name, role['role_name'])
 
         with self.root.ui.throbber("Deleting IAMInstanceProfile '%s'" % name):
             self.connection.delete_instance_profile(name)

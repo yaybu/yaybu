@@ -330,9 +330,10 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
+
         with graph.ui:
             graph.resolve()
-            for actor in graph.actors:
+            for actor in reversed(graph.actors):
                 actor.destroy()
 
         return 0
