@@ -137,11 +137,18 @@ class DBInstance(BotoResource):
 
     def create(self):
         name = self.params.name.as_string()
-        instance = self.connection.create_dbinstance(
-            name, 5, 'db.t1.micro', 'root', 'bototestpw')
+        with self.root.ui.throbber("Creating DBInstance '%s'" % name):
+            instance = self.connection.create_dbinstance(
+                name, 5, 'db.t1.micro', 'root', 'bototestpw')
         return instance
 
+    def update(self, db):
+        pass
+
     def apply(self):
+        if self.root.readonly:
+            return
+
         name = self.params.name.as_string()
 
         try:
@@ -156,10 +163,24 @@ class DBInstance(BotoResource):
             changed = self.update(instance)
 
         if instance.status != 'available':
-            # FIXME: add throbber
-            while instance.status != 'available':
-                time.sleep(1)
-                instances = self.connection.get_all_dbinstances(name)
-                instance = instances[0]
+            with self.root.ui.throbber("Waiting for DBInstance '%s'" % name) as throbber:
+                while instance.status != 'available':
+                    throbber.throb()
+                    time.sleep(1)
+                    instances = self.connection.get_all_dbinstances(name)
+                    instance = instances[0]
 
         return changed
+
+    def destroy(self):
+        name = self.params.name.as_string()
+
+        try:
+            self.connection.get_all_dbinstances(name)
+        except BotoServerError as e:
+            if e.status == 404:
+                return
+            raise
+
+        with self.root.ui.throbber("Destroying DBInstance '%s'" % name):
+            self.connection.delete_dbinstance(name, skip_final_snapshot=True)
