@@ -137,38 +137,58 @@ class CacheCluster(BotoResource):
     module = boto.elasticache
 
     def create(self):
+        name = self.parms.name.as_string()
         # FIXME: Actually get theses settings from self.params
-        response = self.connection.create_cache_cluster(
-            cache_cluster_id=id,
-            num_cache_node=1,
-            cache_node_type='cache.t1.micro',
-            engine='redis',
-            port=6379,
-            cache_security_group_names=[],
-        )
-        return response['CreateCacheClusterResponse']['CreateCacheClusterResult']['CacheCluster']
+        with self.root.ui.throbber("Creating CacheCluster '%s'" % name):
+            response = self.connection.create_cache_cluster(
+                cache_cluster_id=name,
+                num_cache_nodes=1,
+                cache_node_type='cache.t1.micro',
+                engine='redis',
+                port=6379,
+                cache_security_group_names=[],
+            )
+            return response['CreateCacheClusterResponse']['CreateCacheClusterResult']['CacheCluster']
 
     def update(self, existing):
         # FIXME: Update cache cluster settings here
         pass
 
     def apply(self):
+        if self.root.readonly:
+            return
+
+        name = self.params.name.as_string()
+
         try:
-            response = self.connection.describe_cache_clusters(cache_cluster_id=id, show_cache_node_info=True)
-            result = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters'][0]
+            response = self.connection.describe_cache_clusters(cache_cluster_id=name, show_cache_node_info=True)
+            cluster = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters'][0]
         except BotoServerError as e:
             if e.status != 404:
                 raise
-            self.create()
+            cluster = self.create()
         else:
-            self.update(result)
+            self.update(cluster)
 
-        if result['CacheClusterStatus'] != 'available':
+        if cluster['CacheClusterStatus'] != 'available':
             with self.root.ui.throbber("Waiting for CacheCluster to be in state 'available'") as throbber:
-                while result['CacheClusterStatus'] != 'available':
-                    response = self.connection.describe_cache_clusters(cache_cluster_id=id, show_cache_node_info=True)
-                    result = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters'][0]
+                while cluster['CacheClusterStatus'] != 'available':
+                    response = self.connection.describe_cache_clusters(cache_cluster_id=name, show_cache_node_info=True)
+                    cluster = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters'][0]
                     time.sleep(1)
                     throbber.throb()
 
         # FIXME: Extract Endpoint and other outputs and place in graph
+
+    def destroy(self):
+        name = self.params.name.as_string()
+
+        try:
+            self.connection.describe_cache_clusters(cache_cluster_id=name, show_cache_node_info=False)
+        except BotoServerError as e:
+            if e.status == 404:
+                return
+            raise
+
+        with self.root.ui.throbber("Deleting CacheCluster '%s'" % name):
+            self.connection.delete_cache_cluster(name)
