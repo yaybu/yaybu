@@ -15,3 +15,4 @@ Contents:
    part3
    part4
    part5
+   part6
