@@ -119,7 +119,7 @@ parameter::
         server:
             fqdn: example.com
             port: 22
-            username: root
+            user: root
             password: penguin55
             private_key: path/to/id_rsa
 

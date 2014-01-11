@@ -16,7 +16,7 @@ parameter::
         server:
             fqdn: example.com
             port: 22
-            username: root
+            user: root
             password: penguin55
             private_key: path/to/id_rsa
 
@@ -54,7 +54,7 @@ You can pass the following settings to the ``server`` argument:
     A fully qualified domain name to connect to (via SSH). An IP can also be used if required.
 ``port``
     The port to connect to. This is optional, and port 22 will be used if not provided.
-``username``
+``user``
     The ssh username to login as. If this isn't root then Yaybu will attempt to use sudo when it requires root access to perform a task.
 ``password``
     The ssh password to login with.
