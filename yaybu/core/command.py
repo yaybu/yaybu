@@ -382,12 +382,13 @@ class YaybuCmd(OptionParsingCmd):
         usage: run
         Automatically update resources declared in Yaybufile as external events occur
         """
-        graph = self._get_graph(opts, args)
-        graph.start_listening()
+        #graph = self._get_graph(opts, args)
+        #graph.start_listening()
         # FIXME: This API doesn't exist - we'll need to collect any greenlets if
         # we want to block on them with gevent.joinall..
-        import gevent
-        gevent.run()
+        #import gevent
+        #gevent.run()
+        pass
 
     def opts_shell(self, parser):
         parser.add_option("-c", "--command", default=None, action="store")
