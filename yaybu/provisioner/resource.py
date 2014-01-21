@@ -20,6 +20,7 @@ from yaybu.util.backports import OrderedDict
 
 from yay import errors
 from yay.ast import bind, PythonicWrapper
+from yay.config import Config
 from yay.errors import LanguageError
 
 
@@ -267,8 +268,9 @@ class ResourceBundle(OrderedDict):
     @classmethod
     def create_from_list(cls, specification):
         """ Given a list of types and parameters, build a resource bundle """
-        nodes = bind(specification)
-        return cls.create_from_yay_expression(nodes)
+        c = Config()
+        c.add({"resources": specification})
+        return cls.create_from_yay_expression(c.resources)
 
     @classmethod
     def create_from_yay_expression(cls, expression, verbose_errors=False):
