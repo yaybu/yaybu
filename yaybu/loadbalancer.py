@@ -119,8 +119,6 @@ class LoadBalancer(base.GraphExternalAction):
 
     extra_drivers = {}
 
-    keys = []
-
     @property
     @memoized
     def state(self):

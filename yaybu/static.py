@@ -43,7 +43,6 @@ class StaticContainer(base.GraphExternalAction):
     """
 
     extra_drivers = {}
-    keys = []
 
     def _get_source_container(self):
         try:

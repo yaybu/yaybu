@@ -170,8 +170,6 @@ class Zone(base.GraphExternalAction):
         'MINIDNS': MiniDNSDriver,
     }
 
-    keys = []
-
     @property
     @memoized
     def driver(self):
