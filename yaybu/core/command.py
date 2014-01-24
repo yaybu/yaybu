@@ -20,8 +20,6 @@ import optparse
 import logging
 import pprint
 
-from gevent.hub import LoopExit
-
 import yay
 import yay.errors
 from yaybu import error
@@ -300,19 +298,13 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
-        try:
-            graph.resolve()
-        except LoopExit:
-            pass
+        graph.resolve()
 
         for actor in graph.actors:
             actor.test()
 
-        try:
-            graph = self._get_graph(opts, args)
-            graph.resolve()
-        except LoopExit:
-            pass
+        graph = self._get_graph(opts, args)
+        graph.resolve()
 
         if not graph.changelog.changed:
             raise error.NothingChanged("No changes were required")
