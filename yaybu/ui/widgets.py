@@ -13,7 +13,11 @@
 # limitations under the License.
 
 from __future__ import print_function
+import datetime
+import itertools
 import sys
+
+from gevent import Greenlet, sleep
 
 from yaybu.ui.console import get_console_width
 
@@ -24,9 +28,6 @@ class Section(object):
         self.ui = ui
         self.name = name
         self.has_output = False
-
-    def __enter__(self):
-        return self
 
     def _maybe_print_header(self):
         if self.has_output:
@@ -53,7 +54,7 @@ class Section(object):
 
     def print(self, msg):
         self._maybe_print_header()
-        self.ui.print("| %s" % msg)
+        self.ui.ui.print("| %s" % msg)
 
     def info(self, msg, *args):
         self.print(msg)
@@ -67,80 +68,52 @@ class Section(object):
     def error(self, msg, *args):
         self.print(msg)
 
-    def __exit__(self, type_, value, tb):
-        if self.has_output:
-            self.ui.print("\\" + "-" * (self.ui.columns - 1))
-
-
-class Progress(object):
-
-    def __init__(self, ui, upperbound):
-        self.ui = ui
-        self.upperbound = upperbound
-        self.pos = 0
-
     def __enter__(self):
-        self.ui._progress.insert(0, self)
         return self
 
-    def progress(self, progress):
-        scale = float(self.ui.columns - 2) / self.upperbound
-        pos = int(min(progress * scale, self.ui.columns - 2))
-        if pos != self.pos:
-            self.pos = pos
-            self.draw()
-
-    def draw(self):
-        self.ui._clear()
-        self.ui.stdout.write(
-            "[%s%s]" % ("=" * self.pos, " " * ((self.ui.columns - 2) - self.pos)))
-        self.ui.stdout.flush()
-
     def __exit__(self, type_, value, tb):
-        # self.progress(self.upperbound)
-        self.ui._progress.remove(self)
-        self.ui.print("")
+        if self.has_output:
+            self.ui.ui.print("\\" + "-" * (self.ui.columns - 1))
 
 
 class Throbber(object):
 
-    glyphs = {
-        0: "\\",
-        1: "-",
-        2: "/",
-    }
-
     def __init__(self, ui, message):
         self.ui = ui
         self.message = message
-        self.state = -1
+        self.started = False
+        self.finished = False
+        self.upper = 0
+        self.current = 0
 
-    def __enter__(self):
-        self.ui._progress.insert(0, self)
-        self.draw()
-        return self
+    def set_upper(self, upper):
+        self.upper = upper
 
-    def print(self, msg):
-        self.ui.print(msg)
-        self.throb()
+    def set_current(self, current):
+        self.current = current
 
     def throb(self):
-        self.state = (self.state + 1) % len(self.glyphs)
-        self.draw()
+        pass
 
-    def draw(self):
-        self.ui._clear()
-        self.ui.stdout.write("[%s] %s" %
-                             (self.glyphs.get(self.state, " "), self.message))
-        self.ui.stdout.flush()
+    def section(self, name):
+        return Section(self, name)
+
+    def text(self):
+        return self.message
+
+    def status(self):
+        if self.upper:
+            return "%s%%" % ((float(self.current)/float(self.upper)) * 100, )
+
+    def __enter__(self):
+        self.ui._progress.append(self)
+        self.started_time = datetime.datetime.now()
+        return self
 
     def __exit__(self, type_, value, tb):
-        self.ui._progress.remove(self)
-        if tb:
-            char = " "
-        else:
-            char = "*"
-        self.ui.print("[%s] %s" % (char, self.message))
+        self.finished = True
+        self.finished_time = datetime.datetime.now()
+        self.duration = self.finished_time - self.started_time
 
 
 class TextFactory(object):
@@ -150,26 +123,76 @@ class TextFactory(object):
     def __init__(self, stdout=None):
         self.stdout = stdout or sys.stdout
         self._progress = []
+        self.greenlet = None
 
     @property
     def columns(self):
         return get_console_width()
 
-    def section(self, name):
-        return Section(self, name)
-
-    def progress(self, upper):
-        return Progress(self, upper)
-
     def throbber(self, message):
         return Throbber(self, message)
 
+    def start(self):
+        self.greenlet = Greenlet.spawn(self.run)
+
+    def __enter__(self):
+        if self.greenlet:
+            raise errors.ProgrammingError("UI is already running and can't be started again")
+        self.greenlet = Greenlet.spawn(self.run)
+        return self
+
+    def __exit__(self, a, b, c):
+        self.greenlet = None
+
+    def _clear(self):
+        self.stdout.write('\r' + ' ' * self.columns + '\r')
+
+    def _emit_started_and_finished(self):
+        need_starting = [p for p in self._progress if not p.started and not p.finished]
+        if len(need_starting) > 1:
+            for p in need_starting:
+                self.print("[*] Started '%s'" % p.text())
+                p.started = True
+
+        need_finishing = [p for p in self._progress if p.finished]
+        for p in need_finishing:
+            if not p.started:
+                self.print("[*] %s (took %s)" % (p.text(), p.duration))
+            else:
+                self.print("[*] Finished '%s' (took %s)" % (p.text(), p.duration))
+            self._progress.remove(p)
+
+    def _emit_waiting(self, glyphs):
+        num_tasks = len(self._progress)
+        if num_tasks:
+            p = self._progress[0]
+            text = p.text()
+            status = p.status()
+            if status:
+                text += " (%s)" % status
+
+            if num_tasks == 1:
+                self.status("[%s] Waiting for %s" % (glyphs.next(), text))
+            elif num_tasks == 2:
+                self.status("[%s] Waiting for %s and 1 other" % (glyphs.next(), text))
+            elif num_tasks > 2:
+                self.status("[%s] Waiting for %s and %d others" % (glyphs.next(), text, num_tasks-1))
+
+    def run(self):
+        glyphs = itertools.cycle(["\\", "-", "/"])
+        while self.greenlet:
+            self._clear()
+            self._emit_started_and_finished()
+            self._emit_waiting(glyphs)
+            sleep(0.25)
+
+    def status(self, text):
+        self.stdout.write(text)
+        self.stdout.flush()
+
     def print(self, name):
-        self._clear()
         self.stdout.write(name + "\n")
         self.stdout.flush()
-        if self._progress:
-            self._progress[0].draw()
 
     def info(self, msg, *args):
         self.print(msg)
@@ -182,6 +205,3 @@ class TextFactory(object):
 
     def error(self, msg, *args):
         self.print(msg)
-
-    def _clear(self):
-        self.stdout.write('\r' + ' ' * self.columns + '\r')

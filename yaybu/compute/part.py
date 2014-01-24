@@ -242,7 +242,7 @@ class Compute(base.GraphExternalAction):
         self.members.set('fqdn', 'missing-host')
 
     def test(self):
-        with self.root.ui.throbber(_("Testing compute credentials/connectivity")):
+        with self.root.ui.throbber(_("Check compute credentials/connectivity")):
             try:
                 self.driver.list_nodes()
             except InvalidCredsError:
@@ -276,7 +276,7 @@ class Compute(base.GraphExternalAction):
         for tries in range(10):
             logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
 
-            with self.root.ui.throbber(_("Creating node '%r'...") % (self.full_name, )) as throbber:
+            with self.root.ui.throbber(_("Create node '%r'") % (self.full_name, )) as throbber:
                 kwargs = args_from_expression(self.driver.create_node, self.params, ignore=(
                     "name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
 
@@ -301,7 +301,7 @@ class Compute(base.GraphExternalAction):
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
 
             try:
-                with self.root.ui.throbber(_("Waiting for node '%r' to start...") % self.full_name) as throbber:
+                with self.root.ui.throbber(_("Wait for node '%r' to start") % self.full_name) as throbber:
                     try:
                         import time
                         old_sleep = time.sleep
@@ -347,5 +347,5 @@ class Compute(base.GraphExternalAction):
             if not self.libcloud_node:
                 return
 
-        with self.root.ui.throbber(_("Destroying node '%r'") % self.full_name):
+        with self.root.ui.throbber(_("Destroy node '%r'") % self.full_name):
             self.libcloud_node.destroy()

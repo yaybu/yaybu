@@ -80,25 +80,6 @@ class TextRenderer(ChangeRenderer):
     renderer_type = "text"
 
 
-class _IckyNastyStub(object):
-
-    # This is a temporary class whilst we refactor output to go through
-    # yaybu.core.ui
-
-    def __init__(self, changelog, obj):
-        self.changelog = changelog
-        self.obj = obj
-
-    def __enter__(self):
-        obj = self.obj.__enter__()
-        self.changelog.current_resource = obj
-        return obj
-
-    def __exit__(self, a, b, c):
-        self.changelog.current_resource = None
-        return self.obj.__exit__(a, b, c)
-
-
 class ChangeLog:
 
     """ Orchestrate writing output to a changelog. """
@@ -109,9 +90,6 @@ class ChangeLog:
         self.ctx = context
         self.verbose = self.ctx.verbose
         self.ui = context.root.ui
-
-    def resource(self, resource):
-        return _IckyNastyStub(self, self.ctx.root.ui.section(resource.id))
 
     def apply(self, change, ctx=None):
         """ Execute the change, passing it the appropriate renderer to use. """

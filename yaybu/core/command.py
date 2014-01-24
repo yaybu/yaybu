@@ -258,7 +258,9 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
-        resolved = graph.resolve()
+        with graph.ui:
+            resolved = graph.resolve()
+
         try:
             import yaml
             print yaml.safe_dump(resolved, default_flow_style=False)
@@ -273,10 +275,10 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
-        graph.resolve()
-
-        for actor in graph.actors:
-            actor.test()
+        with graph.ui:
+            graph.resolve()
+            for actor in graph.actors:
+                actor.test()
 
         return 0
 
@@ -298,13 +300,14 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
-        graph.resolve()
-
-        for actor in graph.actors:
-            actor.test()
+        with graph.ui:
+            graph.resolve()
+            for actor in graph.actors:
+                actor.test()
 
         graph = self._get_graph(opts, args)
-        graph.resolve()
+        with graph.ui:
+            graph.resolve()
 
         if not graph.changelog.changed:
             raise error.NothingChanged("No changes were required")

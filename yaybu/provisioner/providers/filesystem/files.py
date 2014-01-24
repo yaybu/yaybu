@@ -67,10 +67,10 @@ class File(provider.Provider):
         # Validate that the file exists and any template values can be filled
         # in
         if self.resource.template.as_string():
-            with context.root.ui.throbber("Testing '%s' exists and is a valid template..." % self.resource.template.as_string()):
+            with context.root.ui.throbber("Check '%s' exists and is a valid template" % self.resource.template.as_string()):
                 self.get_file_contents(context)
         elif self.resource.static.as_string():
-            with context.root.ui.throbber("Testing '%s' exists..." % self.resource.static.as_string()):
+            with context.root.ui.throbber("Check '%s' exists" % self.resource.static.as_string()):
                 self.get_file_contents(context)
 
     def apply(self, context, output):

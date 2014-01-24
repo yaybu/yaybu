@@ -229,10 +229,10 @@ class VMWareDriver(NodeDriver):
 
         @rtype: C{bool}
         """
-        with self.yaybu_context.ui.throbber("Starting VM") as t:
+        with self.yaybu_context.ui.throbber("Start VM") as t:
             self._action("start", node.id, "nogui", capture_output=False)
             node.state = NodeState.RUNNING
-        with self.yaybu_context.ui.throbber("Waiting for VM to boot completely") as t:
+        with self.yaybu_context.ui.throbber("Wait for VM to boot completely") as t:
             while not self._decorate_node(node):
                 time.sleep(1)
                 t.throb()
@@ -346,7 +346,7 @@ class VMWareDriver(NodeDriver):
 
     def apply_auth_password(self, vmrun, username, password):
         """ Set the password of the specified username to the provided password """
-        with self.yaybu_context.ui.throbber("Applying new password credentials") as t:
+        with self.yaybu_context.ui.throbber("Apply new password credentials") as t:
             t.throb()
             vmrun("runProgramInGuest", "/usr/bin/sudo", "/bin/bash", "-c",
                   "echo '%s:%s'|/usr/sbin/chpasswd" % (username, password))
@@ -355,7 +355,7 @@ class VMWareDriver(NodeDriver):
         """ Add the provided ssh public key to the specified user's authorised keys """
         # TODO actually find homedir properly
         # TODO find sudo properly
-        with self.yaybu_context.ui.throbber("Applying new SSH credentials") as t:
+        with self.yaybu_context.ui.throbber("Apply new SSH credentials") as t:
             homedir = "/home/%s" % username
             tmpfile = tempfile.NamedTemporaryFile(delete=False)
             tmpfile.write(pubkey)
@@ -443,7 +443,7 @@ class VMWareDriver(NodeDriver):
         hope that they know what the fastest and most efficient way to clone
         an image is. But if that fails we can just copy the entire image
         directory. """
-        with self.yaybu_context.ui.throbber("Cloning template VM"):
+        with self.yaybu_context.ui.throbber("Clone template VM"):
             try:
                 self._action("clone", source, target.vmx)
             except LibcloudError:
@@ -529,7 +529,7 @@ class VMBoxImage:
     def extract(self, destdir, context, metadata):
         """ Extract the compressed image into the destination directory, with
         the specified name. """
-        with context.ui.throbber("Extracting virtual machine") as t:
+        with context.ui.throbber("Extract virtual machine") as t:
             with ZipFile(self.path, "r", zipfile.ZIP_DEFLATED, True) as z:
                 for f in z.namelist():
                     if f == "VM-INFO":
@@ -578,10 +578,8 @@ class RemoteVMBox:
         """
         self.dir = tempfile.mkdtemp(dir=self._tempdir)
         self.image = os.path.join(self.dir, "image")
-        with self.context.ui.throbber("Downloading packed VM"):
-            pass
-        with self.context.ui.progress(100) as p:
-            self.download(self.image, p.progress)
+        with self.context.ui.throbber("Download packed VM") as p:
+            self.download(self.image, p.set_current)
         self.metadata = {
             'url': self.location,
             'created': str(datetime.datetime.now()),

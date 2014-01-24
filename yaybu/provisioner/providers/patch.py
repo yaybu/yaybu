@@ -72,7 +72,7 @@ class Patch(provider.Provider):
     def test(self, context):
         # Validate that the file exists and any template values can be filled
         # in
-        with context.root.ui.throbber("Testing '%s' exists..." % self.resource.patch.as_string()):
+        with context.root.ui.throbber("Check '%s' exists" % self.resource.patch.as_string()):
             self.get_patch(context)
 
     def apply(self, context, output):

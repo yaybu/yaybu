@@ -389,14 +389,15 @@ class ResourceBundle(OrderedDict):
             if hasattr(resource, "_original_hash"):
                 resource._original_hash = resource.hash(ctx)
 
-        with ctx.root.ui.throbber("Applying configuration...") as throbber:
+        with ctx.root.ui.throbber("Apply configuration") as throbber:
+            throbber.set_upper(len(self.values()))
+
             something_changed = False
             for i, resource in enumerate(self.values(), start=1):
-                with ctx.changelog.resource(resource) as output:
+                throbber.set_current(i)
+                with throbber.section(resource) as output:
                     if resource.apply(ctx, output):
                         something_changed = True
-                throbber.message = "Applying configuration... (%s/%s)" % (
-                    i, len(self.values()))
                 throbber.throb()
 
         return something_changed
