@@ -86,7 +86,7 @@ class Heroku(base.GraphExternalAction):
         # half way through set up
         self.apply_collaborators()
 
-        self.root.changelog.changed = changed
+        self.root.changed(changed)
 
     def apply_collaborators(self):
         collaborators = self.app.collaborators if self.app else []

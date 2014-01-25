@@ -49,7 +49,7 @@ class AttributeChanger(changes.Change):
             except KeyError:
                 if not context.simulate:
                     raise error.InvalidUser("User '%s' not found" % self.user)
-                context.changelog.info(
+                renderer.info(
                     "User '%s' not found; assuming this recipe will create it" % self.user)
                 owner = None
 
@@ -64,7 +64,7 @@ class AttributeChanger(changes.Change):
             except KeyError:
                 if not context.simulate:
                     raise error.InvalidGroup("No such group '%s'" % self.group)
-                context.changelog.info(
+                renderer.info(
                     "Group '%s' not found; assuming this recipe will create it" % self.group)  # FIXME
                 group = None
 

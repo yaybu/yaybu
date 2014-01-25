@@ -204,12 +204,11 @@ class Zone(base.GraphExternalAction):
         domain = self.params.domain.as_string().rstrip(".") + "."
         zone = self._get_zone_by_domain(domain)
 
-        zchange = self.root.changelog.apply(
-            ZoneSync(
-                expression=self.params,
-                driver=driver,
-                zone=zone,
-            ))
+        change = ZoneSync(
+            expression=self.params,
+            driver=driver,
+            zone=zone,
+        ).apply(self.root)
 
         if not zone:
             zone = self._get_zone_by_domain(domain)
@@ -217,12 +216,11 @@ class Zone(base.GraphExternalAction):
         if not self.root.simulate and not zone:
             raise errors.Error("Failed to create new zone")
 
-        rchange = self.root.changelog.apply(
-            RecordSync(
-                expression=self.params,
-                driver=driver,
-                zone=zone,
-                purge_remote=not self.params.shared.as_bool(default=True),
-            ))
+        rchange = RecordSync(
+            expression=self.params,
+            driver=driver,
+            zone=zone,
+            purge_remote=not self.params.shared.as_bool(default=True),
+        ).apply(self.root)
 
-        return zchange.changed or rchange.changed
+        self.root.changed(change.changed or rchange.changed)

@@ -158,5 +158,4 @@ class StaticContainer(base.GraphExternalAction):
 
         self._set_manifest(dest, manifest)
 
-        # HACK ALERT
-        self.root.changelog.changed = self.root.changelog.changed or changed
+        self.root.changed(changed)

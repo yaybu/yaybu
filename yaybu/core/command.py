@@ -309,7 +309,7 @@ class YaybuCmd(OptionParsingCmd):
         with graph.ui:
             graph.resolve()
 
-        if not graph.changelog.changed:
+        if not graph._changed:
             raise error.NothingChanged("No changes were required")
 
         return 0

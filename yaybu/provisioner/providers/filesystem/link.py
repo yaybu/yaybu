@@ -65,7 +65,7 @@ class Link(provider.Provider):
             if not context.simulate:
                 raise error.DanglingSymlink(
                     "Destination of symlink %r does not exist" % to)
-            context.changelog.info(
+            output.info(
                 "Destination of sylink %r does not exist" % to)
 
         owner = self._get_owner(context)

@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Isotoma Limited
+# Copyright 2011-2014 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,23 +18,6 @@
 import abc
 
 
-class Change(object):
-
-    """ Base class for changes """
-
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def apply(self, ctx, renderer):
-        """ Apply the specified change. The supplied renderer will be
-        instantiated as below. """
-
-
-class AttributeChange(Change):
-
-    """ A change to one attribute of a file's metadata """
-
-
 class ChangeRendererType(type):
 
     """ Keeps a registry of available renderers by type. The only types
@@ -50,7 +33,7 @@ class ChangeRendererType(type):
         return cls
 
 
-class ChangeRenderer:
+class ChangeRenderer(object):
 
     """ A class that knows how to render a change. """
 
@@ -75,45 +58,29 @@ class ChangeRenderer:
     def debug(self, message, *args):
         self.logger.info(message, *args)
 
+    @classmethod
+    def get(cls, change, logger):
+        renderer_class = ChangeRendererType.renderers.get(
+            (cls.renderer_type, change.__class__), cls)
+        return renderer_class(logger, True)
+
 
 class TextRenderer(ChangeRenderer):
     renderer_type = "text"
 
 
-class ChangeLog:
+class Change(object):
 
-    """ Orchestrate writing output to a changelog. """
+    """ Base class for changes """
 
-    def __init__(self, context):
-        self.changed = False
-        self.current_resource = None
-        self.ctx = context
-        self.verbose = self.ctx.verbose
-        self.ui = context.root.ui
+    __metaclass__ = abc.ABCMeta
 
-    def apply(self, change, ctx=None):
-        """ Execute the change, passing it the appropriate renderer to use. """
-        text_class = ChangeRendererType.renderers.get(
-            ("text", change.__class__), TextRenderer)
-        retval = change.apply(ctx or self.ctx, text_class(self, self.verbose))
-        self.changed = self.changed or change.changed
-        return retval
+    @abc.abstractmethod
+    def apply(self, ctx, renderer=None):
+        """ Apply the specified change. The supplied renderer will be
+        instantiated as below. """
 
-    def info(self, message, *args, **kwargs):
-        if self.current_resource:
-            self.current_resource.info(message, *args)
-        else:
-            self.ui.info(message, *args)
 
-    def notice(self, message, *args, **kwargs):
-        if self.current_resource:
-            self.current_resource.notice(message, *args)
-        else:
-            self.ui.notice(message, *args)
+class AttributeChange(Change):
 
-    def debug(self, message, *args, **kwargs):
-        if self.verbose:
-            self.ui.debug(message, *args, **kwargs)
-
-    def error(self, message, *args):
-        self.ui.error(message, *args)
+    """ A change to one attribute of a file's metadata """

@@ -60,7 +60,7 @@ class MetadataSync(Change):
     def delete(self, uid, record):
         raise NotImplementedError
 
-    def apply(self, ctx, renderer):
+    def apply(self, ctx, renderer=None):
         remote = list(self.get_remote_records())
         remote_lookup = dict(r for r in remote)
 

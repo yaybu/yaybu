@@ -23,7 +23,6 @@ from yaybu.error import ArgParseError
 from yaybu.core.util import memoized
 from yaybu.core.state import StateStorageType, SimulatedStateStorageAdaptor
 from yaybu.ui import TextFactory
-from yaybu import changes
 
 from yaybu.compute import Compute
 from yaybu.provisioner import Provision
@@ -150,7 +149,7 @@ class Config(BaseConfig):
         if os.path.exists(defaults_gpg):
             self.load_uri(defaults_gpg)
 
-        self.changelog = changes.ChangeLog(self)
+        self._changed = False
 
     def setup_openers(self):
         self.add({"yaybu": {"searchpath": self.searchpath or []}})
@@ -228,3 +227,6 @@ class Config(BaseConfig):
             state = SimulatedStateStorageAdaptor(state)
 
         return state
+
+    def changed(self, changed=True):
+        self._changed = self._changed or changed

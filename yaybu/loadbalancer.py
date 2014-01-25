@@ -190,7 +190,6 @@ class LoadBalancer(base.GraphExternalAction):
                 else:
                     lb = None
                 changed = True
-                self.root.changelog.changed = True
 
         else:
             if lb.name != name:
@@ -214,19 +213,17 @@ class LoadBalancer(base.GraphExternalAction):
                             protocol=protocol,
                             algorithm=algorithm,
                         )
-                    self.root.changelog.changed = True
 
-        self.root.changelog.apply(
-            SyncMembers(
-                expression=self.params.members,
-                driver=self.driver,
-                balancer=lb,
-            ))
+        mbchanged = SyncMembers(
+            expression=self.params.members,
+            driver=self.driver,
+            balancer=lb,
+        ).apply(self.root).changed
 
         if lb:
             self.state.update(balancer_id=lb.id)
 
-        return changed
+        self.root.changed(changed or mbchanged)
 
     def destroy(self):
         balancer = self._find_balancer()

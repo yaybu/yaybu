@@ -19,6 +19,7 @@ import sys
 
 from gevent import Greenlet, sleep
 
+from yaybu import error
 from yaybu.ui.console import get_console_width
 
 
@@ -36,15 +37,15 @@ class Section(object):
         header = self.name
 
         rl = len(header)
-        if rl < self.ui.columns:
-            total_minuses = (self.ui.columns - 3) - rl
+        if rl < self.ui.ui.columns:
+            total_minuses = (self.ui.ui.columns - 3) - rl
             minuses = total_minuses / 2
             leftover = total_minuses % 2
         else:
             minuses = 4
             leftover = 0
 
-        self.ui.print("/%s %s %s" % (
+        self.ui.ui.print("/%s %s %s" % (
             "-" * minuses,
             header,
             "-" * (minuses + leftover)
@@ -73,7 +74,7 @@ class Section(object):
 
     def __exit__(self, type_, value, tb):
         if self.has_output:
-            self.ui.ui.print("\\" + "-" * (self.ui.columns - 1))
+            self.ui.ui.print("\\" + "-" * (self.ui.ui.columns - 1))
 
 
 class Throbber(object):
@@ -103,7 +104,7 @@ class Throbber(object):
 
     def status(self):
         if self.upper:
-            return "%s%%" % ((float(self.current)/float(self.upper)) * 100, )
+            return "%s%%" % ((float(self.current) / float(self.upper)) * 100, )
 
     def __enter__(self):
         self.ui._progress.append(self)
@@ -137,7 +138,7 @@ class TextFactory(object):
 
     def __enter__(self):
         if self.greenlet:
-            raise errors.ProgrammingError("UI is already running and can't be started again")
+            raise error.ProgrammingError("UI is already running and can't be started again")
         self.greenlet = Greenlet.spawn(self.run)
         return self
 
@@ -176,7 +177,7 @@ class TextFactory(object):
             elif num_tasks == 2:
                 self.status("[%s] Waiting for %s and 1 other" % (glyphs.next(), text))
             elif num_tasks > 2:
-                self.status("[%s] Waiting for %s and %d others" % (glyphs.next(), text, num_tasks-1))
+                self.status("[%s] Waiting for %s and %d others" % (glyphs.next(), text, num_tasks - 1))
 
     def run(self):
         glyphs = itertools.cycle(["\\", "-", "/"])

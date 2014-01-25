@@ -104,7 +104,7 @@ class RemoveFile(provider.Provider):
             context.change(ShellCommand(["rm", self.resource.name]))
             changed = True
         else:
-            context.changelog.debug(
+            output.debug(
                 "File %s missing already so not removed" % name)
             changed = False
         return changed

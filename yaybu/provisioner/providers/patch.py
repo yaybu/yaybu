@@ -46,7 +46,7 @@ class Patch(provider.Provider):
         # FIXME: Would be good to validate the patch here a bit
         return data, "secret" in patch.labels
 
-    def apply_patch(self, context):
+    def apply_patch(self, context, output):
         patch, sensitive = self.get_patch(context)
 
         cmd = 'patch -t --dry-run -N --silent -r - -o - %s -' % self.resource.source.as_string(
@@ -55,15 +55,15 @@ class Patch(provider.Provider):
             cmd, stdin=patch)
 
         if returncode != 0:
-            context.changelog.info("Patch does not apply cleanly")
-            context.changelog.info(
+            output.info("Patch does not apply cleanly")
+            output.info(
                 "Patch file used was %s" % self.resource.patch.as_string())
-            context.changelog.info(
+            output.info(
                 "File to patch was %s" % self.resource.source.as_string())
 
-            context.changelog.info("")
-            context.changelog.info("Reported error was:")
-            map(context.changelog.info, stderr.split("\n"))
+            output.info("")
+            output.info("Reported error was:")
+            map(output.info, stderr.split("\n"))
 
             raise error.CommandError("Unable to apply patch")
 
@@ -80,7 +80,7 @@ class Patch(provider.Provider):
 
         self.check_path(context, os.path.dirname(name), context.simulate)
 
-        contents, sensitive = self.apply_patch(context)
+        contents, sensitive = self.apply_patch(context, output)
 
         template_args = self.resource.template_args.resolve()
         if template_args:

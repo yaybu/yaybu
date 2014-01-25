@@ -143,7 +143,7 @@ def _handle_slash_r(line):
 
 class ShellTextRenderer(changes.TextRenderer):
 
-    """ Render a ShellCommand on a textual changelog. """
+    """ Render a ShellCommand. """
 
     renderer_for = ShellCommand
 

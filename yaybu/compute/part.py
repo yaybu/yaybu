@@ -288,7 +288,7 @@ class Compute(base.GraphExternalAction):
 
                 if self.root.simulate:
                     self._fake_node_info()
-                    self.root.changelog.changed = True
+                    self.root.changed()
                     return
 
                 node = self.driver.create_node(
@@ -318,7 +318,7 @@ class Compute(base.GraphExternalAction):
                 logger.debug("Node %r running" % (self.full_name, ))
                 # self.their_name = self.libcloud_node.name
                 self._update_node_info()
-                self.root.changelog.changed = True
+                self.root.changed()
                 return
 
             except LibcloudError as e:
