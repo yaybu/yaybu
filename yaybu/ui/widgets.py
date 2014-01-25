@@ -108,7 +108,7 @@ class Task(object):
             return "%s%%" % ((float(self.current) / float(self.upper)) * 100, )
 
     def __enter__(self):
-        self.ui._progress.append(self)
+        self.ui.tasks.append(self)
         self.started_time = datetime.datetime.now()
         return self
 
@@ -120,11 +120,9 @@ class Task(object):
 
 class TextFactory(object):
 
-    _progress = None
-
     def __init__(self, stdout=None):
         self.stdout = stdout or sys.stdout
-        self._progress = []
+        self.tasks = []
         self.greenlet = None
 
     @property
@@ -150,24 +148,24 @@ class TextFactory(object):
         self.stdout.write('\r' + ' ' * self.columns + '\r')
 
     def _emit_started_and_finished(self):
-        need_starting = [p for p in self._progress if not p.started and not p.finished]
+        need_starting = [p for p in self.tasks if not p.started and not p.finished]
         if len(need_starting) > 1:
             for p in need_starting:
                 self.print("[*] Started '%s'" % p.text())
                 p.started = True
 
-        need_finishing = [p for p in self._progress if p.finished]
+        need_finishing = [p for p in self.tasks if p.finished]
         for p in need_finishing:
             if not p.started:
                 self.print("[*] %s (took %s)" % (p.text(), p.duration))
             else:
                 self.print("[*] Finished '%s' (took %s)" % (p.text(), p.duration))
-            self._progress.remove(p)
+            self.tasks.remove(p)
 
     def _emit_waiting(self, glyphs):
-        num_tasks = len(self._progress)
+        num_tasks = len(self.tasks)
         if num_tasks:
-            p = self._progress[0]
+            p = self.tasks[0]
             text = p.text()
             status = p.status()
             if status:
