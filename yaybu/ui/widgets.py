@@ -157,9 +157,9 @@ class TextFactory(object):
         need_finishing = [p for p in self.tasks if p.finished]
         for p in need_finishing:
             if not p.started:
-                self.print("[*] %s (took %s)" % (p.text(), p.duration))
+                self.print("[*] %s" % (p.text(), ))
             else:
-                self.print("[*] Finished '%s' (took %s)" % (p.text(), p.duration))
+                self.print("[*] Finished '%s'" % (p.text(), ))
             self.tasks.remove(p)
 
     def _emit_waiting(self, glyphs):
