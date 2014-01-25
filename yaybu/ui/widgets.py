@@ -25,8 +25,8 @@ from yaybu.ui.console import get_console_width
 
 class Section(object):
 
-    def __init__(self, throbber, name):
-        self.throbber = throbber
+    def __init__(self, task, name):
+        self.task = task
         self.name = name
         self.output = []
         self.finished = False
@@ -40,8 +40,8 @@ class Section(object):
 
         rl = len(header)
 
-        if rl < self.throbber.ui.columns:
-            total_minuses = (self.throbber.ui.columns - 3) - rl
+        if rl < self.task.ui.columns:
+            total_minuses = (self.task.ui.columns - 3) - rl
             minuses = total_minuses / 2
             leftover = total_minuses % 2
         else:
@@ -71,16 +71,16 @@ class Section(object):
         self.print(msg)
 
     def __enter__(self):
-        self.throbber.sections.append(self)
+        self.task.sections.append(self)
         return self
 
     def __exit__(self, type_, value, tb):
         if self.output:
-            self.output.append("\\" + "-" * (self.throbber.ui.columns - 1))
+            self.output.append("\\" + "-" * (self.task.ui.columns - 1))
         self.finished = True
 
 
-class Throbber(object):
+class Task(object):
 
     def __init__(self, ui, message):
         self.ui = ui
@@ -132,7 +132,7 @@ class TextFactory(object):
         return get_console_width()
 
     def throbber(self, message):
-        return Throbber(self, message)
+        return Task(self, message)
 
     def start(self):
         self.greenlet = Greenlet.spawn(self.run)
