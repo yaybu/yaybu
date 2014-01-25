@@ -97,9 +97,6 @@ class Throbber(object):
     def set_current(self, current):
         self.current = current
 
-    def throb(self):
-        pass
-
     def section(self, name):
         return Section(self, name)
 
