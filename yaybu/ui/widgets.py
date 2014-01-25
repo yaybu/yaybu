@@ -25,37 +25,38 @@ from yaybu.ui.console import get_console_width
 
 class Section(object):
 
-    def __init__(self, ui, name):
-        self.ui = ui
+    def __init__(self, throbber, name):
+        self.throbber = throbber
         self.name = name
-        self.has_output = False
+        self.output = []
+        self.finished = False
 
     def _maybe_print_header(self):
-        if self.has_output:
+        # FIXME: If you resize the console whilst 2 deployments are in progress the 2nd set of Section objects will have the wrong Section containers!
+        if self.output:
             return
 
         header = self.name
 
         rl = len(header)
-        if rl < self.ui.ui.columns:
-            total_minuses = (self.ui.ui.columns - 3) - rl
+        
+        if rl < self.throbber.ui.columns:
+            total_minuses = (self.throbber.ui.columns - 3) - rl
             minuses = total_minuses / 2
             leftover = total_minuses % 2
         else:
             minuses = 4
             leftover = 0
 
-        self.ui.ui.print("/%s %s %s" % (
+        self.output.append("/%s %s %s" % (
             "-" * minuses,
             header,
             "-" * (minuses + leftover)
         ))
 
-        self.has_output = True
-
     def print(self, msg):
         self._maybe_print_header()
-        self.ui.ui.print("| %s" % msg)
+        self.output.append("| %s" % msg)
 
     def info(self, msg, *args):
         self.print(msg)
@@ -70,11 +71,13 @@ class Section(object):
         self.print(msg)
 
     def __enter__(self):
+        self.throbber.sections.append(self)
         return self
 
     def __exit__(self, type_, value, tb):
-        if self.has_output:
-            self.ui.ui.print("\\" + "-" * (self.ui.ui.columns - 1))
+        if self.output:
+            self.output.append("\\" + "-" * (self.throbber.ui.columns - 1))
+        self.finished = True
 
 
 class Throbber(object):
@@ -86,6 +89,7 @@ class Throbber(object):
         self.finished = False
         self.upper = 0
         self.current = 0
+        self.sections = []
 
     def set_upper(self, upper):
         self.upper = upper
