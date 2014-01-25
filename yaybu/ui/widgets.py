@@ -132,9 +132,6 @@ class TextFactory(object):
     def throbber(self, message):
         return Task(self, message)
 
-    def start(self):
-        self.greenlet = Greenlet.spawn(self.run)
-
     def __enter__(self):
         if self.greenlet:
             raise error.ProgrammingError("UI is already running and can't be started again")
@@ -142,6 +139,7 @@ class TextFactory(object):
         return self
 
     def __exit__(self, a, b, c):
+        self.greenlet.kill()
         self.greenlet = None
 
     def _clear(self):
@@ -178,13 +176,19 @@ class TextFactory(object):
             elif num_tasks > 2:
                 self.status("[%s] Waiting for %s and %d others" % (glyphs.next(), text, num_tasks - 1))
 
+    def _tick(self, glyphs):
+        self._clear()
+        self._emit_started_and_finished()
+        self._emit_waiting(glyphs)
+
     def run(self):
         glyphs = itertools.cycle(["\\", "-", "/"])
-        while self.greenlet:
-            self._clear()
-            self._emit_started_and_finished()
-            self._emit_waiting(glyphs)
-            sleep(0.25)
+        try:
+            while self.greenlet:
+                self._tick(glyphs)
+                sleep(0.25)
+        finally:
+            self._tick(glyphs)
 
     def status(self, text):
         self.stdout.write(text)
