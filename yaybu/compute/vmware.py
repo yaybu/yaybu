@@ -229,13 +229,12 @@ class VMWareDriver(NodeDriver):
 
         @rtype: C{bool}
         """
-        with self.yaybu_context.ui.throbber("Start VM") as t:
+        with self.yaybu_context.ui.throbber("Start VM"):
             self._action("start", node.id, "nogui", capture_output=False)
             node.state = NodeState.RUNNING
-        with self.yaybu_context.ui.throbber("Wait for VM to boot completely") as t:
+        with self.yaybu_context.ui.throbber("Wait for VM to boot completely"):
             while not self._decorate_node(node):
                 time.sleep(1)
-                t.throb()
 
     def _find_vmrun(self):
         known_locations = [
@@ -346,8 +345,7 @@ class VMWareDriver(NodeDriver):
 
     def apply_auth_password(self, vmrun, username, password):
         """ Set the password of the specified username to the provided password """
-        with self.yaybu_context.ui.throbber("Apply new password credentials") as t:
-            t.throb()
+        with self.yaybu_context.ui.throbber("Apply new password credentials"):
             vmrun("runProgramInGuest", "/usr/bin/sudo", "/bin/bash", "-c",
                   "echo '%s:%s'|/usr/sbin/chpasswd" % (username, password))
 
@@ -355,26 +353,21 @@ class VMWareDriver(NodeDriver):
         """ Add the provided ssh public key to the specified user's authorised keys """
         # TODO actually find homedir properly
         # TODO find sudo properly
-        with self.yaybu_context.ui.throbber("Apply new SSH credentials") as t:
+        with self.yaybu_context.ui.throbber("Apply new SSH credentials"):
             homedir = "/home/%s" % username
             tmpfile = tempfile.NamedTemporaryFile(delete=False)
             tmpfile.write(pubkey)
             tmpfile.close()
-            t.throb()
             try:
                 vmrun("createDirectoryInGuest", "%s/.ssh" % homedir)
             except FileAlreadyExistsError:
                 pass
-            t.throb()
             vmrun("copyFileFromHostToGuest", tmpfile.name,
                   "%s/.ssh/authorized_keys" % homedir)
-            t.throb()
             vmrun("runProgramInGuest", "/bin/chmod",
                   "0700", "%s/.ssh" % homedir)
-            t.throb()
             vmrun("runProgramInGuest", "/bin/chmod",
                   "0600", "%s/.ssh/authorized_keys" % homedir)
-            t.throb()
             os.unlink(tmpfile.name)
 
     def apply_auth(self, target, auth):
@@ -529,7 +522,7 @@ class VMBoxImage:
     def extract(self, destdir, context, metadata):
         """ Extract the compressed image into the destination directory, with
         the specified name. """
-        with context.ui.throbber("Extract virtual machine") as t:
+        with context.ui.throbber("Extract virtual machine"):
             with ZipFile(self.path, "r", zipfile.ZIP_DEFLATED, True) as z:
                 for f in z.namelist():
                     if f == "VM-INFO":
@@ -537,7 +530,6 @@ class VMBoxImage:
                     else:
                         pathname = os.path.join(destdir, f)
                         self._zcopy(pathname, z, f)
-                    t.throb()
             self._store_metadata(destdir, metadata)
 
     def compress(self, srcdir, username, password):

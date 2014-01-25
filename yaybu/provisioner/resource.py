@@ -394,12 +394,11 @@ class ResourceBundle(OrderedDict):
 
             something_changed = False
             for i, resource in enumerate(self.values(), start=1):
-                throbber.set_current(i)
                 with throbber.section(resource.id) as output:
                     ctx.current_output = output
                     if resource.apply(ctx, output):
                         something_changed = True
                     ctx.current_output = None
-                throbber.throb()
+                throbber.set_current(i)
 
         return something_changed

@@ -276,7 +276,7 @@ class Compute(base.GraphExternalAction):
         for tries in range(10):
             logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
 
-            with self.root.ui.throbber(_("Create node '%r'") % (self.full_name, )) as throbber:
+            with self.root.ui.throbber(_("Create node '%r'") % (self.full_name, )):
                 kwargs = args_from_expression(self.driver.create_node, self.params, ignore=(
                     "name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
 
@@ -301,19 +301,9 @@ class Compute(base.GraphExternalAction):
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
 
             try:
-                with self.root.ui.throbber(_("Wait for node '%r' to start") % self.full_name) as throbber:
-                    try:
-                        import time
-                        old_sleep = time.sleep
-
-                        def sleep(amt):
-                            throbber.throb()
-                            old_sleep(amt)
-                        time.sleep = sleep
-                        self.libcloud_node, self.ip_addresses = self.driver.wait_until_running(
-                            [node], wait_period=1, timeout=600)[0]
-                    finally:
-                        time.sleep = old_sleep
+                with self.root.ui.throbber(_("Wait for node '%r' to start") % self.full_name):
+                    self.libcloud_node, self.ip_addresses = self.driver.wait_until_running(
+                        [node], wait_period=1, timeout=600)[0]
 
                 logger.debug("Node %r running" % (self.full_name, ))
                 # self.their_name = self.libcloud_node.name

@@ -58,11 +58,6 @@ class TestVMBoxImage(unittest2.TestCase):
             ])
             ctx.ui.throbber.assert_called_once_with(
                 "Extract virtual machine")
-            ctx.ui.throbber().__enter__().throb.assert_has_calls([
-                call(),
-                call(),
-                call(),
-            ])
 
     def test_extract_metadata(self):
         with patch('yaybu.compute.vmware.ZipFile') as zf:

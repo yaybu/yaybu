@@ -39,7 +39,7 @@ class Section(object):
         header = self.name
 
         rl = len(header)
-        
+
         if rl < self.throbber.ui.columns:
             total_minuses = (self.throbber.ui.columns - 3) - rl
             minuses = total_minuses / 2
