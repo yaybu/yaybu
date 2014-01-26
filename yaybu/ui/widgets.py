@@ -105,7 +105,7 @@ class Task(object):
 
     def status(self):
         if self.upper:
-            return "%s%%" % ((float(self.current) / float(self.upper)) * 100, )
+            return "%.1f%%" % ((float(self.current) / float(self.upper)) * 100, )
 
     def __enter__(self):
         self.ui.tasks.append(self)
@@ -146,19 +146,19 @@ class TextFactory(object):
         self.stdout.write('\r' + ' ' * self.columns + '\r')
 
     def _emit_started_and_finished(self):
-        need_starting = [p for p in self.tasks if not p.started and not p.finished]
-        if len(need_starting) > 1:
-            for p in need_starting:
+        need_starting = len([p for p in self.tasks if not p.started and not p.finished]) > 1
+
+        for p in self.tasks:
+            if not p.started and not p.finished and need_starting:
                 self.print("[*] Started '%s'" % p.text())
                 p.started = True
 
-        need_finishing = [p for p in self.tasks if p.finished]
-        for p in need_finishing:
-            if not p.started:
-                self.print("[*] %s" % (p.text(), ))
-            else:
-                self.print("[*] Finished '%s'" % (p.text(), ))
-            self.tasks.remove(p)
+            if p.finished:
+                if not p.started:
+                    self.print("[*] %s" % (p.text(), ))
+                else:
+                    self.print("[*] Finished '%s'" % (p.text(), ))
+                self.tasks.remove(p)
 
     def _emit_waiting(self, glyphs):
         num_tasks = len(self.tasks)
