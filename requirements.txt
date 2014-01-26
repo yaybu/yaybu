@@ -17,7 +17,7 @@ fakechroot
 flake8
 
 # yay
--e git://github.com/yaybu/yay@waits#egg=yay
+-e git://github.com/yaybu/yay@master#egg=yay
 
 -e .
 
