@@ -30,6 +30,7 @@ class Section(object):
         self.name = name
         self.output = []
         self.finished = False
+        self.visited = False
 
     def _maybe_print_header(self):
         # FIXME: If you resize the console whilst 2 deployments are in progress the 2nd set of Section objects will have the wrong Section containers!
@@ -124,6 +125,7 @@ class TextFactory(object):
         self.stdout = stdout or sys.stdout
         self.tasks = []
         self.greenlet = None
+        self._section = None
 
     @property
     def columns(self):
@@ -149,9 +151,18 @@ class TextFactory(object):
         need_starting = len([p for p in self.tasks if not p.started and not p.finished]) > 1
 
         for p in self.tasks:
-            if not p.started and not p.finished and need_starting:
+            if not p.started and not p.finished and (need_starting or p.sections):
                 self.print("[*] Started '%s'" % p.text())
                 p.started = True
+
+            for section in p.sections:
+                if section.visited:
+                    continue
+                if not section.finished:
+                    continue
+                for line in section.output:
+                    self.print(line)
+                section.visited = True
 
             if p.finished:
                 if not p.started:
