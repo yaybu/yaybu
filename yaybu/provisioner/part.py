@@ -112,7 +112,8 @@ class Provision(base.GraphExternalAction):
             self.params.resources, verbose_errors=self.verbose > 2)
         bundle.bind()
 
-        changed = bundle.apply(self, None)
+        with self.root.ui.throbber("Provision %s" % self.host) as throbber:
+            changed = bundle.apply(self, throbber)
         self.root.changed(changed)
 
         if not self.simulate and self.transport.exists(self.state.save_file):
