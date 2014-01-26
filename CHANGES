@@ -4,6 +4,10 @@ Changelog for yaybu
 3.2 (unreleased)
 ----------------
 
+- Your ``Yaybufile`` is now executed in parallel. Constraints are implied by
+  your metadata. If a ``Provision`` configuration needs to know the IP of a
+  ``Compute`` node then the ``Compute`` node will be started first.
+
 - When establishing an SSH connection to deploy configuration various self-test
   steps are performed. The motivation here is that after #123 we know Amazon
   have AMI's that don't respect the SSH protocol. They accept an SSH connection
