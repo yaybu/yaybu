@@ -26,6 +26,7 @@ from yaybu import error
 from yaybu.core import util
 from yaybu.core.config import Config
 from yaybu.compute.vmware import VMBoxImage
+from yaybu.util.ssh import get_ssh_transport_for_node
 
 logger = logging.getLogger("yaybu.core.command")
 
@@ -350,25 +351,12 @@ class YaybuCmd(OptionParsingCmd):
         node = graph.parse_expression(args[0])
 
         try:
-            hostname = node.fqdn.as_string()
+            transport = get_ssh_transport_for_node(node)
         except yay.errors.NoMatching:
-            node = node.server
-            hostname = node.fqdn.as_string()
+            transport = get_ssh_transport_for_node(node.server)
 
-        username = node.port.as_string(default="ubuntu")
-        port = node.port.as_string(default="22")
-
-        cmd = [
-            "/usr/bin/ssh",
-            "-p", port,
-            "-o", "StrictHostKeyChecking=no",
-            "-o", "UserKnownHostsFile=/dev/null",
-            "%s@%s" % (username, hostname),
-        ]
-
-        import subprocess
-        p = subprocess.Popen(cmd)
-        p.wait()
+        from yaybu.ui.shell import PosixInteractiveShell
+        PosixInteractiveShell.from_transport(transport).run()
 
     def do_status(self, opts, args):
         """
