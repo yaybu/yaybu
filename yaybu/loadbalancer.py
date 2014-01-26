@@ -119,8 +119,6 @@ class LoadBalancer(base.GraphExternalAction):
 
     extra_drivers = {}
 
-    keys = []
-
     @property
     @memoized
     def state(self):
@@ -180,7 +178,7 @@ class LoadBalancer(base.GraphExternalAction):
         changed = False
 
         if not lb:
-            with self.root.ui.throbber("Creating load balancer '%s'" % name):
+            with self.root.ui.throbber("Create load balancer '%s'" % name):
                 if not self.root.simulate:
                     lb = self.driver.create_balancer(
                         name=name,
@@ -192,7 +190,6 @@ class LoadBalancer(base.GraphExternalAction):
                 else:
                     lb = None
                 changed = True
-                self.root.changelog.changed = True
 
         else:
             if lb.name != name:
@@ -207,7 +204,7 @@ class LoadBalancer(base.GraphExternalAction):
             #    changed = True
 
             if changed:
-                with self.root.ui.throbber("Updating load balancer '%s'" % name):
+                with self.root.ui.throbber("Update load balancer '%s'" % name):
                     if not self.root.simulate:
                         self.driver.update_balancer(
                             balancer=lb,
@@ -216,23 +213,21 @@ class LoadBalancer(base.GraphExternalAction):
                             protocol=protocol,
                             algorithm=algorithm,
                         )
-                    self.root.changelog.changed = True
 
-        self.root.changelog.apply(
-            SyncMembers(
-                expression=self.params.members,
-                driver=self.driver,
-                balancer=lb,
-            ))
+        mbchanged = SyncMembers(
+            expression=self.params.members,
+            driver=self.driver,
+            balancer=lb,
+        ).apply(self.root).changed
 
         if lb:
             self.state.update(balancer_id=lb.id)
 
-        return changed
+        self.root.changed(changed or mbchanged)
 
     def destroy(self):
         balancer = self._find_balancer()
         if not balancer:
             return
-        with self.root.ui.throbber("Destroying load balancer '%s'" % balancer.name):
+        with self.root.ui.throbber("Destroy load balancer '%s'" % balancer.name):
             balancer.destroy()

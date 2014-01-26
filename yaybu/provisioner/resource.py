@@ -20,6 +20,7 @@ from yaybu.util.backports import OrderedDict
 
 from yay import errors
 from yay.ast import bind, PythonicWrapper
+from yay.config import Config
 from yay.errors import LanguageError
 
 
@@ -267,8 +268,9 @@ class ResourceBundle(OrderedDict):
     @classmethod
     def create_from_list(cls, specification):
         """ Given a list of types and parameters, build a resource bundle """
-        nodes = bind(specification)
-        return cls.create_from_yay_expression(nodes)
+        c = Config()
+        c.add({"resources": specification})
+        return cls.create_from_yay_expression(c.resources)
 
     @classmethod
     def create_from_yay_expression(cls, expression, verbose_errors=False):
@@ -379,7 +381,7 @@ class ResourceBundle(OrderedDict):
             resource.validate(ctx)
             resource.test(ctx)
 
-    def apply(self, ctx, config):
+    def apply(self, ctx, throbber):
         """ Apply the resources to the system, using the provided context and
         overall configuration. """
         for resource in self.values():
@@ -387,14 +389,14 @@ class ResourceBundle(OrderedDict):
             if hasattr(resource, "_original_hash"):
                 resource._original_hash = resource.hash(ctx)
 
-        with ctx.root.ui.throbber("Applying configuration...") as throbber:
-            something_changed = False
-            for i, resource in enumerate(self.values(), start=1):
-                with ctx.changelog.resource(resource) as output:
-                    if resource.apply(ctx, output):
-                        something_changed = True
-                throbber.message = "Applying configuration... (%s/%s)" % (
-                    i, len(self.values()))
-                throbber.throb()
+        throbber.set_upper(len(self.values()))
+        something_changed = False
+        for i, resource in enumerate(self.values(), start=1):
+            with throbber.section(resource.id) as output:
+                ctx.current_output = output
+                if resource.apply(ctx, output):
+                    something_changed = True
+                ctx.current_output = None
+            throbber.set_current(i)
 
         return something_changed

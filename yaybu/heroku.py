@@ -36,6 +36,10 @@ class Heroku(base.GraphExternalAction):
             raise errors.TypeError(
                 "Dependency 'heroku' is required and not available", anchor=self.anchor)
 
+    def action(self, msg):
+        print msg
+
+    def apply(self):
         try:
             self.cloud = heroku.from_key(self.params.key.as_string())
         except errors.NoMatching:
@@ -47,10 +51,6 @@ class Heroku(base.GraphExternalAction):
                     "Must specify key or username and password", anchor=self.params.anchor)
             self.cloud = heroku.from_pass(username, password)
 
-    def action(self, msg):
-        print msg
-
-    def apply(self):
         if self.root.readonly:
             return
 
@@ -86,7 +86,7 @@ class Heroku(base.GraphExternalAction):
         # half way through set up
         self.apply_collaborators()
 
-        self.root.changelog.changed = changed
+        self.root.changed(changed)
 
     def apply_collaborators(self):
         collaborators = self.app.collaborators if self.app else []

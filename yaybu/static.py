@@ -43,7 +43,6 @@ class StaticContainer(base.GraphExternalAction):
     """
 
     extra_drivers = {}
-    keys = []
 
     def _get_source_container(self):
         try:
@@ -72,7 +71,7 @@ class StaticContainer(base.GraphExternalAction):
         except ContainerDoesNotExistError:
             if self.root.readonly:
                 return True, None
-            with self.root.ui.throbber("Creating container '%s'" % container_name):
+            with self.root.ui.throbber("Create container '%s'" % container_name):
                 if self.root.simulate:
                     return True, None
                 container = driver.create_container(
@@ -95,7 +94,7 @@ class StaticContainer(base.GraphExternalAction):
                 StringIO.StringIO(json.dumps(manifest)), ".yaybu-manifest")
 
     def test(self):
-        with self.root.ui.throbber("Testing storage credentials/connectivity"):
+        with self.root.ui.throbber("Test storage credentials/connectivity"):
             self._get_source_container()
             self._get_destination_container()
 
@@ -125,7 +124,7 @@ class StaticContainer(base.GraphExternalAction):
 
         # FIXME: Need to dereference object names...
         for name in to_add:
-            with self.root.ui.throbber("Uploading new static file '%s'" % name):
+            with self.root.ui.throbber("Upload new static file '%s'" % name):
                 if not self.root.simulate:
                     source_stream = source[name].as_stream()
                     dest.upload_object_via_stream(source_stream, name)
@@ -142,7 +141,7 @@ class StaticContainer(base.GraphExternalAction):
             if obj_s.size == obj_d.size and obj_s.hash and obj_s.hash == obj_d.hash:
                 continue
 
-            with self.root.ui.throbber("Updating static file '%s'" % name):
+            with self.root.ui.throbber("Update static file '%s'" % name):
                 if not self.root.simulate:
                     source_stream = obj_s.as_stream()
                     dest.upload_object_via_stream(source_stream, name)
@@ -150,7 +149,7 @@ class StaticContainer(base.GraphExternalAction):
                 changed = True
 
         for name in to_delete:
-            with self.root.ui.throbber("Deleting static file '%s'" % name):
+            with self.root.ui.throbber("Delete static file '%s'" % name):
                 if not self.root.simulate:
                     destination[name].delete()
                     if name in manifest:
@@ -159,5 +158,4 @@ class StaticContainer(base.GraphExternalAction):
 
         self._set_manifest(dest, manifest)
 
-        # HACK ALERT
-        self.root.changelog.changed = self.root.changelog.changed or changed
+        self.root.changed(changed)

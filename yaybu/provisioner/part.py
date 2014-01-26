@@ -20,6 +20,7 @@ import yay
 from yay.errors import NotFound, NotModified
 
 from yaybu.provisioner import resource
+from yaybu.changes import TextRenderer
 from yaybu import error
 from yaybu.error import MissingAsset, UnmodifiedAsset
 from yaybu import base
@@ -65,7 +66,6 @@ class Provision(base.GraphExternalAction):
         self.no_resume = root.no_resume
         self.simulate = root.simulate
         self.verbose = root.verbose
-        self.changelog = root.changelog
 
         self.options = {}
         if os.path.exists("/etc/yaybu"):
@@ -77,7 +77,7 @@ class Provision(base.GraphExternalAction):
             simulate=root.simulate,
         )
 
-        with root.ui.throbber("Connecting to '%s'" % hostname):
+        with root.ui.throbber("Connect to '%s'" % hostname):
             self.transport.connect()
 
         if not self.simulate and not self.transport.exists(self.get_data_path()):
@@ -112,7 +112,10 @@ class Provision(base.GraphExternalAction):
             self.params.resources, verbose_errors=self.verbose > 2)
         bundle.bind()
 
-        bundle.apply(self, None)
+        with self.root.ui.throbber("Provision %s" % self.host) as throbber:
+            changed = bundle.apply(self, throbber)
+        self.root.changed(changed)
+
         if not self.simulate and self.transport.exists(self.state.save_file):
             self.transport.unlink(self.state.save_file)
 
@@ -123,7 +126,8 @@ class Provision(base.GraphExternalAction):
         bundle.test(self)
 
     def change(self, change):
-        return self.changelog.apply(change, self)
+        renderer = TextRenderer.get(change, self.current_output)
+        return change.apply(self, renderer)
 
     def get_file(self, filename, etag=None):
         try:

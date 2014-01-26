@@ -16,7 +16,7 @@ import unittest
 import datetime
 from mock import Mock
 
-from yay.ast import bind as bind_
+from yay.config import Config
 
 from yaybu.core import argument, policy
 from yaybu.provisioner import resource, provider
@@ -25,9 +25,9 @@ from yaybu.tests.provisioner_fixture import TestCase
 
 
 def bind(foo):
-    b = bind_(foo)
-    b.parent = None
-    return b
+    c = Config()
+    c.add({"test": foo})
+    return c.test
 
 
 class F(resource.Resource):
