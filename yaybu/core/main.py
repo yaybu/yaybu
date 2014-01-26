@@ -21,7 +21,7 @@ for more information on a command:
 
 def _main(argv):
     from gevent.monkey import patch_all
-    patch_all()
+    patch_all(subprocess=True)
 
     # We do the imports here so that Ctrl+C doesn't show any ugly traceback
     import sys
