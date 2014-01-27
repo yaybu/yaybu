@@ -133,15 +133,15 @@ class GitHubChangeSource(base.GraphExternalAction):
             headers = {}
 
             # As per the GitHub API docs - if we have an etag then provide it
-	    # This maximizes the number of API calls we can make - 304 Not
+            # This maximizes the number of API calls we can make - 304 Not
             # Modified does not count towards the API limits.
             if etag:
                 headers['If-None-Match'] = etag
 
             resp = requests.get("https://api.github.com/repos/%s/events" % repository, headers=headers)
             if resp.status_code == 200:
-                events = resp.json()
-                print "GOT SOME EVENTS"
+                for events in resp.json():
+                    pass
                 etag = resp.headers.get("ETag")
 
             elif resp.status_code == 304:
@@ -150,8 +150,8 @@ class GitHubChangeSource(base.GraphExternalAction):
             elif resp.status_code == 400:
                 print "REPO GONE AWAY"
 
-	    # Respect the Poll interval requested by GitHub (it may change when
-	    # the API is under heavy use)
+            # Respect the Poll interval requested by GitHub (it may change when
+            # the API is under heavy use)
             poll_interval = int(resp.headers.get("X-Poll-Interval") or poll_interval)
             gevent.sleep(poll_interval)
 
