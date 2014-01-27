@@ -329,10 +329,10 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
-        graph.resolve()
-
-        for actor in graph.actors:
-            actor.destroy()
+        with graph.ui:
+            graph.resolve()
+            for actor in graph.actors:
+                actor.destroy()
 
         return 0
 
@@ -373,13 +373,16 @@ class YaybuCmd(OptionParsingCmd):
         usage: run
         Automatically update resources declared in Yaybufile as external events occur
         """
-        #graph = self._get_graph(opts, args)
-        #graph.start_listening()
-        # FIXME: This API doesn't exist - we'll need to collect any greenlets if
-        # we want to block on them with gevent.joinall..
-        #import gevent
-        #gevent.run()
-        pass
+        graph = self._get_graph(opts, args)
+        with graph.ui:
+            graph.resolve()
+
+            greenlets = []
+            for actor in graph.actors:
+                if hasattr(actor, "listen"):
+                    greenlets.append(actor.listen())
+            import gevent
+            gevent.joinall(greenlets)
 
     def opts_shell(self, parser):
         parser.add_option("-c", "--command", default=None, action="store")

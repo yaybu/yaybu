@@ -148,7 +148,7 @@ class TextFactory(object):
         self.stdout.write('\r' + ' ' * self.columns + '\r')
 
     def _emit_started_and_finished(self):
-        need_starting = len([p for p in self.tasks if not p.started and not p.finished]) > 1
+        need_starting = len([p for p in self.tasks if not p.finished]) > 1
 
         for p in self.tasks:
             if not p.started and not p.finished and (need_starting or p.sections):

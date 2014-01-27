@@ -114,23 +114,50 @@ class GitHubChangeSource(base.GraphExternalAction):
     pushed to github
 
     new GitHubChangeSource as changesource:
-        repository: https://github.com/yaybu/yaybu
-        polling-interval: 0
-        listen:
-          - 0.0.0.0:8080
-
-    Specifying a ``listen`` parameter allows yaybu to receive webhook pushes
-    from GitHub. This means yaybu responds to a commit or release almost
-    immediately.
-
-    If polling-interval is 0 then yaybu will only poll at startup (when push
-    data is not available). This is the default, but can be set to any positive
-    integer to activate polling.
+        repository: yaybu/yaybu
     """
 
     def test(self):
         # FIXME: Test that github repository exists
         pass
+
+    def _run(self):
+        import requests
+        import gevent
+
+        repository = self.params.repository.as_string()
+
+        etag = None
+        poll_interval = 60
+        while True:
+            headers = {}
+
+            # As per the GitHub API docs - if we have an etag then provide it
+	    # This maximizes the number of API calls we can make - 304 Not
+            # Modified does not count towards the API limits.
+            if etag:
+                headers['If-None-Match'] = etag
+
+            resp = requests.get("https://api.github.com/repos/%s/events" % repository, headers=headers)
+            if resp.status_code == 200:
+                events = resp.json()
+                print "GOT SOME EVENTS"
+                etag = resp.headers.get("ETag")
+
+            elif resp.status_code == 304:
+                print "NOT MODIFIED"
+
+            elif resp.status_code == 400:
+                print "REPO GONE AWAY"
+
+	    # Respect the Poll interval requested by GitHub (it may change when
+	    # the API is under heavy use)
+            poll_interval = int(resp.headers.get("X-Poll-Interval") or poll_interval)
+            gevent.sleep(poll_interval)
+
+    def listen(self):
+        import gevent
+        return gevent.spawn(self._run)
 
     def apply(self):
         # To list all branches and tags:
