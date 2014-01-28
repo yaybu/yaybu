@@ -42,5 +42,5 @@ class TestChangeSource(TestCase):
                polling-interval: 0
 
             new Printer as myprinter:
-                message: {{ mychangesource.master }}
+                message: {{ mychangesource.branches.master }}
             """)

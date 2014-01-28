@@ -15,9 +15,10 @@
 from __future__ import absolute_import
 import subprocess
 
+import gevent
 import requests
 
-from yaybu import base
+from yaybu import base, error
 
 
 class GitChangeSource(base.GraphExternalAction):
@@ -120,9 +121,6 @@ class GitHubChangeSource(base.GraphExternalAction):
         pass
 
     def _run(self):
-        import requests
-        import gevent
-
         repository = self.params.repository.as_string()
 
         etag = None
@@ -161,12 +159,12 @@ class GitHubChangeSource(base.GraphExternalAction):
 
         resp = requests.get("https://api.github.com/repos/%s/branches" % repository)
         if resp.status_code != 200:
-            raise errors.ValueError("Unable to get a list of branches for '%s'" % repository)
+            raise error.ValueError("Unable to get a list of branches for '%s'" % repository)
         branches = dict((v['name'], v['commit']['sha']) for v in resp.json())
 
         resp = requests.get("https://api.github.com/repos/%s/tags" % repository)
         if resp.status_code != 200:
-            raise errors.ValueError("Unable to get a list of tags for '%s'" % repository)
+            raise error.ValueError("Unable to get a list of tags for '%s'" % repository)
         tags = [dict(name=v['name'], sha=v['commit']['sha']) for v in resp.json()]
 
         self.members['branches'] = branches
