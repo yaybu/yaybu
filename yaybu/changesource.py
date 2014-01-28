@@ -15,6 +15,8 @@
 from __future__ import absolute_import
 import subprocess
 
+import requests
+
 from yaybu import base
 
 
@@ -53,16 +55,13 @@ class GitChangeSource(base.GraphExternalAction):
                   revision: {{ changesource.branches.master }}
     """
 
-    def poll_loop(self):
-        import gevent
-        while True:  # self.running:
+    def _run(self):
+        while True:
             self.update_remotes()
             gevent.sleep(self.params["polling-interval"].as_int(default=60))
 
-    def start_listening(self):
-        super(GitChangeSource, self).start_listening()
-        import gevent
-        gevent.spawn(self.poll_loop)
+    def listen(self):
+        gevent.spawn(self._run)
 
     def update_remotes(self):
         cmd = ["git", "ls-remote", str(self.params.repository)]
@@ -85,9 +84,8 @@ class GitChangeSource(base.GraphExternalAction):
                     continue
                 tags.append(ref[10:])
 
-        # self.members.set("branches", branches)
-        # self.members.set("tags", tags)
-        self.members.set("master", branches["master"])
+        self.members["branches"] = branches
+        self.members["tags"] = tags
 
         # FIXME: In both of the above cases we are quite broad with our change
         # notification. It is raised by the container, which means more
@@ -156,13 +154,20 @@ class GitHubChangeSource(base.GraphExternalAction):
             gevent.sleep(poll_interval)
 
     def listen(self):
-        import gevent
         return gevent.spawn(self._run)
 
     def apply(self):
-        # To list all branches and tags:
-        # http://developer.github.com/v3/git/refs/
-        # Webhook pushes:
-        # https://help.github.com/articles/post-receive-hooks
-        # Do we get push events for tags???
-        return False
+        repository = self.params.repository.as_string()
+
+        resp = requests.get("https://api.github.com/repos/%s/branches" % repository)
+        if resp.status_code != 200:
+            raise errors.ValueError("Unable to get a list of branches for '%s'" % repository)
+        branches = dict((v['name'], v['commit']['sha']) for v in resp.json())
+
+        resp = requests.get("https://api.github.com/repos/%s/tags" % repository)
+        if resp.status_code != 200:
+            raise errors.ValueError("Unable to get a list of tags for '%s'" % repository)
+        tags = [dict(name=v['name'], sha=v['commit']['sha']) for v in resp.json()]
+
+        self.members['branches'] = branches
+        self.members['tags'] = tags

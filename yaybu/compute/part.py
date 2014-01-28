@@ -225,21 +225,21 @@ class Compute(base.GraphExternalAction):
         self.state.update(their_name=n.name)
 
         if n.public_ips:
-            self.members.set('public_ip', n.public_ips[0])
+            self.members['public_ip'] = n.public_ips[0]
         if n.private_ips:
-            self.members.set('private_ip', n.private_ips[0])
+            self.members.set['private_ip'] = n.private_ips
 
-        self.members.set('fqdn', n.public_ips[0])
+        self.members['fqdn'] = n.public_ips[0]
 
         if 'dns_name' in n.extra:
-            self.members.set('hostname', n.extra['dns_name'].split(".")[0])
-            self.members.set('fqdn', n.extra['dns_name'])
-            self.members.set('domain', n.extra['dns_name'].split(".", 1)[1])
+            self.members['hostname'] = n.extra['dns_name'].split(".")[0]
+            self.members['fqdn'] = n.extra['dns_name']
+            self.members['domain'] = n.extra['dns_name'].split(".", 1)[1]
 
     def _fake_node_info(self):
-        self.members.set('public_ip', '0.0.0.0')
-        self.members.set('private_ip', '0.0.0.0')
-        self.members.set('fqdn', 'missing-host')
+        self.members['public_ip'] = '0.0.0.0'
+        self.members['private_ip'] = '0.0.0.0'
+        self.members['fqdn'] = 'missing-host'
 
     def test(self):
         with self.root.ui.throbber(_("Check compute credentials/connectivity")):
