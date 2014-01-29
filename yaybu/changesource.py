@@ -84,14 +84,15 @@ class GitChangeSource(base.GraphExternalAction):
             branches, tags = self._get_remote_metadata()
 
             with change_mgr.changeset() as cs:
-                if branches != self.members["branches"]:
+                old_branches = self.members["branches"]
+                if branches != old_branches:
                     # One or more branches have changed
                     # There is no cache to bust for new branches
                     # We don't bother busting the cache for removed branches
                     # So we only look for pushes to existing branches
                     bw = self.members_wrapped.get_key("branches")
                     for name, sha in branches.items():
-                        if name in self.members and self.members[name] != sha:
+                        if name in old_branches and old_branches[name] != sha:
                             cs.bust(bw._get_key, name)
                     self.members["branches"] = branches
 
