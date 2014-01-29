@@ -137,12 +137,14 @@ class GitHubChangeSource(base.GraphExternalAction):
             resp = requests.get("https://api.github.com/repos/%s/events" % repository, headers=headers)
             if resp.status_code == 200:
                 etag = resp.headers.get("ETag")
-                for events in resp.json():
+                for event in resp.json():
                     if event['type'] == 'DeploymentEvent':
                         deployment = event['payload']
+                        print deployment
 
                     elif event['type'] == 'PushEvent':
                         push = event['payload']
+                        print push
 
             elif resp.status_code == 304:
                 print "NOT MODIFIED"
