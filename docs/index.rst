@@ -25,6 +25,7 @@ Contents:
    language
    encryption
    change_source
+   integration
    hacking
 
 

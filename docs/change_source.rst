@@ -2,85 +2,18 @@
 Change Sources
 ==============
 
-EXPERIMENTAL: Provisioning on commit (via Travis CI)
-====================================================
+Change sources listen to remote repositories for commits and tags, allowing you
+to trigger a deployment as code is committed.
 
-Travis CI has a mechansim to encrypt secrets. It also has a hook that is run on
-success. This means we can have yaybu perform system orchestration tasks on
-commit + successful CI run without having to run any of our own servers.
+Change sources require you to run yaybu in 'active mode', using the ``yaybu
+run`` command.
 
-Here is a simple ``Yaybufile``::
+GitChangeSource
+===============
 
-    yaybu:
-        options:
-            - name: BIGV_KEY
-            - name: BIGV_SECRET
-            - name: BIGV_ACCOUNT
-            - name: BIGV_ROOT_PASSWORD
-              default: penguin55
-
-    new Provisioner as myexample:
-        new Compute as server:
-            driver:
-                id: BIGV
-                key: {{ yaybu.argv.BIGV_KEY }}
-                secret: {{ yaybu.argv.BIGV_SECRET }}
-
-            image: precise
-
-            name: myexample
-
-            user: root
-            password: {{ yaybu.argv.BIGV_ROOT_PASSWORD }}
-
-        resources:
-          - Package:
-              name: git-core
-
-          - Checkout:
-             name: /tmp/yaybu
-             scm: git
-             repository: https://github.com/yaybu/example
-
-The ``yaybu.options`` section allows us to define arguments that can be passed
-to yaybu via the command line. You can define defaults to use if no such
-argument is passed in.
-
-Now we can encrypt these details using the travis command line tool::
-
-    travis encrypt BIGV_KEY=myusername --add env.global
-    travis encrypt BIGV_SECRET=password --add env.global
-    travis encrypt BIGV_ACCOUNT=myaccount --add env.global
-    travis encrypt BIGV_ROOT_PASSWORD=password --add env.global
-
-And here is what your ``.travis.yml`` looks like::
-
-    language: python
-    pythons:
-      - "2.6"
-
-    env:
-      global:
-        - secure: <YOUR_ENCRYPTED_STRINGS>
-
-    script:
-      - true # This is where you would normally run your tests
-
-    after_success:
-      - sudo add-apt-repository yaybu-team/yaybu
-      - sudo apt-get update
-      - sudo apt-get install python-yaybu
-      - yaybu up BIGV_KEY=$BIGV_KEY BIGV_SECRET=$BIGV_SECRET BIGV_ACCOUNT=$BIGV_ACCOUNT BIGV_ROOT_PASSWORD=$BIGV_ROOT_PASSWORD
-
-
-EXPERIMENTAL: Provisioning on commit
-====================================
-
-This uses a new command, ``yaybu run``. This puts yaybu into a mode where it
-continues to run, rather than deploying then exiting. Parts can set up
-listeners to respond to external events like commits or monitoring systems.
-
-To deploy on commit you can use a ``Yaybufile`` like this::
+The ``GitChangeSource`` polls any git repostory that can be accessed using
+``git ls-remote``. By default it will do this every 60s. A typical example of
+how to use this might be::
 
 
     new GitChangeSource as changesource:
@@ -111,11 +44,11 @@ To deploy on commit you can use a ``Yaybufile`` like this::
              name: /tmp/yaybu
              scm: git
              repository: {{ changesource.repository }}
-             revision: {{ changesource.master }}
+             revision: {{ changesource.branches.master }}
 
 
-The ``GitChangeSource`` part polls and sets ``{{changesource.master}}`` with
-the SHA of the current commit.
+The ``GitChangeSource`` part polls and sets
+``{{changesource.branches.master}}`` with the SHA of the current commit.
 
 This example changesource polls to learn if a new commit has occurred. This is
 only because the part is an example implementation - it could easily be a
