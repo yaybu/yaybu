@@ -80,19 +80,18 @@ class GitChangeSource(base.GraphExternalAction):
         return branches, tags
 
     def _run(self, change_mgr):
+        e = change_mgr.executor
         while True:
             branches, tags = self._get_remote_metadata()
 
-            changes = []
-            if branches != self.members["branches"]:
-                self.members["branches"] = branches
-                changes.append((self.get_key, "branches"))
+            with change_mgr.changeset() as cs:
+                if branches != self.members["branches"]:
+                    self.members["branches"] = branches
+                    cs.bust(self.members_wrapped._get_key, "branches")
 
-            if tags != self.members["tags"]:
-                self.members["tags"] = tags
-                changes.append((self.get_key, "tags"))
-
-            change_mgr.put(changes)
+                if tags != self.members["tags"]:
+                    self.members["tags"] = tags
+                    cs.bust(self.members_wrapped._get_key, "tags")
 
             gevent.sleep(self.params["polling-interval"].as_int(default=60))
 

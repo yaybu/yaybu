@@ -16,12 +16,34 @@ from gevent import Greenlet
 from gevent.queue import Queue
 
 
+class ChangeSet(object):
+
+    def __init__(self, mgr):
+        self.mgr = mgr
+        self.changes = []
+
+    def bust(self, callable, *args):
+        try:
+            self.changes.append(self.mgr.executor.get_operation(callable, *args))
+        except KeyError:
+            pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, a, b, c):
+        self.mgr.put(self.changes)
+
+
 class ChangeResponder(object):
 
     def __init__(self, root):
         self.root = root
         self.executor = root.executor
         self.queue = Queue()
+
+    def changeset(self):
+        return ChangeSet(self)
 
     def put(self, itm):
         if not itm:
@@ -32,11 +54,9 @@ class ChangeResponder(object):
         print "Started listening for changes"
         for changed in self.queue:
             print "Change occurred"
-            for op_id in changed:
-                if op_id in self.executor.operations:
-                    op = self.executor.operations[op_id]
-                    print " -> Purging '%s' and its rdepends" % op
-                    op.purge_rdeps()
+            for op in changed:
+                print " -> Purging '%s' and its rdepends" % op
+                op.purge_rdepends()
 
             print "Requesting resolve"
             self.root.resolve()
