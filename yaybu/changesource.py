@@ -140,10 +140,9 @@ class GitHubChangeSource(base.GraphExternalAction):
                 for events in resp.json():
                     if event['type'] == 'DeploymentEvent':
                         deployment = event['payload']
-                        
-                    elif event['type'] == 'PushEvent':
-                        push = event['payload']
 
+                    elif event['type'] == 'PushEvent':
+                        push = event['payload']
 
             elif resp.status_code == 304:
                 print "NOT MODIFIED"
