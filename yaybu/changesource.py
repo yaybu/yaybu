@@ -80,7 +80,6 @@ class GitChangeSource(base.GraphExternalAction):
         return branches, tags
 
     def _run(self, change_mgr):
-        e = change_mgr.executor
         while True:
             branches, tags = self._get_remote_metadata()
 

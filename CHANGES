@@ -8,6 +8,9 @@ Changelog for yaybu
   your metadata. If a ``Provision`` configuration needs to know the IP of a
   ``Compute`` node then the ``Compute`` node will be started first.
 
+- You can use a ``GitChangeSource`` to trigger deployments. (Use ``yaybu run``
+  to have yaybu stay running and monitoring your repository).
+
 - When establishing an SSH connection to deploy configuration various self-test
   steps are performed. The motivation here is that after #123 we know Amazon
   have AMI's that don't respect the SSH protocol. They accept an SSH connection
