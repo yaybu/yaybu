@@ -89,7 +89,7 @@ class GitChangeSource(base.GraphExternalAction):
                     # There is no cache to bust for new branches
                     # We don't bother busting the cache for removed branches
                     # So we only look for pushes to existing branches
-                    bw = self.members_wrapper.get_key("branches")
+                    bw = self.members_wrapped.get_key("branches")
                     for name, sha in branches.items():
                         if name in self.members and self.members[name] != sha:
                             cs.bust(bw._get_key, name)
