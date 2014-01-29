@@ -86,13 +86,14 @@ class GitChangeSource(base.GraphExternalAction):
             changes = []
             if branches != self.members["branches"]:
                 self.members["branches"] = branches
-                changes.append((self, "get_key", "branches"))
+                changes.append((self.get_key, "branches"))
 
             if tags != self.members["tags"]:
                 self.members["tags"] = tags
-                changes.append((self, "get_key", "tags"))
+                changes.append((self.get_key, "tags"))
 
             change_mgr.put(changes)
+
             gevent.sleep(self.params["polling-interval"].as_int(default=60))
 
     def listen(self, change_mgr):
