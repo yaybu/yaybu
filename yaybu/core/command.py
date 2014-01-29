@@ -24,6 +24,7 @@ import yay
 import yay.errors
 from yaybu import error
 from yaybu.core import util
+from yaybu.core.queue import ChangeResponder
 from yaybu.core.config import Config
 from yaybu.compute.vmware import VMBoxImage
 from yaybu.util.ssh import get_ssh_transport_for_node
@@ -377,10 +378,11 @@ class YaybuCmd(OptionParsingCmd):
         with graph.ui:
             graph.resolve()
 
-            greenlets = []
+            change_mgr = ChangeResponder(graph)
+            greenlets = [change_mgr.listen()]
             for actor in graph.actors:
                 if hasattr(actor, "listen"):
-                    greenlets.append(actor.listen())
+                    greenlets.append(actor.listen(change_mgr))
             import gevent
             gevent.joinall(greenlets)
 

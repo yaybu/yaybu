@@ -56,15 +56,7 @@ class GitChangeSource(base.GraphExternalAction):
                   revision: {{ changesource.branches.master }}
     """
 
-    def _run(self):
-        while True:
-            self.update_remotes()
-            gevent.sleep(self.params["polling-interval"].as_int(default=60))
-
-    def listen(self):
-        gevent.spawn(self._run)
-
-    def update_remotes(self):
+    def _get_remote_metadata(self):
         cmd = ["git", "ls-remote", str(self.params.repository)]
         p = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -85,16 +77,26 @@ class GitChangeSource(base.GraphExternalAction):
                     continue
                 tags.append(ref[10:])
 
-        self.members["branches"] = branches
-        self.members["tags"] = tags
+        return branches, tags
 
-        # FIXME: In both of the above cases we are quite broad with our change
-        # notification. It is raised by the container, which means more
-        # activity could be generated than required. E.g. a new branch could
-        # trigger stuff to happen even if we are only tracking tags.
-        # The metadata dictionary needs to grow more API. It is not enough to
-        # simply wrap a python dictionary, we need to be able to trigger per key
-        # notifications.
+    def _run(self, change_mgr):
+        while True:
+            branches, tags = self._get_remote_metadata()
+
+            changes = []
+            if branches != self.members["branches"]:
+                self.members["branches"] = branches
+                changes.append((self, "get_key", "branches"))
+
+            if tags != self.members["tags"]:
+                self.members["tags"] = tags
+                changes.append((self, "get_key", "tags"))
+
+            change_mgr.put(changes)
+            gevent.sleep(self.params["polling-interval"].as_int(default=60))
+
+    def listen(self, change_mgr):
+        return gevent.spawn(self._run, change_mgr)
 
     def test(self):
         # FIXME: Test that git repository exists and that any credentials we
@@ -102,8 +104,9 @@ class GitChangeSource(base.GraphExternalAction):
         pass
 
     def apply(self):
-        self.update_remotes()
-        return False
+        branches, tags = self._get_remote_metadata()
+        self.members["branches"] = branches
+        self.members["tags"] = tags
 
 
 class GitHubChangeSource(base.GraphExternalAction):
@@ -157,7 +160,7 @@ class GitHubChangeSource(base.GraphExternalAction):
             poll_interval = int(resp.headers.get("X-Poll-Interval") or poll_interval)
             gevent.sleep(poll_interval)
 
-    def listen(self):
+    def listen(self, change_mgr):
         return gevent.spawn(self._run)
 
     def apply(self):
