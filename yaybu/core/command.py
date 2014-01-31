@@ -369,6 +369,14 @@ class YaybuCmd(OptionParsingCmd):
         raise NotImplementedError(
             "I don't know how to find nodes in the graph yet")
 
+    def opts_run(self, parser):
+        parser.add_option(
+            "-s", "--simulate", default=False, action="store_true")
+        parser.add_option("--resume", default=False, action="store_true",
+                          help="Resume from saved events if terminated abnormally")
+        parser.add_option("--no-resume", default=False, action="store_true",
+                          help="Clobber saved event files if present and do not resume")
+
     def do_run(self, opts, args):
         """
         usage: run

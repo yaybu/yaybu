@@ -102,7 +102,10 @@ class Task(object):
         return Section(self, name)
 
     def text(self):
-        return self.message
+        text = self.message
+        if self.sections and not self.sections[-1].finished:
+            text += " (%s)" % self.sections[-1].name
+        return text
 
     def status(self):
         if self.upper:
