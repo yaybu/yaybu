@@ -16,6 +16,7 @@ from yaybu.tests.provisioner_fixture import TestCase
 from yaybu import error
 import os
 import stat
+import json
 
 
 def sibpath(filename):
@@ -69,7 +70,7 @@ class TestFileApply(TestCase):
         mode = stat.S_IMODE(st.st_mode)
         self.assertEqual(mode, 0o666)
 
-    def test_create_file_template(self):
+    def test_create_file_template_deprecated(self):
         self.check_apply("""
             resources:
                 - File:
@@ -83,13 +84,27 @@ class TestFileApply(TestCase):
                     """)
         self.failUnlessExists("/etc/templated")
 
+    def test_create_file_template(self):
+        self.check_apply("""
+            resources:
+                - File:
+                    name: /etc/templated
+                    source: package://yaybu.tests/assets/template1.j2
+                    args:
+                        foo: this is foo
+                        bar: 42
+                    owner: root
+                    group: root
+                    """)
+        self.failUnlessExists("/etc/templated")
+
     def test_create_file_template_with_extends(self):
         self.check_apply("""
             resources:
                 - File:
                     name: /etc/templated
-                    template: {{ "package://yaybu.tests/assets/template_with_extends.j2" }}
-                    template_args:
+                    source: {{ "package://yaybu.tests/assets/template_with_extends.j2" }}
+                    args:
                         foo: this is foo
                         bar: 42
                     owner: root
@@ -105,8 +120,8 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_modify_file
-                    template: {{ "package://yaybu.tests/assets/template1.j2" }}
-                    template_args:
+                    source: {{ "package://yaybu.tests/assets/template1.j2" }}
+                    args:
                         foo: this is a modified file
                         bar: 37
             """)
@@ -152,8 +167,8 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_carriage_returns
-                    template: {{ "package://yaybu.tests/assets/test_carriage_returns.j2" }}
-                    template_args: {}
+                    source: {{ "package://yaybu.tests/assets/test_carriage_returns.j2" }}
+                    args: {}
                     """)
 
     def test_carriage_returns2(self):
@@ -165,14 +180,14 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/test_carriage_returns2
-                    template: {{ "package://yaybu.tests/assets/test_carriage_returns2.j2" }}
-                    template_args: {}
+                    source: {{ "package://yaybu.tests/assets/test_carriage_returns2.j2" }}
+                    args: {}
             """)
 
     def test_unicode(self):
         self.check_apply(open(sibpath("assets/unicode1.yay")).read())
 
-    def test_static(self):
+    def test_static_deprecated(self):
         """ Test setting the contents to that of a static file. """
         self.check_apply("""
             resources:
@@ -181,12 +196,21 @@ class TestFileApply(TestCase):
                     static: {{ "package://yaybu.tests/assets/test_carriage_returns2.j2" }}
             """)
 
+    def test_static(self):
+        """ Test setting the contents to that of a static file. """
+        self.check_apply("""
+            resources:
+                - File:
+                    name: /etc/foo
+                    source: package://yaybu.tests/assets/test_carriage_returns2.j2
+            """)
+
     def test_static_empty(self):
         self.check_apply("""
             resources:
                 - File:
                     name: /etc/foo
-                    static: {{ "package://yaybu.tests/assets/empty_file" }}
+                    source: {{ "package://yaybu.tests/assets/empty_file" }}
             """)
 
     def test_missing(self):
@@ -195,8 +219,23 @@ class TestFileApply(TestCase):
             resources:
                 - File:
                     name: /etc/foo
-                    static: this-doesnt-exist
+                    source: this-doesnt-exist
             """)
+
+    def test_json(self):
+        self.check_apply("""
+            resources:
+                - File:
+                    name: /etc/foo
+                    renderer: json
+                    args:
+                        BLAH:
+                          - foo
+            """)
+        self.assertEqual(
+            json.loads(self.transport.get("/etc/foo")),
+            {"BLAH": ["foo"]},
+        )
 
 
 class TestFileRemove(TestCase):

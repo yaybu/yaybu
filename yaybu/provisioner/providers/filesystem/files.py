@@ -98,7 +98,7 @@ class File(provider.Provider):
         renderer = self.resource.renderer.as_string(default='guess')
         func_name = 'render_%s' % renderer
         if not hasattr(self, func_name):
-            raise Something("Invalid renderer '%s'" % renderer)
+            raise error.ValueError("Invalid renderer '%s'" % renderer)
         return getattr(self, func_name)(context)
 
     def test(self, context):

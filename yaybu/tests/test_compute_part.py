@@ -236,7 +236,7 @@ class TestComputeCluster(TestCase):
                 resources:
                    - File:
                        name: /etc/hearbeat.conf
-                       template_args:
+                       args:
                            ip: {{ container2.server.public_ip }}
 
             container2:
@@ -253,7 +253,7 @@ class TestComputeCluster(TestCase):
                 resources:
                    - File:
                        name: /etc/hearbeat.conf
-                       template_args:
+                       args:
                            ip: {{ container1.server.public_ip }}
             """)
         nodes = self.driver.list_nodes()
