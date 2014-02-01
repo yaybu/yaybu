@@ -25,6 +25,15 @@ def sibpath(filename):
 
 class TestFileApply(TestCase):
 
+    def test_not_directory(self):
+       self.assertRaises(error.PathComponentNotDirectory, self.apply, """
+           resources:
+             - File:
+                 name: /etc/missing
+             - File:
+                 name: /etc/missing/filename
+           """)
+
     def test_create_missing_component(self):
         self.assertRaises(error.PathComponentMissing, self.apply, """
             resources:
@@ -236,6 +245,14 @@ class TestFileApply(TestCase):
             json.loads(self.transport.get("/etc/foo")),
             {"BLAH": ["foo"]},
         )
+
+    def test_invalid_renderer(self):
+        self.assertRaises(error.ValueError, self.apply, """
+            resources:
+                - File:
+                    name: /etc/foo
+                    renderer: no-such-renderer
+            """)
 
 
 class TestFileRemove(TestCase):
