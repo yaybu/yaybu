@@ -26,13 +26,13 @@ def sibpath(filename):
 class TestFileApply(TestCase):
 
     def test_not_directory(self):
-       self.assertRaises(error.PathComponentNotDirectory, self.apply, """
-           resources:
-             - File:
-                 name: /etc/missing
-             - File:
-                 name: /etc/missing/filename
-           """)
+        self.assertRaises(error.PathComponentNotDirectory, self.apply, """
+            resources:
+              - File:
+                  name: /etc/missing
+              - File:
+                  name: /etc/missing/filename
+            """)
 
     def test_create_missing_component(self):
         self.assertRaises(error.PathComponentMissing, self.apply, """
