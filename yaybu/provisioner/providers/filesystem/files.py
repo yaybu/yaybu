@@ -57,11 +57,13 @@ class File(provider.Provider):
 
         try:
             args = self.resource.args.resolve()
+            sensitive_args = self.resource.args.contains_secrets()
         except error.NoMatching:
             args = self.resource.template_args.resolve()
+            sensitive_args = self.resource.template_args.contains_secrets()
 
         contents, sensitive = render_template(context, source, args)
-        sensitive = sensitive or self.resource.template_args.contains_secrets()
+        sensitive = sensitive or sensitive_args
         return contents, sensitive
 
     def render_static(self, context):

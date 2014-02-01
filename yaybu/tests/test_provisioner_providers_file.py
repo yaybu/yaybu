@@ -153,6 +153,7 @@ class TestFileApply(TestCase):
                 - File:
                     name: /etc/test_carriage_returns
                     template: {{ "package://yaybu.tests/assets/test_carriage_returns.j2" }}
+                    template_args: {}
                     """)
 
     def test_carriage_returns2(self):
@@ -165,6 +166,7 @@ class TestFileApply(TestCase):
                 - File:
                     name: /etc/test_carriage_returns2
                     template: {{ "package://yaybu.tests/assets/test_carriage_returns2.j2" }}
+                    template_args: {}
             """)
 
     def test_unicode(self):
