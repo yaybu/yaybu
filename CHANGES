@@ -26,6 +26,11 @@ Changelog for yaybu
 - Implement 'yaybu ssh' without needing ssh binary - this means we don't need
   to let encrypted stuff touch the disk!
 
+- There is now a ``renderer`` attribute on ``File``. Set it to ``json`` and it
+  will encode ``args`` as JSON and write to ``name``.
+
+- Deprecate the ``template``, ``static`` and ``template_args`` arguments of
+  ``File`` in favour of ``source`` and ``args``.
 
 3.1.1 (2013-11-07)
 ------------------

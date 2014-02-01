@@ -23,8 +23,8 @@ parameter::
         resources:
           - File:
               name: /etc/my.cnf
-              template: mytemplate.j2
-              template_args:
+              source: mytemplate.j2
+              args:
                   hello: world
 
 
@@ -86,7 +86,7 @@ local file::
           owner: root
           group: root
           mode: 644
-          static: my_hosts_file
+          source: my_hosts_file
 
 The following will create a file using a jinja2 template, and will back up the
 old version of the file if necessary::
@@ -119,15 +119,22 @@ The available parameters are:
     A mode representation as an octal. This can begin with leading zeros if
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work.
-``static``
-    A static file to copy into this resource. The file is located on the
-    yaybu path, so can be colocated with your recipes.
-``template``
-    A jinja2 template, used to generate the contents of this resource. The
-    template is located on the yaybu path, so can be colocated with your
-    recipes
-``template_args``
-    The arguments passed to the template.
+``renderer``
+    How to render the ``source`` before placing it at ``name``. There are a
+    couple of choices:
+     * ``guess``. Same as ``jinja2`` if ``source`` and ``args`` are both
+       present, ``static`` if just args is present, otherwise same as
+       ``empty``. This is the default behaviour.
+     * ``json`` takes the ``args`` parameter and renders it as JSON.
+     * ``jinja2`` takes the ``source`` file and renders it as a Jinja2
+        template, with ``args`` as the template 'context'.
+     * ``static`` copies the ``source`` as it is without any rendering.
+     * ``empty`` ensures that the file is empty.
+``source``
+    An optional file that is rendered into ``name`` on the target. Yaybu
+    searches the searchpath to find it.
+``args``
+    The arguments passed to the renderer.
 
 
 Directory

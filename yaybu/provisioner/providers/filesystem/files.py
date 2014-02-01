@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import json
 
 from yaybu import error
 from yaybu.provisioner import resources
@@ -36,49 +37,78 @@ class File(provider.Provider):
             path = os.path.join(path, i)
             if not ctx.transport.exists(path):  # FIXME
                 if not simulate:
-                    raise error.PathComponentMissing(path)
+                    raise error.PathComponentMissing("Directory '%s' is missing" % path)
             elif not ctx.transport.isdir(path):
-                raise error.PathComponentNotDirectory(path)
+                raise error.PathComponentNotDirectory("Path '%s' is not a directory" % path)
 
-    def get_file_contents(self, context):
-        template = self.resource.template.as_string(default='')
-        static = self.resource.static.as_string(default='')
+    def render_json(self, context):
+        args = self.resource.args.resolve()
 
-        if template:
-            template_args = self.resource.template_args.resolve()
-            contents, sensitive = render_template(
-                context, template, template_args)
-            if template_args:
-                sensitive = sensitive or self.resource.template_args.contains_secrets(
-                )
-
-        elif static:
-            fp = context.get_file(static)
-            contents = fp.read()
-            sensitive = "secret" in fp.labels
-
-        else:
-            contents = None
-            sensitive = False
-
+        contents = json.dumps(args, sort_keys=True, indent=4)
+        sensitive = self.resource.args.contains_secrets()
         return contents, sensitive
 
+    def render_jinja2(self, context):
+        source = self.resource.source.as_string()
+        if not source:
+            source = self.resource.template.as_string(default='')
+            if not source:
+                raise error.NoMatching("You must specify a 'source'")
+
+        try:
+            args = self.resource.args.resolve()
+        except error.NoMatching:
+            args = self.resource.template_args.resolve()
+
+        contents, sensitive = render_template(context, source, args)
+        sensitive = sensitive or self.resource.template_args.contains_secrets()
+        return contents, sensitive
+
+    def render_static(self, context):
+        source = self.resource.source.as_string()
+        if not source:
+            source = self.resource.static.as_string(default='')
+            if not source:
+                raise error.NoMatching("You must specify a 'source'")
+
+        fp = context.get_file(source)
+        contents = fp.read()
+        sensitive = "secret" in fp.labels
+        return contents, sensitive
+
+    def render_empty(self, context):
+        return None, False
+
+    def render_guess(self, context):
+        try:
+            return self.render_jinja2(context)
+        except error.NoMatching:
+            pass
+
+        try:
+            return self.render_static(context)
+        except error.NoMatching:
+            pass
+
+        return self.render_empty(context)
+
+    def render(self, context):
+        renderer = self.resource.renderer.as_string(default='guess')
+        func_name = 'render_%s' % renderer
+        if not hasattr(self, func_name):
+            raise Something("Invalid renderer '%s'" % renderer)
+        return getattr(self, func_name)(context)
+
     def test(self, context):
-        # Validate that the file exists and any template values can be filled
-        # in
-        if self.resource.template.as_string():
-            with context.root.ui.throbber("Check '%s' exists and is a valid template" % self.resource.template.as_string()):
-                self.get_file_contents(context)
-        elif self.resource.static.as_string():
-            with context.root.ui.throbber("Check '%s' exists" % self.resource.static.as_string()):
-                self.get_file_contents(context)
+        with context.root.ui.throbber("Checking '%s can be rendered" % self.resource):
+            self.render(context)
 
     def apply(self, context, output):
         name = self.resource.name.as_string()
 
         self.check_path(context, os.path.dirname(name), context.simulate)
 
-        contents, sensitive = self.get_file_contents(context)
+        contents, sensitive = self.render(context)
 
         fc = EnsureFile(
             name,
