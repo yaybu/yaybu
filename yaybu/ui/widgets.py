@@ -143,6 +143,7 @@ class TextFactory(object):
     def __exit__(self, a, b, c):
         self.greenlet.kill()
         self.greenlet = None
+        self._clear()
 
     def _clear(self):
         self.stdout.write('\r' + ' ' * self.columns + '\r')
