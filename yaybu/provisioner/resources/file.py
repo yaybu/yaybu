@@ -82,17 +82,28 @@ class File(Resource):
     you like, but this is not required. DO NOT use yaml Octal representation
     (0o666), this will NOT work."""
 
+    source = Property(File)
+    """A file that will be rendered and applied to this resource. """
+
+    renderer = Property(String, default="guess")
+    """ How to render the file. 'static' just copies the file, 'jinja2' applies
+    a Jinja2 template and 'json' transforms the args dictionary into a JSON
+    file """
+
+    args = Property(Dict, default={})
+    """ The arguments passed to the renderer."""
+
     static = Property(File)
-    """A static file to copy into this resource. The file is located on the
-    yaybu path, so can be colocated with your recipes."""
+    """ DEPRECATED: A static file to copy into this resource. The file is
+    located on the yaybu path, so can be colocated with your recipes."""
 
     template = Property(File)
-    """A jinja2 template, used to generate the contents of this resource. The
-    template is located on the yaybu path, so can be colocated with your
-    recipes"""
+    """ DEPRECATED: A jinja2 template, used to generate the contents of this
+    resource. The template is located on the yaybu path, so can be colocated
+    with your recipes"""
 
     template_args = Property(Dict, default={})
-    """The arguments passed to the template."""
+    """ DEPRECATED: The arguments passed to the template."""
 
     def hash(self, ctx):
         name = self.name.as_string()

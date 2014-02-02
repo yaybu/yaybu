@@ -21,6 +21,7 @@ from paramiko.ssh_exception import SSHException
 from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
 import StringIO
+import gevent
 
 from yaybu import error
 from . import remote, base
@@ -104,6 +105,16 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
             raise error.ConnectionError(
                 "Got unusable SSH connection: 'false' has exit code 0, same as 'true'!")
 
+        ret, out, err = self._execute_impl(["true"], None, None, None, transport=transport)
+        if ret != 0:
+            raise error.ConnectionError(
+                "Got unusable SSH connection: 'true' has exit code %d!" % ret)
+
+        ret, out, err = self._execute_impl(["sudo", "whoami"], None, None, None, transport=transport)
+        if ret != 0:
+            raise error.ConnectionError(
+                "Got unusable SSH connection: Can't become root")
+
     def whoami(self):
         return self.connect().get_transport().get_username()
 
@@ -125,6 +136,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
                     if cb:
                         cb(data)
                     buffer.append(data)
+                gevent.sleep(0.1)
 
         stdout_buffer = []
         stderr_buffer = []
