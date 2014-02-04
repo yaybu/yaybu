@@ -136,7 +136,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
                     if cb:
                         cb(data)
                     buffer.append(data)
-                gevent.sleep(0.1)
+            gevent.sleep()
 
         stdout_buffer = []
         stderr_buffer = []
