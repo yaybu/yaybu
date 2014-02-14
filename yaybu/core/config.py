@@ -79,30 +79,60 @@ class YaybuArg:
                 "Don't understand %r as a type for argument %r" % (self.type, self.name))
 
 
-class YaybuArgParser:
+class YaybuArgv(ast.PythonClass):
 
-    def __init__(self, *args):
-        self.args = {}
-        for a in args:
-            self.add(a)
+    def __init__(self, **args):
+        super(YaybuArgv, self).__init__(ast.PythonDict({}))
+        self.schema = {}
+        self.args = args
+        self.anchor = None
+
+    @classmethod
+    def from_argv(cls, argv):
+        arguments = {}
+        for arg in argv:
+            name, value = arg.split("=", 1)
+            if name in arguments:
+                raise ArgParseError(
+                    "Duplicate argument %r specified" % (name,))
+            arguments[name] = value
+        return cls(**arguments)
 
     def add(self, arg):
-        if arg.name in self.args:
+        if arg.name in self.schema:
             raise ArgParseError(
                 "Duplicate argument %r specified" % (arg.name,))
-        self.args[arg.name] = arg
+        self.schema[arg.name] = arg
 
-    def parse(self, **arguments):
-        for name, value in arguments.items():
-            if name not in self.args:
+    def parse(self):
+        print self.args
+        for name, value in self.args.items():
+            if name not in self.schema:
                 raise ArgParseError(
                     "Unexpected argument %r provided" % (name,))
-            self.args[name].set(value)
+            self.schema[name].set(value)
         return dict(self.values())
 
     def values(self):
-        for a in self.args.values():
+        for a in self.schema.values():
             yield (a.name, a.get())
+
+    def apply(self):
+        try:
+            args = self.get_key("yaybu").get_key("options").get_iterable()
+        except NoMatching:
+            return
+
+        for arg in args:
+            yarg = YaybuArg(
+                str(arg.name),
+                arg.type.as_string('string'),
+                arg.default.as_string(None),
+                arg.help.as_string(None),
+            )
+            self.add(yarg)
+
+        self.members.update(self.parse())
 
 
 class Config(BaseConfig):
@@ -170,37 +200,18 @@ class Config(BaseConfig):
         }
 
     def set_arguments(self, **arguments):
-        parser = YaybuArgParser()
-
-        try:
-            args = list(self.yaybu.options)
-        except NoMatching:
-            args = []
-
-        for arg in args:
-            yarg = YaybuArg(
-                str(arg.name),
-                arg.type.as_string('string'),
-                arg.default.as_string(None),
-                arg.help.as_string(None),
-            )
-            parser.add(yarg)
-
         self.add({
             "yaybu": {
-                "argv": parser.parse(**arguments),
+                "argv": YaybuArgv(**arguments),
             }
         })
 
     def set_arguments_from_argv(self, argv):
-        arguments = {}
-        for arg in argv:
-            name, value = arg.split("=", 1)
-            if name in arguments:
-                raise ArgParseError(
-                    "Duplicate argument %r specified" % (name,))
-            arguments[name] = value
-        self.set_arguments(**arguments)
+        self.add({
+            "yaybu": {
+                "argv": YaybuArgv.from_argv(argv),
+            }
+        })
 
     def set_hostname(self, hostname):
         self.add({
@@ -230,3 +241,6 @@ class Config(BaseConfig):
 
     def changed(self, changed=True):
         self._changed = self._changed or changed
+
+
+ast.bindings.append((lambda v: isinstance(v, YaybuArgv), lambda v: v))
