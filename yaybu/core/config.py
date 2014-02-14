@@ -119,7 +119,7 @@ class YaybuArgv(ast.PythonClass):
 
     def apply(self):
         try:
-            args = self.get_key("yaybu").get_key("options").get_iterable()
+            args = list(self.root.yaybu.options)
         except NoMatching:
             return
 
