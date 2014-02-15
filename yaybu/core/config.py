@@ -123,6 +123,7 @@ class YaybuArgv(ast.PythonClass):
         except NoMatching:
             return
 
+        self.schema = {}
         for arg in args:
             yarg = YaybuArg(
                 str(arg.name),
