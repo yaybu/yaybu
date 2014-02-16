@@ -181,7 +181,8 @@ class Resource(object):
         for key in self.inner.keys():
             if not key in self.get_argument_names():
                 raise error.ParseError(
-                    "'%s' is not a valid option for resource %s" % (key, self))
+                    "'%s' is not a valid option for resource %s" % (key, self),
+                    self.inner.anchor)
 
         # Error if doesn't conform to policy
         for p in self.get_potential_policies():
@@ -313,11 +314,11 @@ class ResourceBundle(OrderedDict):
         try:
             spec.as_dict()
         except errors.TypeError:
-            raise error.ParseError("Not a valid Resource definition")
+            raise error.ParseError("Not a valid Resource definition", anchor=spec.anchor)
 
         keys = list(spec.keys())
         if len(keys) > 1:
-            raise error.ParseError("Too many keys in list item")
+            raise error.ParseError("Too many keys in list item", anchor=spec.anchor)
 
         typename = keys[0]
         instances = spec.get_key(typename)
@@ -333,18 +334,18 @@ class ResourceBundle(OrderedDict):
 
     def add(self, typename, instance):
         if not hasattr(instance, "keys"):
-            raise error.ParseError("Expected mapping for %s" % typename)
+            raise error.ParseError("Expected mapping for %s" % typename, anchor=getattr(instance, "anchor", None))
 
         try:
             kls = ResourceType.resources[typename]
         except KeyError:
             raise error.ParseError(
-                "There is no resource type of '%s'" % typename)
+                "There is no resource type of '%s'" % typename, anchor=instance.anchor)
 
         resource = kls(instance)
         if resource.id in self:
             raise error.ParseError(
-                "'%s' cannot be defined multiple times" % resource.id)
+                "'%s' cannot be defined multiple times" % resource.id, anchor=instance.anchor)
 
         self[resource.id] = resource
 
