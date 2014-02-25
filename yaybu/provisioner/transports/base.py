@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-from subprocess import list2cmdline
 from pipes import quote
 from yay.ast import AST
 
