@@ -14,6 +14,7 @@
 
 import os
 from subprocess import list2cmdline
+from pipes import quote
 from yay.ast import AST
 
 
@@ -64,7 +65,7 @@ class Transport(object):
             for i, segment in enumerate(command):
                 if isinstance(segment, AST):
                     command[i] = segment.as_string()
-            command = list2cmdline(command)
+            command = ' '.join([quote(c) for c in command])
 
         parts = []
 
