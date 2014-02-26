@@ -2,8 +2,6 @@
 -r requirements/yaybu.txt
 
 nose2
-fakechroot
-mock
 
 # exxtras just for dev environment/travis
 coverage
