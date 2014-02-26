@@ -15,6 +15,7 @@
 """ Provides command-driven input to yaybu, using cmd.Cmd """
 
 import os
+import sys
 import cmd
 import optparse
 import logging
@@ -439,6 +440,19 @@ class YaybuCmd(OptionParsingCmd):
                 pass
 
             code.interact(local=mylocals)
+
+    def do_selftest(self, opts, args):
+        import unittest
+        import mock
+        loader = unittest.TestLoader()
+        suite = unittest.TestSuite()
+        # suite.addTests(loader.discover('yay'))
+        # suite.addTests(loader.discover('yaybu'))
+        runner = unittest.TextTestRunner(stream=sys.stderr)
+ 
+        with mock.patch('sys.stdout'):
+            with mock.patch('sys.stderr'):
+                runner.run(suite)
 
     def do_exit(self, opts=None, args=None):
         """ Exit yaybu """
