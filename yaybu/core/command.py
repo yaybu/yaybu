@@ -444,13 +444,26 @@ class YaybuCmd(OptionParsingCmd):
     def do_selftest(self, opts, args):
         import unittest
         import mock
+        import json
+        import pkgutil
+        import importlib
+
         loader = unittest.TestLoader()
         suite = unittest.TestSuite()
+
+        manifest = json.loads(pkgutil.get_data("yaybu.tests", "manifest.json"))
+        for module in manifest:
+            m = importlib.import_module("yaybu.tests.%s" % module)
+            suite.addTests(loader.loadTestsFromModule(m))
+
         # suite.addTests(loader.discover('yay'))
-        # suite.addTests(loader.discover('yaybu'))
+
+        stdout_fileno = sys.stdout.fileno()
+
         runner = unittest.TextTestRunner(stream=sys.stderr)
- 
         with mock.patch('sys.stdout'):
+            sys.stdout.fileno.return_value = stdout_fileno
+            sys.stdout.encoding = None
             with mock.patch('sys.stderr'):
                 runner.run(suite)
 
