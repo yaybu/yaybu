@@ -15,14 +15,18 @@
 from optparse import OptionParser
 import os
 import tempfile
-import unittest2
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from yaybu.core.config import Config
 from yaybu.core.command import YaybuCmd
 from yaybu import error
 
 
-class TestCase(unittest2.TestCase):
+class TestCase(unittest.TestCase):
 
     Config = Config
 
