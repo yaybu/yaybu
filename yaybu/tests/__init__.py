@@ -47,7 +47,14 @@ __all__ = [
     "test_util_templates"
 ]
 
+
 # This is horrible. But the alternative is flake failures or worse.
-import importlib
-globals().update(dict((m, importlib.import_module("yaybu.tests.%s" % m)) for m in __all__))
-del importlib
+# Can't even use importlib as still supporting py2.6!
+def import_module(mod):
+    import sys
+    __import__(mod)
+    return sys.modules[mod]
+
+globals().update(dict((m, import_module("yaybu.tests.%s" % m)) for m in __all__))
+
+del import_module
