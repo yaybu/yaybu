@@ -1,29 +1,31 @@
 import unittest
-import pkgutil
-import json
 import os
 import glob
+
+import yaybu.tests
 
 
 class TestTestManifest(unittest.TestCase):
 
-    def test_test_manifest(self):
-        # In order for test discovery on Windows and OSX we need a list of modules to inspect
-        # At the same time we don't want  to manually maintain that list
-        current_manifest = json.loads(pkgutil.get_data("yaybu.tests", "manifest.json"))
+    # Our default unittest runner in dev is nose2. This has lots of nice extras
+    # like collecting stdout and showing it alongside the correct test result.
 
-        test_dir = os.path.dirname(__file__)
-        manifest_path = os.path.join(test_dir, "manifest.json")
-        if not os.path.exists(manifest_path):
+    # However in a "packed" binary build (such as py2exe) it won't be able to
+    # discover tests by scanning the yaybu directory. We have to rely on
+    # yaybu/tests/__init__.py importing all the tests.
+
+    # This test asserts that yaybu/tests/__init__.py does indeed list all of
+    # the tests.
+
+    def test_test_manifest(self):
+        if not os.path.exists(__file__):
             # We are probably running from inside a library.zip or similar
             # Bail out
             return
 
-        manifest = []
-        for path in glob.glob(os.path.join(test_dir, "test_*.py")):
-            manifest.append(os.path.relpath(path, test_dir)[:-3])
+        current_manifest = dir(yaybu.tests)
 
-        if sorted(current_manifest) != sorted(manifest):
-            with open(manifest_path, "w") as fp:
-                json.dump(manifest, fp)
-            assert False, "Manifest is stale"
+        test_dir = os.path.dirname(__file__)
+        for path in glob.glob(os.path.join(test_dir, "test_*.py")):
+            modname = os.path.basename(path)[:-3]
+            self.assertIn(modname, current_manifest)
