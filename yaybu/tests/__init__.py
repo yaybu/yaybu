@@ -47,5 +47,3 @@ from yaybu.tests import (  # noqa
     test_test_manifest,
     test_util_templates
 )
-
-__all__ = [m for m in list(globals()) if m.startswith("test_")]

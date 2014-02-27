@@ -450,8 +450,9 @@ class YaybuCmd(OptionParsingCmd):
         loader = unittest.TestLoader()
         suite = unittest.TestSuite()
 
-        for m in yaybu.tests.__all__:
-            suite.addTests(loader.loadTestsFromModule(importlib.import_module("yaybu.tests.%s" % m)))
+        for m in dir(yaybu.tests):
+            if m.startswith("test_"):
+                suite.addTests(loader.loadTestsFromModule(importlib.import_module("yaybu.tests.%s" % m)))
         # suite.addTests(loader.discover('yay'))
 
         stdout_fileno = sys.stdout.fileno()
