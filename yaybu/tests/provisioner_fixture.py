@@ -16,7 +16,10 @@ import os
 import json
 import tempfile
 import inspect
-from unittest2 import SkipTest
+try:
+    from unittest2 import SkipTest
+except ImportError:
+    from unittest import SkipTest
 from yaybu import error
 
 from fakechroot import unittest2

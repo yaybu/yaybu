@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
 import os
 import tempfile
 import hashlib
@@ -23,6 +22,7 @@ import zipfile
 
 from mock import MagicMock as Mock, call, patch
 
+from yaybu.tests.base import TestCase
 from yaybu.compute.vmware import VMBoxLibrary, RemoteVMBox, VMBoxImage
 
 
@@ -34,7 +34,7 @@ def normpath(path):
     return path
 
 
-class TestVMBoxImage(unittest2.TestCase):
+class TestVMBoxImage(TestCase):
 
     def test_extract(self):
         with patch('yaybu.compute.vmware.ZipFile') as zf:
@@ -85,7 +85,7 @@ class TestVMBoxImage(unittest2.TestCase):
             ])
 
 
-class TestRemoteVMBox(unittest2.TestCase):
+class TestRemoteVMBox(TestCase):
 
     def _make_box(self, location):
         return RemoteVMBox(normpath(location), None, None)
@@ -165,7 +165,7 @@ fixture = [
 ]
 
 
-class TestVMBoxLibrary(unittest2.TestCase):
+class TestVMBoxLibrary(TestCase):
 
     def setUp(self):
         self.root = tempfile.mkdtemp()

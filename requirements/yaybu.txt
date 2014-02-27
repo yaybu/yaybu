@@ -9,5 +9,5 @@ ply==3.4
 pycrypto==2.6.1
 requests==2.2.1
 
-fakechroot
+fakechroot==0.0.7
 mock
