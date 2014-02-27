@@ -23,7 +23,7 @@ class TestTestManifest(unittest.TestCase):
         for path in glob.glob(os.path.join(test_dir, "test_*.py")):
             manifest.append(os.path.relpath(path, test_dir)[:-3])
 
-        if current_manifest != manifest:
+        if sorted(current_manifest) != sorted(manifest):
             with open(manifest_path, "w") as fp:
                 json.dump(manifest, fp)
             assert False, "Manifest is stale"
