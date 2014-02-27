@@ -1,11 +1,11 @@
-import unittest
 import os
 import glob
 
+from yaybu.tests.base import TestCase
 import yaybu.tests
 
 
-class TestTestManifest(unittest.TestCase):
+class TestTestManifest(TestCase):
 
     # Our default unittest runner in dev is nose2. This has lots of nice extras
     # like collecting stdout and showing it alongside the correct test result.
