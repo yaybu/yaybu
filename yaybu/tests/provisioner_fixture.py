@@ -16,6 +16,8 @@ import os
 import json
 import tempfile
 import inspect
+import pkgutil
+
 try:
     from unittest2 import SkipTest
 except ImportError:
@@ -161,10 +163,11 @@ class TestCase(unittest2.TestCase):
 
     def _setUp_for_playback(self):
         t = self.Transport = TransportPlayback
-        if not os.path.exists(self.path):
-            t.results = []
-            return
-        all_results = json.load(open(self.path))
+        payload = pkgutil.get_data("yaybu.tests", os.path.basename(self.path))
+        if payload:
+            all_results = json.loads(payload)
+        else:
+            all_results = {}
         t.results = all_results.get(self.id(), [])
 
     def failUnlessExists(self, path):
