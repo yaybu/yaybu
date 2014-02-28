@@ -22,7 +22,9 @@ except ImportError:
     from unittest import SkipTest
 from yaybu import error
 
-from fakechroot import unittest2
+# py2exe has a lot to say sorry for...
+# from fakechroot import unittest2
+import fakechroot.unittest2 as unittest2
 
 from yaybu.provisioner.transports.remote import stat_result, \
     struct_group, struct_passwd, struct_spwd
