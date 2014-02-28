@@ -14,6 +14,7 @@
 
 
 import os
+import pkgutil
 from yaybu.tests.provisioner_fixture import TestCase
 from yaybu import error
 
@@ -95,4 +96,4 @@ class TestLink(TestCase):
         """)
 
     def test_unicode(self):
-        self.check_apply(open(sibpath("assets/link_unicode1.yay")).read())
+        self.check_apply(pkgutil.get_data("yaybu.tests", "assets/link_unicode1.yay"))

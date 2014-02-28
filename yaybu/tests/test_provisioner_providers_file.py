@@ -17,6 +17,7 @@ from yaybu import error
 import os
 import stat
 import json
+import pkgutil
 
 
 def sibpath(filename):
@@ -194,7 +195,7 @@ class TestFileApply(TestCase):
             """)
 
     def test_unicode(self):
-        self.check_apply(open(sibpath("assets/unicode1.yay")).read())
+        self.check_apply(pkgutil.get_data("yaybu.tests", "assets/unicode1.yay"))
 
     def test_static_deprecated(self):
         """ Test setting the contents to that of a static file. """

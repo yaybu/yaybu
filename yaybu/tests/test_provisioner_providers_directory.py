@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import os
+import pkgutil
 import stat
 from yaybu.tests.provisioner_fixture import TestCase
 
@@ -66,7 +67,7 @@ class TestDirectory(TestCase):
 
     def test_unicode(self):
         utf8 = "/etc/£££££"  # this is utf-8 encoded
-        self.check_apply(open(sibpath("assets/directory_unicode1.yay")).read())
+        self.check_apply(pkgutil.get_data("yaybu.tests", "assets/directory_unicode1.yay"))
         self.failUnlessExists(utf8)
 
     def test_attributes(self):
