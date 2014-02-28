@@ -461,7 +461,10 @@ class YaybuCmd(OptionParsingCmd):
             sys.stdout.fileno.return_value = stdout_fileno
             sys.stdout.encoding = None
             with mock.patch('sys.stderr'):
-                runner.run(suite)
+                result = runner.run(suite)
+
+        if not result.wasSuccessful():
+            raise error.ExecutionError("Self-test failed, it is highly likely your yaybu installation is broken.")
 
     def do_exit(self, opts=None, args=None):
         """ Exit yaybu """
