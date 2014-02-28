@@ -29,6 +29,10 @@ Changelog for yaybu
 - There is now a ``renderer`` attribute on ``File``. Set it to ``json`` and it
   will encode ``args`` as JSON and write to ``name``.
 
+- Add a new ``yaybu selftest`` command. Right now this runs the yaybu test
+  suite. It's purpose is to ensure any py2exe/py2app/dh_virtualenv builds of
+  yaybu are functional and contain all required assets.
+
 - Deprecate the ``template``, ``static`` and ``template_args`` arguments of
   ``File`` in favour of ``source`` and ``args``.
 
