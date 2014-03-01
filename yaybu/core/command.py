@@ -444,14 +444,14 @@ class YaybuCmd(OptionParsingCmd):
     def do_selftest(self, opts, args):
         import unittest
         import mock
+        from yaybu.util.backports import import_module
         import yaybu.tests
-        import importlib
 
         loader = unittest.TestLoader()
         suite = unittest.TestSuite()
 
         for m in yaybu.tests.__all__:
-            suite.addTests(loader.loadTestsFromModule(importlib.import_module("yaybu.tests.%s" % m)))
+            suite.addTests(loader.loadTestsFromModule(import_module("yaybu.tests.%s" % m)))
         # suite.addTests(loader.discover('yay'))
 
         stdout_isatty = sys.stdout.isatty()

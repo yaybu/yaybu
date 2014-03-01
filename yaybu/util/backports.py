@@ -135,3 +135,12 @@ if not hasattr(socket, "inet_pton"):  # pragma: no cover
             raise socket.error('unknown address family')
 
     setattr(socket, "inet_pton", inet_pton)
+
+
+# import_module wasn't available in python2.6
+try:
+    from importlib import import_module
+except ImportError:
+    def import_module(mod):
+        __import__(mod)
+        return __import__("sys").modules[mod]
