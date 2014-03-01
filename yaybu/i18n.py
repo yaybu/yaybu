@@ -19,10 +19,10 @@ import gettext
 
 os.environ.setdefault("LANG", "en_GB.UTF-8")
 
-lc, encoding = locale.getdefaultlocale()
+language = locale.getdefaultlocale()[0] or 'en-GB'
 
 mo_location = os.path.join(os.path.dirname(__file__), "i18n")
-languages = [lc, ]
+languages = [language, ]
 
 gettext.install(True, localedir=None, unicode=1)
 gettext.find("Yaybu", mo_location)
