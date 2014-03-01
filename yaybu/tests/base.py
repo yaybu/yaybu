@@ -75,3 +75,21 @@ class TestCase(unittest.TestCase):
 
     def destroy(self, config, *args):
         return self._do("destroy", config, *args)
+
+    if not hasattr(unittest.TestCase, "addCleanup"):
+        def __init__(self, *args, **kwargs):
+            self.cleanups = []
+            super(TestCase, self).__init__(*args, **kwargs)
+
+        def addCleanup(self, func, *args, **kwargs):
+            self.cleanups.append((func, args, kwargs))
+
+        def tearDown(self):
+            for func, args, kwargs in reversed(self.cleanups):
+                try:
+                    func(*args, **kwargs)
+                except:
+                    pass
+
+        def assertIn(self, a, b):
+            assert a in b, "%r not in %r" % (a, b)
