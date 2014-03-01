@@ -454,10 +454,12 @@ class YaybuCmd(OptionParsingCmd):
             suite.addTests(loader.loadTestsFromModule(importlib.import_module("yaybu.tests.%s" % m)))
         # suite.addTests(loader.discover('yay'))
 
+        stdout_isatty = sys.stdout.isatty()
         stdout_fileno = sys.stdout.fileno()
 
         runner = unittest.TextTestRunner(stream=sys.stderr)
         with mock.patch('sys.stdout'):
+            sys.stdout.isatty.return_value = stdout_isatty
             sys.stdout.fileno.return_value = stdout_fileno
             sys.stdout.encoding = None
             with mock.patch('sys.stderr'):
