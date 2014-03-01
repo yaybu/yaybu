@@ -21,7 +21,12 @@ import pkgutil
 try:
     from unittest2 import SkipTest
 except ImportError:
-    from unittest import SkipTest
+    try:
+        from unittest import SkipTest
+    except ImportError:
+        class SkipTest(Exception):
+            pass
+
 from yaybu import error
 
 # py2exe has a lot to say sorry for...
