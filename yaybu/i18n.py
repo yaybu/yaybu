@@ -16,14 +16,32 @@
 import os
 import locale
 import gettext
+import logging
+
+
+log = logging.getLogger("yaybu.i18n")
 
 os.environ.setdefault("LANG", "en_GB.UTF-8")
+
+try:
+    locale.setlocale(locale.LC_ALL, '')
+except locale.Error:
+    log.warning("Unable to set locale. Setting locale to 'C'")
+    locale.setlocale(locale.LC_ALL, 'C')
+
+try:
+    locale.getlocale()
+except locale.Error:
+    log.warning("locale.getlocale() broken; trying 'C'")
+    locale.setlocale(locale.LC_ALL, 'C')
+    locale.getlocale()
 
 language = locale.getdefaultlocale()[0] or 'en-GB'
 
 mo_location = os.path.join(os.path.dirname(__file__), "i18n")
 languages = [language, ]
 
+# FIXME: Can only pass unicode=1 on python 2.x
 gettext.install(True, localedir=None, unicode=1)
 gettext.find("Yaybu", mo_location)
 gettext.textdomain("Yaybu")
