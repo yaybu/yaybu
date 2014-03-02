@@ -4,7 +4,7 @@ python:
   - "2.7"
 
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --allow-external argparse --allow-unverified argparse 'argparse>=1.2.1,<1.3' unittest2; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --allow-external argparse --allow-unverified argparse 'argparse>=1.2.1,<1.3'; fi
   - pip install -r requirements.txt
 
 script:
