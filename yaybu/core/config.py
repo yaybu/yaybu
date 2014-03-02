@@ -32,6 +32,7 @@ from yaybu.static import StaticContainer
 from yaybu.heroku import Heroku
 from yaybu.changesource import GitChangeSource, GitHubChangeSource
 from yaybu.printer import Printer
+from yaybu.clock import Clock
 
 
 class YaybuArg:
@@ -200,6 +201,12 @@ class Config(BaseConfig):
             "Printer": ast.PythonClassFactory(Printer),
         }
 
+        self.add({
+            "yaybu": {
+                "now": Clock(),
+            }
+        })
+
     def set_arguments(self, **arguments):
         self.add({
             "yaybu": {
@@ -244,4 +251,4 @@ class Config(BaseConfig):
         self._changed = self._changed or changed
 
 
-ast.bindings.append((lambda v: isinstance(v, YaybuArgv), lambda v: v))
+ast.bindings.append((lambda v: isinstance(v, ast.AST), lambda v: v))
