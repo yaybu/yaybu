@@ -446,6 +446,7 @@ class YaybuCmd(OptionParsingCmd):
         import mock
         from yaybu.util.backports import import_module
         import yaybu.tests
+        import yay.tests
 
         loader = unittest.TestLoader()
         suite = unittest.TestSuite()
@@ -453,7 +454,8 @@ class YaybuCmd(OptionParsingCmd):
         for m in yaybu.tests.__all__:
             suite.addTests(loader.loadTestsFromModule(import_module("yaybu.tests.%s" % m)))
 
-        suite.addTests(loader.discover('yay'))
+        for m in yay.tests.__all__:
+            suite.addTests(loader.loadTestsFromModule(import_module("yay.tests.%s" % m)))
 
         stdout_isatty = sys.stdout.isatty()
         stdout_fileno = sys.stdout.fileno()
