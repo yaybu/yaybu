@@ -27,14 +27,16 @@ except ImportError:
         class SkipTest(Exception):
             pass
 
+from fakechroot import FakeChroot
+
 from yaybu import error
-
-# py2exe has a lot to say sorry for...
-# from fakechroot import unittest2
-import fakechroot.unittest2 as unittest2
-
+from yaybu.tests.base import TestCase as BaseTestCase
 from yaybu.provisioner.transports.remote import stat_result, \
     struct_group, struct_passwd, struct_spwd
+
+
+class ChangeStillOutstanding(Exception):
+    pass
 
 
 class TransportRecorder(object):
@@ -102,15 +104,7 @@ class TransportPlayback(object):
         return _
 
 
-class CalledProcessError(Exception):
-    pass
-
-
-class ChangeStillOutstanding(Exception):
-    pass
-
-
-class YaybuFakeChroot(unittest2.FakeChroot):
+class YaybuFakeChroot(FakeChroot):
 
     """
     I provide a very simple COW userspace environment in which to test configuration
@@ -121,7 +115,7 @@ class YaybuFakeChroot(unittest2.FakeChroot):
     Exception = SkipTest
 
 
-class TestCase(unittest2.TestCase):
+class TestCase(BaseTestCase):
 
     FakeChroot = YaybuFakeChroot
     location = os.path.join(os.path.dirname(__file__), "..", "..", "..")
@@ -131,22 +125,23 @@ class TestCase(unittest2.TestCase):
         self.path = inspect.getfile(self.__class__).rsplit(".", 1)[0] + ".json"
 
         if os.environ.get("YAYBU_RECORD_FIXTURES", "") == "YES":
-            super(TestCase, self).setUp()
             self._setUp_for_recording()
         else:
             self._setUp_for_playback()
 
         self.transport = self.Transport(None, 5, False)
 
-    def _config(self, contents):
-        f = tempfile.NamedTemporaryFile(delete=False)
-        f.write(contents)
-        f.close()
-        path = os.path.realpath(f.name)
-        self.addCleanup(os.unlink, path)
-        return path
+        self.Transport.path = self.path
+        self.Transport.id = self.id()
+
+        from yaybu.provisioner import Provision
+        Provision.Transport = self.Transport
 
     def _setUp_for_recording(self):
+        self.chroot = self.FakeChroot(self.location)
+        self.addCleanup(self.chroot.cleanUp)
+        self.chroot.setUp()
+
         from yaybu.provisioner.transports import FakechrootTransport
         FakechrootTransport.env = self.chroot.get_env()
         FakechrootTransport.chroot_path = self.chroot.chroot_path
@@ -181,27 +176,9 @@ class TestCase(unittest2.TestCase):
     def failIfExists(self, path):
         assert not self.transport.exists(path), "%s does exist" % path
 
-    def yaybu(self, configfile, *args):
-        self.Transport.path = self.path
-        self.Transport.id = self.id()
-
-        from yaybu.provisioner import Provision
-        Provision.Transport = self.Transport
-
-        from yaybu.core.command import YaybuCmd
-        from optparse import OptionParser
-
-        p = OptionParser()
-        y = YaybuCmd(configfile, ypath=(os.path.dirname(configfile), ))
-        y.verbose = 2
-        y.debug = True
-        y.opts_up(p)
-
-        return y.do_up(*p.parse_args(list(args)))
-
-    def apply(self, contents, *args):
-        path = self._config(contents)
-        path2 = self._config(
+    def _config(self, contents):
+        path = super(TestCase, self)._config(contents)
+        path2 = super(TestCase, self)._config(
             """
             include r"%s"
             main:
@@ -210,22 +187,15 @@ class TestCase(unittest2.TestCase):
                         fqdn: fakechroot:///
                     resources: {{ resources }}
             """ % path)
+        return path2
 
-        return self.yaybu(path2, *args)
+    # FIXME: Methods beyond this point are deprecated
+
+    def apply(self, contents, *args):
+        return self._up(contents, *args)
 
     def check_apply(self, contents, *args, **kwargs):
-        # Apply the change in simulate mode
-        sim_args = list(args) + ["-s"]
-        self.apply(contents, *sim_args)
-
-        # Apply the change for real
-        self.apply(contents, *args)
-
-        # If we apply the change again nothing should be changed
-
         try:
-            self.apply(contents, *args)
-        except error.NothingChanged:
-            return
-
-        raise ChangeStillOutstanding("Change still outstanding")
+            return self.up(contents, *args)
+        except RuntimeError:
+            raise ChangeStillOutstanding()
