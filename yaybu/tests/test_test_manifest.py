@@ -23,7 +23,7 @@ class TestTestManifest(TestCase):
             # Bail out
             return
 
-        current_manifest = dir(yaybu.tests)
+        current_manifest = yaybu.tests.__all__
 
         test_dir = os.path.dirname(__file__)
         for path in glob.glob(os.path.join(test_dir, "test_*.py")):
