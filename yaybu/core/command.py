@@ -452,7 +452,8 @@ class YaybuCmd(OptionParsingCmd):
 
         for m in yaybu.tests.__all__:
             suite.addTests(loader.loadTestsFromModule(import_module("yaybu.tests.%s" % m)))
-        # suite.addTests(loader.discover('yay'))
+
+        suite.addTests(loader.discover('yay'))
 
         stdout_isatty = sys.stdout.isatty()
         stdout_fileno = sys.stdout.fileno()
