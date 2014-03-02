@@ -14,7 +14,6 @@
 
 import os
 import json
-import tempfile
 import inspect
 import pkgutil
 
@@ -29,7 +28,6 @@ except ImportError:
 
 from fakechroot import FakeChroot
 
-from yaybu import error
 from yaybu.tests.base import TestCase as BaseTestCase
 from yaybu.provisioner.transports.remote import stat_result, \
     struct_group, struct_passwd, struct_spwd
