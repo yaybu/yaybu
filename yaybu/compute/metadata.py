@@ -24,4 +24,4 @@ openstack.OpenStackNodeDriver.kwargs = [
     'ex_force_service_type',
     'ex_force_service_name',
     'ex_force_service_region',
-    ]
+]
