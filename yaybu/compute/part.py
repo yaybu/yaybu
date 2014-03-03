@@ -226,10 +226,12 @@ class Compute(base.GraphExternalAction):
 
         if n.public_ips:
             self.members['public_ip'] = n.public_ips[0]
-        if n.private_ips:
-            self.members.set['private_ip'] = n.private_ips
+            self.members['public_ips'] = n.public_ips
+            self.members['fqdn'] = n.public_ips[0]
 
-        self.members['fqdn'] = n.public_ips[0]
+        if n.private_ips:
+            self.members['private_ip'] = n.private_ips[0]
+            self.members['private_ips'] = n.private_ips
 
         if 'dns_name' in n.extra:
             self.members['hostname'] = n.extra['dns_name'].split(".")[0]

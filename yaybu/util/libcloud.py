@@ -85,6 +85,6 @@ def get_driver_from_expression(
                            "/".join(possible))
             raise error.ValueError(
                 '\n'.join(msg), anchor=driver_id_expr.expand().anchor)
-    driver = Driver(**args_from_expression(Driver, expression, ignore=ignore))
+    driver = Driver(**args_from_expression(Driver, expression, ignore=ignore, kwargs=getattr(Driver, "kwargs", [])))
     driver.yaybu_context = context
     return driver
