@@ -39,5 +39,6 @@ setup(name='Yaybu',
       entry_points = """
       [console_scripts]
       yaybu = yaybu.core.main:main
+      recrypt = yaybu.core.recrypt:main
       """
       )

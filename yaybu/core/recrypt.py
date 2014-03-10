@@ -1,5 +1,4 @@
 
-import wingdbstub
 import optparse
 import sys
 import os
