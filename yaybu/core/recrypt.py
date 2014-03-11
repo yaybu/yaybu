@@ -13,13 +13,16 @@ usage = "%prog [options] directory..."
 verbose = False
 debug = False
 
+
 def vmessage(message, *args):
     if verbose:
         print >> sys.stderr, message.format(*args)
 
+
 def dmessage(message, *args):
     if debug:
         print >> sys.stderr, message.format(*args)
+
 
 def gpg(args, stdin=None):
     command = [
@@ -39,7 +42,9 @@ def gpg(args, stdin=None):
         raise SystemExit(1)
     return stdout, stderr
 
+
 cached_identities = {}
+
 
 def gpg_get_identities(recipient):
     if recipient not in cached_identities:
@@ -51,11 +56,13 @@ def gpg_get_identities(recipient):
                 cached_identities[recipient].append(m.group(1))
     return cached_identities[recipient]
 
+
 class Group:
 
     def __init__(self, *members):
         self.members = []
         self.members.extend(members)
+
 
 class EncryptedFile:
     def __init__(self, pathname, desired_recipients):
@@ -102,11 +109,12 @@ class EncryptedFile:
                 return
         vmessage("{0} is current, not encrypting", self.pathname)
 
+
 class RecipientDirectory:
 
     def __init__(self, directory):
         self.directory = directory
-        self.groups = collections.defaultdict(lambda:[])
+        self.groups = collections.defaultdict(lambda: [])
         self.files = []
         self.errors = 0
         self.ingest()
@@ -132,7 +140,7 @@ class RecipientDirectory:
                 l.append(m)
         return l
 
-    def _parse_encrypt_line(self, line):
+    def _parse_encrypt_line(self, line, no, recipient_file):
         parts = line.split()
         files = []
         targets = []
@@ -149,7 +157,7 @@ class RecipientDirectory:
         for f in files:
             yield (f, targets)
 
-    def _parse_group_line(self, line):
+    def _parse_group_line(self, line, no, pathname):
         terms = line.split()
         group_name = terms[1]
         members = terms[2:]
@@ -158,7 +166,6 @@ class RecipientDirectory:
         return (group_name, members)
 
     def ingest(self, filename=RECIPIENTS):
-        errors = 0
         files = {}
         recipient_filename = os.path.join(self.directory, filename)
         for no, line in enumerate(open(recipient_filename)):
@@ -168,10 +175,10 @@ class RecipientDirectory:
             elif line.startswith("#"):
                 pass
             elif line.startswith("group"):
-                group_name, members = self._parse_group_line(line)
+                group_name, members = self._parse_group_line(line, no, recipient_filename)
                 self.groups[group_name].extend(members)
             elif line.startswith("encrypt"):
-                files.update(self._parse_encrypt_line(line))
+                files.update(self._parse_encrypt_line(line, no, recipient_filename))
             else:
                 self.error("Error in {0} at line {1}: cannot parse".format(recipient_filename, no), line)
         for filename, targets in files.items():
@@ -179,10 +186,12 @@ class RecipientDirectory:
             pathname = os.path.join(self.directory, filename)
             self.files.append(EncryptedFile(pathname, expanded_targets))
 
+
 def find_recipients(target):
     for dirpath, dirnames, filenames in os.walk(target):
         if RECIPIENTS in filenames:
             yield dirpath
+
 
 class Reencryptor:
 
@@ -198,13 +207,17 @@ class Reencryptor:
         for d in self.directories:
             d.encrypt()
 
+
 def main():
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="some output")
     parser.add_option("-d", "--debug", dest="debug", action="store_true", help="lots of output")
     opts, args = parser.parse_args()
+
+    global verbose, debug
     verbose = opts.verbose or opts.debug
     debug = opts.debug
+
     if len(args) < 1:
         parser.print_help()
         raise SystemExit(1)
