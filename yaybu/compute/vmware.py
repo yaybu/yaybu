@@ -378,42 +378,6 @@ class VMWareDriver(NodeDriver):
         if isinstance(auth, NodeAuthSSHKey):
             self.apply_auth_ssh(vmrun, auth.username, auth.pubkey)
 
-    def _get_and_check_auth(self, auth):
-        """
-        Helper function for providers supporting L{NodeAuthPassword} or
-        L{NodeAuthSSHKey}
-
-        Validates that only a supported object type is passed to the auth
-        parameter and raises an exception if it is not.
-
-        If no L{NodeAuthPassword} object is provided but one is expected then a
-        password is automatically generated.
-        """
-
-        if isinstance(auth, NodeAuthPassword):
-            if 'password' in self.features['create_node']:
-                return auth
-            raise LibcloudError(
-                'Password provided as authentication information, but password'
-                'not supported', driver=self)
-
-        if isinstance(auth, NodeAuthSSHKey):
-            if 'ssh_key' in self.features['create_node']:
-                return auth
-            raise LibcloudError(
-                'SSH Key provided as authentication information, but SSH Key'
-                'not supported', driver=self)
-
-        if 'password' in self.features['create_node']:
-            value = os.urandom(16)
-            value = binascii.hexlify(value).decode('ascii')
-            return NodeAuthPassword(value, generated=True)
-
-        if auth:
-            raise LibcloudError(
-                '"auth" argument provided, but it was not a NodeAuthPassword'
-                'or NodeAuthSSHKey object', driver=self)
-
     def _get_source(self, image):
         """ If the source looks like it is remote then fetch the image and
         extract it into the library directory, otherwise use it directly. """
