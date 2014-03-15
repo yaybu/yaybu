@@ -29,7 +29,6 @@ import os
 import shlex
 import subprocess
 from pipes import quote
-import binascii
 
 from libcloud.common.types import LibcloudError, ProviderError
 from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
