@@ -265,7 +265,7 @@ class Compute(base.GraphExternalAction):
 
         if self.libcloud_node:
             logger.debug("Applying to node %r at %r/%r" %
-                         (self.libcloud_node.name, self.libcloud_node.public_ip, self.libcloud_node.private_ip))
+                         (self.libcloud_node.name, self.libcloud_node.public_ips, self.libcloud_node.private_ips))
             self._update_node_info()
             return
 
