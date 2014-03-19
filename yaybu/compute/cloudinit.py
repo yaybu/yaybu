@@ -74,6 +74,87 @@ class Seed:
             os.unlink(os.path.join(self.tmpdir, f))
         os.rmdir(self.tmpdir)
 
+class FedoraCloudImage:
+
+    server = "download.fedoraproject.org"
+    source = "http://{server}/pub/fedora/linux/releases/{release}/Images/{arch}"
+    checksum = "Fedora-Images-{arch}-{release}-CHECKSUM"
+    qcow = "Fedora-{arch}-{release}-{version}-sda.qcow2"
+
+    # the name of the image is found by looking in the checksum file
+    image = None
+    blocksize = 81920
+
+    def __init__(self, directory, release="20", arch="x86_64"):
+        self.directory = directory
+        self.release = release
+        self.arch = arch
+
+    def fmt_args(self):
+        return dict(server=self.server,
+                    release=self.release,
+                    arch=self.arch)
+
+    def set_image(self, sums):
+        for k in sums:
+            if k.endswith("qcow2"):
+                self.image = k
+
+    def get_remote_sums(self):
+        logger.debug("Fetching remote image sums")
+        remote_pattern = self.source + "/" + self.checksum
+        remote_url = remote_pattern.format(**self.fmt_args())
+        response = urllib2.urlopen(remote_url)
+        lines = response.read().splitlines()
+        sums = {}
+        for line in lines[3:]:
+            if line.startswith("---"):
+                break
+            line = line.strip()
+            s, f = line.split()
+            sums[f[1:]] = s
+        return sums
+
+    def get_local_sums(self):
+        sums = {}
+        pathname = os.path.join(self.directory, self.image)
+        h = hashlib.sha1()
+        if os.path.exists(pathname):
+            h.update(open(pathname).read())
+            sums[self.image] = h.hexdigest()
+        return sums
+
+    def fetch(self):
+        args = self.fmt_args()
+        source = self.source.format(**args)
+        remote_url = source + "/" + self.image
+        try:
+            response = urllib2.urlopen(remote_url)
+        except urllib2.HTTPError:
+            print remote_url
+            raise CloudInitException("Unable to fetch {0}".format(remote_url))
+        local = open(os.path.join(self.directory, self.image), "w")
+        while True:
+            data = response.read(self.blocksize)
+            if not data:
+                break
+            local.write(data)
+
+    def update(self):
+        remote = self.get_remote_sums()
+        self.set_image(remote)
+        local = self.get_local_sums()
+        logger.debug("Checking sums for {0}".format(self.image))
+        if self.image not in local:
+            logger.info("{0} not present locally, fetching".format(self.image))
+            self.fetch()
+        elif local[self.image] != remote[self.image]:
+            logger.info("Local {0} does not match remote sum, fetching".format(self.image))
+            self.fetch()
+        else:
+            logger.info("Sums match for {0}".format(filename))
+        # TODO check sums subsequently
+
 class UbuntuCloudImage:
 
     server = "cloud-images.ubuntu.com"
@@ -99,7 +180,6 @@ class UbuntuCloudImage:
                     extension=extension)
 
     def fetch(self, extension):
-        import wingdbstub
         args = self.fmt_args(extension)
         source = self.source.format(**args)
         filename = self.filename(extension)
@@ -256,7 +336,8 @@ class CloudInit:
         s.cleanup()
 
     def fetch_image(self):
-        r = UbuntuCloudImage(self.directory)
+        #r = UbuntuCloudImage(self.directory)
+        r = FedoraCloudImage(self.directory)
         r.update()
         r.make_vmx()
 
