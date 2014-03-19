@@ -1,4 +1,4 @@
-
+import wingdbstub
 import os
 import tempfile
 import subprocess
@@ -10,8 +10,6 @@ import hashlib
 import logging
 
 logger = logging.getLogger("cloudinit")
-
-import wingdbstub
 
 class CloudInitException(Exception):
 
@@ -74,6 +72,140 @@ class Seed:
             os.unlink(os.path.join(self.tmpdir, f))
         os.rmdir(self.tmpdir)
 
+class ImageConverter:
+    xmlns = {"env": "http://schemas.dmtf.org/ovf/envelope/1"}
+
+    def convert_image(self, source, destination, format):
+        command = [
+            "qemu-img",
+            "convert",
+            "-O", format,
+            source,
+            destination,
+        ]
+        logger.info("Converting image to {0} format".format(format))
+        logger.debug("Executing {0}".format(" ".join(command)))
+        p = subprocess.Popen(
+            args=command,
+            stdin=None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            raise CloudInitException("qemu-img failed", log=stdout+stderr)
+
+    def fix_ovf(self, source, disk_image):
+        image_size = len(open(disk_image).read())
+        tree = ET.parse(source)
+        disk = tree.find("./env:References/env:File", self.xmlns)
+        disk.attrib["{%s}size" % self.xmlns["env"]] = str(image_size)
+        disk.attrib["{%s}href" % self.xmlns["env"]] = os.path.basename(disk_image)
+        product_section = tree.find("./env:VirtualSystem/env:ProductSection", namespaces=self.xmlns)
+        for elem in product_section.findall("env:Property", namespaces=self.xmlns):
+            product_section.remove(elem)
+        tree.write(source)
+
+    def read_vmx_config(self, vmx):
+        config = {}
+        for l in open(vmx):
+            l = l.strip()
+            name, value = l.split("=", 1)
+            config[name] = value
+        return config
+
+    def write_vmx_config(self, vmx, config):
+        f = open(vmx, "w")
+        for name, value in config.items():
+            print >> f, '{0} = "{1}"'.format(name, value)
+
+    def create_plain_vmx(self, vmx, vmdk, name="New Machine"):
+        config = {
+            "displayname": name,
+            "annotation": "Created by Yaybu.",
+            "guestos" :"fedora",
+            "config.version": "8",
+            "virtualhw.version": "7",
+            ".encoding": "UTF-8",
+
+            "memsize": "256",
+            "cpuid.coresPerSocket": "1",
+            "numvcpus": "1",
+
+            "ethernet0.connectionType": "bridged",
+            "ethernet0.present": "TRUE",
+            "ethernet0.virtualDev": "e1000",
+            "ethernet0.startConnected": "TRUE",
+            "ethernet0.addressType": "generated",
+
+            "scsi0.virtualDev": "lsilogic",
+            "scsi0.present": "TRUE",
+            "scsi0:0.present": "TRUE",
+            "scsi0:0.fileName": vmdk,
+            "scsi0:0.mode": "persistent",
+            "scsi0:0.deviceType": "disk",
+
+            "ide0:0.deviceType": "cdrom-image",
+            "ide0:0.present": "TRUE",
+            "ide0:0.fileName":  "seed.iso",
+
+            "usb.present": "TRUE",
+            "floppy0.present": "FALSE",
+            "vmci0.present": "TRUE",
+
+            "toolscripts.afterresume": "true",
+            "toolscripts.afterpoweron": "true",
+            "toolscripts.beforesuspend": "true",
+            "toolscripts.beforepoweroff": "true",
+
+            "pciBridge0.present": "TRUE",
+            "pciBridge4.present": "TRUE",
+            "pciBridge5.present": "TRUE",
+            "pciBridge6.present": "TRUE",
+            "pciBridge7.present": "TRUE",
+            "pciBridge4.virtualDev": "pcieRootPort",
+            "pciBridge5.virtualDev": "pcieRootPort",
+            "pciBridge6.virtualDev": "pcieRootPort",
+            "pciBridge7.virtualDev": "pcieRootPort",
+            "pciBridge4.functions": "8",
+            "pciBridge5.functions": "8",
+            "pciBridge6.functions": "8",
+            "pciBridge7.functions": "8",
+          }
+        self.write_vmx_config(vmx, config)
+
+    def convert_ovf_to_vmx(self, source, destination):
+        import wingdbstub
+        command = [
+            "ovftool",
+            "-o",
+            source,
+            destination,
+        ]
+        logger.info("Converting to VMX")
+        logger.debug("Executing {0}".format(" ".join(command)))
+        p = subprocess.Popen(
+            args=command,
+            stdin=None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            logger.debug(stdout)
+            logger.debug(stderr)
+            raise CloudInitException("ovftool failed")
+        config = self.read_vmx_config(destination)
+        for n in config.keys():
+            if n.startswith("ide"):
+                del config[n]
+        config.update({
+            "ide0:0.present": "TRUE",
+            "ide0:0.fileName":  "seed.iso",
+            "ide0:0.deviceType": "cdrom-image",
+        })
+        self.write_vmx_config(destination, config)
+
 class FedoraCloudImage:
 
     server = "download.fedoraproject.org"
@@ -118,7 +250,7 @@ class FedoraCloudImage:
     def get_local_sums(self):
         sums = {}
         pathname = os.path.join(self.directory, self.image)
-        h = hashlib.sha1()
+        h = hashlib.sha256()
         if os.path.exists(pathname):
             h.update(open(pathname).read())
             sums[self.image] = h.hexdigest()
@@ -152,8 +284,16 @@ class FedoraCloudImage:
             logger.info("Local {0} does not match remote sum, fetching".format(self.image))
             self.fetch()
         else:
-            logger.info("Sums match for {0}".format(filename))
+            logger.info("Sums match for {0}".format(self.image))
         # TODO check sums subsequently
+
+    def make_vmx(self):
+        source = os.path.join(self.directory, self.image)
+        vmdk = os.path.join(self.directory, "disk1.vmdk")
+        vmx = os.path.join(self.directory, self.image[:-10] + ".vmx")
+        converter = ImageConverter()
+        converter.convert_image(source, vmdk, "vmdk")
+        converter.create_plain_vmx(vmx, vmdk)
 
 class UbuntuCloudImage:
 
@@ -161,7 +301,6 @@ class UbuntuCloudImage:
     source = "http://{server}/releases/{release}/release"
     fn_pattern = "ubuntu-{release}-server-cloudimg-{arch}{extension}"
     extensions = ['-disk1.img', '.ovf']
-    xmlns = {"env": "http://schemas.dmtf.org/ovf/envelope/1"}
     blocksize = 81920
 
     def __init__(self, directory, release="13.10", arch="amd64"):
@@ -237,89 +376,15 @@ class UbuntuCloudImage:
                 logger.info("Sums match for {0}".format(filename))
         # TODO check sums subsequently
 
-    def read_vmx_config(self):
-        config = {}
-        vmx = os.path.join(self.directory, self.filename(".vmx"))
-        for l in open(vmx):
-            l = l.strip()
-            name, value = l.split("=", 1)
-            config[name] = value
-        return config
-
-    def write_vmx_config(self, config):
-        vmx = os.path.join(self.directory, self.filename(".vmx"))
-        f = open(vmx, "w")
-        for name, value in config.items():
-            print >> f, "{0} = {1}".format(name, value)
-
     def make_vmx(self):
-        self.convert_image()
-        self.convert_ovf()
-        command = [
-            "ovftool",
-            "-o",
-            self.filename(".ovf"),
-            self.filename(".vmx"),
-        ]
-        logger.info("Converting to VMX")
-        logger.debug("Executing {0}".format(" ".join(command)))
-        p = subprocess.Popen(
-            args=command,
-            stdin=None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd=self.directory
-        )
-        stdout, stderr = p.communicate()
-        if p.returncode != 0:
-            logger.debug(stdout)
-            logger.debug(stderr)
-            raise CloudInitException("ovftool failed")
-        config = self.read_vmx_config()
-        for n in config.keys():
-            if n.startswith("ide"):
-                del config[n]
-        config.update({
-            "ide0:0.present": "TRUE",
-            "ide0:0.fileName":  "seed.iso",
-            "ide0:0.deviceType": "cdrom-image",
-        })
-        self.write_vmx_config(config)
-
-    def convert_image(self):
-        filename = self.filename("-disk1.img")
-        destination = "disk1.vmdk"
-        command = [
-            "qemu-img",
-            "convert",
-            "-O", "vmdk",
-            os.path.join(self.directory, filename),
-            os.path.join(self.directory, destination),
-        ]
-        logger.info("Converting image to vmdk format")
-        logger.debug("Executing {0}".format(" ".join(command)))
-        p = subprocess.Popen(
-            args=command,
-            stdin=None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        stdout, stderr = p.communicate()
-        if p.returncode != 0:
-            raise CloudInitException("qemu-img failed", log=stdout+stderr)
-
-    def convert_ovf(self):
-        filename = os.path.join(self.directory, self.filename(".ovf"))
-        disk_image = os.path.join(self.directory, "disk1.vmdk")
-        image_size = len(open(disk_image).read())
-        tree = ET.parse(filename)
-        disk = tree.find("./env:References/env:File", self.xmlns)
-        disk.attrib["{%s}size" % self.xmlns["env"]] = str(image_size)
-        disk.attrib["{%s}href" % self.xmlns["env"]] = "disk1.vmdk"
-        product_section = tree.find("./env:VirtualSystem/env:ProductSection", namespaces=self.xmlns)
-        for elem in product_section.findall("env:Property", namespaces=self.xmlns):
-            product_section.remove(elem)
-        tree.write(filename)
+        source = os.path.join(self.directory, self.filename("-disk1.img"))
+        vmdk = os.path.join(self.directory, "disk1.vmdk")
+        ovf = os.path.join(self.directory, self.filename(".ovf"))
+        vmx = os.path.join(self.directory, self.filename(".vmx"))
+        converter = ImageConverter()
+        converter.convert_image(source, vmdk, "vmdk")
+        converter.fix_ovf(ovf, vmdk)
+        converter.convert_ovf_to_vmx(ovf, vmx)
 
 class CloudInit:
 
@@ -336,8 +401,8 @@ class CloudInit:
         s.cleanup()
 
     def fetch_image(self):
-        #r = UbuntuCloudImage(self.directory)
-        r = FedoraCloudImage(self.directory)
+        r = UbuntuCloudImage(self.directory)
+        #r = FedoraCloudImage(self.directory)
         r.update()
         r.make_vmx()
 
