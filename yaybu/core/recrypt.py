@@ -1,4 +1,3 @@
-
 import optparse
 import sys
 import os
@@ -143,9 +142,9 @@ class RecipientDirectory:
             else:
                 dest.append(i)
         if not targets:
-            self.error("No targets in {0} at line {1}".format(recipient_file, no))
+            raise ValueError("No targets")
         if not files:
-            self.error("no files in {0} at line {1}".format(recipient_file, no))
+            raise ValueError("No files")
         for f in files:
             yield (f, targets)
 
@@ -153,8 +152,6 @@ class RecipientDirectory:
         terms = line.split()
         group_name = terms[1]
         members = terms[2:]
-        if group_name in self.groups:
-            self.error("Redefinition of group {0} in {1} at line {2}".format(group_name, pathname, no))
         return (group_name, members)
 
     def ingest(self, filename=RECIPIENTS):
@@ -171,7 +168,12 @@ class RecipientDirectory:
                 group_name, members = self._parse_group_line(line)
                 self.groups[group_name].extend(members)
             elif line.startswith("encrypt"):
-                files.update(self._parse_encrypt_line(line))
+                try:
+                    files.update(self._parse_encrypt_line(line))
+                except ValueError, e:
+                    print >>sys.stderr, "{0} in {1} at line {2}".format(e.message, recipient_filename, no)
+                    errors += 1
+
             else:
                 self.error("Error in {0} at line {1}: cannot parse".format(recipient_filename, no), line)
         for filename, targets in files.items():
@@ -200,9 +202,10 @@ class Reencryptor:
 
 def main():
     parser = optparse.OptionParser(usage=usage)
-    parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="some output")
-    parser.add_option("-d", "--debug", dest="debug", action="store_true", help="lots of output")
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="some output", default=False)
+    parser.add_option("-d", "--debug", dest="debug", action="store_true", help="lots of output", default=False)
     opts, args = parser.parse_args()
+    global verbose, debug
     verbose = opts.verbose or opts.debug
     debug = opts.debug
     if len(args) < 1:
