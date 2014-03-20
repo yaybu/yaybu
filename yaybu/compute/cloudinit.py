@@ -1,4 +1,3 @@
-import wingdbstub
 import os
 import tempfile
 import subprocess
@@ -10,11 +9,13 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 logger = logging.getLogger("cloudinit")
 
+
 class CloudInitException(Exception):
 
     def __init__(self, message, log=""):
         self.message = message
         self.log = log
+
 
 class FetchFailedException(CloudInitException):
     pass
@@ -35,7 +36,7 @@ class Seed:
             "-output", self.seedfile,
             "-volid", "cidata",
             "-joliet", "-rock",
-            ]
+        ]
         command.extend(self.filenames)
         p = subprocess.Popen(
             args=command,
@@ -46,8 +47,7 @@ class Seed:
         )
         stdout, stderr = p.communicate()
         if p.returncode != 0:
-            raise CloudInitException("genisoimage failed", log=stdout+stderr)
-
+            raise CloudInitException("genisoimage failed", log=stdout + stderr)
 
     def open(self, filename, mode):
         path = os.path.join(self.tmpdir, filename)
@@ -75,6 +75,7 @@ class Seed:
             os.unlink(os.path.join(self.tmpdir, f))
         os.rmdir(self.tmpdir)
 
+
 class ImageConverter:
     xmlns = {"env": "http://schemas.dmtf.org/ovf/envelope/1"}
 
@@ -100,7 +101,7 @@ class ImageConverter:
         )
         stdout, stderr = p.communicate()
         if p.returncode != 0:
-            raise CloudInitException("qemu-img failed", log=stdout+stderr)
+            raise CloudInitException("qemu-img failed", log=stdout + stderr)
 
     def read_vmx_config(self, vmx):
         config = {}
@@ -119,7 +120,7 @@ class ImageConverter:
         config = {
             "displayname": name,
             "annotation": "Created by Yaybu.",
-            "guestos" :"fedora",
+            "guestos": "fedora",
             "config.version": "8",
             "virtualhw.version": "7",
             ".encoding": "UTF-8",
@@ -143,7 +144,7 @@ class ImageConverter:
 
             "ide0:0.deviceType": "cdrom-image",
             "ide0:0.present": "TRUE",
-            "ide0:0.fileName":  "seed.iso",
+            "ide0:0.fileName": "seed.iso",
 
             "usb.present": "TRUE",
             "floppy0.present": "FALSE",
@@ -167,9 +168,10 @@ class ImageConverter:
             "pciBridge5.functions": "8",
             "pciBridge6.functions": "8",
             "pciBridge7.functions": "8",
-          }
+        }
         logger.info("Creating VMX file {0}".format(vmx))
         self.write_vmx_config(vmx, config)
+
 
 class CloudImage(object):
 
@@ -178,7 +180,6 @@ class CloudImage(object):
     locally it is fetched from the source provided by the distribution. e"""
 
     __metaclass__ = ABCMeta
-
 
     # size of blocks fetched from remote resources
     blocksize = 81920
@@ -291,7 +292,6 @@ class CloudImage(object):
             logger.error("Local image sum {0} does not match remote {1} after fetch.".format(self.local_hash, self.remote_hash))
             raise FetchFailedException("Local image missing or wrong after fetch")
 
-
     def make_vmx(self):
         source = self.local_image_filename()
         vmdk = self.local_filename(".vmdk")
@@ -299,6 +299,7 @@ class CloudImage(object):
         converter = ImageConverter(self.directory)
         converter.convert_image(source, vmdk, "vmdk")
         converter.create_plain_vmx(vmx, vmdk)
+
 
 class StandardCloudImage(CloudImage):
 
@@ -322,6 +323,7 @@ class StandardCloudImage(CloudImage):
         filename = template.format(release=self.release, arch=self.arch)
         return hashes.get(filename, None)
 
+
 class UbuntuCloudImage(StandardCloudImage):
 
     server = "cloud-images.ubuntu.com"
@@ -330,6 +332,7 @@ class UbuntuCloudImage(StandardCloudImage):
     image_suffix = "-disk1.img"
     checksums = "SHA256SUMS"
     hash_function = hashlib.sha256
+
 
 class CirrosCloudImage(StandardCloudImage):
 
@@ -344,6 +347,7 @@ class CirrosCloudImage(StandardCloudImage):
         template = self.prefix + self.image_suffix
         filename = template.format(release=self.release, arch=self.arch)
         return hashes.get(filename, None)
+
 
 class FedoraCloudImage(StandardCloudImage):
 
