@@ -1,10 +1,10 @@
 Jinja2==2.7.2
-MarkupSafe==0.18
+MarkupSafe==0.19
 apache-libcloud==0.14.1
 gevent==1.0
 greenlet==0.4.2
 lockfile==0.9.1
-paramiko==1.12.1
+paramiko==1.13.0
 ply==3.4
 pycrypto==2.6.1
 requests==2.2.1
