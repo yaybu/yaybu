@@ -179,7 +179,7 @@ class RecipientDirectory:
                     files.update(self._parse_encrypt_line(line))
                 except ValueError, e:
                     print >>sys.stderr, "{0} in {1} at line {2}".format(e.message, recipient_filename, no)
-                    errors += 1
+                    self.errors += 1
             else:
                 self.error("Error in {0} at line {1}: cannot parse".format(recipient_filename, no), line)
         for filename, targets in files.items():
