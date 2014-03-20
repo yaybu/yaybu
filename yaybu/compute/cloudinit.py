@@ -3,11 +3,10 @@ import os
 import tempfile
 import subprocess
 import urllib2
-#import xml.etree.ElementTree as ET
-import lxml.etree as ET
 import hashlib
-
 import logging
+
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 logger = logging.getLogger("cloudinit")
 
@@ -16,6 +15,10 @@ class CloudInitException(Exception):
     def __init__(self, message, log=""):
         self.message = message
         self.log = log
+
+class FetchFailedException(CloudInitException):
+    pass
+
 
 class Seed:
 
@@ -75,6 +78,9 @@ class Seed:
 class ImageConverter:
     xmlns = {"env": "http://schemas.dmtf.org/ovf/envelope/1"}
 
+    def __init__(self, directory):
+        self.directory = directory
+
     def convert_image(self, source, destination, format):
         command = [
             "qemu-img",
@@ -90,32 +96,22 @@ class ImageConverter:
             stdin=None,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            cwd=self.directory
         )
         stdout, stderr = p.communicate()
         if p.returncode != 0:
             raise CloudInitException("qemu-img failed", log=stdout+stderr)
 
-    def fix_ovf(self, source, disk_image):
-        image_size = len(open(disk_image).read())
-        tree = ET.parse(source)
-        disk = tree.find("./env:References/env:File", self.xmlns)
-        disk.attrib["{%s}size" % self.xmlns["env"]] = str(image_size)
-        disk.attrib["{%s}href" % self.xmlns["env"]] = os.path.basename(disk_image)
-        product_section = tree.find("./env:VirtualSystem/env:ProductSection", namespaces=self.xmlns)
-        for elem in product_section.findall("env:Property", namespaces=self.xmlns):
-            product_section.remove(elem)
-        tree.write(source)
-
     def read_vmx_config(self, vmx):
         config = {}
-        for l in open(vmx):
+        for l in open(os.path.join(self.directory, vmx)):
             l = l.strip()
             name, value = l.split("=", 1)
             config[name] = value
         return config
 
     def write_vmx_config(self, vmx, config):
-        f = open(vmx, "w")
+        f = open(os.path.join(self.directory, vmx), "w")
         for name, value in config.items():
             print >> f, '{0} = "{1}"'.format(name, value)
 
@@ -172,226 +168,227 @@ class ImageConverter:
             "pciBridge6.functions": "8",
             "pciBridge7.functions": "8",
           }
+        logger.info("Creating VMX file {0}".format(vmx))
         self.write_vmx_config(vmx, config)
 
-    def convert_ovf_to_vmx(self, source, destination):
-        import wingdbstub
-        command = [
-            "ovftool",
-            "-o",
-            source,
-            destination,
-        ]
-        logger.info("Converting to VMX")
-        logger.debug("Executing {0}".format(" ".join(command)))
-        p = subprocess.Popen(
-            args=command,
-            stdin=None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        stdout, stderr = p.communicate()
-        if p.returncode != 0:
-            logger.debug(stdout)
-            logger.debug(stderr)
-            raise CloudInitException("ovftool failed")
-        config = self.read_vmx_config(destination)
-        for n in config.keys():
-            if n.startswith("ide"):
-                del config[n]
-        config.update({
-            "ide0:0.present": "TRUE",
-            "ide0:0.fileName":  "seed.iso",
-            "ide0:0.deviceType": "cdrom-image",
-        })
-        self.write_vmx_config(destination, config)
+class CloudImage(object):
 
-class FedoraCloudImage:
+    """ Represents a cloud image file for a specified release and
+    architecture, with a local manifestation of the image. If no image exists
+    locally it is fetched from the source provided by the distribution. e"""
 
-    server = "download.fedoraproject.org"
-    source = "http://{server}/pub/fedora/linux/releases/{release}/Images/{arch}"
-    checksum = "Fedora-Images-{arch}-{release}-CHECKSUM"
-    qcow = "Fedora-{arch}-{release}-{version}-sda.qcow2"
+    __metaclass__ = ABCMeta
 
-    # the name of the image is found by looking in the checksum file
-    image = None
+
+    # size of blocks fetched from remote resources
     blocksize = 81920
 
-    def __init__(self, directory, release="20", arch="x86_64"):
+    def __init__(self, directory, release, arch):
         self.directory = directory
         self.release = release
         self.arch = arch
+        self.remote_hash = None
+        self.local_hash = None
 
-    def fmt_args(self):
-        return dict(server=self.server,
-                    release=self.release,
-                    arch=self.arch)
+    @abstractproperty
+    def hash_function(self):
+        """ The hash function used to hash local files """
 
-    def set_image(self, sums):
-        for k in sums:
-            if k.endswith("qcow2"):
-                self.image = k
+    @abstractmethod
+    def remote_image_url(self):
+        """ Return a complete url of the remote virtual machine image """
 
-    def get_remote_sums(self):
-        logger.debug("Fetching remote image sums")
-        remote_pattern = self.source + "/" + self.checksum
-        remote_url = remote_pattern.format(**self.fmt_args())
-        response = urllib2.urlopen(remote_url)
-        lines = response.read().splitlines()
-        sums = {}
-        for line in lines[3:]:
-            if line.startswith("---"):
-                break
-            line = line.strip()
-            s, f = line.split()
-            sums[f[1:]] = s
-        return sums
+    @abstractmethod
+    def remote_hashfile_url(self):
+        """ Return a complete url of the remote hash file that contains the
+        hash for the virtual machine image. Return None if no hash file is
+        available. """
 
-    def get_local_sums(self):
-        sums = {}
-        pathname = os.path.join(self.directory, self.image)
-        h = hashlib.sha256()
-        if os.path.exists(pathname):
-            h.update(open(pathname).read())
-            sums[self.image] = h.hexdigest()
-        return sums
+    @abstractmethod
+    def filename_prefix(self):
+        """ The first part of the filename, used for every file on disk
+        locally, such as disk images, specification files, buffers etc.
+        within the VM directory """
+
+    @abstractmethod
+    def image_hash(self, hashes):
+        """ From the dictionary of all hashes provided in the remote hash
+        file, return the hash of the virtual machine image """
+
+    def local_filename(self, extension):
+        return self.filename_prefix() + extension
+
+    def local_pathname(self, extension):
+        return os.path.join(self.directory, self.local_filename(extension))
+
+    def local_image_filename(self):
+        return self.local_filename(".img")
+
+    def local_image_pathname(self):
+        return self.local_pathname(".img")
 
     def fetch(self):
-        args = self.fmt_args()
-        source = self.source.format(**args)
-        remote_url = source + "/" + self.image
+        remote_url = self.remote_image_url()
+        pathname = self.local_image_pathname()
+        logger.info("Retrieving {0} to {1}".format(remote_url, pathname))
         try:
             response = urllib2.urlopen(remote_url)
         except urllib2.HTTPError:
-            print remote_url
             raise CloudInitException("Unable to fetch {0}".format(remote_url))
-        local = open(os.path.join(self.directory, self.image), "w")
+        local = open(pathname, "w")
         while True:
             data = response.read(self.blocksize)
             if not data:
                 break
             local.write(data)
 
-    def update(self):
-        remote = self.get_remote_sums()
-        self.set_image(remote)
-        local = self.get_local_sums()
-        logger.debug("Checking sums for {0}".format(self.image))
-        if self.image not in local:
-            logger.info("{0} not present locally, fetching".format(self.image))
-            self.fetch()
-        elif local[self.image] != remote[self.image]:
-            logger.info("Local {0} does not match remote sum, fetching".format(self.image))
-            self.fetch()
+    def decode_hashes(self, data):
+        hashes = {}
+        for line in data.splitlines():
+            parts = line.strip().split()
+            if len(parts) == 2:
+                hashes[parts[1]] = parts[0]
+        return hashes
+
+    def get_remote_hashes(self):
+        remote_url = self.remote_hashfile_url()
+        logger.info("Fetching hashes from {0}".format(remote_url))
+        try:
+            response = urllib2.urlopen(remote_url)
+        except urllib2.HTTPError:
+            return {}
+        return self.decode_hashes(response.read())
+
+    def get_local_sum(self):
+        pathname = self.local_image_pathname()
+        h = self.hash_function()
+        if os.path.exists(pathname):
+            h.update(open(pathname).read())
+            return h.hexdigest()
+
+    def update_hashes(self):
+        if self.remote_hash is None:
+            self.remote_hash = self.image_hash(self.get_remote_hashes())
+        self.local_hash = self.get_local_sum()
+
+    def requires_update(self):
+        if self.local_hash is None:
+            logger.info("Image not present locally, fetching")
+            return True
+        elif self.local_hash != self.remote_hash:
+            logger.info("Local image does not match remote sum, fetching")
+            return True
         else:
-            logger.info("Sums match for {0}".format(self.image))
-        # TODO check sums subsequently
+            logger.info("Sums match for local image, not updating")
+            return False
+
+    def update(self):
+        self.update_hashes()
+        if self.requires_update():
+            self.fetch()
+        self.update_hashes()
+        if self.requires_update():
+            logger.error("Local image sum {0} does not match remote {1} after fetch.".format(self.local_hash, self.remote_hash))
+            raise FetchFailedException("Local image missing or wrong after fetch")
+
 
     def make_vmx(self):
-        source = os.path.join(self.directory, self.image)
-        vmdk = os.path.join(self.directory, "disk1.vmdk")
-        vmx = os.path.join(self.directory, self.image[:-10] + ".vmx")
-        converter = ImageConverter()
+        source = self.local_image_filename()
+        vmdk = self.local_filename(".vmdk")
+        vmx = self.local_filename(".vmx")
+        converter = ImageConverter(self.directory)
         converter.convert_image(source, vmdk, "vmdk")
         converter.create_plain_vmx(vmx, vmdk)
 
-class UbuntuCloudImage:
+class StandardCloudImage(CloudImage):
+
+    def remote_image_url(self):
+        url = self.source + "/" + self.prefix + self.image_suffix
+        return url.format(server=self.server,
+                          release=self.release,
+                          arch=self.arch)
+
+    def remote_hashfile_url(self):
+        url = self.source + "/" + self.checksums
+        return url.format(server=self.server,
+                          release=self.release,
+                          arch=self.arch)
+
+    def filename_prefix(self):
+        return self.prefix.format(release=self.release, arch=self.arch)
+
+    def image_hash(self, hashes):
+        template = "*" + self.prefix + self.image_suffix
+        filename = template.format(release=self.release, arch=self.arch)
+        return hashes.get(filename, None)
+
+class UbuntuCloudImage(StandardCloudImage):
 
     server = "cloud-images.ubuntu.com"
     source = "http://{server}/releases/{release}/release"
-    fn_pattern = "ubuntu-{release}-server-cloudimg-{arch}{extension}"
-    extensions = ['-disk1.img', '.ovf']
-    blocksize = 81920
+    prefix = "ubuntu-{release}-server-cloudimg-{arch}"
+    image_suffix = "-disk1.img"
+    checksums = "SHA256SUMS"
+    hash_function = hashlib.sha256
 
-    def __init__(self, directory, release="13.10", arch="amd64"):
-        """ Specify a local filename which will be overwritten if missing our out of date """
-        self.directory = directory
-        self.release = release
-        self.arch = arch
+class CirrosCloudImage(StandardCloudImage):
 
-    def filename(self, extension):
-        return self.fn_pattern.format(**self.fmt_args(extension))
+    server = "launchpad.net"
+    source = "https://{server}/cirros/trunk/{release}/+download"
+    prefix = "cirros-{release}-{arch}"
+    image_suffix = "-disk.img"
+    checksums = prefix + image_suffix + "/+md5"
+    hash_function = hashlib.md5
 
-    def fmt_args(self, extension):
-        return dict(server=self.server,
-                    release=self.release,
-                    arch=self.arch,
-                    extension=extension)
+    def image_hash(self, hashes):
+        template = self.prefix + self.image_suffix
+        filename = template.format(release=self.release, arch=self.arch)
+        return hashes.get(filename, None)
 
-    def fetch(self, extension):
-        args = self.fmt_args(extension)
-        source = self.source.format(**args)
-        filename = self.filename(extension)
-        remote_url = source + "/" + filename
-        try:
-            response = urllib2.urlopen(remote_url)
-        except urllib2.HTTPError:
-            print remote_url
-            raise CloudInitException("Unable to fetch {0}".format(remote_url))
-        local = open(os.path.join(self.directory, filename), "w")
-        while True:
-            data = response.read(self.blocksize)
-            if not data:
-                break
-            local.write(data)
+class FedoraCloudImage(StandardCloudImage):
 
-    def get_remote_sums(self):
-        logger.debug("Fetching remote image sums")
-        remote_url = self.source.format(**self.fmt_args("")) + "/SHA1SUMS"
-        response = urllib2.urlopen(remote_url)
-        sums = {}
-        for line in response:
-            line = line.strip()
-            s, f = line.split()
-            sums[f[1:]] = s
-        return sums
+    """ Fedora images annoyingly have a version number in the remote
+    filename, which can only be identified by inspecting the hash file. """
 
-    def get_local_sums(self):
-        sums = {}
-        for e in self.extensions:
-            filename = self.filename(e)
-            pathname = os.path.join(self.directory, filename)
-            h = hashlib.sha1()
-            if os.path.exists(pathname):
-                h.update(open(pathname).read())
-                sums[filename] = h.hexdigest()
-        return sums
+    server = "download.fedoraproject.org"
+    source = "http://{server}/pub/fedora/linux/releases/{release}/Images/{arch}"
+    checksums = "Fedora-Images-{arch}-{release}-CHECKSUM"
+    prefix = "Fedora-{arch}-{release}"
+    qcow = "Fedora-{arch}-{release}-{version}-sda.qcow2"
+    hash_function = hashlib.sha256
 
-    def update(self):
-        remote = self.get_remote_sums()
-        local = self.get_local_sums()
-        for e in self.extensions:
-            filename = self.filename(e)
-            logger.debug("Checking sums for {0}".format(filename))
-            if filename not in remote:
-                logger.info("Remote sum missing for {0}, fetching".format(filename))
-                self.fetch(e)
-            elif filename not in local:
-                logger.info("{0} not present locally, fetching".format(filename))
-                self.fetch(e)
-            elif local[filename] != remote[filename]:
-                logger.info("Local {0} does not match remote sum, fetching".format(filename))
-                self.fetch(e)
-            else:
-                logger.info("Sums match for {0}".format(filename))
-        # TODO check sums subsequently
+    def update_hashes(self):
+        if self.remote_hash is None:
+            hashes = self.get_remote_hashes()
+            self.find_version_in_hashes(hashes)
+            self.remote_hash = self.image_hash(self.get_remote_hashes())
+        self.local_hash = self.get_local_sum()
 
-    def make_vmx(self):
-        source = os.path.join(self.directory, self.filename("-disk1.img"))
-        vmdk = os.path.join(self.directory, "disk1.vmdk")
-        ovf = os.path.join(self.directory, self.filename(".ovf"))
-        vmx = os.path.join(self.directory, self.filename(".vmx"))
-        converter = ImageConverter()
-        converter.convert_image(source, vmdk, "vmdk")
-        converter.fix_ovf(ovf, vmdk)
-        converter.convert_ovf_to_vmx(ovf, vmx)
+    def find_version_in_hashes(self, hashes):
+        # this is mildly fugly, but the safest way of identifying the specific
+        # version filename for this release
+        for k in hashes:
+            if k.endswith(".qcow2"):
+                name, arch, release, version, tail = k.split("-")
+                if arch == self.arch and release == self.release:
+                    self.version = version
+                    break
+
+    def remote_image_url(self):
+        # version is set as part of the hash retrieval phase
+        url = self.source + "/" + self.qcow
+        return url.format(server=self.server, release=self.release, arch=self.arch, version=self.version)
+
+    def image_hash(self, hashes):
+        filename = "*" + self.qcow.format(arch=self.arch, release=self.release, version=self.version)
+        return hashes.get(filename, None)
+
 
 class CloudInit:
 
-    def __init__(self, directory, release="13.10", arch="amd64"):
-        self.directory = os.path.realpath(directory)
-        self.release = release
-        self.arch = arch
+    def __init__(self, directory, image):
+        self.directory = directory
+        self.image = image
 
     def create_seed(self):
         """ Create a seed ISO image in the specified filename """
@@ -401,24 +398,18 @@ class CloudInit:
         s.cleanup()
 
     def fetch_image(self):
-        r = UbuntuCloudImage(self.directory)
-        #r = FedoraCloudImage(self.directory)
-        r.update()
-        r.make_vmx()
+        self.image.update()
+        self.image.make_vmx()
 
 if __name__ == "__main__":
     import sys
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-    if not os.path.exists("cloudinit"):
-        os.mkdir("cloudinit")
-    cloudinit = CloudInit("cloudinit")
+    directory = os.path.realpath("cloudinit")
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    #image = UbuntuCloudImage(directory, "13.10", "amd64")
+    image = FedoraCloudImage(directory, "20", "x86_64")
+    image = CirrosCloudImage(directory, "0.3.0", "x86_64")
+    cloudinit = CloudInit(directory, image)
     cloudinit.create_seed()
     cloudinit.fetch_image()
-
-# create the seed iso image
-# fetch the image from the ubuntu cloud website
-# fetch the ovf as well
-# convert the image into a vmdk
-# attach seed.iso
-# boot with ds=nocloud-net parameter to kernel
-# make changes to the image so it knows it is not on EC2
