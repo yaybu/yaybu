@@ -34,8 +34,8 @@ class CloudImage(object):
     # size of blocks fetched from remote resources
     blocksize = 81920
 
-    def __init__(self, directory, release, arch):
-        self.directory = directory
+    def __init__(self, pathname, release, arch):
+        self.pathname = pathname
         self.release = release
         self.arch = arch
         self.remote_hash = None
@@ -56,37 +56,18 @@ class CloudImage(object):
         available. """
 
     @abc.abstractmethod
-    def filename_prefix(self):
-        """ The first part of the filename, used for every file on disk
-        locally, such as disk images, specification files, buffers etc.
-        within the VM directory """
-
-    @abc.abstractmethod
     def image_hash(self, hashes):
         """ From the dictionary of all hashes provided in the remote hash
         file, return the hash of the virtual machine image """
 
-    def local_filename(self, extension):
-        return self.filename_prefix() + extension
-
-    def local_pathname(self, extension):
-        return os.path.join(self.directory, self.local_filename(extension))
-
-    def local_image_filename(self):
-        return self.local_filename(".img")
-
-    def local_image_pathname(self):
-        return self.local_pathname(".img")
-
     def fetch(self):
         remote_url = self.remote_image_url()
-        pathname = self.local_image_pathname()
-        logger.info("Retrieving {0} to {1}".format(remote_url, pathname))
+        logger.info("Retrieving {0} to {1}".format(remote_url, self.pathname))
         try:
             response = urllib2.urlopen(remote_url)
         except urllib2.HTTPError:
-            raise error.CloudInitException("Unable to fetch {0}".format(remote_url))
-        local = open(pathname, "w")
+            raise error.FetchFailedException("Unable to fetch {0}".format(remote_url))
+        local = open(self.pathname, "w")
         while True:
             data = response.read(self.blocksize)
             if not data:
@@ -111,10 +92,9 @@ class CloudImage(object):
         return self.decode_hashes(response.read())
 
     def get_local_sum(self):
-        pathname = self.local_image_pathname()
         h = self.hash_function()
-        if os.path.exists(pathname):
-            h.update(open(pathname).read())
+        if os.path.exists(self.pathname):
+            h.update(open(self.pathname).read())
             return h.hexdigest()
 
     def update_hashes(self):
@@ -142,14 +122,6 @@ class CloudImage(object):
             logger.error("Local image sum {0} does not match remote {1} after fetch.".format(self.local_hash, self.remote_hash))
             raise error.FetchFailedException("Local image missing or wrong after fetch")
 
-    #def make_vmx(self):
-        #source = self.local_image_filename()
-        #vmdk = self.local_filename(".vmdk")
-        #vmx = self.local_filename(".vmx")
-        #converter = conversion.ImageConverter(self.directory)
-        #converter.convert_image(source, vmdk, "vmdk")
-        #converter.create_plain_vmx(vmx, vmdk)
-
 
 class StandardCloudImage(CloudImage):
 
@@ -164,9 +136,6 @@ class StandardCloudImage(CloudImage):
         return url.format(server=self.server,
                           release=self.release,
                           arch=self.arch)
-
-    def filename_prefix(self):
-        return self.prefix.format(release=self.release, arch=self.arch)
 
     def image_hash(self, hashes):
         template = "*" + self.prefix + self.image_suffix

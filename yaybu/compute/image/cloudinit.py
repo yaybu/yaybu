@@ -27,9 +27,10 @@ class Seed:
 
     filenames = ['meta-data', 'user-data']
 
-    def __init__(self, seedfile):
+    def __init__(self, seedfile, instance_id):
         self.seedfile = os.path.realpath(seedfile)
         self.tmpdir = tempfile.mkdtemp()
+        self.instance_id = instance_id
 
     def save(self):
         """ Overwrite the seed ISO file. Will clobber it potentially."""
@@ -40,6 +41,7 @@ class Seed:
             "-joliet", "-rock",
         ]
         command.extend(self.filenames)
+        logger.info("Executing: {0} in {1}".format(" ".join(command), self.tmpdir))
         p = subprocess.Popen(
             args=command,
             stdin=None,
@@ -49,7 +51,7 @@ class Seed:
         )
         stdout, stderr = p.communicate()
         if p.returncode != 0:
-            raise error.CloudInitException("genisoimage failed", log=stdout + stderr)
+            raise error.CannotGenerateSeed("genisoimage failed", log=stdout + stderr)
 
     def open(self, filename, mode):
         path = os.path.join(self.tmpdir, filename)
@@ -58,19 +60,28 @@ class Seed:
     def create_meta_data(self):
         f = self.open("meta-data", "w")
         print >> f, "local-hostname: localhost"
-        print >> f, "instance-id: foo1"
+        print >> f, "instance-id:", self.instance_id
 
     def create_user_data(self):
         f = self.open("user-data", "w")
         print >> f, "#cloud-config"
         print >> f, "password: password"
         print >> f, "chpasswd: { expire: False }"
+        #print >> f, "apt_upgrade: true"
+        #print >> f, "runcmd:"
+        #print >> f, "  - [ sed, -i, '/^# deb.*multiverse/ s/^# //', /etc/apt/sources.list ]"
+        #print >> f, "  - [ apt-get, install, open-vm-tools ]"
+        #print >> f, "  - [ mkdir, /vmware ]"
+        #print >> f, "  - [ mount, /dev/sr1, /vmware ]"
+        #print >> f, "  - [ tar, -zxf, /mnt/VMwareTools-*.tar.gz ]"
+        #print >> f, "  - [ cd, vmware-tools-distrib, &&, ./vmware-install.pl, --d]"
 
     def update(self):
         for f in self.filenames:
             fn = "create_" + f.replace("-", "_")
             getattr(self, fn)()
         self.save()
+        self.cleanup()
 
     def cleanup(self):
         for f in self.filenames:

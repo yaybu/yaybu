@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import base
 import hashlib
+
+from . import base
 
 
 class CirrosCloudImage(base.StandardCloudImage):

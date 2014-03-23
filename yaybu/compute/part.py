@@ -134,8 +134,21 @@ class Compute(base.GraphExternalAction):
             )
 
     def _get_image(self):
+        """ Image can look like any one of these three formats:
+
+            image: http://server/path/image.img
+
+            image:
+              id: image-id
+
+            image:
+              distro: ubuntu
+              arch: amd64
+              release: 12.04
+
+        """
         try:
-            self.params.image.as_dict()
+            params = self.params.image.as_dict()
 
         except errors.NoMatching as e:
             try:
@@ -150,13 +163,21 @@ class Compute(base.GraphExternalAction):
         except errors.TypeError:
             return self._get_image_from_id(self.params.image.as_string())
 
-        id = str(self.params.image.id)
-        return NodeImage(
-            id=id,
-            name=self.params.image.name.as_string(default=id),
-            extra=self.params.image.extra.as_dict(default={}),
-            driver=self.driver,
-        )
+        if "id" in params:
+            return NodeImage(
+                id=params["id"],
+                name=self.params.image.name.as_string(default=id),
+                extra=self.params.image.extra.as_dict(default={}),
+                driver=self.driver,
+            )
+        else:
+            id="{distro}-{release}-{arch}".format(**params),
+            return NodeImage(
+                id=id,
+                name=self.params.image.name.as_string(default=id),
+                extra=params,
+                driver=self.driver
+            )
 
     def _get_size_from_id(self, size_id):
         try:

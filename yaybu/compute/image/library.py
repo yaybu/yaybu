@@ -15,12 +15,15 @@
 
 import os
 import hashlib
+import uuid
 
 from . import cloudinit
+
 from . import ubuntu
 from . import fedora
 from . import cirros
-
+from . import error
+from . import vmware
 
 class ImageLibrary:
 
@@ -30,11 +33,16 @@ class ImageLibrary:
     The directory structure resembles:
 
     ~/.yaybu/
-        /instances/<UUID>/<vm files>
-        /images/<filename>/
-            <filename>.qcow2
-            <filename>.vmdk
-        /temp/<UUID>/<temp files>
+        /instances/
+            /vmware/
+                <UUID>/
+            /vbox/
+                <UUID/
+        /images/
+            /<distro>/
+                <release>-<arch>.qcow2
+                <release>-<arch>.vmdk
+        /temp/
     """
 
     distributions = {
@@ -43,55 +51,26 @@ class ImageLibrary:
         "cirros": cirros.CirrosCloudImage,
     }
 
+    systems = {
+        "vmware": vmware.VMWare,
+    }
+
     def __init__(self, root="~/.yaybu"):
         self.root = os.path.expanduser(root)
-        self.library = {}
-        # a set of images that are only cloned
-        self.librarydir = os.path.join(self.root, "library")
-        # instances that may be started and running
+        self.imagedir = os.path.join(self.root, "library")
         self.instancedir = os.path.join(self.root, "instances")
-        # A temporary directory, we put it here so we know we have enough room
         self.tempdir = os.path.join(self.root, "temp")
         self.setupdirs()
-        self.scan()
 
     def setupdirs(self):
         """ Create directories if required """
-        for d in self.librarydir, self.instancedir, self.tempdir:
+        imagedirs = [os.path.join(self.imagedir, x) for x in self.distributions.keys() + ["user"]]
+        systemdirs = [os.path.join(self.instancedir, x) for x in self.systems.keys()]
+        for d in [self.imagedir, self.instancedir, self.tempdir] + imagedirs + systemdirs:
             if not os.path.exists(d):
                 os.makedirs(d)
 
-    def scan(self):
-        """ Scan the library and populate self.library. self.library looks like:
-
-        { "<image hash>": {
-            "qcow2": "ubuntu-<release>-<arch>.qcow2",
-            "vmdk": "ubuntu-<release>-<arch>.vmdk",
-            },
-        }
-        """
-        for item in os.listdir(self.librarydir):
-            ip = os.path.join(self.librarydir, item)
-            if os.path.isdir(ip):
-                self.library[item] = {}
-                for img in os.listdir(ip):
-                    ext = img.rsplit(".", 1)
-                    self.library[item][ext] = img
-
-    #def guess_name(self, uri):
-        #""" Use the name of the file with the extension stripped off """
-        #path = urlparse.urlparse(uri).path
-        #leaf = path.split("/")[-1]
-        #if not leaf:
-            #raise VMException("Cannot guess name for %r" % (uri,))
-        #return leaf.rsplit(".", 1)[0]
-
-    def uri_hash(self, uri):
-        h = hashlib.sha256()
-        h.update(uri)
-        return h.hexdigest()
-
-    def get(self, distro, release, arch, format, context=None):
+    def get_canonical(self, distro, release, arch, context=None):
         """ Fetches the specified uri into the cache and then extracts it
         into the library.  If name is None then a name is made up.
 
@@ -101,37 +80,49 @@ class ImageLibrary:
             arch: the distribution's name for the architecture, i.e. x86_64, amd64
             format: the format of virtual machine image required, i.e. vmdk, qcow
         """
+        klass = self.distributions.get(distro, None)
+        if klass is None:
+            raise error.DistributionNotKnown()
+        with context.ui.throbber("Fetching distro image"):
+            pathname = os.path.join(self.imagedir, distro, "{0}-{1}.qcow2".format(release, arch))
+            distro = klass(pathname, release, arch)
+            distro.update()
+        return pathname
 
-    def instances(self):
-        """ Return a generator of VMWareVM objects. """
+    def get_remote(self, remote_url, context=None):
+        urihash = hashlib.sha256()
+        urihash.update(remote_url)
+        pathname = os.path.join(self.imagedir, "user", "{0}.qcow2".format(urihash.hexdigest()))
+        with context.ui.throbber("Retrieving {0} to {1}".format(remote_url, pathname)):
+            try:
+                response = urllib2.urlopen(remote_url)
+            except urllib2.HTTPError:
+                raise error.FetchFailedException("Unable to fetch {0}".format(remote_url))
+            local = open(pathname, "w")
+            while True:
+                data = response.read(81920)
+                if not data:
+                    break
+                local.write(data)
+        return pathname
 
+    def get_system_driver(self, name):
+        klass = self.systems.get(name, None)
+        if klass is None:
+            raise error.SystemNotKnown()
+        return klass
 
-class CloudInit:
+    def instances(self, system):
+        """ Return a generator of instance objects. """
+        driver = self.get_system_driver(system)
+        systemdir = os.path.join(self.instancedir, system)
+        for d in os.listdir(systemdir):
+            pathname = os.path.join(systemdir, d)
+            yield driver(pathname)
 
-    def __init__(self, directory, image):
-        self.directory = directory
-        self.image = image
-
-    def create_seed(self):
-        """ Create a seed ISO image in the specified filename """
-        s = cloudinit.Seed(os.path.join(self.directory, "seed.iso"))
-        s.update()
-        s.save()
-        s.cleanup()
-
-    def fetch_image(self):
-        self.image.update()
-        self.image.make_vmx()
-
-#if __name__ == "__main__":
-    #import sys
-    #logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-    #directory = os.path.realpath("cloudinit")
-    #if not os.path.exists(directory):
-        #os.mkdir(directory)
-    ##image = UbuntuCloudImage(directory, "13.10", "amd64")
-    #image = fedora.FedoraCloudImage(directory, "20", "x86_64")
-    #image = cirros.CirrosCloudImage(directory, "0.3.0", "x86_64")
-    #cloudinit = library.CloudInit(directory, image)
-    #cloudinit.create_seed()
-    #cloudinit.fetch_image()
+    def create_node(self, system, base_image, auth, name, size, **kwargs):
+        """ Create an instance from the provided base image """
+        klass = self.get_system_driver(system)
+        instancedir = os.path.join(self.instancedir, system, str(uuid.uuid4()))
+        vm = klass.create_node(instancedir, base_image, auth=auth, name=name, size=size, **kwargs)
+        return vm
