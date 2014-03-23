@@ -62,20 +62,25 @@ class Seed:
         print >> f, "local-hostname: localhost"
         print >> f, "instance-id:", self.instance_id
 
-    def create_user_data(self):
+    def create_user_data(self, tools="vmware"):
         f = self.open("user-data", "w")
         print >> f, "#cloud-config"
         print >> f, "password: password"
         print >> f, "chpasswd: { expire: False }"
         print >> f, "ssh_pwauth: True"
-        #print >> f, "apt_upgrade: true"
+        print >> f, "apt_upgrade: true"
         print >> f, "runcmd:"
-        #print >> f, "  - [ sed, -i, '/^# deb.*multiverse/ s/^# //', /etc/apt/sources.list ]"
-        #print >> f, "  - [ apt-get, install, open-vm-tools ]"
-        print >> f, "  - [ mkdir, /vmware ]"
-        print >> f, "  - [ mount, /dev/sr1, /vmware ]"
-        print >> f, '  - [ bash, -c, "tar -zxf /vmware/VMwareTools-*.tar.gz" ]'
-        print >> f, "  - [ vmware-tools-distrib/vmware-install.pl, --d]"
+        if tools == "open":
+            print >> f, "  - [ sed, -i, '/^# deb.*multiverse/ s/^# //', /etc/apt/sources.list ]"
+            print >> f, "  - [ apt-get, update ]"
+            print >> f, "  - [ apt-get, install, open-vm-tools ]"
+        elif tools == "vmware":
+            print >> f, "  - [ mkdir, /vmware ]"
+            print >> f, "  - [ mount, /dev/sr1, /vmware ]"
+            print >> f, '  - [ bash, -c, "tar -zxf /vmware/VMwareTools-*.tar.gz" ]'
+            print >> f, "  - [ umount, /dev/sr1 ]"
+            print >> f, "  - [ vmware-tools-distrib/vmware-install.pl, --d]"
+            print >> f, "  - [ rm, -rf, vmware-tools-distrib ]"
 
     def update(self):
         for f in self.filenames:
