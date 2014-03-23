@@ -16,7 +16,6 @@
 from yaybu.tests import (  # noqa
     test_changesource,
     test_compute_part,
-    test_compute_vmware,
     test_core_arguments,
     test_core_command,
     test_core_config,
