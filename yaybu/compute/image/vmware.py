@@ -67,8 +67,10 @@ class VMX(dict):
 
     def read(self):
         for l in open(self.vmx_pathname):
-            name, value = l.strip().split("=", 1)
-            self[name] = value
+            l = l.strip()
+            if l and not l.startswith("#"):
+                name, value = l.strip().split("=", 1)
+                self[name] = value
 
     def write(self):
         f = open(self.vmx_pathname, "w")

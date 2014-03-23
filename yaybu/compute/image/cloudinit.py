@@ -67,6 +67,7 @@ class Seed:
         print >> f, "#cloud-config"
         print >> f, "password: password"
         print >> f, "chpasswd: { expire: False }"
+        print >> f, "ssh_pwauth: True"
         #print >> f, "apt_upgrade: true"
         print >> f, "runcmd:"
         #print >> f, "  - [ sed, -i, '/^# deb.*multiverse/ s/^# //', /etc/apt/sources.list ]"
