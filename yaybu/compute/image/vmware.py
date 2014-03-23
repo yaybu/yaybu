@@ -23,6 +23,7 @@ from . import cloudinit
 
 logger = logging.getLogger("vmware")
 
+
 def qemu_img(source, destination, format):
     command = [
         "qemu-img",
@@ -57,7 +58,7 @@ class VMX(dict):
 
     @property
     def vmx_pathname(self):
-        return os.path.join(self.directory, self.prefix+".vmx")
+        return os.path.join(self.directory, self.prefix + ".vmx")
 
     def create(self):
         """ Create an empty vmx """
@@ -102,11 +103,10 @@ class VMX(dict):
         # e1000 always probably
         self[interface + ".virtualDev"] = "e1000"
 
-
         self[interface + ".startConnected"] = "TRUE"
 
         # static, generated or vpx
-        self[interface + ".addressType"] ="static"
+        self[interface + ".addressType"] = "static"
 
         # valid range is 00:50:56:00:00:00 to
         #                00:50:56:3f:ff:ff
@@ -115,47 +115,48 @@ class VMX(dict):
         self.write()
 
     default = {
-            "displayname": "yaybu image",
-            "annotation": "Created by Yaybu.",
-            "guestos": "fedora",
-            "config.version": "8",
-            "virtualhw.version": "7",
-            ".encoding": "UTF-8",
+        "displayname": "yaybu image",
+        "annotation": "Created by Yaybu.",
+        "guestos": "fedora",
+        "config.version": "8",
+        "virtualhw.version": "7",
+        ".encoding": "UTF-8",
 
-            "memsize": "256",
-            "cpuid.coresPerSocket": "1",
-            "numvcpus": "1",
+        "memsize": "256",
+        "cpuid.coresPerSocket": "1",
+        "numvcpus": "1",
 
-            "scsi0.virtualDev": "lsilogic",
-            "scsi0.present": "TRUE",
-            "scsi0:0.present": "TRUE",
-            "scsi0:0.fileName": "disk1.vmdk",
-            "scsi0:0.mode": "persistent",
-            "scsi0:0.deviceType": "disk",
+        "scsi0.virtualDev": "lsilogic",
+        "scsi0.present": "TRUE",
+        "scsi0:0.present": "TRUE",
+        "scsi0:0.fileName": "disk1.vmdk",
+        "scsi0:0.mode": "persistent",
+        "scsi0:0.deviceType": "disk",
 
-            "usb.present": "TRUE",
-            "floppy0.present": "FALSE",
-            "vmci0.present": "TRUE",
+        "usb.present": "TRUE",
+        "floppy0.present": "FALSE",
+        "vmci0.present": "TRUE",
 
-            "toolscripts.afterresume": "true",
-            "toolscripts.afterpoweron": "true",
-            "toolscripts.beforesuspend": "true",
-            "toolscripts.beforepoweroff": "true",
+        "toolscripts.afterresume": "true",
+        "toolscripts.afterpoweron": "true",
+        "toolscripts.beforesuspend": "true",
+        "toolscripts.beforepoweroff": "true",
 
-            "pciBridge0.present": "TRUE",
-            "pciBridge4.present": "TRUE",
-            "pciBridge5.present": "TRUE",
-            "pciBridge6.present": "TRUE",
-            "pciBridge7.present": "TRUE",
-            "pciBridge4.virtualDev": "pcieRootPort",
-            "pciBridge5.virtualDev": "pcieRootPort",
-            "pciBridge6.virtualDev": "pcieRootPort",
-            "pciBridge7.virtualDev": "pcieRootPort",
-            "pciBridge4.functions": "8",
-            "pciBridge5.functions": "8",
-            "pciBridge6.functions": "8",
-            "pciBridge7.functions": "8",
-        }
+        "pciBridge0.present": "TRUE",
+        "pciBridge4.present": "TRUE",
+        "pciBridge5.present": "TRUE",
+        "pciBridge6.present": "TRUE",
+        "pciBridge7.present": "TRUE",
+        "pciBridge4.virtualDev": "pcieRootPort",
+        "pciBridge5.virtualDev": "pcieRootPort",
+        "pciBridge6.virtualDev": "pcieRootPort",
+        "pciBridge7.virtualDev": "pcieRootPort",
+        "pciBridge4.functions": "8",
+        "pciBridge5.functions": "8",
+        "pciBridge6.functions": "8",
+        "pciBridge7.functions": "8",
+    }
+
 
 class VMWare:
 

@@ -171,7 +171,7 @@ class Compute(base.GraphExternalAction):
                 driver=self.driver,
             )
         else:
-            id="{distro}-{release}-{arch}".format(**params),
+            id = "{distro}-{release}-{arch}".format(**params)
             return NodeImage(
                 id=id,
                 name=self.params.image.name.as_string(default=id),

@@ -16,14 +16,14 @@
 import os
 import hashlib
 import uuid
-
-from . import cloudinit
+import urllib2
 
 from . import ubuntu
 from . import fedora
 from . import cirros
 from . import error
 from . import vmware
+
 
 class ImageLibrary:
 

@@ -25,25 +25,15 @@
 import os
 
 from libcloud.common.types import LibcloudError
-from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
-import json
-import urllib2
-import uuid
-import datetime
-import urlparse
-import tempfile
-from functools import partial
+#from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
 import time
 import shutil
-import hashlib
 
 from libcloud.compute.base import NodeDriver, Node
 from libcloud.compute.base import NodeState
 from libcloud.compute.types import Provider
 
 
-import zipfile
-from yaybu.util import ZipFile
 from yaybu.compute.process import Connection, Response
 
 from .image.library import ImageLibrary
@@ -73,6 +63,7 @@ class VMRunConnection(Connection):
 
 # FIXME:
 Provider.VMWARE = 99
+
 
 class VMWareDriver(NodeDriver):
 
@@ -238,4 +229,3 @@ class VMWareDriver(NodeDriver):
     def ex_set_runtime_variable(self, node, variable, value):
         self._action(
             "writeVariable", node.id, "runtimeConfig", variable, value)
-
