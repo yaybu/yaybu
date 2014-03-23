@@ -68,13 +68,13 @@ class Seed:
         print >> f, "password: password"
         print >> f, "chpasswd: { expire: False }"
         #print >> f, "apt_upgrade: true"
-        #print >> f, "runcmd:"
+        print >> f, "runcmd:"
         #print >> f, "  - [ sed, -i, '/^# deb.*multiverse/ s/^# //', /etc/apt/sources.list ]"
         #print >> f, "  - [ apt-get, install, open-vm-tools ]"
-        #print >> f, "  - [ mkdir, /vmware ]"
-        #print >> f, "  - [ mount, /dev/sr1, /vmware ]"
-        #print >> f, "  - [ tar, -zxf, /mnt/VMwareTools-*.tar.gz ]"
-        #print >> f, "  - [ cd, vmware-tools-distrib, &&, ./vmware-install.pl, --d]"
+        print >> f, "  - [ mkdir, /vmware ]"
+        print >> f, "  - [ mount, /dev/sr1, /vmware ]"
+        print >> f, '  - [ bash, -c, "tar -zxf /vmware/VMwareTools-*.tar.gz" ]'
+        print >> f, "  - [ vmware-tools-distrib/vmware-install.pl, --d]"
 
     def update(self):
         for f in self.filenames:

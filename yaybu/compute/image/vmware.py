@@ -187,4 +187,4 @@ class VMWare:
         seed = cloudinit.Seed(seed_path, self.uuid)
         seed.update()
         self.vmx.connect_iso(seed_name)
-        #self.vmx.connect_iso("/usr/lib/vmware/isoimages/linux.iso", "ide1:0", "FALSE")
+        self.vmx.connect_iso("/usr/lib/vmware/isoimages/linux.iso", "ide0:1", "TRUE")
