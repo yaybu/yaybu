@@ -92,6 +92,7 @@ class VMWareDriver(NodeDriver):
         @rtype: C{bool}
         """
         self._action("start", node.id, "nogui", capture_output=False)
+        #self._action("start", node.id, capture_output=False)
         node.state = NodeState.RUNNING
         with self.yaybu_context.ui.throbber("Wait for VM to boot completely"):
             while not self._decorate_node(node):

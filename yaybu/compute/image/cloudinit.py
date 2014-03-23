@@ -73,7 +73,7 @@ class Seed:
         if tools == "open":
             print >> f, "  - [ sed, -i, '/^# deb.*multiverse/ s/^# //', /etc/apt/sources.list ]"
             print >> f, "  - [ apt-get, update ]"
-            print >> f, "  - [ apt-get, install, open-vm-tools ]"
+            print >> f, "  - [ apt-get, install, -y, open-vm-tools ]"
         elif tools == "vmware":
             print >> f, "  - [ mkdir, /vmware ]"
             print >> f, "  - [ mount, /dev/sr1, /vmware ]"
