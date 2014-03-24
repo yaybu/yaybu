@@ -86,7 +86,10 @@ class CloudImage(object):
         for line in data.splitlines():
             parts = line.strip().split()
             if len(parts) == 2:
-                hashes[parts[1]] = parts[0]
+                value, filename = parts[0], parts[1]
+                if filename in hashes:
+                    raise KeyError("Two hashes for the same file: {0}".format(filename))
+                hashes[filename] = value
         return hashes
 
     def get_remote_hashes(self):

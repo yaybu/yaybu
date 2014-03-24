@@ -42,3 +42,28 @@ class TestCloudImage(unittest2.TestCase):
     def test_fetch_httperror(self, m_open, m_urlopen):
         m_urlopen.side_effect = urllib2.HTTPError(*[None] * 5)
         self.assertRaises(error.FetchFailedException, self.cloud_image.fetch)
+
+    def test_decode_hashes_happy(self):
+        d = self.cloud_image.decode_hashes("""
+        foo bar
+        baz quux
+        """)
+        self.assertEqual(d, {'bar': 'foo', 'quux': 'baz',})
+
+    def test_decode_hashes_otherstuff(self):
+        d = self.cloud_image.decode_hashes("""
+        ----- PGP CRAP -----
+        foo bar
+        baz quux
+        ----- MORE PGP CRAP -----
+
+        stuff
+        #wow
+        """)
+        self.assertEqual(d, {'bar': 'foo', 'quux': 'baz',})
+
+    def test_decode_hashes_duplicate(self):
+        self.assertRaises(KeyError, self.cloud_image.decode_hashes, """
+        foo bar
+        baz bar
+        """)
