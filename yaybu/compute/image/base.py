@@ -27,7 +27,10 @@ class CloudImage(object):
 
     """ Represents a cloud image file for a specified release and
     architecture, with a local manifestation of the image. If no image exists
-    locally it is fetched from the source provided by the distribution. e"""
+    locally it is fetched from the source provided by the distribution.
+
+    This is an Abstract Base Class. Concrete implementations need to provide
+    some information about the image locations and hash file format. """
 
     __metaclass__ = abc.ABCMeta
 
@@ -61,6 +64,7 @@ class CloudImage(object):
         file, return the hash of the virtual machine image """
 
     def fetch(self):
+        """ Fetch the remote image to the local pathname. """
         remote_url = self.remote_image_url()
         logger.info("Retrieving {0} to {1}".format(remote_url, self.pathname))
         try:
@@ -75,6 +79,9 @@ class CloudImage(object):
             local.write(data)
 
     def decode_hashes(self, data):
+        """ Parse the hash file data provided and return a dictionary of hash values keyed on filenames.
+        Hash file formats vary quite a bit, this is quite tolerant.
+        """
         hashes = {}
         for line in data.splitlines():
             parts = line.strip().split()
@@ -83,6 +90,7 @@ class CloudImage(object):
         return hashes
 
     def get_remote_hashes(self):
+        """ Fetch the remote hash file and return the decoded hashes. """
         remote_url = self.remote_hashfile_url()
         logger.info("Fetching hashes from {0}".format(remote_url))
         try:
@@ -92,17 +100,21 @@ class CloudImage(object):
         return self.decode_hashes(response.read())
 
     def get_local_sum(self):
+        """ Calculate the sum for the local downloaded image. """
         h = self.hash_function()
         if os.path.exists(self.pathname):
             h.update(open(self.pathname).read())
             return h.hexdigest()
 
     def update_hashes(self):
+        """ Fetch the remote and local hashes. The remote hash is presumed
+        not to change once we have it once. """
         if self.remote_hash is None:
             self.remote_hash = self.image_hash(self.get_remote_hashes())
         self.local_hash = self.get_local_sum()
 
     def requires_update(self):
+        """ Returns true if the local file needs to be downloaded. """
         if self.local_hash is None:
             logger.info("Image not present locally, fetching")
             return True
@@ -114,6 +126,9 @@ class CloudImage(object):
             return False
 
     def update(self):
+        """ Check if the file needs to be updated, and update it if so.
+        Throws an error if the image still doesn't match the remote hash once
+        downloaded. """
         self.update_hashes()
         if self.requires_update():
             self.fetch()
