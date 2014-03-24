@@ -67,3 +67,24 @@ class TestCloudImage(unittest2.TestCase):
         foo bar
         baz bar
         """)
+
+    @mock.patch('urllib2.urlopen')
+    def test_get_remote_hashes(self, m_urlopen):
+        m_urlopen().read.return_value = """
+        foo bar
+        baz quux
+        """
+        self.assertEqual(self.cloud_image.get_remote_hashes(), {
+            "bar": "foo",
+            "quux": "baz",
+        })
+
+    @mock.patch('urllib2.urlopen')
+    def test_get_remote_hashes_empty(self, m_urlopen):
+        m_urlopen().read.return_value = ""
+        self.assertEqual(self.cloud_image.get_remote_hashes(), {})
+
+    @mock.patch('urllib2.urlopen')
+    def test_get_remote_hashes_missing(self, m_urlopen):
+        m_urlopen.side_effect = urllib2.HTTPError(*[None] * 5)
+        self.assertEqual(self.cloud_image.get_remote_hashes(), {})
