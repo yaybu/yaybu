@@ -14,6 +14,14 @@
 
 
 from yaybu.tests import (  # noqa
+    test_compute_image_base,
+    test_compute_image_error,
+    test_compute_image_cirros,
+    test_compute_image_cloudinit,
+    test_compute_image_ubuntu,
+    test_compute_image_fedora,
+    test_compute_image_library,
+    test_compute_image_vmware,
     test_changesource,
     test_compute_part,
     test_core_arguments,
