@@ -23,7 +23,7 @@ from . import fedora
 from . import cirros
 from . import error
 from . import vmware
-
+from . import cloudinit
 
 class ImageLibrary:
 
@@ -120,9 +120,22 @@ class ImageLibrary:
             pathname = os.path.join(systemdir, d)
             yield driver(pathname)
 
+    def create_seed(self, directory, instance_id):
+        meta_data = cloudinit.MetaData(instance_id)
+        user_data = cloudinit.CloudConfig()
+        fpath = os.path.join(directory, "seed.iso")
+        seed = cloudinit.Seed(fpath, [meta_data, user_data])
+        seed.create()
+        return fpath
+
     def create_node(self, system, base_image, auth, name, size, **kwargs):
         """ Create an instance from the provided base image """
         klass = self.get_system_driver(system)
-        instancedir = os.path.join(self.instancedir, system, str(uuid.uuid4()))
+        instance_id = str(uuid.uuid4())
+        instancedir = os.path.join(self.instancedir, system, instance_id)
+        os.mkdir(instancedir)
+        filename = self.create_seed(instancedir, instance_id)
         vm = klass.create_node(instancedir, base_image, auth=auth, name=name, size=size, **kwargs)
+        vm.connect_seed(filename)
+        vm.connect_tools()
         return vm

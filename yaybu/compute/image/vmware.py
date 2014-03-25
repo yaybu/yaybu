@@ -162,17 +162,14 @@ class VMWare:
     @classmethod
     def create_node(klass, directory, base_image, prefix="yaybu", **settings):
         """ Create a new VMWare virtual machine in the specified directory from the base image. """
-        os.mkdir(directory)
+        # do stuff with auth and size and stuff
         pathname = os.path.join(directory, prefix + ".vmdk")
         qemu_img(source=base_image, destination=pathname, format="vmdk")
         vmware = klass(directory, prefix)
-        vmware.connect_seed()
-        vmware.vmx.update(settings)
         return vmware
 
-    def connect_seed(self, seed_name="seed.iso"):
-        seed_path = os.path.join(self.directory, seed_name)
-        seed = cloudinit.Seed(seed_path, self.uuid)
-        seed.update()
-        self.vmx.connect_iso(seed_name)
+    def connect_seed(self, filename):
+        self.vmx.connect_iso(filename)
+
+    def connect_tools(self):
         self.vmx.connect_iso("/usr/lib/vmware/isoimages/linux.iso", "ide0:1", "TRUE")

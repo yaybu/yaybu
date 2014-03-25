@@ -18,7 +18,8 @@ class SubRunner(object):
     default an exception will be raised when the class is instantiated if the
     named command cannot be found.
 
-    If the command might be found somewhere other than on PATH, you can provide these in known_locations
+    If the command might be found somewhere other than on PATH, you can
+    provide these in known_locations
 
     """
 
@@ -52,11 +53,16 @@ class SubRunner(object):
                 return pathname
 
     def __call__(self, *args, **kwargs):
+        cwd = kwargs.pop("cwd", None)
         command = self.compose(*args, **kwargs)
-        return self.execute(command)
+        return self.execute(command, cwd=cwd)
 
-    def execute(self, command):
-        p = subprocess.Popen(args=command, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    def execute(self, command, cwd):
+        p = subprocess.Popen(args=command,
+                             stdin=None,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             cwd=cwd)
         if self.log_execution:
             logging.info("Executing: {0}".format(" ".join(command)))
         stdout, stderr = p.communicate()
@@ -69,5 +75,5 @@ class SubRunner(object):
             for line in stderr.splitlines():
                 logging.info("STDERR: {0}".format(line))
         if p.returncode != 0:
-            raise SubRunnerException("Command execution failed with error code {0}".format(p.returncode))
+            raise SubRunnerException("Command execution of {0} failed with error code {1}".format(" ".join(command), p.returncode))
         return self.parse(stdout, stderr)
