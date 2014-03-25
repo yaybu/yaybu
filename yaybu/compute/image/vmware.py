@@ -145,12 +145,13 @@ class VMX(dict):
 
 class VMWare:
 
-    def __init__(self, directory, prefix="yaybu"):
+    prefix = "yaybu"
+
+    def __init__(self, directory, **kwargs):
         self.directory = directory
-        self.prefix = prefix
         # the abstraction. it leaks.
         self.uuid = os.path.basename(self.directory)
-        self.vmx = VMX(directory, prefix)
+        self.vmx = VMX(directory, self.prefix)
 
     @property
     def id(self):
@@ -160,12 +161,11 @@ class VMWare:
         return self.vmx.vmx_pathname
 
     @classmethod
-    def create_node(klass, directory, base_image, prefix="yaybu", **settings):
+    def create_node(klass, directory, base_image, size):
         """ Create a new VMWare virtual machine in the specified directory from the base image. """
-        # do stuff with auth and size and stuff
-        pathname = os.path.join(directory, prefix + ".vmdk")
+        pathname = os.path.join(directory, klass.prefix + ".vmdk")
         qemu_img(source=base_image, destination=pathname, format="vmdk")
-        vmware = klass(directory, prefix)
+        vmware = klass(directory, size=size)
         return vmware
 
     def connect_seed(self, filename):

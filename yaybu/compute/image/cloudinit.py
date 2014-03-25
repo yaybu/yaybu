@@ -19,6 +19,8 @@ import subprocess
 import logging
 import StringIO
 import yaml
+import random
+import crypt
 
 from . import error
 
@@ -35,12 +37,9 @@ genisoimage = SubRunner(
 )
 
 vmware_tools_install = [
-    ['mkdir', '/vmware'],
-    ['mount', '/dev/sr1', '/vmware'],
-    ['bash', '-c', '"tar -zxf /vmware/VMwareTools-*.tar.gz"'],
-    #['umount', '/dev/sr1'],
-    ['vmware-tools-distrib/vmware-install.pl', '--d'],
-    #['rm', '-rf', 'vmware-tools-distrib'],
+    ['mount', '/dev/sr1', '/mnt'],
+    ['bash', '/mnt/run_upgrader.sh'],
+    ['umount', '/mnt'],
 ]
 
 # there is probably a neater way of doing this
@@ -60,31 +59,64 @@ default_config = {
         "runcmd": vmware_tools_install,
 }
 
-        #print >> f, "password: password"
-        #print >> f, "chpasswd: { expire: False }"
-        #print >> f, "ssh_pwauth: True"
-        #print >> f, "apt_upgrade: true"
-        #print >> f, "runcmd:"
-        #if tools == "open":
-            #print >> f, "  - [ sed, -i, '/^# deb.*multiverse/ s/^# //', /etc/apt/sources.list ]"
-            #print >> f, "  - [ apt-get, update ]"
-            #print >> f, "  - [ apt-get, install, -y, open-vm-tools ]"
-        #elif tools == "vmware":
-            #print >> f, "  - [ mkdir, /vmware ]"
-            #print >> f, "  - [ mount, /dev/sr1, /vmware ]"
-            #print >> f, '  - [ bash, -c, "tar -zxf /vmware/VMwareTools-*.tar.gz" ]'
-            #print >> f, "  - [ umount, /dev/sr1 ]"
-            #print >> f, "  - [ vmware-tools-distrib/vmware-install.pl, --d]"
-            #print >> f, "  - [ rm, -rf, vmware-tools-distrib ]"
-
 class CloudConfig:
 
     filename = "user-data"
 
-    def __init__(self, config=None):
-        self.config = config
-        if self.config is None:
-            self.config = default_config
+    config_modules = [
+        "disk-setup",
+        "mounts",
+        "users_groups",
+        "ssh-import-id",
+        "locale",
+        "set-passwords",
+        "grub-dpkg",
+        "apt-pipelining",
+        "apt-update-upgrade",
+        "timezone",
+        "disable-ec2-metadata",
+        "runcmd",
+        "byobu",
+    ]
+
+    def __init__(self, auth, runcmd=None, apt_upgrade=False):
+        self.config = {
+            "apt_upgrade": apt_upgrade,
+            "cloud_config_modules": self.config_modules,
+        }
+        if runcmd is not None:
+            self.config['runcmd'] = runcmd
+        if hasattr(auth, "password"):
+            self.set_password_auth(auth.username, auth.password)
+
+    def set_password_auth(self, username, password):
+        if username != "ubuntu":
+            logging.warn("A username other than 'ubuntu' is not supported on earlier versions of ubuntu")
+        default_user = {
+            "name": username,
+            "passwd": self.encrypt(password),
+            "gecos": "Yaybu",
+            "groups": ["adm", "audio", "cdrom", "dialout", "floppy", "video", "plugdev", "dip", "netdev"],
+            "lock-passwd": False,
+            "inactive": False,
+            "system": False,
+            "sudo": "ALL=(ALL) NOPASSWD:ALL",
+        }
+        self.config['users'] = [default_user]
+        self.config['ssh_pwauth'] = True
+        self.config['chpasswd'] = {'expire': False}
+        self.config['password'] = password
+
+    def encrypt(self, passwd):
+        """ Return the password hash for the specified password """
+        salt = self.generate_salt()
+        return crypt.crypt(passwd, "$5${0}$".format(salt))
+
+    def generate_salt(self, length=16):
+        salt_set = ('abcdefghijklmnopqrstuvwxyz'
+                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                    '0123456789./')
+        return ''.join([random.choice(salt_set) for i in range(length)])
 
     def as_dict(self):
         return self.config
