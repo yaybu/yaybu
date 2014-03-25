@@ -48,7 +48,7 @@ class TestCloudImage(unittest2.TestCase):
         foo bar
         baz quux
         """)
-        self.assertEqual(d, {'bar': 'foo', 'quux': 'baz',})
+        self.assertEqual(d, {'bar': 'foo', 'quux': 'baz'})
 
     def test_decode_hashes_otherstuff(self):
         d = self.cloud_image.decode_hashes("""
@@ -60,7 +60,7 @@ class TestCloudImage(unittest2.TestCase):
         stuff
         #wow
         """)
-        self.assertEqual(d, {'bar': 'foo', 'quux': 'baz',})
+        self.assertEqual(d, {'bar': 'foo', 'quux': 'baz'})
 
     def test_decode_hashes_duplicate(self):
         self.assertRaises(KeyError, self.cloud_image.decode_hashes, """

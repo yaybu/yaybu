@@ -14,6 +14,7 @@
 
 
 from yaybu.tests import (  # noqa
+    test_compute_util,
     test_compute_image_base,
     test_compute_image_error,
     test_compute_image_cirros,

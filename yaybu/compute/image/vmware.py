@@ -13,36 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import subprocess
 import os
 import logging
 import random
 
-from . import error
 from . import cloudinit
+
+from yaybu.compute.util import SubRunner
 
 logger = logging.getLogger("vmware")
 
-
-def qemu_img(source, destination, format):
-    command = [
-        "qemu-img",
-        "convert",
-        "-O", format,
-        source,
-        destination,
-    ]
-    logger.info("Converting image to {0} format".format(format))
-    logger.debug("Executing {0}".format(" ".join(command)))
-    p = subprocess.Popen(
-        args=command,
-        stdin=None,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    stdout, stderr = p.communicate()
-    if p.returncode != 0:
-        raise error.ImageConversionError("qemu-img failed", log=stdout + stderr)
+qemu_img = SubRunner(
+    command_name="qemu-img",
+    args=["convert", "-O", "{format}", "{source}", "{destination}"],
+    log_execution=True,
+)
 
 
 class VMX(dict):
@@ -179,7 +164,7 @@ class VMWare:
         """ Create a new VMWare virtual machine in the specified directory from the base image. """
         os.mkdir(directory)
         pathname = os.path.join(directory, prefix + ".vmdk")
-        qemu_img(base_image, pathname, "vmdk")
+        qemu_img(source=base_image, destination=pathname, format="vmdk")
         vmware = klass(directory, prefix)
         vmware.connect_seed()
         vmware.vmx.update(settings)
