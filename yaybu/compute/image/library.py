@@ -51,9 +51,8 @@ class ImageLibrary:
 
     def setupdirs(self):
         """ Create directories if required """
-        imagedirs = [os.path.join(self.imagedir, x) for x in self.distributions.keys() + ["user"]]
         systemdirs = [os.path.join(self.instancedir, x) for x in self.systems.keys()]
-        for d in [self.imagedir, self.instancedir, self.tempdir] + imagedirs + systemdirs:
+        for d in [self.imagedir, self.instancedir, self.tempdir] + systemdirs:
             if not os.path.exists(d):
                 os.makedirs(d)
 
@@ -71,7 +70,7 @@ class ImageLibrary:
         if klass is None:
             raise error.DistributionNotKnown()
         with context.ui.throbber("Fetching distro image"):
-            pathname = os.path.join(self.imagedir, distro, "{0}-{1}.qcow2".format(release, arch))
+            pathname = os.path.join(self.imagedir, "{0}-{1}-{2}.qcow2".format(distro, release, arch))
             distro = klass(pathname, release, arch)
             distro.update()
         return pathname
@@ -79,7 +78,7 @@ class ImageLibrary:
     def get_remote(self, remote_url, context=None):
         urihash = hashlib.sha256()
         urihash.update(remote_url)
-        pathname = os.path.join(self.imagedir, "user", "{0}.qcow2".format(urihash.hexdigest()))
+        pathname = os.path.join(self.imagedir, "user-{0}.qcow2".format(urihash.hexdigest()))
         with context.ui.throbber("Retrieving {0} to {1}".format(remote_url, pathname)):
             try:
                 response = urllib2.urlopen(remote_url)

@@ -148,8 +148,8 @@ class Compute(base.GraphExternalAction):
 
         """
         try:
-            params = self.params.image.as_dict()
-
+            # don't find floats
+            params = dict((k, self.params.image.get_key(k).as_string()) for k in self.params.image.keys())
         except errors.NoMatching as e:
             try:
                 return self._get_image_from_id('default')
