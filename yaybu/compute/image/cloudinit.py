@@ -15,16 +15,13 @@
 
 import os
 import tempfile
-import subprocess
 import logging
 import StringIO
 import yaml
 import random
 import crypt
 
-from . import error
-
-from yaybu.compute.util import SubRunner, SubRunnerException
+from yaybu.compute.util import SubRunner
 
 logger = logging.getLogger("cloudinit")
 
@@ -49,15 +46,6 @@ open_tools_install = [
     ['apt-get', 'install', '-y', 'open-vm-tools'],
 ]
 
-default_config = {
-        "password": "password",
-        "chpasswd": {
-            "expire": False,
-        },
-        "ssh_pwauth": True,
-        "apt_upgrade": False,
-        "runcmd": vmware_tools_install,
-}
 
 class CloudConfig:
 
@@ -127,6 +115,7 @@ class CloudConfig:
         print >> f, yaml.dump(self.config)
         return StringIO.StringIO(f.getvalue())
 
+
 class MetaData:
 
     filename = "meta-data"
@@ -143,6 +132,7 @@ class MetaData:
 
     def open(self):
         return StringIO.StringIO(yaml.dump(self.as_dict()))
+
 
 class Seed:
 

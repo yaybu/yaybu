@@ -17,8 +17,6 @@ import os
 import logging
 import random
 
-from . import cloudinit
-
 from yaybu.compute.util import SubRunner
 
 logger = logging.getLogger("vmware")

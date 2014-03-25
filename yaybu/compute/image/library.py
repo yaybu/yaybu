@@ -25,6 +25,7 @@ from . import error
 from . import vmware
 from . import cloudinit
 
+
 class ImageLibrary:
 
     """ A library of virtual machines, and a mechanism for adding packaged
