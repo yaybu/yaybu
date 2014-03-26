@@ -33,13 +33,13 @@ from libcloud.compute.base import NodeDriver, Node
 from libcloud.compute.base import NodeState
 from libcloud.compute.types import Provider
 
+from yaybu.compute.process import Connection
 
 from .image.library import ImageLibrary
 
 
 class VBoxError(LibcloudError):
     pass
-
 
 # FIXME:
 Provider.VBOX = 98
@@ -50,6 +50,7 @@ class VBoxDriver(NodeDriver):
     type = Provider.VBOX
     name = "vbox"
     website = "http://www.vmware.com/products/fusion/"
+    connectionCls = Connection
     features = {'create_node': ['ssh_key', 'password']}
 
     def __init__(self, yaybu_root="~/.yaybu", vboxmanage=None):
@@ -86,9 +87,7 @@ class VBoxDriver(NodeDriver):
     def _action(self, *params, **kwargs):
         command = [self.vboxmanage] + list(params)
         return (
-            self.connection.request(
-                command,
-                capture_output=True).body
+            self.connection.request(command).body
         )
 
     def list_images(self, location=None):
