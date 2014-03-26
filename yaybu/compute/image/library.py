@@ -25,7 +25,6 @@ from . import error
 from . import vmware
 from . import cloudinit
 
-
 class ImageLibrary:
 
     """ A library of virtual machines, and a mechanism for adding packaged
@@ -40,7 +39,7 @@ class ImageLibrary:
     }
 
     systems = {
-        "vmware": vmware.VMWare,
+        "vmware": (vmware.VMWareMachineInstance, vmware.VMWareMachineBuilder)
     }
 
     def __init__(self, root="~/.yaybu"):
@@ -87,42 +86,29 @@ class ImageLibrary:
                 raise error.FetchFailedException("Unable to fetch {0}".format(remote_url))
             local = open(pathname, "w")
             while True:
-                data = response.read(81920)
+                data = response.read(20*1024*1024*1024)
                 if not data:
                     break
                 local.write(data)
         return pathname
 
     def get_system_driver(self, name):
-        klass = self.systems.get(name, None)
-        if klass is None:
+        if name not in self.systems:
             raise error.SystemNotKnown()
-        return klass
+        return self.systems[name]
 
     def instances(self, system):
         """ Return a generator of instance objects. """
-        driver = self.get_system_driver(system)
+        driver, _ = self.get_system_driver(system)
         systemdir = os.path.join(self.instancedir, system)
         for d in os.listdir(systemdir):
-            pathname = os.path.join(systemdir, d)
-            yield driver(pathname)
+            yield driver(systemdir, d)
 
-    def create_seed(self, directory, instance_id, auth):
-        meta_data = cloudinit.MetaData(instance_id)
-        user_data = cloudinit.CloudConfig(auth, cloudinit.vmware_tools_install)
-        fpath = os.path.join(directory, self.seed_iso_name)
-        seed = cloudinit.Seed(fpath, [meta_data, user_data])
-        seed.create()
-        return fpath
-
-    def create_node(self, system, base_image, auth, name, size):
+    def create_node(self, system, base_image, state, **kwargs):
         """ Create an instance from the provided base image """
-        klass = self.get_system_driver(system)
+        instance, builder = self.get_system_driver(system)
+        system_dir = os.path.join(self.instancedir, system)
         instance_id = str(uuid.uuid4())
-        instancedir = os.path.join(self.instancedir, system, instance_id)
-        os.mkdir(instancedir)
-        filename = self.create_seed(instancedir, name, auth)
-        vm = klass.create_node(instancedir, base_image, size)
-        vm.connect_seed(filename)
-        vm.connect_tools()
-        return vm
+        b = builder(system_dir, state, instance_id)
+        b.write(base_image, **kwargs)
+        return instance(system_dir, instance_id, **kwargs)

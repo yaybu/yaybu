@@ -22,6 +22,39 @@ from . import error
 
 logger = logging.getLogger("image")
 
+class MachineInstance(object):
+
+    """ This is a local virtual machine, created by a MachineBuilder. """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, directory, state, instance_id, **kwargs):
+        self.distro = kwargs.pop("distro", None)
+        self.release = kwargs.pop("release", None)
+        self.arch = kwargs.pop("arch", None)
+        self.size = kwargs.pop("size", None)
+        self.auth = kwargs.pop("auth", None)
+        self.directory = directory
+        self.state = state
+
+class MachineBuilder(object):
+
+    """ This builds a new MachineInstance when provided with a source image. """
+
+    __metaclass__ = abc.ABCMeta
+
+    instance = MachineInstance
+
+    def __init__(self, directory, state, instance_id=None):
+        self.directory = directory
+        self.state = state
+        self.instance_id = instance_id
+        if self.instance_id is None:
+            self.instance_id = str(uuid.uuid4())
+        self.instance_dir = os.path.join(self.directory, self.instance_id)
+
+    def write(self, base_image, **kwargs):
+        """ Builds the instance """
 
 class CloudImage(object):
 

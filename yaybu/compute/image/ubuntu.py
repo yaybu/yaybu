@@ -16,7 +16,6 @@
 import hashlib
 from . import base
 
-
 class UbuntuCloudImage(base.StandardCloudImage):
 
     server = "cloud-images.ubuntu.com"

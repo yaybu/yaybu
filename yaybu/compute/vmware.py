@@ -202,13 +202,15 @@ class VMWareDriver(NodeDriver):
             raise LibcloudError("Base image %s not found" % source)
         return source
 
-    def create_node(self, name, size, image, auth=None, **kwargs):
+    def create_node(self, name, image, **kwargs):
         """ Create a new VM from a template VM and start it.
         """
 
-        auth = self._get_and_check_auth(auth)
+        state = kwargs.pop("state")
+        kwargs.update(image.extra)
+        auth = self._get_and_check_auth(kwargs.pop("auth", None))
         base_image = self._get_source(image)
-        machine = self.machines.create_node("vmware", base_image, auth, name, size, **kwargs)
+        machine = self.machines.create_node("vmware", base_image, state, auth=auth, **kwargs)
         node = Node(machine.id, name, NodeState.PENDING, None, None, self)
         self.ex_start(node)
         return node

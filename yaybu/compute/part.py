@@ -167,7 +167,7 @@ class Compute(base.GraphExternalAction):
             return NodeImage(
                 id=params["id"],
                 name=self.params.image.name.as_string(default=id),
-                extra=self.params.image.extra.as_dict(default={}),
+                extra=params,
                 driver=self.driver,
             )
         else:
@@ -317,6 +317,7 @@ class Compute(base.GraphExternalAction):
                 node = self.driver.create_node(
                     name=self.full_name,
                     image=self._get_image(),
+                    state=self.state,
                     size=self._get_size(),
                     **kwargs
                 )
