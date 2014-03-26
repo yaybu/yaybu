@@ -17,10 +17,12 @@ import os
 import abc
 import urllib2
 import logging
+import uuid
 
 from . import error
 
 logger = logging.getLogger("image")
+
 
 class MachineInstance(object):
 
@@ -36,6 +38,7 @@ class MachineInstance(object):
         self.auth = kwargs.pop("auth", None)
         self.directory = directory
         self.state = state
+
 
 class MachineBuilder(object):
 
@@ -55,6 +58,7 @@ class MachineBuilder(object):
 
     def write(self, base_image, **kwargs):
         """ Builds the instance """
+
 
 class CloudImage(object):
 

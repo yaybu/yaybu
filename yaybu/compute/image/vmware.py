@@ -16,7 +16,6 @@
 import os
 import logging
 import random
-import uuid
 import collections
 
 from . import cloudinit
@@ -31,6 +30,7 @@ qemu_img = SubRunner(
     args=["convert", "-O", "{format}", "{source}", "{destination}"],
     log_execution=True,
 )
+
 
 class VMX(collections.defaultdict):
 
@@ -173,6 +173,7 @@ class VMX(collections.defaultdict):
             "address": self.generate_mac(),
         }
 
+
 class VMWareMachineInstance(base.MachineInstance):
 
     name = "vmware"
@@ -192,6 +193,7 @@ class VMWareMachineInstance(base.MachineInstance):
         which is used by the compute node to manipulate it. Value is
         dependent on the underlying VM system. """
         return self.vmx.pathname
+
 
 class VMWareCloudConfig(cloudinit.CloudConfig):
 
@@ -248,13 +250,13 @@ class VMWareMachineBuilder(base.MachineBuilder):
         """ Create a new VMWare virtual machine in the specified directory from the base image. """
 
         distro = kwargs.pop("distro", None)
-        release = kwargs.pop("release", None)
-        arch = kwargs.pop("arch", None)
+        #release = kwargs.pop("release", None)
+        #arch = kwargs.pop("arch", None)
         auth = kwargs.pop("auth", None)
-        size = kwargs.pop("size", None)
-        cpus = kwargs.pop("cpus", None)
-        cores = kwargs.pop("cores", None)
-        ram = kwargs.pop("ram", None)
+        #size = kwargs.pop("size", None)
+        #cpus = kwargs.pop("cpus", None)
+        #cores = kwargs.pop("cores", None)
+        #ram = kwargs.pop("ram", None)
 
         # create the directory to hold all the bits
         os.mkdir(self.instance_dir)

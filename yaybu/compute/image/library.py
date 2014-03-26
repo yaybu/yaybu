@@ -15,15 +15,16 @@
 
 import os
 import hashlib
-import uuid
 import urllib2
+import random
 
 from . import ubuntu
 from . import fedora
 from . import cirros
 from . import error
 from . import vmware
-from . import cloudinit
+from . import vbox
+
 
 class ImageLibrary:
 
@@ -39,7 +40,8 @@ class ImageLibrary:
     }
 
     systems = {
-        "vmware": (vmware.VMWareMachineInstance, vmware.VMWareMachineBuilder)
+        "vmware": (vmware.VMWareMachineInstance, vmware.VMWareMachineBuilder),
+        "vbox": (vbox.VBoxMachineInstance, vbox.VBoxMachineBuilder),
     }
 
     def __init__(self, root="~/.yaybu"):
@@ -86,7 +88,7 @@ class ImageLibrary:
                 raise error.FetchFailedException("Unable to fetch {0}".format(remote_url))
             local = open(pathname, "w")
             while True:
-                data = response.read(20*1024*1024*1024)
+                data = response.read(20 * 1024 * 1024 * 1024)
                 if not data:
                     break
                 local.write(data)
@@ -104,11 +106,18 @@ class ImageLibrary:
         for d in os.listdir(systemdir):
             yield driver(systemdir, d)
 
+    def random_name(self):
+        chars = ('abcdefghijklmnopqrstuvwxyz'
+                 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                 '0123456789./')
+        return ''.join([random.choice(chars) for i in range(8)])
+
     def create_node(self, system, base_image, state, **kwargs):
         """ Create an instance from the provided base image """
         instance, builder = self.get_system_driver(system)
         system_dir = os.path.join(self.instancedir, system)
-        instance_id = str(uuid.uuid4())
+        #instance_id = str(uuid.uuid4())
+        instance_id = self.random_name()
         b = builder(system_dir, state, instance_id)
         b.write(base_image, **kwargs)
         return instance(system_dir, instance_id, **kwargs)

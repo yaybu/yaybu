@@ -24,6 +24,7 @@ from libcloud.compute.types import NodeState
 from libcloud.compute.base import NodeImage, NodeSize, NodeAuthPassword, NodeAuthSSHKey
 
 from .vmware import VMWareDriver
+from .vbox import VBoxDriver
 from .bigv import BigVNodeDriver
 from .docker import DockerNodeDriver
 
@@ -57,6 +58,7 @@ class Compute(base.GraphExternalAction):
         "VMWARE": VMWareDriver,
         "BIGV": BigVNodeDriver,
         "DOCKER": DockerNodeDriver,
+        "VBOX": VBoxDriver,
     }
 
     def __init__(self, node):
