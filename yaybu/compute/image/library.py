@@ -16,7 +16,6 @@
 import os
 import hashlib
 import urllib2
-import random
 import datetime
 
 from . import ubuntu

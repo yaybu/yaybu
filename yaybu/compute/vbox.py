@@ -25,7 +25,6 @@
 import os
 
 from libcloud.common.types import LibcloudError
-#from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
 import time
 import shutil
 
@@ -101,19 +100,15 @@ class VBoxDriver(NodeDriver):
 
     def _list_running(self):
         """ List running virtual machines """
+        # TODO
         return []
-        #lines = iter(self._action("list", "running").strip().splitlines())
-        #for line in lines:
-            #if not line.strip():
-                #continue
-            #yield line.strip()
 
     def _decorate_node(self, node):
         """ Add ips. Returns True if it successfully decorated it, False if
         it failed and None if the node was not running. """
         if node.state == NodeState.RUNNING:
             # find the IP somehow!
-            #node.public_ips = [ip]
+            # node.public_ips = [ip]
             return True
         return None
 

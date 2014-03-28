@@ -107,6 +107,7 @@ class CloudConfig:
         print >> f, yaml.dump(config)
         return StringIO.StringIO(f.getvalue())
 
+
 class UbuntuCloudConfig:
 
     config_modules = [
@@ -136,6 +137,7 @@ class UbuntuCloudConfig:
         "apt-update-upgrade",
     ]
 
+
 class FedoraCloudConfig:
 
     # these are the modules available in Release 20
@@ -156,40 +158,41 @@ class FedoraCloudConfig:
         'runcmd',
 
         # other available
-        #'apt-configure',
-        #'apt-pipelining',
-        #'bootcmd',
-        #'byobu',
-        #'ca-certs',
-        #'emit-upstart',
-        #'final-message',
-        #'foo',
-        #'growpart',
-        #'grub-dpkg',
-        #'keys-to-console',
-        #'landscape',
-        #'migrator',
-        #'phone-home',
-        #'power-state-change',
-        #'resizefs',
-        #'resolv-conf',
-        #'rsyslog',
-        #'set-hostname',
-        #'ssh-import-id',
-        #'ssh',
-        #'update-etc-hosts',
-        #'update-hostname',
+        # 'apt-configure',
+        # 'apt-pipelining',
+        # 'bootcmd',
+        # 'byobu',
+        # 'ca-certs',
+        # 'emit-upstart',
+        # 'final-message',
+        # 'foo',
+        # 'growpart',
+        # 'grub-dpkg',
+        # 'keys-to-console',
+        # 'landscape',
+        # 'migrator',
+        # 'phone-home',
+        # 'power-state-change',
+        # 'resizefs',
+        # 'resolv-conf',
+        # 'rsyslog',
+        # 'set-hostname',
+        # 'ssh-import-id',
+        # 'ssh',
+        # 'update-etc-hosts',
+        # 'update-hostname',
         'users_groups',
-        #'write-files',
+        # 'write-files',
 
-        # final modules
-        #'rightscale-userdata',
-        #'scripts-per-boot',
-        #'scripts-per-instance',
-        #'scripts-per-once',
-        #'scripts-user',
-        #'ssh-authkey-fingerprints',
-        ]
+        # final modules already used
+        # 'rightscale-userdata',
+        # 'scripts-per-boot',
+        # 'scripts-per-instance',
+        # 'scripts-per-once',
+        # 'scripts-user',
+        # 'ssh-authkey-fingerprints',
+    ]
+
 
 class MetaData:
 

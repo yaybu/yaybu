@@ -132,13 +132,13 @@ class VBoxMachineBuilder(base.MachineBuilder):
         """ Create a new VMWare virtual machine in the specified directory from the base image. """
 
         distro = kwargs.pop("distro", None)
-        #release = kwargs.pop("release", None)
-        #arch = kwargs.pop("arch", None)
+        # release = kwargs.pop("release", None)
+        # arch = kwargs.pop("arch", None)
         auth = kwargs.pop("auth", None)
-        #size = kwargs.pop("size", None)
-        #cpus = kwargs.pop("cpus", None)
-        #cores = kwargs.pop("cores", None)
-        #ram = kwargs.pop("ram", None)
+        # size = kwargs.pop("size", None)
+        # cpus = kwargs.pop("cpus", None)
+        # cores = kwargs.pop("cores", None)
+        # ram = kwargs.pop("ram", None)
 
         # create the directory to hold all the bits
         os.mkdir(self.instance_dir)
