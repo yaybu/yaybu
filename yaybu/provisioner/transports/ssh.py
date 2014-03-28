@@ -32,6 +32,7 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
     connection_attempts = 20
     missing_host_key_policy = paramiko.AutoAddPolicy()
     _client = None
+    _allocate_pty = False
 
     def get_private_key(self, data):
         for KeyClass in (RSAKey, DSSKey):
@@ -112,8 +113,11 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
 
         ret, out, err = self._execute_impl(["sudo", "whoami"], None, None, None, transport=transport)
         if ret != 0:
-            raise error.ConnectionError(
-                "Got unusable SSH connection: Can't become root")
+            self._allocate_pty = True
+            ret, out, err = self._execute_impl(["sudo", "whoami"], None, None, None, transport=transport)
+            if ret != 0:
+                raise error.ConnectionError(
+                    "Got unusable SSH connection: Can't become root")
 
     def whoami(self):
         return self.connect().get_transport().get_username()
@@ -122,6 +126,9 @@ class SSHTransport(base.Transport, remote.RemoteTransport):
         transport = transport or self.connect().get_transport()
 
         channel = transport.open_session()
+
+        if self._allocate_pty:
+            channel.get_pty()
 
         channel.exec_command(' '.join([pipes.quote(c) for c in command]))
 
