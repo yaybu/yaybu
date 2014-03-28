@@ -17,6 +17,7 @@ import os
 import hashlib
 import urllib2
 import random
+import datetime
 
 from . import ubuntu
 from . import fedora
@@ -106,18 +107,26 @@ class ImageLibrary:
         for d in os.listdir(systemdir):
             yield driver(systemdir, d)
 
-    def random_name(self):
-        chars = ('abcdefghijklmnopqrstuvwxyz'
-                 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                 '0123456789./')
-        return ''.join([random.choice(chars) for i in range(8)])
+    def get_instance_id(self, directory, name):
+        today = datetime.datetime.now()
+        instance_id = "{0}-{1:%Y-%m-%d}".format(name, today)
+        count = 1
+        while True:
+            pathname = os.path.join(directory, instance_id)
+            if not os.path.exists(pathname):
+                break
+            instance_id = "{0}-{1:%Y-%m-%d}-{2:02}".format(name, today, count)
+            count = count + 1
+        return instance_id
 
-    def create_node(self, system, base_image, state, **kwargs):
+    def create_node(self, system, base_image, state, name=None, **kwargs):
         """ Create an instance from the provided base image """
         instance, builder = self.get_system_driver(system)
         system_dir = os.path.join(self.instancedir, system)
-        #instance_id = str(uuid.uuid4())
-        instance_id = self.random_name()
+        if name is None:
+            name = system
+        instance_id = self.get_instance_id(system_dir, name)
+        print "Creating", instance_id
         b = builder(system_dir, state, instance_id)
         b.write(base_image, **kwargs)
         return instance(system_dir, instance_id, **kwargs)

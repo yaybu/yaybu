@@ -195,7 +195,7 @@ class VMWareMachineInstance(base.MachineInstance):
         return self.vmx.pathname
 
 
-class VMWareCloudConfig(cloudinit.CloudConfig):
+class VMWareCloudConfig:
 
     vmware_tools_install = [
         ['mount', '/dev/sr1', '/mnt'],
@@ -210,16 +210,18 @@ class VMWareCloudConfig(cloudinit.CloudConfig):
         ['apt-get', 'install', '-y', 'open-vm-tools'],
     ]
 
-    def __init__(self, auth, **kwargs):
-        cloudinit.CloudConfig.__init__(self, auth, runcmd=self.vmware_tools_install)
+    runcmd = vmware_tools_install
 
-
-class VMWareUbuntuCloudConfig(VMWareCloudConfig):
+class VMWareUbuntuCloudConfig(cloudinit.UbuntuCloudConfig,
+                              VMWareCloudConfig,
+                              cloudinit.CloudConfig):
     pass
 
 
-class VMWareFedoraCloudConfig(VMWareCloudConfig):
-    pass
+class VMWareFedoraCloudConfig(cloudinit.FedoraCloudConfig,
+                              VMWareCloudConfig,
+                              cloudinit.CloudConfig):
+    packages = ['file', 'perl']
 
 
 class VMWareMachineBuilder(base.MachineBuilder):

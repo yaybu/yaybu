@@ -207,10 +207,9 @@ class VMWareDriver(NodeDriver):
         """
 
         state = kwargs.pop("state")
-        kwargs.update(image.extra)
         auth = self._get_and_check_auth(kwargs.pop("auth", None))
         base_image = self._get_source(image)
-        machine = self.machines.create_node("vmware", base_image, state, auth=auth, **kwargs)
+        machine = self.machines.create_node("vmware", base_image, state, name=name, auth=auth, **kwargs)
         node = Node(machine.id, name, NodeState.PENDING, None, None, self)
         self.ex_start(node)
         return node

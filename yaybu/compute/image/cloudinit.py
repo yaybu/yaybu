@@ -38,32 +38,23 @@ class CloudConfig:
 
     filename = "user-data"
 
-    config_modules = [
-        "disk-setup",
-        "mounts",
-        "users_groups",
-        "ssh-import-id",
-        "locale",
-        "set-passwords",
-        "grub-dpkg",
-        "apt-pipelining",
-        "apt-update-upgrade",
-        "timezone",
-        "disable-ec2-metadata",
-        "runcmd",
-        "byobu",
-    ]
-
-    def __init__(self, auth, runcmd=None, apt_upgrade=False):
-        self.config = {
-            "apt_upgrade": apt_upgrade,
-            "cloud_config_modules": self.config_modules,
-        }
-        if runcmd is not None:
-            self.config['runcmd'] = runcmd
+    def __init__(self, auth, **kwargs):
         self.auth = auth
-        if self.username and self.password:
-            self.set_password_auth()
+
+    def get_config(self):
+        config = {}
+        if hasattr(self, 'apt_upgrade'):
+            config["apt_upgrade"] = self.apt_upgrade
+        if hasattr(self, 'config_modules'):
+            config["cloud_config_modules"] = self.config_modules
+        if hasattr(self, 'packages'):
+            config['packages'] = self.packages
+        if hasattr(self, 'runcmd'):
+            config['runcmd'] = self.runcmd
+        if hasattr(self, 'auth'):
+            if self.username and self.password:
+                self.set_password_auth(config)
+        return config
 
     @property
     def username(self):
@@ -79,7 +70,7 @@ class CloudConfig:
             return None
         return self.encrypt(self.password)
 
-    def set_password_auth(self):
+    def set_password_auth(self, config):
         if self.username != "ubuntu":
             logging.warn("A username other than 'ubuntu' is not supported on earlier versions of ubuntu")
         default_user = {
@@ -90,12 +81,13 @@ class CloudConfig:
             "lock-passwd": False,
             "inactive": False,
             "system": False,
+            "no-create-home": False,
             "sudo": "ALL=(ALL) NOPASSWD:ALL",
         }
-        self.config['users'] = [default_user]
-        self.config['ssh_pwauth'] = True
-        self.config['chpasswd'] = {'expire': False}
-        self.config['password'] = self.password
+        config['users'] = [default_user]
+        config['ssh_pwauth'] = True
+        config['chpasswd'] = {'expire': False}
+        config['password'] = self.password
 
     def encrypt(self, passwd):
         """ Return the password hash for the specified password """
@@ -108,15 +100,96 @@ class CloudConfig:
                     '0123456789./')
         return ''.join([random.choice(salt_set) for i in range(length)])
 
-    def as_dict(self):
-        return self.config
-
     def open(self):
+        config = self.get_config()
         f = StringIO.StringIO()
         print >> f, "#cloud-config"
-        print >> f, yaml.dump(self.config)
+        print >> f, yaml.dump(config)
         return StringIO.StringIO(f.getvalue())
 
+class UbuntuCloudConfig:
+
+    config_modules = [
+        # default
+        "emit_upstart",
+        "disk_setup",
+        "mounts",
+        "ssh-import-id",
+        "locale",
+        "set-passwords",
+        "grub-dpkg",
+        "apt-pipelining",
+        "apt-configure",
+        "package-update-upgrade-install",
+        "landscape",
+        "timezone",
+        "puppet",
+        "chef",
+        "salt-minion",
+        "mcollective",
+        "disable-ec2-metadata",
+        "runcmd",
+        "byobu",
+
+        # others
+        "users_groups",
+        "apt-update-upgrade",
+    ]
+
+class FedoraCloudConfig:
+
+    # these are the modules available in Release 20
+    config_modules = [
+
+        # default
+        'mounts',
+        'locale',
+        'set-passwords',
+        'yum-add-repo',
+        'package-update-upgrade-install',
+        'timezone',
+        'puppet',
+        'chef',
+        'salt-minion',
+        'mcollective',
+        'disable-ec2-metadata',
+        'runcmd',
+
+        # other available
+        #'apt-configure',
+        #'apt-pipelining',
+        #'bootcmd',
+        #'byobu',
+        #'ca-certs',
+        #'emit-upstart',
+        #'final-message',
+        #'foo',
+        #'growpart',
+        #'grub-dpkg',
+        #'keys-to-console',
+        #'landscape',
+        #'migrator',
+        #'phone-home',
+        #'power-state-change',
+        #'resizefs',
+        #'resolv-conf',
+        #'rsyslog',
+        #'set-hostname',
+        #'ssh-import-id',
+        #'ssh',
+        #'update-etc-hosts',
+        #'update-hostname',
+        'users_groups',
+        #'write-files',
+
+        # final modules
+        #'rightscale-userdata',
+        #'scripts-per-boot',
+        #'scripts-per-instance',
+        #'scripts-per-once',
+        #'scripts-user',
+        #'ssh-authkey-fingerprints',
+        ]
 
 class MetaData:
 

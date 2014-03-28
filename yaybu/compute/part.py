@@ -311,6 +311,16 @@ class Compute(base.GraphExternalAction):
                 if 'ex_iamprofile' in kwargs:
                     kwargs['ex_iamprofile'] = kwargs['ex_iamprofile'].encode("utf-8")
 
+                image = self._get_image()
+                size = self._get_size()
+                # need to think about this
+                if 'distro' in image.extra:
+                    kwargs['distro'] = image.extra['distro']
+                if 'release' in image.extra:
+                    kwargs['release'] = image.extra['release']
+                if 'arch' in image.extra:
+                    kwargs['arch'] = image.extra['arch']
+
                 if self.root.simulate:
                     self._fake_node_info()
                     self.root.changed()
@@ -318,9 +328,9 @@ class Compute(base.GraphExternalAction):
 
                 node = self.driver.create_node(
                     name=self.full_name,
-                    image=self._get_image(),
+                    image=image,
                     state=self.state,
-                    size=self._get_size(),
+                    size=size,
                     **kwargs
                 )
 
