@@ -33,10 +33,6 @@ from yaybu.provisioner.transports.remote import stat_result, \
     struct_group, struct_passwd, struct_spwd
 
 
-class ChangeStillOutstanding(Exception):
-    pass
-
-
 class TransportRecorder(object):
 
     # path =...
