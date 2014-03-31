@@ -26,6 +26,10 @@ from yaybu.core.command import YaybuCmd
 from yaybu import error
 
 
+class ChangeStillOutstanding(Exception):
+    pass
+
+
 class TestCase(unittest.TestCase):
 
     Config = Config
@@ -71,7 +75,7 @@ class TestCase(unittest.TestCase):
             self._up(config, *args)
         except error.NothingChanged:
             return
-        raise RuntimeError("Action wasn't idempotent")
+        raise ChangeStillOutstanding("Action wasn't idempotent")
 
     def destroy(self, config, *args):
         return self._do("destroy", config, *args)

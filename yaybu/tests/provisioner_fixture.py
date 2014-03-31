@@ -188,12 +188,5 @@ class TestCase(BaseTestCase):
         return path2
 
     # FIXME: Methods beyond this point are deprecated
-
-    def apply(self, contents, *args):
-        return self._up(contents, *args)
-
-    def check_apply(self, contents, *args, **kwargs):
-        try:
-            return self.up(contents, *args)
-        except RuntimeError:
-            raise ChangeStillOutstanding()
+    apply = BaseTestCase._up
+    check_apply = BaseTestCase.up
