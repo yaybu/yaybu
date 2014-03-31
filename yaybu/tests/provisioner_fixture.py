@@ -136,9 +136,9 @@ class TestCase(BaseTestCase):
         Provision.Transport = self.Transport
 
     def _setUp_for_recording(self):
-        self.chroot = self.FakeChroot(self.location)
-        self.addCleanup(self.chroot.cleanUp)
-        self.chroot.setUp()
+        self.chroot = self.FakeChroot.create_in_tempdir(self.location)
+        self.addCleanup(self.chroot.destroy)
+        self.chroot.build()
 
         from yaybu.provisioner.transports import FakechrootTransport
         FakechrootTransport.env = self.chroot.get_env()
