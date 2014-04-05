@@ -16,6 +16,7 @@ import os
 import json
 import inspect
 import pkgutil
+import textwrap
 
 try:
     from unittest2 import SkipTest
@@ -28,6 +29,7 @@ except ImportError:
 
 from fakechroot import FakeChroot
 
+from yaybu import base
 from yaybu.tests.base import TestCase as BaseTestCase
 from yaybu.provisioner.transports.remote import stat_result, \
     struct_group, struct_passwd, struct_spwd
@@ -99,6 +101,21 @@ class TransportPlayback(object):
                 "getspnam": lambda x: struct_spwd(*x),
             }.get(f, lambda x: x)(results)
         return _
+
+
+class FakeChrootPart(base.GraphExternalAction):
+
+    """
+    This part can create and destroy a fakechroot, but via the yay machinery.
+    """
+
+    def apply(self):
+        location = self.params.location.as_string()
+
+        chroot = self.FakeChroot.create_in_tempdir(location)
+        chroot.build()
+
+        self.members['fqdn'] = "fakechroot://" + chroot.chroot_path
 
 
 class TestCase(BaseTestCase):
@@ -173,17 +190,22 @@ class TestCase(BaseTestCase):
         assert not self.transport.exists(path), "%s does exist" % path
 
     def _config(self, contents):
-        path = super(TestCase, self)._config(contents)
-        path2 = super(TestCase, self)._config(
-            """
-            include r"%s"
-            main:
-                new Provisioner:
-                    server:
-                        fqdn: fakechroot:///%s
-                    resources: {{ resources }}
-            """ % (path, self.chroot_path))
-        return path2
+        compute_stanza = textwrap.dedent("""
+        #new FakeChroot as server:
+        server:
+            location: %s
+            fqdn: fakechroot://{{ server.location }}
+        """ % self.location)
+
+        provisioner_stanza = textwrap.dedent("""
+        new Provisioner as main:
+            server: {{ server }}
+            resources: {{ resources }}
+        """)
+
+        testcase_stanza = textwrap.dedent(contents)
+
+        return super(TestCase, self)._config("\n\n".join((compute_stanza, provisioner_stanza, testcase_stanza)))
 
     # FIXME: Methods beyond this point are deprecated
     apply = BaseTestCase._up
