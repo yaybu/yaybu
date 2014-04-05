@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import local, remote, base
+from __future__ import absolute_import
+
 import os
+import urlparse
+
+from fakechroot import FakeChroot
+
+from . import local, remote, base
 
 
 class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExecute):
@@ -28,6 +34,14 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
         "LD_PRELOAD",
         "LD_LIBRARY_PATH",
     ]
+
+    def __init__(self, context, *args, **kwargs):
+        super(FakechrootTransport, self).__init__(context, *args, **kwargs)
+
+        chroot = FakeChroot(urlparse.urlparse(context.hostname).path)
+        self.env = chroot.get_env()
+        self.chroot_path = chroot.chroot_path
+        self.overlay_dir = chroot.overlay_dir
 
     def whoami(self):
         return "root"

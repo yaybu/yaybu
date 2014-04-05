@@ -15,6 +15,7 @@
 import os
 import logging
 import getpass
+import urlparse
 
 import yay
 from yay.errors import NotFound, NotModified
@@ -43,7 +44,9 @@ class Provision(base.GraphExternalAction):
         resources: {{ resources }}
     """
 
-    Transport = transports.SSHTransport
+    transports = {
+        "ssh": transports.SSHTransport,
+    }
 
     def apply(self):
         if self.root.readonly:
@@ -71,7 +74,13 @@ class Provision(base.GraphExternalAction):
         if os.path.exists("/etc/yaybu"):
             self.options = yay.load_uri("/etc/yaybu")
 
-        self.transport = self.Transport(
+        if "://" in hostname:
+            parsed = urlparse.urlparse(hostname)
+            Transport = self.transports[parsed.scheme]
+        else:
+            Transport = self.transports["ssh"]
+
+        self.transport = Transport(
             context=self,
             verbose=root.verbose,
             simulate=root.simulate,

@@ -31,6 +31,7 @@ from fakechroot import FakeChroot
 from yaybu.tests.base import TestCase as BaseTestCase
 from yaybu.provisioner.transports.remote import stat_result, \
     struct_group, struct_passwd, struct_spwd
+from yaybu.provisioner.transports.fakechroot import FakechrootTransport
 
 
 class TransportRecorder(object):
@@ -38,6 +39,8 @@ class TransportRecorder(object):
     # path =...
     # id = ...
     # Transport = ...
+
+    Transport = FakechrootTransport
 
     def __init__(self, *args, **kwargs):
         self.inner = self.Transport(*args, **kwargs)
@@ -98,20 +101,9 @@ class TransportPlayback(object):
         return _
 
 
-class YaybuFakeChroot(FakeChroot):
-
-    """
-    I provide a very simple COW userspace environment in which to test configuration
-
-    I am used for some of Yaybu's internal tests.
-    """
-
-    Exception = SkipTest
-
-
 class TestCase(BaseTestCase):
 
-    FakeChroot = YaybuFakeChroot
+    FakeChroot = FakeChroot
     location = os.path.join(os.path.dirname(__file__), "..", "..", "..")
     Transport = None
 
@@ -119,28 +111,29 @@ class TestCase(BaseTestCase):
         self.path = inspect.getfile(self.__class__).rsplit(".", 1)[0] + ".json"
 
         if os.environ.get("YAYBU_RECORD_FIXTURES", "") == "YES":
-            self._setUp_for_recording()
+            context = self._setUp_for_recording()
         else:
-            self._setUp_for_playback()
-
-        self.transport = self.Transport(None, 5, False)
+            context = self._setUp_for_playback()
 
         self.Transport.path = self.path
         self.Transport.id = self.id()
 
+        # Get a transport to inspect the changes Yaybu makes to a fakechroot
+        self.transport = self.Transport(context, 5, False)
+
+        # Let yaybu use this fakechroot
         from yaybu.provisioner import Provision
-        Provision.Transport = self.Transport
+        Provision.transports["fakechroot"] = self.Transport
+        #self.addCleanup(operator.del, Provision.transports, "fakechroot")
 
     def _setUp_for_recording(self):
-        self.chroot = self.FakeChroot.create_in_tempdir(self.location)
-        self.addCleanup(self.chroot.destroy)
-        self.chroot.build()
+        chroot = self.FakeChroot.create_in_tempdir(self.location)
+        self.addCleanup(chroot.destroy)
+        chroot.build()
+
+        self.chroot_path = chroot.chroot_path
 
         from yaybu.provisioner.transports import FakechrootTransport
-        FakechrootTransport.env = self.chroot.get_env()
-        FakechrootTransport.chroot_path = self.chroot.chroot_path
-        FakechrootTransport.overlay_dir = self.chroot.overlay_dir
-
         TransportRecorder.results = self.results = []
         TransportRecorder.Transport = FakechrootTransport
 
@@ -155,6 +148,11 @@ class TestCase(BaseTestCase):
         self.addCleanup(cleanup)
         self.Transport = TransportRecorder
 
+        class FakeContext:
+            hostname = "fakechroot:///" + self.location
+
+        return FakeContext()
+
     def _setUp_for_playback(self):
         t = self.Transport = TransportPlayback
         payload = pkgutil.get_data("yaybu.tests", os.path.basename(self.path))
@@ -163,6 +161,10 @@ class TestCase(BaseTestCase):
         else:
             all_results = {}
         t.results = all_results.get(self.id(), [])
+
+        self.chroot_path = "/tmp-playback-XOXOXO"
+
+        return None
 
     def failUnlessExists(self, path):
         assert self.transport.exists(path), "%s doesnt exist" % path
@@ -178,9 +180,9 @@ class TestCase(BaseTestCase):
             main:
                 new Provisioner:
                     server:
-                        fqdn: fakechroot:///
+                        fqdn: fakechroot:///%s
                     resources: {{ resources }}
-            """ % path)
+            """ % (path, self.chroot_path))
         return path2
 
     # FIXME: Methods beyond this point are deprecated

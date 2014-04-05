@@ -40,7 +40,6 @@ from yaybu.tests import (  # noqa
     test_provisioner_providers_user,
     test_provisioner_resource,
     test_provisioner_transports_base,
-    test_provisioner_transports_fakechroot,
     test_provisioner_transports_local,
     test_provisioner_transports_remote,
     test_static,
