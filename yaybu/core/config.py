@@ -148,6 +148,18 @@ class Config(BaseConfig):
     readonly = False
     simulate = False
 
+    default_builtins = {
+        "Compute": Compute,
+        "Provisioner": Provision,
+        "LoadBalancer": LoadBalancer,
+        "Zone": Zone,
+        "Heroku": Heroku,
+        "StaticContainer": StaticContainer,
+        "GitChangeSource": GitChangeSource,
+        "GitHubChangeSource": GitHubChangeSource,
+        "Printer": Printer,
+    }
+
     def __init__(self, context=None, hostname=None, searchpath=None, ui=None):
         if not ui:
             ui = TextFactory()
@@ -188,17 +200,9 @@ class Config(BaseConfig):
             searchpath=SearchpathFromGraph(self.yaybu.searchpath))
 
     def setup_builtins(self):
-        self.builtins = {
-            "Compute": ast.PythonClassFactory(Compute),
-            "Provisioner": ast.PythonClassFactory(Provision),
-            "LoadBalancer": ast.PythonClassFactory(LoadBalancer),
-            "Zone": ast.PythonClassFactory(Zone),
-            "Heroku": ast.PythonClassFactory(Heroku),
-            "StaticContainer": ast.PythonClassFactory(StaticContainer),
-            "GitChangeSource": ast.PythonClassFactory(GitChangeSource),
-            "GitHubChangeSource": ast.PythonClassFactory(GitHubChangeSource),
-            "Printer": ast.PythonClassFactory(Printer),
-        }
+        self.builtins = {}
+        for key, value in self.default_builtins.items():
+            self.builtins[key] = ast.PythonClassFactory(value)
 
     def set_arguments(self, **arguments):
         self.add({

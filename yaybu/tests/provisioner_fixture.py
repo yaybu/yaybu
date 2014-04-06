@@ -17,6 +17,8 @@ import json
 import inspect
 import pkgutil
 import textwrap
+import operator
+import tempfile
 
 try:
     from unittest2 import SkipTest
@@ -112,10 +114,21 @@ class FakeChrootPart(base.GraphExternalAction):
     def apply(self):
         location = self.params.location.as_string()
 
-        chroot = self.FakeChroot.create_in_tempdir(location)
-        chroot.build()
+        if self.readonly or self.simulate:
+            return
 
-        self.members['fqdn'] = "fakechroot://" + chroot.chroot_path
+        FakeChroot(location).build()
+        self.members['fqdn'] = "fakechroot://" + location
+
+    def destroy(self):
+        location = self.params.location.as_string()
+        FakeChroot(location).destroy()
+
+    @classmethod
+    def install(cls, testcase):
+        from yaybu.core.config import Config
+        Config.default_builtins["FakeChroot"] = cls
+        testcase.addCleanup(operator.delitem, Config.default_builtins, "FakeChroot")
 
 
 class TestCase(BaseTestCase):
@@ -126,6 +139,12 @@ class TestCase(BaseTestCase):
 
     def setUp(self):
         self.path = inspect.getfile(self.__class__).rsplit(".", 1)[0] + ".json"
+
+        self.provisioner_stanza = textwrap.dedent("""
+            new Provisioner as main:
+              server: {{ server }}
+              resources: {{ resources }}
+        """)
 
         if os.environ.get("YAYBU_RECORD_FIXTURES", "") == "YES":
             context = self._setUp_for_recording()
@@ -141,14 +160,14 @@ class TestCase(BaseTestCase):
         # Let yaybu use this fakechroot
         from yaybu.provisioner import Provision
         Provision.transports["fakechroot"] = self.Transport
-        #self.addCleanup(operator.del, Provision.transports, "fakechroot")
+        self.addCleanup(operator.delitem, Provision.transports, "fakechroot")
 
     def _setUp_for_recording(self):
-        chroot = self.FakeChroot.create_in_tempdir(self.location)
-        self.addCleanup(chroot.destroy)
-        chroot.build()
+        self.chroot_path = tempfile.mkdtemp(dir=self.location)
+        self._up(self.compute_stanza)
+        self.addCleanup(FakeChroot(self.chroot_path).destroy)
 
-        self.chroot_path = os.path.realpath(chroot.path)
+        FakeChrootPart.install(self)
 
         TransportRecorder.results = self.results = []
 
@@ -166,6 +185,11 @@ class TestCase(BaseTestCase):
         class FakeContext:
             host = "fakechroot://" + self.chroot_path
 
+        self.compute_stanza = textwrap.dedent("""
+            new FakeChroot as server:
+                location: %s
+        """ % os.path.realpath(self.chroot_path))
+
         return FakeContext()
 
     def _setUp_for_playback(self):
@@ -179,6 +203,11 @@ class TestCase(BaseTestCase):
 
         self.chroot_path = "/tmp-playback-XOXOXO"
 
+        self.compute_stanza = textwrap.dedent("""
+            server:
+                fqdn: fakechroot://%s
+        """ % os.path.realpath(self.chroot_path))
+
         return None
 
     def failUnlessExists(self, path):
@@ -188,22 +217,12 @@ class TestCase(BaseTestCase):
         assert not self.transport.exists(path), "%s does exist" % path
 
     def _config(self, contents):
-        compute_stanza = textwrap.dedent("""
-        #new FakeChroot as server:
-        server:
-            location: %s
-            fqdn: fakechroot://{{ server.location }}
-        """ % os.path.realpath(self.chroot_path))
-
-        provisioner_stanza = textwrap.dedent("""
-        new Provisioner as main:
-            server: {{ server }}
-            resources: {{ resources }}
-        """)
-
         testcase_stanza = textwrap.dedent(contents)
-
-        return super(TestCase, self)._config("\n\n".join((compute_stanza, provisioner_stanza, testcase_stanza)))
+        return super(TestCase, self)._config("\n\n".join((
+            self.compute_stanza,
+            self.provisioner_stanza,
+            testcase_stanza
+        )))
 
     # FIXME: Methods beyond this point are deprecated
     apply = BaseTestCase._up
