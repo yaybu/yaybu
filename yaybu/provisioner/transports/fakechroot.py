@@ -24,7 +24,7 @@ from . import local, remote, base
 
 class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExecute):
 
-    env_passthrought = [
+    env_passthrough = [
         "COWDANCER_ILISTFILE",
         "FAKECHROOT",
         "FAKECHROOT_VERSION",
@@ -38,7 +38,7 @@ class FakechrootTransport(base.Transport, remote.RemoteTransport, local.LocalExe
     def __init__(self, context, *args, **kwargs):
         super(FakechrootTransport, self).__init__(context, *args, **kwargs)
 
-        chroot = FakeChroot(urlparse.urlparse(context.hostname).path)
+        chroot = FakeChroot(urlparse.urlparse(context.host).path)
         self.env = chroot.get_env()
         self.chroot_path = chroot.chroot_path
         self.overlay_dir = chroot.overlay_dir

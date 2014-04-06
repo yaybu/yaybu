@@ -148,11 +148,9 @@ class TestCase(BaseTestCase):
         self.addCleanup(chroot.destroy)
         chroot.build()
 
-        self.chroot_path = chroot.chroot_path
+        self.chroot_path = os.path.realpath(chroot.path)
 
-        from yaybu.provisioner.transports import FakechrootTransport
         TransportRecorder.results = self.results = []
-        TransportRecorder.Transport = FakechrootTransport
 
         def cleanup():
             existing = {}
@@ -161,12 +159,12 @@ class TestCase(BaseTestCase):
             existing[self.id()] = self.results
             with open(self.path, "w") as fp:
                 json.dump(existing, fp)
-
         self.addCleanup(cleanup)
+
         self.Transport = TransportRecorder
 
         class FakeContext:
-            hostname = "fakechroot:///" + self.location
+            host = "fakechroot://" + self.chroot_path
 
         return FakeContext()
 
@@ -195,7 +193,7 @@ class TestCase(BaseTestCase):
         server:
             location: %s
             fqdn: fakechroot://{{ server.location }}
-        """ % self.location)
+        """ % os.path.realpath(self.chroot_path))
 
         provisioner_stanza = textwrap.dedent("""
         new Provisioner as main:
