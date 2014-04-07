@@ -32,6 +32,7 @@ except ImportError:
 from fakechroot import FakeChroot
 
 from yaybu import base
+from yaybu import error
 from yaybu.tests.base import TestCase as BaseTestCase
 from yaybu.provisioner.transports.remote import stat_result, \
     struct_group, struct_passwd, struct_spwd
@@ -113,12 +114,14 @@ class FakeChrootPart(base.GraphExternalAction):
 
     def apply(self):
         location = self.params.location.as_string()
+        self.members['fqdn'] = "fakechroot://" + location
 
-        if self.readonly or self.simulate:
+        if self.root.readonly or self.root.simulate:
             return
 
-        FakeChroot(location).build()
-        self.members['fqdn'] = "fakechroot://" + location
+        if not os.path.exists(os.path.join(location, "chroot")):
+            FakeChroot(location).build()
+            self.root.changed()
 
     def destroy(self):
         location = self.params.location.as_string()
@@ -160,14 +163,24 @@ class TestCase(BaseTestCase):
         # Let yaybu use this fakechroot
         from yaybu.provisioner import Provision
         Provision.transports["fakechroot"] = self.Transport
-        self.addCleanup(operator.delitem, Provision.transports, "fakechroot")
+        # self.addCleanup(operator.delitem, Provision.transports, "fakechroot")
+
+        try:
+            self._up("resources: []")
+        except error.NothingChanged:
+            pass
 
     def _setUp_for_recording(self):
-        self.chroot_path = tempfile.mkdtemp(dir=self.location)
-        self._up(self.compute_stanza)
-        self.addCleanup(FakeChroot(self.chroot_path).destroy)
+        self.chroot_path = tempfile.mkdtemp(dir=os.path.abspath(self.location))
+
+        self.compute_stanza = textwrap.dedent("""
+            new FakeChroot as server:
+                location: %s
+        """ % os.path.realpath(self.chroot_path))
 
         FakeChrootPart.install(self)
+
+        self.addCleanup(self.destroy, "resources: []")
 
         TransportRecorder.results = self.results = []
 
@@ -184,11 +197,6 @@ class TestCase(BaseTestCase):
 
         class FakeContext:
             host = "fakechroot://" + self.chroot_path
-
-        self.compute_stanza = textwrap.dedent("""
-            new FakeChroot as server:
-                location: %s
-        """ % os.path.realpath(self.chroot_path))
 
         return FakeContext()
 
