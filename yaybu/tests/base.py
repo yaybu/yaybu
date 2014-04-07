@@ -42,6 +42,17 @@ class TestCase(unittest.TestCase):
         self.addCleanup(os.unlink, path)
         return path
 
+    def _get_graph(self, config, *args):
+        config_file = self._config(config)
+        config_dir = os.path.dirname(config_file)
+        p = OptionParser()
+        y = YaybuCmd(config_file, ypath=(config_dir, ))
+        y.Config = self.Config
+        y.verbose = 2
+        y.debug = True
+        y.opts_up(p)
+        return y._get_graph(*p.parse_args(list(args)))
+
     def _do(self, action, config, *args):
         config_file = self._config(config)
         config_dir = os.path.dirname(config_file)

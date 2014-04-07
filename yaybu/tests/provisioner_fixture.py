@@ -19,6 +19,8 @@ import pkgutil
 import textwrap
 import operator
 import tempfile
+import urlparse
+import urllib
 
 try:
     from unittest2 import SkipTest
@@ -41,14 +43,18 @@ from yaybu.provisioner.transports.fakechroot import FakechrootTransport
 
 class TransportRecorder(object):
 
-    # path =...
-    # id = ...
-    # Transport = ...
+    def __init__(self, context, *args, **kwargs):
+        q = urlparse.urlparse(context.host)
+        self.path = q.path
+        qs = urlparse.parse_qs(q.query)
+        self.id = qs['id'][0]
 
-    Transport = FakechrootTransport
-
-    def __init__(self, *args, **kwargs):
-        self.inner = self.Transport(*args, **kwargs)
+        # Set up the backend to record
+        target = context.params.target.fqdn.as_string()
+        bq = urlparse.urlparse(target)
+        Transport = context.transports[bq.scheme]
+        context.host = target
+        self.inner = Transport(context, *args, **kwargs)
 
     def __getattr__(self, function_name):
         attr = getattr(self.inner, function_name)
@@ -75,11 +81,20 @@ class TransportRecorder(object):
 
 class TransportPlayback(object):
 
-    # path = ...
-    # id = ...
+    def __init__(self, context, *args, **kwargs):
+        q = urlparse.urlparse(context.host)
+        self.path = q.path
+        qs = urlparse.parse_qs(q.query)
+        self.id = qs['id'][0]
+        context.host = context.params.target.fqdn.as_string()
 
-    def __init__(self, *args, **kwargs):
-        pass
+        if not self.results:
+            payload = pkgutil.get_data("yaybu.tests", os.path.basename(self.path))
+            if payload:
+                all_results = json.loads(payload)
+            else:
+                all_results = {}
+            self.results.extend(all_results.get(self.id, []))
 
     def __getattr__(self, function_name):
         f, results, exception = self.results.pop(0)
@@ -136,39 +151,45 @@ class FakeChrootPart(base.GraphExternalAction):
 
 class TestCase(BaseTestCase):
 
-    FakeChroot = FakeChroot
     location = os.path.join(os.path.dirname(__file__), "..", "..", "..")
-    Transport = None
 
     def setUp(self):
         self.path = inspect.getfile(self.__class__).rsplit(".", 1)[0] + ".json"
+        self.uri = "?".join((self.path, urllib.urlencode({"id": self.id()})))
 
-        self.provisioner_stanza = textwrap.dedent("""
-            new Provisioner as main:
-              server: {{ server }}
-              resources: {{ resources }}
-        """)
+        # Setup the provisioner transports used for testing
+        transports = [
+            ("fakechroot", FakechrootTransport),
+            ("record", TransportRecorder),
+            ("playback", TransportPlayback),
+        ]
+
+        from yaybu.provisioner import Provision
+        for name, transport in transports:
+            Provision.transports[name] = transport
+            self.addCleanup(operator.delitem, Provision.transports, name)
+
+        FakeChrootPart.install(self)
+
+        # Yuck - the transport instances have shared state!
+        self.results = TransportRecorder.results = TransportPlayback.results = []
 
         if os.environ.get("YAYBU_RECORD_FIXTURES", "") == "YES":
             context = self._setUp_for_recording()
         else:
             context = self._setUp_for_playback()
 
-        self.Transport.path = self.path
-        self.Transport.id = self.id()
-
-        # Get a transport to inspect the changes Yaybu makes to a fakechroot
-        self.transport = self.Transport(context, 5, False)
-
-        # Let yaybu use this fakechroot
-        from yaybu.provisioner import Provision
-        Provision.transports["fakechroot"] = self.Transport
-        # self.addCleanup(operator.delitem, Provision.transports, "fakechroot")
-
         try:
             self._up("resources: []")
         except error.NothingChanged:
             pass
+
+        self.addCleanup(self.destroy, "resources: []")
+
+        # FIXME: Nicer API here perhaps?
+        provisioner = self._get_graph("resources: []").main.expand()
+        provisioner.apply()
+        self.transport = provisioner.transport
 
     def _setUp_for_recording(self):
         self.chroot_path = tempfile.mkdtemp(dir=os.path.abspath(self.location))
@@ -178,11 +199,13 @@ class TestCase(BaseTestCase):
                 location: %s
         """ % os.path.realpath(self.chroot_path))
 
-        FakeChrootPart.install(self)
-
-        self.addCleanup(self.destroy, "resources: []")
-
-        TransportRecorder.results = self.results = []
+        self.provisioner_stanza = textwrap.dedent("""
+            new Provisioner as main:
+              server:
+                  fqdn: record://%s
+              target: {{ server }}
+              resources: {{ resources }}
+        """ % self.uri)
 
         def cleanup():
             existing = {}
@@ -193,28 +216,26 @@ class TestCase(BaseTestCase):
                 json.dump(existing, fp)
         self.addCleanup(cleanup)
 
-        self.Transport = TransportRecorder
-
         class FakeContext:
             host = "fakechroot://" + self.chroot_path
 
         return FakeContext()
 
     def _setUp_for_playback(self):
-        t = self.Transport = TransportPlayback
-        payload = pkgutil.get_data("yaybu.tests", os.path.basename(self.path))
-        if payload:
-            all_results = json.loads(payload)
-        else:
-            all_results = {}
-        t.results = all_results.get(self.id(), [])
-
         self.chroot_path = "/tmp-playback-XOXOXO"
 
         self.compute_stanza = textwrap.dedent("""
             server:
                 fqdn: fakechroot://%s
         """ % os.path.realpath(self.chroot_path))
+
+        self.provisioner_stanza = textwrap.dedent("""
+            new Provisioner as main:
+              server:
+                  fqdn: playback://%s
+              target: {{ server }}
+              resources: {{ resources }}
+        """ % self.uri)
 
         return None
 
