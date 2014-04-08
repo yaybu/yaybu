@@ -45,8 +45,8 @@ class TransportRecorder(object):
 
     def __init__(self, context, *args, **kwargs):
         q = urlparse.urlparse(context.host)
-        self.path, query = q.path.split("?", 1)
-        qs = urlparse.parse_qs(query)
+        self.path = q.path
+        qs = urlparse.parse_qs(q.query)
         self.id = qs['id'][0]
 
         # Set up the backend to record
@@ -83,8 +83,8 @@ class TransportPlayback(object):
 
     def __init__(self, context, *args, **kwargs):
         q = urlparse.urlparse(context.host)
-        self.path, query = q.path.split("?", 1)
-        qs = urlparse.parse_qs(query)
+        self.path = q.path
+        qs = urlparse.parse_qs(q.query)
         self.id = qs['id'][0]
         context.host = context.params.target.fqdn.as_string()
 
@@ -168,6 +168,8 @@ class TestCase(BaseTestCase):
         for name, transport in transports:
             Provision.transports[name] = transport
             self.addCleanup(operator.delitem, Provision.transports, name)
+            urlparse.uses_netloc.append(name)
+            self.addCleanup(urlparse.uses_netloc.remove, name)
 
         FakeChrootPart.install(self)
 
