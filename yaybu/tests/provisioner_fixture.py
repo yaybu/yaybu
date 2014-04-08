@@ -168,8 +168,8 @@ class TestCase(BaseTestCase):
         for name, transport in transports:
             Provision.transports[name] = transport
             self.addCleanup(operator.delitem, Provision.transports, name)
-            urlparse.uses_netloc.append(name)
-            self.addCleanup(urlparse.uses_netloc.remove, name)
+            urlparse.uses_query.append(name)
+            self.addCleanup(urlparse.uses_query.remove, name)
 
         FakeChrootPart.install(self)
 
