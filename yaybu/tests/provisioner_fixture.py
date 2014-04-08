@@ -175,9 +175,9 @@ class TestCase(BaseTestCase):
         self.results = TransportRecorder.results = TransportPlayback.results = []
 
         if os.environ.get("YAYBU_RECORD_FIXTURES", "") == "YES":
-            context = self._setUp_for_recording()
+            self._setUp_for_recording()
         else:
-            context = self._setUp_for_playback()
+            self._setUp_for_playback()
 
         try:
             self._up("resources: []")
@@ -216,11 +216,6 @@ class TestCase(BaseTestCase):
                 json.dump(existing, fp)
         self.addCleanup(cleanup)
 
-        class FakeContext:
-            host = "fakechroot://" + self.chroot_path
-
-        return FakeContext()
-
     def _setUp_for_playback(self):
         self.chroot_path = "/tmp-playback-XOXOXO"
 
@@ -236,8 +231,6 @@ class TestCase(BaseTestCase):
               target: {{ server }}
               resources: {{ resources }}
         """ % self.uri)
-
-        return None
 
     def failUnlessExists(self, path):
         assert self.transport.exists(path), "%s doesnt exist" % path
