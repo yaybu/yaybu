@@ -195,7 +195,7 @@ class VMWareMachineInstance(base.MachineInstance):
         return self.vmx.pathname
 
 
-class VMWareCloudConfig:
+class VMWareCloudConfig(cloudinit.CloudConfig):
 
     vmware_tools_install = [
         ['mount', '/dev/sr1', '/mnt'],
@@ -214,14 +214,12 @@ class VMWareCloudConfig:
 
 
 class VMWareUbuntuCloudConfig(cloudinit.UbuntuCloudConfig,
-                              VMWareCloudConfig,
-                              cloudinit.CloudConfig):
-    pass
+                              VMWareCloudConfig):
+    packages = ['zip']
 
 
 class VMWareFedoraCloudConfig(cloudinit.FedoraCloudConfig,
-                              VMWareCloudConfig,
-                              cloudinit.CloudConfig):
+                              VMWareCloudConfig):
     packages = ['file', 'perl']
 
 

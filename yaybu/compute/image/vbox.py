@@ -55,11 +55,11 @@ attach_disk = vboxmanage("storageattach", "{name}",
 
 attach_ide = vboxmanage("storageattach", "{name}",
                         "--storagectl", '"IDE Controller"',
-                        "--port", "0", "--device", "0",
+                        "--port", "{port}", "--device", "{device}",
                         "--type", "dvddrive",
                         "--medium", "{filename}")
 
-configure = vboxmanage("modifyvm", "{name}",
+configurevm = vboxmanage("modifyvm", "{name}",
                        "--ioapic", "on",
                        "--boot1", "disk", "--boot2", "none",
                        "--memory", "{memsize}", "--vram", "128",
@@ -87,16 +87,22 @@ class VBoxMachineInstance(base.MachineInstance):
 
 
 class VBoxCloudConfig(cloudinit.CloudConfig):
-
-    def __init__(self, auth, **kwargs):
-        cloudinit.CloudConfig.__init__(self, auth)
-
-
-class VBoxUbuntuCloudConfig(VBoxCloudConfig):
     pass
 
+class VBoxUbuntuCloudConfig(cloudinit.UbuntuCloudConfig,
+                            VBoxCloudConfig):
+    packages = ['zip']
+    #package_update = True
+    #package_upgrade = True
+    #packages = ['virtualbox-guest-utils']
+    #runcmd = [
+        #["/etc/init.d/virtualbox-guest-utils", "start"],
+    #]
 
-class VBoxFedoraCloudConfig(VBoxCloudConfig):
+
+class VBoxFedoraCloudConfig(cloudinit.FedoraCloudConfig,
+                            VBoxCloudConfig):
+
     pass
 
 
@@ -144,6 +150,7 @@ class VBoxMachineBuilder(base.MachineBuilder):
         os.mkdir(self.instance_dir)
 
         createvm(name=self.instance_id, directory=self.directory, ostype=self.ostype[distro])
+        configurevm(name=self.instance_id, memsize=256)
 
         # create the disk image and attach it
         disk = self.create_disk(base_image)
@@ -160,4 +167,5 @@ class VBoxMachineBuilder(base.MachineBuilder):
 
         # connect the seed ISO and the tools ISO
         create_ide(name=self.instance_id)
-        attach_ide(name=self.instance_id, filename=seed.pathname)
+        attach_ide(name=self.instance_id, port="0", device="0", filename=seed.pathname)
+        #attach_ide(name=self.instance_id, port="0", device="1", filename="/usr/share/virtualbox/VBoxGuestAdditions.iso")
