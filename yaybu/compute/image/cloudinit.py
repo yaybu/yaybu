@@ -38,19 +38,23 @@ class CloudConfig:
 
     filename = "user-data"
 
+    terms = [
+        "package_upgrade",
+        "package_update",
+        "package_reboot_if_required",
+        #"cloud_config_modules",
+        "packages",
+        "runcmd",
+    ]
+
     def __init__(self, auth, **kwargs):
         self.auth = auth
 
     def get_config(self):
         config = {}
-        if hasattr(self, 'apt_upgrade'):
-            config["apt_upgrade"] = self.apt_upgrade
-        if hasattr(self, 'config_modules'):
-            config["cloud_config_modules"] = self.config_modules
-        if hasattr(self, 'packages'):
-            config['packages'] = self.packages
-        if hasattr(self, 'runcmd'):
-            config['runcmd'] = self.runcmd
+        for t in self.terms:
+            if hasattr(self, t):
+                config[t] = getattr(self, t)
         if hasattr(self, 'auth'):
             if self.username and self.password:
                 self.set_password_auth(config)
@@ -110,7 +114,7 @@ class CloudConfig:
 
 class UbuntuCloudConfig:
 
-    config_modules = [
+    cloud_config_modules = [
         # default
         "emit_upstart",
         "disk_setup",
@@ -129,19 +133,18 @@ class UbuntuCloudConfig:
         "salt-minion",
         "mcollective",
         "disable-ec2-metadata",
-        "runcmd",
         "byobu",
+        "runcmd",
 
         # others
         "users_groups",
-        "apt-update-upgrade",
     ]
 
 
 class FedoraCloudConfig:
 
     # these are the modules available in Release 20
-    config_modules = [
+    cloud_config_modules = [
 
         # default
         'mounts',
