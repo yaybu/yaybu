@@ -56,6 +56,7 @@ class Layer(object):
         self.their_name = None
         self.node = None  # was libcloud_node
 
+    @property
     def attached(self):
         """ Return True if we have attached to a node. False if we have yet
         to attach to a node. """
@@ -104,10 +105,6 @@ class Layer(object):
         """ The unqualified hostname of the node """
 
     @abc.abstractproperty
-    def fqdn(self):
-        """ The fully qualified hostname.domain of the node """
-
-    @abc.abstractproperty
     def domain(self):
         """ The domain name of the node """
 
@@ -146,9 +143,11 @@ class CloudComputeLayer(Layer):
             logger.exception("Could not connect")
             raise error.InvalidCredError("Unable to login to compute service", anchor=self.original.params.driver.id.anchor)
 
+    @property
     def name(self):
         return self.node.name
 
+    @property
     def location(self):
         return "%r/%r" % (self.node.public_ips, self.node.private_ips)
 
@@ -166,7 +165,8 @@ class CloudComputeLayer(Layer):
         kwargs = getattr(Driver, "kwargs", [])
         args = args_from_expression(Driver, params, ignore=(), kwargs=kwargs)
         driver = Driver(**args)
-        driver.yaybu_context = self.root
+        driver.yaybu_context = self.original.root
+        return driver
 
     @property
     @memoized
@@ -184,7 +184,7 @@ class CloudComputeLayer(Layer):
                 n for n in self.driver.list_nodes() if n.name == name and n.state != NodeState.TERMINATED]
         except InvalidCredsError:
             raise error.InvalidCredsError(
-                "Credentials invalid - unable to check/create '%s'" % self.params.name.as_string(), anchor=None)
+                "Credentials invalid - unable to check/create '%s'" % self.original.full_name, anchor=None)
         if len(existing) > 1:
             raise LibcloudError(
                 _("There are already multiple nodes called '%s'") % name)
@@ -207,7 +207,7 @@ class CloudComputeLayer(Layer):
         try:
             return self.images[image_id]
         except KeyError:
-            raise error.ValueError('Cannot find image "%s" at this host/location' % image_id, anchor=self.params.image.inner.anchor)
+            raise error.ValueError('Cannot find image "%s" at this host/location' % image_id, anchor=self.original.params.image.inner.anchor)
         except NotImplementedError:
             return NodeImage(
                 id=image_id,
@@ -226,7 +226,7 @@ class CloudComputeLayer(Layer):
             possible = difflib.get_close_matches(size_id, all_sizes)
             if possible:
                 msg.append('did you mean "%s"?' % possible[0])
-            raise error.ValueError(" - ".join(msg), anchor=self.params.size.inner.anchor)
+            raise error.ValueError(" - ".join(msg), anchor=self.original.params.size.inner.anchor)
         except NotImplementedError:
             # If backend raises NotImplemented then it doesnt support
             # enumeration.
@@ -234,7 +234,7 @@ class CloudComputeLayer(Layer):
 
     def _get_size(self):
         try:
-            self.params.size.as_dict()
+            self.original.params.size.as_dict()
 
         except errors.NoMatching as e:
             try:
@@ -247,31 +247,31 @@ class CloudComputeLayer(Layer):
             raise e
 
         except errors.TypeError:
-            return self._get_size_from_id(self.params.size.as_string())
+            return self._get_size_from_id(self.original.params.size.as_string())
 
-        id = str(self.params.size.id)
+        id = str(self.original.params.size.id)
         return NodeSize(
             id=id,
-            name=self.params.size.name.as_string(default=id),
-            ram=self.params.size.ram.as_int(default=0),
-            disk=self.params.size.disk.as_int(default=0),
-            bandwidth=self.params.bandwidth.as_int(default=0),
-            price=self.params.size.price.as_int(default=0),
+            name=self.original.params.size.name.as_string(default=id),
+            ram=self.original.params.size.ram.as_int(default=0),
+            disk=self.original.params.size.disk.as_int(default=0),
+            bandwidth=self.original.params.bandwidth.as_int(default=0),
+            price=self.original.params.size.price.as_int(default=0),
             driver=self.driver,
         )
 
     def _get_auth(self):
-        username = self.params.user.as_string(default=getpass.getuser())
+        username = self.original.params.user.as_string(default=getpass.getuser())
         if 'password' in self.driver.features['create_node']:
-            password = self.params.password.as_string(default=None)
+            password = self.original.params.password.as_string(default=None)
             if password is not None:
                 auth = NodeAuthPassword(password)
                 auth.username = username
                 return auth
         if 'ssh_key' in self.driver.features['create_node']:
-            pubkey = self.params.public_key.as_string(default=None)
+            pubkey = self.original.params.public_key.as_string(default=None)
             if pubkey is not None:
-                fp = self.root.openers.open(os.path.expanduser(pubkey))
+                fp = self.original.root.openers.open(os.path.expanduser(pubkey))
                 auth = NodeAuthSSHKey(fp.read())
                 auth.username = username
                 return auth
@@ -312,8 +312,7 @@ class CloudComputeLayer(Layer):
             return self.node.extra['dns_name']
 
     def create(self):
-
-        kwargs = args_from_expression(self.driver.create_node, self.params, ignore=(
+        kwargs = args_from_expression(self.driver.create_node, self.original.params, ignore=(
             "name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
 
         if not 'ex_keyname' in kwargs:
@@ -322,25 +321,13 @@ class CloudComputeLayer(Layer):
         if 'ex_iamprofile' in kwargs:
             kwargs['ex_iamprofile'] = kwargs['ex_iamprofile'].encode("utf-8")
 
-        image = self.params.image.as_string()
+        image = self._get_image_from_id(self.original.params.image.as_string())
         size = self._get_size()
-        # need to think about this
-        if 'distro' in image.extra:
-            kwargs['distro'] = image.extra['distro']
-        if 'release' in image.extra:
-            kwargs['release'] = image.extra['release']
-        if 'arch' in image.extra:
-            kwargs['arch'] = image.extra['arch']
-
-        if self.root.simulate:
-            self._fake_node_info()
-            self.root.changed()
-            return
 
         self.pending_node = self.driver.create_node(
-            name=self.full_name,
+            name=self.original.full_name,
             image=image,
-            state=self.state,
+            state=self.original.state,
             size=size,
             **kwargs
         )
@@ -350,6 +337,7 @@ class CloudComputeLayer(Layer):
             return
         try:
             self.node, ip_addresses = self.driver.wait_until_running([self.pending_node], wait_period=1, timeout=600)[0]
+            self.pending_node = None
         except LibcloudError, e:
             logger.exception("LibCloud node did not start in time")
             raise NodeFailedToStartException()
@@ -448,7 +436,7 @@ class Compute(base.GraphExternalAction):
     @property
     @memoized
     def state(self):
-        return PartState(self.root.state, self.params.name.as_string())
+        return PartState(self.root.state, self.full_name)
 
     def synchronise(self):
         """ Update our members with the appropriate data from the underlying layer. """
@@ -504,12 +492,13 @@ class Compute(base.GraphExternalAction):
         logger.debug("Node will be %r" % self.full_name)
 
         for tries in range(10):
-            self.create()
+            logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
+            if self.create():
+                return
         logger.error("Unable to create node successfully. giving up.")
         raise IOError()
 
     def create(self):
-        logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
         with self.root.ui.throbber(_("Create node '%r'") % (self.full_name, )):
             self.layer.create()
             logger.debug("Waiting for node %r to start" % (self.full_name, ))
@@ -519,12 +508,12 @@ class Compute(base.GraphExternalAction):
                 logger.debug("Node %r running" % (self.full_name, ))
                 self.synchronise()
                 self.root.changed()
-                return
+                return True
 
             except NodeFailedToStartException:
                 logger.warning("Node %r did not start before timeout. retrying." % self.full_name)
                 self.destroy()
-                return
+                return False
 
             except Exception as e:
                 logger.exception(
