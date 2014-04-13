@@ -31,18 +31,21 @@ from .docker import DockerNodeDriver
 
 from yaybu.core.util import memoized
 from yaybu.core.state import PartState
-from yaybu.util import get_driver_from_expression, args_from_expression
+from yaybu.util import args_from_expression
 from yaybu import base, error
 from yaybu.i18n import _
 from yay import errors
 
 logger = logging.getLogger(__name__)
 
+
 class LayerException(Exception):
     pass
 
+
 class NodeFailedToStartException(LayerException):
     pass
+
 
 class Layer(object):
     """ An underlying implementation of a virtualization layer. There is a
@@ -109,7 +112,6 @@ class Layer(object):
         """ The domain name of the node """
 
 
-
 class CloudComputeLayer(Layer):
 
     """
@@ -157,8 +159,8 @@ class CloudComputeLayer(Layer):
         """ Find the underlying libcloud driver and marshall the arguments to
         it from whatever is provided in the source yay, by inspection of the
         call signature of the driver. """
-        ## This used get_driver_from_expression which has some nice
-        ## diff logic we should reuse
+        # This used get_driver_from_expression which has some nice
+        # diff logic we should reuse
         params = self.original.params.driver
         provider = getattr(Provider, self.original.driver_id)
         Driver = get_driver(provider)
@@ -315,7 +317,7 @@ class CloudComputeLayer(Layer):
         kwargs = args_from_expression(self.driver.create_node, self.original.params, ignore=(
             "name", "image", "size"), kwargs=getattr(self.driver, "create_node_kwargs", []))
 
-        if not 'ex_keyname' in kwargs:
+        if 'ex_keyname' not in kwargs:
             kwargs['auth'] = self._get_auth()
 
         if 'ex_iamprofile' in kwargs:
@@ -338,9 +340,10 @@ class CloudComputeLayer(Layer):
         try:
             self.node, ip_addresses = self.driver.wait_until_running([self.pending_node], wait_period=1, timeout=600)[0]
             self.pending_node = None
-        except LibcloudError, e:
+        except LibcloudError:
             logger.exception("LibCloud node did not start in time")
             raise NodeFailedToStartException()
+
 
 class LocalComputeLayer(Layer):
 
@@ -396,6 +399,7 @@ class LocalComputeLayer(Layer):
                 extra=params,
                 driver=self.driver
             )
+
 
 class Compute(base.GraphExternalAction):
 
@@ -515,14 +519,12 @@ class Compute(base.GraphExternalAction):
                 self.destroy()
                 return False
 
-            except Exception as e:
+            except Exception:
                 logger.exception(
                     "Node %r had an unexpected error - node will be cleaned up and processing will stop" % (self.full_name,))
-                node.destroy()
+                self.node.destroy()
                 raise
-
 
     @property
     def full_name(self):
         return "%s" % str(self.params.name.as_string())
-
