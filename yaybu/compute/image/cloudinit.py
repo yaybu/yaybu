@@ -21,17 +21,20 @@ import yaml
 import random
 import crypt
 
-from yaybu.compute.util import SubRunner
+from yaybu.compute.util import SubRunner, SubRunnerException
 
 logger = logging.getLogger("cloudinit")
 
-genisoimage = SubRunner(
-    command_name="genisoimage",
-    args=["-output", "{pathname}",
-          "-volid", "cidata",
-          "-joliet", "-rock"],
-    log_execution=True,
-)
+try:
+    genisoimage = SubRunner(
+        command_name="genisoimage",
+        args=["-output", "{pathname}",
+            "-volid", "cidata",
+            "-joliet", "-rock"],
+        log_execution=True,
+    )
+except SubRunnerException:
+    genisoimage = None
 
 
 class CloudConfig:
