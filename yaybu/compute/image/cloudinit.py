@@ -21,15 +21,14 @@ import yaml
 import random
 import crypt
 
-from yaybu.compute.util import SubRunner, SubRunnerException
+from yaybu.compute.util import SubRunner
 
 logger = logging.getLogger("cloudinit")
 
 genisoimage = SubRunner(
     command_name="genisoimage",
     args=["-output", "{pathname}", "-volid", "cidata", "-joliet", "-rock"],
-    log_execution=True,
-    )
+    log_execution=True)
 
 
 class CloudConfig:
