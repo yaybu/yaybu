@@ -89,15 +89,16 @@ class VBoxMachineInstance(base.MachineInstance):
 class VBoxCloudConfig(cloudinit.CloudConfig):
     pass
 
+
 class VBoxUbuntuCloudConfig(cloudinit.UbuntuCloudConfig,
                             VBoxCloudConfig):
     packages = ['zip']
-    #package_update = True
-    #package_upgrade = True
-    #packages = ['virtualbox-guest-utils']
-    #runcmd = [
-        #["/etc/init.d/virtualbox-guest-utils", "start"],
-    #]
+    # package_update = True
+    # package_upgrade = True
+    # packages = ['virtualbox-guest-utils']
+    # runcmd = [
+    #     ["/etc/init.d/virtualbox-guest-utils", "start"],
+    # ]
 
 
 class VBoxFedoraCloudConfig(cloudinit.FedoraCloudConfig,
@@ -168,4 +169,4 @@ class VBoxMachineBuilder(base.MachineBuilder):
         # connect the seed ISO and the tools ISO
         create_ide(name=self.instance_id)
         attach_ide(name=self.instance_id, port="0", device="0", filename=seed.pathname)
-        #attach_ide(name=self.instance_id, port="0", device="1", filename="/usr/share/virtualbox/VBoxGuestAdditions.iso")
+        # attach_ide(name=self.instance_id, port="0", device="1", filename="/usr/share/virtualbox/VBoxGuestAdditions.iso")

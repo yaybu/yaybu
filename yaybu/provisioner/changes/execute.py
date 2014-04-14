@@ -160,7 +160,7 @@ class ShellTextRenderer(changes.TextRenderer):
     def stdout(self, data):
         if self.verbose >= 2:
             data = self.stdout_buffer + data
-            if not "\n" in data:
+            if "\n" not in data:
                 self.stdout_buffer = data
                 return
             data, self.stdout_buffer = data.rsplit("\n", 1)
@@ -170,7 +170,7 @@ class ShellTextRenderer(changes.TextRenderer):
     def stderr(self, data):
         if self.verbose >= 1:
             data = self.stderr_buffer + data
-            if not "\n" in data:
+            if "\n" not in data:
                 self.stdout_buffer = data
                 return
             data, self.stderr_buffer = data.rsplit("\n", 1)

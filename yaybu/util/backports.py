@@ -73,7 +73,7 @@ except ImportError:  # pragma: no cover
         def clear(self):
             self.__end = end = []
             end += [None, end, end]
-                # sentinel node for doubly linked list
+            # sentinel node for doubly linked list
             self.__map = {}                 # key --> [key, prev, next]
             dict.clear(self)
 

@@ -160,7 +160,7 @@ class FileStateStorage(StateStorage):
 
         data = json.load(self.get_stream())
 
-        if not 'version' in data:
+        if 'version' not in data:
             raise RuntimeError(
                 "State file has no version metadata - possible corrupt")
 

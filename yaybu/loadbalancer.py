@@ -161,7 +161,7 @@ class LoadBalancer(base.GraphExternalAction):
 
         protocols = self.driver.list_protocols()
         protocol = self.params.protocol.as_string(default=protocols[0])
-        if not protocol in protocols:
+        if protocol not in protocols:
             raise error.ValueError(
                 "'%s' not a supported protocol\nExpected one of '%s'" %
                 (protocol, ", ".join(protocols)), anchor=self.params.protocol.anchor)
@@ -169,7 +169,7 @@ class LoadBalancer(base.GraphExternalAction):
         algorithms = [ALGORITHM_NAMES[aid]
                       for aid in self.driver.list_supported_algorithms()]
         algorithm = self.params.algorithm.as_string(default=algorithms[0])
-        if not algorithm in algorithms:
+        if algorithm not in algorithms:
             raise error.ValueError(
                 "'%s' not a supported algorithm\nExpected one of '%s'" %
                 (algorithm, ", ".join(algorithms)), anchor=self.params.algorithm.anchor)

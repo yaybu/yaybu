@@ -179,7 +179,7 @@ class Resource(object):
 
         # Only allow keys that are in the schema
         for key in self.inner.keys():
-            if not key in self.get_argument_names():
+            if key not in self.get_argument_names():
                 raise error.ParseError(
                     "'%s' is not a valid option for resource %s" % (key, self),
                     self.inner.anchor)

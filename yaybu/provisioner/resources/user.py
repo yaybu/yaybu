@@ -73,7 +73,7 @@ class User(Resource):
     the next deployment would remove you again. """
 
     system = Property(Boolean, default=True)
-                      # has no effect on modification, only creation
+    # has no effect on modification, only creation
     """ A boolean representing whether this user is a system user or not. This only takes effect on
     creation - a user cannot be changed into a system user once created
     without deleting and recreating the user. """

@@ -52,7 +52,7 @@ class BigVResponse(JsonResponse):
         return self.status in self.valid_response_codes
 
 
-#=======================================================================
+# =======================================================================
 # FIXME: Remove this when there is a better way to do this
 from libcloud.common.base import LoggingHTTPSConnection
 import socket
@@ -88,7 +88,7 @@ class BigVHTTPSConnection(LoggingHTTPSConnection):
         if not self._verify_hostname(self.host, cert):
             raise ssl.SSLError('Failed to verify hostname')
 
-#=======================================================================
+# =======================================================================
 
 
 class BigVConnection(ConnectionUserAndKey):

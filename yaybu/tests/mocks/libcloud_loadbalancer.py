@@ -68,13 +68,13 @@ class MockLoadBalancer(Driver):
         return pending_balancer
 
     def destroy_balancer(self, balancer):
-        if not balancer.id in self.balancers.keys():
+        if balancer.id not in self.balancers.keys():
             raise LibcloudLBError("Balancer does not exist")
         del self.balancers[balancer.id]
         return True
 
     def get_balancer(self, balancer_id):
-        if not balancer_id in self.balancers:
+        if balancer_id not in self.balancers:
             raise LibcloudLBError("Balancer does not exist")
         return self.balancers[balancer_id]
 

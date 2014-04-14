@@ -68,16 +68,19 @@ class MockNodeDriver(DummyNodeDriver):
     def install(cls, test_case):
         test_case.addCleanup(setattr, MockNodeDriver, "nl", [])
 
+
 class MockNodeDriverArgless(MockNodeDriver):
 
     def __init__(self):
         pass
+
 
 class MockCloudComputeLayer(CloudComputeLayer):
     def driver_class(self):
         if self.original.driver_id == "DUMMY":
             return MockNodeDriver
         raise DriverNotFound
+
 
 class MockArglessCloudComputeLayer(CloudComputeLayer):
     def driver_class(self):

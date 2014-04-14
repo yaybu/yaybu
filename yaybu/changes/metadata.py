@@ -71,7 +71,7 @@ class MetadataSync(Change):
             uid = self.match_local_to_remote(record, remote_lookup)
             rid = uid or rid
 
-            if not rid in remote_lookup:
+            if rid not in remote_lookup:
                 with ctx.root.ui.throbber("Add '%s'" % rid):
                     self.changed = True
                     if not ctx.simulate:
@@ -89,7 +89,7 @@ class MetadataSync(Change):
 
         if self.purge_remote:
             for rid, record in remote:
-                if not rid in local_lookup:
+                if rid not in local_lookup:
                     with ctx.root.ui.throbber("Delete '%s'" % rid):
                         self.changed = True
                         if not ctx.simulate:

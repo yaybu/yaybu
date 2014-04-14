@@ -363,10 +363,10 @@ class YaybuCmd(OptionParsingCmd):
 
         if "--" in args:
             graph_args = args[:args.index("--")]
-            #script_args = args[args.index("--") + 1:]
+            # script_args = args[args.index("--") + 1:]
         else:
             graph_args = args
-            #script_args = []
+            # script_args = []
 
         graph = self._get_graph(opts, graph_args)
         mylocals = {'graph': graph, '__name__': '__main__'}
