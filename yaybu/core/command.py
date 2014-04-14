@@ -27,7 +27,6 @@ from yaybu import error
 from yaybu.core import util
 from yaybu.core.queue import ChangeResponder
 from yaybu.core.config import Config
-from yaybu.compute.vmware import VMBoxImage
 from yaybu.util.ssh import get_ssh_transport_for_node
 
 logger = logging.getLogger("yaybu.core.command")
@@ -209,51 +208,6 @@ class YaybuCmd(OptionParsingCmd):
 
         return graph
 
-    def help_vm(self):
-        print "Usage: yaybu vm command [args]"
-        print
-        print "Commands:"
-        print "  list         List available virtual machine templates for download"
-        print "  install      Install a remote machine image as a new template"
-        print "  install-key  Copy your SSH key to a locally installed template vm"
-        print "  compress     Compress a virtual machine and create an image"
-        print "  extract      Extract an image to a specified location"
-        print
-
-    def do_vm(self, opts, args):
-        """
-        usage: vm
-        Manipulate virtual machines on this host.
-        """
-        if len(args) == 0:
-            self.do_help((), ("vm",))
-            return
-        if args[0] == "compress":
-            if len(args) == 5:
-                image_path = args[1]
-                source = args[2]
-                username = args[3]
-                password = args[4]
-                print "Packaging VM in", source, "into image at", image_path
-                image = VMBoxImage(image_path)
-                image.compress(source, username, password)
-            else:
-                print "Usage: yaybu vm compress <image> <source> <username> <password>"
-                return
-        elif args[0] == "extract":
-            if len(args) == 3:
-                image_path = args[1]
-                dest = args[2]
-                print "Extracting VM in", image_path, "to", dest
-                image = VMBoxImage(image_path)
-                image.extract(dest)
-            else:
-                print "Usage: yaybu vm extract <image> <destination>"
-                return
-        else:
-            self.do_help((), ("vm",))
-            return
-
     def do_expand(self, opts, args):
         """
         usage: expand
@@ -409,10 +363,10 @@ class YaybuCmd(OptionParsingCmd):
 
         if "--" in args:
             graph_args = args[:args.index("--")]
-            #script_args = args[args.index("--") + 1:]
+            # script_args = args[args.index("--") + 1:]
         else:
             graph_args = args
-            #script_args = []
+            # script_args = []
 
         graph = self._get_graph(opts, graph_args)
         mylocals = {'graph': graph, '__name__': '__main__'}

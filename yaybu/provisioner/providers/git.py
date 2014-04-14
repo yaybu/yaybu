@@ -39,8 +39,8 @@ class Git(Provider):
     def get_git_command(self, action, *args):
         command = [
             "git",
-            #"--git-dir=%s" % os.path.join(self.resource.name, ".git"),
-            #"--work-tree=%s" % self.resource.name,
+            # "--git-dir=%s" % os.path.join(self.resource.name, ".git"),
+            # "--work-tree=%s" % self.resource.name,
             "--no-pager",
             action,
         ]
@@ -141,7 +141,7 @@ class Git(Provider):
 
         elif tag:
             as_tag = "refs/tags/%s" % tag
-            if not as_tag in refs_to_shas.keys():
+            if as_tag not in refs_to_shas.keys():
                 raise CheckoutError("Cannot find a tag called '%s'" % tag)
 
             annotated_tag = as_tag + "^{}"
@@ -153,7 +153,7 @@ class Git(Provider):
 
         elif branch:
             as_branch = "refs/heads/%s" % branch
-            if not as_branch in refs_to_shas.keys():
+            if as_branch not in refs_to_shas.keys():
                 raise CheckoutError(
                     "Cannot find a branch called '%s'" % branch)
             newref = "remotes/%s/%s" % (

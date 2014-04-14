@@ -29,7 +29,7 @@ class Execute(provider.Provider):
     def apply(self, context, output):
         creates = self.resource.creates.as_string()
         if creates and context.transport.exists(creates):
-            #logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
+            # logging.info("%r: %s exists, not executing" % (self.resource, self.resource.creates))
             return False
 
         touch = self.resource.touch.as_string()

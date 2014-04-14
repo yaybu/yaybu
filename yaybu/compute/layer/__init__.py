@@ -1,4 +1,4 @@
-# Copyright 2013 Isotoma Limited
+# Copyright 2012 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,22 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from yay import ast
-
-
-class GraphExternalAction(ast.PythonClass):
-
-    def test(self):
-        pass
-
-    def destroy(self):
-        pass
-
-    def _resolve(self):
-        # FIXME: There is a nicer way to do this without resolve, but more yay
-        # refactoring required
-        root = self.root
-        if self not in root.actors:
-            root.actors.append(self)
-        return super(GraphExternalAction, self)._resolve()

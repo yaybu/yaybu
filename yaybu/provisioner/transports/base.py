@@ -78,7 +78,7 @@ class Transport(object):
             newenv.update(self.env)
 
         newenv.update({
-            #"HOME": "/home/" + self.user,
+            # "HOME": "/home/" + self.user,
             "LOGNAME": user,
             "PATH":
             "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",

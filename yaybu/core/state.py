@@ -46,6 +46,9 @@ class PartState(object):
         self.data.update(kwargs)
         self.state.set_state(self.partid, self.data)
 
+    def get(self, key, default):
+        return self.data.get(key, default)
+
     def keys(self):
         return self.data.keys()
 
@@ -157,7 +160,7 @@ class FileStateStorage(StateStorage):
 
         data = json.load(self.get_stream())
 
-        if not 'version' in data:
+        if 'version' not in data:
             raise RuntimeError(
                 "State file has no version metadata - possible corrupt")
 

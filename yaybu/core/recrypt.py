@@ -1,3 +1,18 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import optparse
 import sys
 import os
@@ -179,7 +194,6 @@ class RecipientDirectory:
                     files.update(self._parse_encrypt_line(line))
                 except ValueError, e:
                     print >>sys.stderr, "{0} in {1} at line {2}".format(e.message, recipient_filename, no)
-                    self.errors += 1
             else:
                 self.error("Error in {0} at line {1}: cannot parse".format(recipient_filename, no), line)
         for filename, targets in files.items():

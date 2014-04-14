@@ -26,8 +26,8 @@ class ProviderType(ABCMeta):
     def __new__(meta, class_name, bases, new_attrs):
         cls = super(ProviderType, meta).__new__(
             meta, class_name, bases, new_attrs)
-        for pol in cls.policies:
-            pol.providers.append(cls)
+        for p in cls.policies:
+            p.providers.append(cls)
         return cls
 
 

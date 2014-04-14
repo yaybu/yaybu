@@ -115,10 +115,13 @@ class DockerNodeDriver(NodeDriver):
                 'sizerootfs': value['SizeRootFs'],
             }
 
-            nodes.append(Node(id=value['Id'], name=value['Id'],
-                              state=NodeState.RUNNING, public_ips=[
-                              ], private_ips=[],
-                              driver=self.connection.driver, extra=extra))
+            nodes.append(Node(id=value['Id'],
+                              name=value['Id'],
+                              state=NodeState.RUNNING,
+                              public_ips=[],
+                              private_ips=[],
+                              driver=self.connection.driver,
+                              extra=extra))
 
         return nodes
 
@@ -141,21 +144,21 @@ class DockerNodeDriver(NodeDriver):
         # auth = kwargs.get('auth', None)
 
         payload = {
-            #'Hostname': None,
-            #'PortSpecs': None,
-            #'User': None,
-            #'Tty': False,
-            #'OpenStdin': False,
-            #'Memory': 0,
+            # 'Hostname': None,
+            # 'PortSpecs': None,
+            # 'User': None,
+            # 'Tty': False,
+            # 'OpenStdin': False,
+            # 'Memory': 0,
             'AttachStdin': False,
             'AttachStdout': False,
             'AttachStderr': False,
-            #'Env': None,
+            # 'Env': None,
             'Cmd': ['ls'],
-            #'Dns': None,
+            # 'Dns': None,
             'Image': 'base',
-            #'Volumes': None,
-            #'VolumesFrom': None,
+            # 'Volumes': None,
+            # 'VolumesFrom': None,
         }
 
         data = json.dumps(payload)

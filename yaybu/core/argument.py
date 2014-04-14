@@ -233,10 +233,10 @@ class PolicyTrigger:
         self.on = on
 
     def bind(self, resources, target):
-        if not self.on in resources:
+        if self.on not in resources:
             raise error.BindingError(
                 "Cannot bind %r to missing resource named '%s'" % (target, self.on))
-        if not self.when in resources[self.on].policies:
+        if self.when not in resources[self.on].policies:
             raise error.BindingError(
                 "%r cannot bind to non-existant event %s on resource %r" % (target, self.when, resources[self.on]))
         resources[self.on].register_observer(self.when, target, self.policy)
@@ -286,7 +286,7 @@ class PolicyArgument(Argument):
             return None
 
         if type(value) in types.StringTypes:
-            if not value in instance.policies:
+            if value not in instance.policies:
                 raise error.ParseError(
                     "'%s' is not a valid policy for %r" % (value, instance))
             return PolicyCollection(StandardPolicy(value))
@@ -294,7 +294,7 @@ class PolicyArgument(Argument):
         if isinstance(value, dict):
             triggers = []
             for policy, conditions in value.items():
-                if not policy in instance.policies:
+                if policy not in instance.policies:
                     raise error.ParseError(
                         "'%s' is not a valid policy for %r" % (policy, instance))
                 if not isinstance(conditions, list):

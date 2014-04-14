@@ -57,7 +57,7 @@ class Heroku(base.GraphExternalAction):
         changed = False
 
         app_id = self.params.application_id.as_string()
-        if not app_id in self.cloud.apps:
+        if app_id not in self.cloud.apps:
             self.action("Creating new app named '%s'" % app_id)
             if not self.root.simulate:
                 self.app = self.cloud.apps.add(app_id)
@@ -173,7 +173,7 @@ class Heroku(base.GraphExternalAction):
             after = []
 
         for dyno in after:
-            if not self.app or not dyno in self.app.processes:
+            if not self.app or dyno not in self.app.processes:
                 raise ExecutionError(
                     "Tried to configure dyno '%s' but it doesn't exist in the app" % dyno)
 
