@@ -23,7 +23,7 @@ class SubRunner(object):
 
     """
 
-    def __init__(self, command_name, args=(), known_locations=(), bail_if_absent=True,
+    def __init__(self, command_name, args=(), known_locations=(), bail_if_absent=False,
                  log_execution=False, log_stdout=False, log_stderr=False):
         self.command_name = command_name
         self.args = args
