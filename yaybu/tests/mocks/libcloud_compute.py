@@ -16,7 +16,9 @@ from libcloud.compute.base import Node, NodeSize, NodeImage
 from libcloud.compute.types import NodeState
 from libcloud.compute.drivers.dummy import DummyNodeDriver
 
-from yaybu.compute.part import CloudComputeLayer, Compute, DriverNotFound
+from yaybu.compute import Compute
+from yaybu.compute.layer.cloud import CloudComputeLayer
+from yaybu.compute.layer import base
 
 
 class MockNodeDriver(DummyNodeDriver):
@@ -79,7 +81,7 @@ class MockCloudComputeLayer(CloudComputeLayer):
     def driver_class(self):
         if self.original.driver_id == "DUMMY":
             return MockNodeDriver
-        raise DriverNotFound
+        raise base.DriverNotFound
 
 
 class MockArglessCloudComputeLayer(CloudComputeLayer):
