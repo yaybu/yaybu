@@ -46,6 +46,9 @@ class LayerException(Exception):
 class NodeFailedToStartException(LayerException):
     pass
 
+class DriverNotFound(LayerException):
+    pass
+
 
 class Layer(object):
     """ An underlying implementation of a virtualization layer. There is a
@@ -128,6 +131,10 @@ class CloudComputeLayer(Layer):
             size: t1.micro         # Smallest AWS size
     """
 
+    # used purely for test injection, but could be used to extend
+    # cloud drivers
+    extra_drivers = {}
+
     def __init__(self, original):
         super(CloudComputeLayer, self).__init__(original)
         self.pending_node = None  # a node that hasn't started yet
@@ -143,7 +150,7 @@ class CloudComputeLayer(Layer):
             self.driver.list_nodes()
         except InvalidCredsError:
             logger.exception("Could not connect")
-            raise error.InvalidCredError("Unable to login to compute service", anchor=self.original.params.driver.id.anchor)
+            raise error.InvalidCredError("Unable to login to compute service", anchor=self.original.params.driver.anchor)
 
     @property
     def name(self):
@@ -153,6 +160,13 @@ class CloudComputeLayer(Layer):
     def location(self):
         return "%r/%r" % (self.node.public_ips, self.node.private_ips)
 
+    def driver_class(self):
+        provider = getattr(Provider, self.original.driver_id)
+        try:
+            return get_driver(provider)
+        except AttributeError:
+            raise DriverNotFound()
+
     @property
     @memoized
     def driver(self):
@@ -161,9 +175,8 @@ class CloudComputeLayer(Layer):
         call signature of the driver. """
         # This used get_driver_from_expression which has some nice
         # diff logic we should reuse
-        params = self.original.params.driver
-        provider = getattr(Provider, self.original.driver_id)
-        Driver = get_driver(provider)
+        params = self.original.driver_params
+        Driver = self.driver_class()
         kwargs = getattr(Driver, "kwargs", [])
         args = args_from_expression(Driver, params, ignore=(), kwargs=kwargs)
         driver = Driver(**args)
@@ -418,6 +431,9 @@ class Compute(base.GraphExternalAction):
 
     """
 
+    layers = {}
+    default_layer = CloudComputeLayer
+
     @property
     @memoized
     def driver_id(self):
@@ -429,13 +445,21 @@ class Compute(base.GraphExternalAction):
         return driver_id
 
     @property
+    def driver_params(self):
+        try:
+            self.params.driver.as_string()
+        except errors.TypeError:
+            return self.params.driver
+        return {}
+
+    @property
     @memoized
     def layer(self):
         """ Return the underlying virtualization layer implementation. """
-        if self.driver_id in LocalComputeLayer.drivers:
-            return LocalComputeLayer(self)
+        if self.driver_id in self.layers:
+            return self.layers[self.driver_id](self)
         else:
-            return CloudComputeLayer(self)
+            return self.default_layer(self)
 
     @property
     @memoized
@@ -482,15 +506,20 @@ class Compute(base.GraphExternalAction):
         if self.layer.attached:
             return
 
-        self.load()
+        try:
+            self.load()
+        except DriverNotFound:
+            raise error.ValueError("%r is not a valid driver" % self.driver_id)
         if self.layer.attached:
             logger.debug("Applying to node %s at %s" % (self.layer.name, self.layer.location))
             return
 
-        if self.root.readonly:
+        if self.root.readonly or self.root.simulate:
             self.members['public_ip'] = '0.0.0.0'
             self.members['private_ip'] = '0.0.0.0'
             self.members['fqdn'] = 'missing-host'
+            if self.root.simulate:
+                self.root.changed()
             return
 
         logger.debug("Node will be %r" % self.full_name)
