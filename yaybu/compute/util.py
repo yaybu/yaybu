@@ -44,7 +44,7 @@ class SubRunner(object):
         return cmd_args
 
     def parse(self, stdout, stderr):
-        return None
+        return stdout.strip()
 
     def locate_command(self):
         for loc in itertools.chain(self.known_locations, os.environ['PATH'].split(":")):

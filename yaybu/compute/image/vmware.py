@@ -178,12 +178,12 @@ class VMWareMachineInstance(base.MachineInstance):
 
     name = "vmware"
 
-    def __init__(self, directory, instance_id, **kwargs):
+    def __init__(self, directory, instance_id):
         self.instance_id = instance_id
         self.instance_dir = os.path.join(directory, instance_id)
         self.vmx = VMX(self.instance_dir, self.name)
 
-    def check_state(self, state):
+    def apply_changes(self, state=None, auth=None, hardware=None, vmx=None):
         """ Check the settings of the VM against the state, and do what is
         necessary to resolve any differences if possible. """
 

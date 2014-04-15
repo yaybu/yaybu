@@ -51,17 +51,12 @@ unregistervm = vboxmanage("unregistervm",
 
 class VBoxLayer(LocalComputeLayer):
 
-    def _find_vm(self, name):
-        for vm in self.machines.instances("vbox"):
-            # find it
-            return vm
-        return None
-
     def load(self, name):
-        vm = self._find_vm(name)
-        if vm is not None:
-            self.node = vm
-            startvm(type="gui", name=self.node.instance_id)
+        for vm in self.machines.instances("vbox"):
+            if vm.name == name:
+                self.node = vm
+                startvm(type="gui", name=self.node.id)
+                return
 
     @memoized
     @property
@@ -81,7 +76,7 @@ class VBoxLayer(LocalComputeLayer):
             auth=self.auth,
             hardware=self.hardware,
             modifyvm=self.modifyvm)
-        startvm(type="gui", name=self.pending_node.instance_id)
+        startvm(type="gui", name=self.pending_node.id)
 
     def destroy(self):
         unregistervm(name=self.node)
