@@ -24,6 +24,45 @@ from . import error
 logger = logging.getLogger("image")
 
 
+class Auth(object):
+    pass
+
+
+class PasswordAuth(Auth):
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+
+class SSHAuth(Auth):
+    def __init__(self, username, private_key, public_key):
+        self.username = username
+        self.private_key = private_key
+        self.public_key = public_key
+
+
+class Image(object):
+    pass
+
+
+class RemoteImage(Image):
+    def __init__(self, url):
+        self.url = url
+
+
+class StandardImage(Image):
+    def __init__(self, distro, release, arch):
+        self.distro = distro
+        self.release = release
+        self.arch = arch
+
+
+class Hardware(object):
+    def __init__(self, memory, cpus):
+        self.memory = memory
+        self.cpus = cpus
+
+
 class MachineInstance(object):
 
     """ This is a local virtual machine, created by a MachineBuilder. """

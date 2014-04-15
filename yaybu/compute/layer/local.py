@@ -17,55 +17,15 @@ import os
 from .base import Layer, AuthenticationError
 from yaybu.core.util import memoized
 
-from ..image.library import ImageLibrary
-
-
-class Auth(object):
-    pass
-
-
-class PasswordAuth(Auth):
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-
-
-class SSHAuth(Auth):
-    def __init__(self, username, private_key, public_key):
-        self.username = username
-        self.private_key = private_key
-        self.public_key = public_key
-
-
-class Image(object):
-    pass
-
-
-class RemoteImage(Image):
-    def __init__(self, url):
-        self.url = url
-
-
-class StandardImage(Image):
-    def __init__(self, distro, release, arch):
-        self.distro = distro
-        self.release = release
-        self.arch = arch
-
-
-class Hardware(object):
-    def __init__(self, memory, cpus):
-        self.memory = memory
-        self.cpus = cpus
-
+from yaybu.compute.image import PasswordAuth, SSHAuth, RemoteImage, StandardImage
 
 class LocalComputeLayer(Layer):
     def __init__(self, original, yaybu_root="~/.yaybu"):
         super(LocalComputeLayer, self).__init__(original)
         self.machines = ImageLibrary(root=yaybu_root)
 
-    @memoized
     @property
+    @memoized
     def auth(self):
         """ Return an instance of Auth appropriate for the configuration.
 
@@ -100,8 +60,8 @@ class LocalComputeLayer(Layer):
             raise AuthenticationError("Public key file %r does not exist" % public_key)
         return SSHAuth(username, private_key, public_key)
 
-    @memoized
     @property
+    @memoized
     def image(self):
         """ Image can look like one of these formats:
 
@@ -122,8 +82,8 @@ class LocalComputeLayer(Layer):
         arch = p.image.arch.as_string(default=None)
         return StandardImage(distro, release, arch)
 
-    @memoized
     @property
+    @memoized
     def hardware(self):
         """ Standard hardware configuration. Currently supports:
 
@@ -134,6 +94,7 @@ class LocalComputeLayer(Layer):
         cpus = self.original.params.cpus.as_string(default=None)
         return Hardware(memory, cpus)
 
+    @property
     def price(self):
         """ Local implementations are free. \o/. """
         return None
