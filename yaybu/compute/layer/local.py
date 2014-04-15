@@ -20,6 +20,7 @@ from yay import errors
 
 from yaybu.compute.image import PasswordAuth, SSHAuth, RemoteImage, CanonicalImage, ImageLibrary, Hardware
 
+
 class LocalComputeLayer(Layer):
     def __init__(self, original, yaybu_root="~/.yaybu"):
         super(LocalComputeLayer, self).__init__(original)

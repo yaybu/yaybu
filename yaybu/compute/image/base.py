@@ -70,9 +70,9 @@ class RemoteImage(Image):
         urihash.update(self.url)
         pathname = os.path.join(imagedir, "user-{0}.qcow2".format(urihash.hexdigest()))
         try:
-            response = urllib2.urlopen(remote_url)
+            response = urllib2.urlopen(self.url)
         except urllib2.HTTPError:
-            raise error.FetchFailedException("Unable to fetch {0}".format(remote_url))
+            raise error.FetchFailedException("Unable to fetch {0}".format(self.url))
         local = open(pathname, "w")
         while True:
             data = response.read(20 * 1024 * 1024 * 1024)
@@ -80,6 +80,7 @@ class RemoteImage(Image):
                 break
             local.write(data)
         return pathname
+
 
 class CanonicalImage(Image):
 
@@ -114,6 +115,7 @@ class CanonicalImage(Image):
         distro = klass(pathname, self.release, self.arch)
         distro.update()
         return pathname
+
 
 class Hardware(object):
     def __init__(self, memory, cpus):
@@ -156,6 +158,7 @@ class MachineBuilder(object):
     def write(self, base_image, **kwargs):
         """ Builds the instance """
 
+
 class CloudImageType(abc.ABCMeta):
 
     def __new__(meta, class_name, bases, new_attrs):
@@ -163,6 +166,7 @@ class CloudImageType(abc.ABCMeta):
         if cls.name is not None:
             CanonicalImage.distributions[cls.name] = cls
         return cls
+
 
 class CloudImage(object):
 

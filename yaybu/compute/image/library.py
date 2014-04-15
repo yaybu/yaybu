@@ -14,15 +14,11 @@
 # limitations under the License.
 
 import os
-import hashlib
-import urllib2
 import datetime
 
 from . import error
 from . import vmware
 from . import vbox
-
-from base import RemoteImage, CanonicalImage, PasswordAuth, SSHAuth
 
 
 class ImageLibrary:
