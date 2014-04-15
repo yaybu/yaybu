@@ -109,6 +109,10 @@ class CloudComputeLayer(Layer):
     def sizes(self):
         return dict((str(s.id), s) for s in self.driver.list_sizes())
 
+    def price(self):
+        size = self._get_size()
+        return size.price
+
     def _find_node(self, name):
         try:
             existing = [

@@ -13,21 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This driver presents a libcloud interface around vmrun - the command line API
-# for controlling VMWare VM's.
-
 import os
-
-import time
 import shutil
 
+from yaybu.core.util import memoized
+from ..util import SubRunner
 from .local import LocalComputeLayer
 
-from ..util import SubRunner
+# createvm options to accomodate - Priority 1
+# --memory <memorysize in MB> - CONFIGURATION
+# --ioapic on|off   - ALWAYS ON
+# --cpus <number> - CONFIGURATION
+
+# createvm options to accomodate - Priority 2
+# --pagefusion on|off
+# --vram <vramsize in MB>
+# --firmware bios|efi|efi32|efi64
+# --cpuexecutioncap <1-100>
+
+# other features to accomodate
+# attaching additional IDE drives
+# attaching additional SATA drives
+# network settings
+# shared folders
+
 
 def vboxmanage(*args):
     return SubRunner(command_name="VBoxManage", args=args)
-
 
 startvm = vboxmanage("startvm",
                      "--type", "{type}",
@@ -50,16 +62,24 @@ class VBoxLayer(LocalComputeLayer):
         if vm is not None:
             startvm(type="gui", name=self.node)
 
+    @memoized
+    @property
+    def modifyvm(self):
+        """ Take the parameters from the compute node and configure ourselves
+        to create or run an instance """
+        return self.original.params.modifyvm.as_dict(default=None)
+
     def create(self):
+        pass
         # TODO THIS IS THE OLD CODE
-        state = kwargs.pop("state")
-        kwargs.update(image.extra)
-        auth = self._get_and_check_auth(kwargs.pop("auth", None))
-        base_image = self._get_source(image)
-        machine = self.machines.create_node("vbox", base_image, state, auth=auth, **kwargs)
-        node = Node(machine.id, name, NodeState.PENDING, None, None, self)
-        self.ex_start(node)
-        return node
+        # state = kwargs.pop("state")
+        # kwargs.update(image.extra)
+        # auth = self._get_and_check_auth(kwargs.pop("auth", None))
+        # base_image = self._get_source(image)
+        # machine = self.machines.create_node("vbox", base_image, state, auth=auth, **kwargs)
+        # node = Node(machine.id, name, NodeState.PENDING, None, None, self)
+        # self.ex_start(node)
+        # return node
 
     def destroy(self):
         unregistervm(name=self.node)
@@ -70,7 +90,7 @@ class VBoxLayer(LocalComputeLayer):
         pass
 
     def test(self):
-        raise NotImplementedError()
+        return startvm.pathname is not None
 
     def domain(self):
         raise NotImplementedError()

@@ -95,6 +95,10 @@ class Layer(object):
     def domain(self):
         """ The domain name of the node """
 
+    @abc.abstractmethod
+    def price(self):
+        """ The calculated price of this instance in USD/hour """
+
 
 class LayerException(Exception):
     pass
@@ -105,4 +109,8 @@ class NodeFailedToStartException(LayerException):
 
 
 class DriverNotFound(LayerException):
+    pass
+
+
+class AuthenticationError(LayerException):
     pass
