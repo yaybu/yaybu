@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import shutil
+import os
 from yaybu.core.util import memoized
 from ..util import SubRunner
 from .local import LocalComputeLayer
+
 
 def vmrun(*args):
     return SubRunner(command_name="vmrun", args=args)
@@ -25,6 +27,7 @@ startvm = vmrun("start", "{name}", "gui")
 stopvm = vmrun("stop", "{name}", "hard")
 deletevm = vmrun("deleteVM", "{name}")
 readVariable = vmrun("readVariable", "{name}", "guestVar", "{variable}")
+
 
 class VMWareLayer(LocalComputeLayer):
 
@@ -106,4 +109,3 @@ class VMWareLayer(LocalComputeLayer):
     @property
     def public_ips(self):
         raise NotImplementedError()
-
