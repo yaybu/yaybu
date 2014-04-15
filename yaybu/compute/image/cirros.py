@@ -20,6 +20,7 @@ from . import base
 
 class CirrosCloudImage(base.StandardCloudImage):
 
+    name = "cirros"
     server = "launchpad.net"
     source = "https://{server}/cirros/trunk/{release}/+download"
     prefix = "cirros-{release}-{arch}"

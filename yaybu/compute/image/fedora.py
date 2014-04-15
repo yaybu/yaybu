@@ -23,6 +23,7 @@ class FedoraCloudImage(base.StandardCloudImage):
     """ Fedora images annoyingly have a version number in the remote
     filename, which can only be identified by inspecting the hash file. """
 
+    name = "fedora"
     server = "download.fedoraproject.org"
     source = "http://{server}/pub/fedora/linux/releases/{release}/Images/{arch}"
     checksums = "Fedora-Images-{arch}-{release}-CHECKSUM"

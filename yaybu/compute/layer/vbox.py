@@ -60,7 +60,8 @@ class VBoxLayer(LocalComputeLayer):
     def load(self, name):
         vm = self._find_vm(name)
         if vm is not None:
-            startvm(type="gui", name=self.node)
+            self.node = vm
+            startvm(type="gui", name=self.node.instance_id)
 
     @memoized
     @property
@@ -70,51 +71,63 @@ class VBoxLayer(LocalComputeLayer):
         return self.original.params.modifyvm.as_dict(default=None)
 
     def create(self):
-        pass
-        # TODO THIS IS THE OLD CODE
-        # state = kwargs.pop("state")
-        # kwargs.update(image.extra)
-        # auth = self._get_and_check_auth(kwargs.pop("auth", None))
-        # base_image = self._get_source(image)
-        # machine = self.machines.create_node("vbox", base_image, state, auth=auth, **kwargs)
-        # node = Node(machine.id, name, NodeState.PENDING, None, None, self)
-        # self.ex_start(node)
-        # return node
+        base_image = self.machines.fetch(self.image)
+        self.pending_node = self.machines.create_node(
+            name=self.original.params.name.as_string(),
+            distro=self.image.distro,
+            system="vbox",
+            base_image=base_image,
+            state=self.original.state,
+            auth=self.auth,
+            hardware=self.hardware,
+            modifyvm=self.modifyvm)
+        startvm(type="gui", name=self.pending_node.instance_id)
 
     def destroy(self):
         unregistervm(name=self.node)
         shutil.rmtree(os.path.dirname(self.node))
 
     def wait(self):
-        # see the old _decorate_node
-        pass
+        self.node = self.pending_node
+        self.pending_node = None
 
     def test(self):
         return startvm.pathname is not None
 
+    @property
     def domain(self):
         raise NotImplementedError()
 
+    @property
     def fqdn(self):
         raise NotImplementedError()
 
+    @property
     def hostname(self):
         raise NotImplementedError()
 
+    @property
     def location(self):
         raise NotImplementedError()
 
+    @property
     def name(self):
-        raise NotImplementedError()
+        if self.node is not None:
+            return self.node.name
+        raise ValueError("No active node")
 
+    @property
     def private_ip(self):
         raise NotImplementedError()
 
+    @property
     def private_ips(self):
         raise NotImplementedError()
 
+    @property
     def public_ip(self):
         raise NotImplementedError()
 
+    @property
     def public_ips(self):
         raise NotImplementedError()

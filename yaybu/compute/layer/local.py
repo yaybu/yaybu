@@ -16,8 +16,9 @@ import os
 
 from .base import Layer, AuthenticationError
 from yaybu.core.util import memoized
+from yay import errors
 
-from yaybu.compute.image import PasswordAuth, SSHAuth, RemoteImage, StandardImage
+from yaybu.compute.image import PasswordAuth, SSHAuth, RemoteImage, CanonicalImage, ImageLibrary, Hardware
 
 class LocalComputeLayer(Layer):
     def __init__(self, original, yaybu_root="~/.yaybu"):
@@ -74,13 +75,15 @@ class LocalComputeLayer(Layer):
 
         """
         p = self.original.params
-        image = p.image.as_string(default=None)
-        if image is not None:
-            return RemoteImage(image)
-        distro = p.image.distro.as_string(default=None)
-        release = p.image.release.as_string(default=None)
-        arch = p.image.arch.as_string(default=None)
-        return StandardImage(distro, release, arch)
+        try:
+            url = p.image.as_string()
+            image = RemoteImage(url)
+        except errors.TypeError:
+            distro = p.image.distro.as_string(default=None)
+            release = p.image.release.as_string(default=None)
+            arch = p.image.arch.as_string(default=None)
+            image = CanonicalImage(distro, release, arch)
+        return image
 
     @property
     @memoized
@@ -90,8 +93,8 @@ class LocalComputeLayer(Layer):
         memory: 1024
         cpus: 2
         """
-        memory = self.original.params.memory.as_string(default=None)
-        cpus = self.original.params.cpus.as_string(default=None)
+        memory = self.original.params.memory.as_string(default="256")
+        cpus = self.original.params.cpus.as_string(default="1")
         return Hardware(memory, cpus)
 
     @property

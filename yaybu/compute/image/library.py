@@ -18,12 +18,11 @@ import hashlib
 import urllib2
 import datetime
 
-from . import ubuntu
-from . import fedora
-from . import cirros
 from . import error
 from . import vmware
 from . import vbox
+
+from base import RemoteImage, CanonicalImage, PasswordAuth, SSHAuth
 
 
 class ImageLibrary:
@@ -32,12 +31,6 @@ class ImageLibrary:
     virtual machines to the library from local or remote locations. """
 
     seed_iso_name = "seed.iso"
-
-    distributions = {
-        "ubuntu": ubuntu.UbuntuCloudImage,
-        "fedora": fedora.FedoraCloudImage,
-        "cirros": cirros.CirrosCloudImage,
-    }
 
     systems = {
         "vmware": (vmware.VMWareMachineInstance, vmware.VMWareMachineBuilder),
@@ -58,41 +51,8 @@ class ImageLibrary:
             if not os.path.exists(d):
                 os.makedirs(d)
 
-    def get_canonical(self, distro, release, arch, context=None):
-        """ Fetches the specified uri into the cache and then extracts it
-        into the library.  If name is None then a name is made up.
-
-        Arguments:
-            distro: the name of the distribution, i.e. Ubuntu, Fedora
-            release: the distribution's name for the release, i.e. 12.04
-            arch: the distribution's name for the architecture, i.e. x86_64, amd64
-            format: the format of virtual machine image required, i.e. vmdk, qcow
-        """
-        klass = self.distributions.get(distro, None)
-        if klass is None:
-            raise error.DistributionNotKnown()
-        with context.ui.throbber("Fetching distro image"):
-            pathname = os.path.join(self.imagedir, "{0}-{1}-{2}.qcow2".format(distro, release, arch))
-            distro = klass(pathname, release, arch)
-            distro.update()
-        return pathname
-
-    def get_remote(self, remote_url, context=None):
-        urihash = hashlib.sha256()
-        urihash.update(remote_url)
-        pathname = os.path.join(self.imagedir, "user-{0}.qcow2".format(urihash.hexdigest()))
-        with context.ui.throbber("Retrieving {0} to {1}".format(remote_url, pathname)):
-            try:
-                response = urllib2.urlopen(remote_url)
-            except urllib2.HTTPError:
-                raise error.FetchFailedException("Unable to fetch {0}".format(remote_url))
-            local = open(pathname, "w")
-            while True:
-                data = response.read(20 * 1024 * 1024 * 1024)
-                if not data:
-                    break
-                local.write(data)
-        return pathname
+    def fetch(self, image):
+        return image.fetch(self.imagedir)
 
     def get_system_driver(self, name):
         if name not in self.systems:
@@ -118,7 +78,7 @@ class ImageLibrary:
             count = count + 1
         return instance_id
 
-    def create_node(self, system, base_image, state, name=None, **kwargs):
+    def create_node(self, name, system, distro, base_image, state, auth, hardware, **kwargs):
         """ Create an instance from the provided base image """
         instance, builder = self.get_system_driver(system)
         system_dir = os.path.join(self.instancedir, system)
@@ -127,5 +87,13 @@ class ImageLibrary:
         instance_id = self.get_instance_id(system_dir, name)
         print "Creating", instance_id
         b = builder(system_dir, state, instance_id)
-        b.write(base_image, **kwargs)
-        return instance(system_dir, instance_id, **kwargs)
+        b.write(
+            base_image=base_image,
+            distro=distro,
+            state=state,
+            auth=auth,
+            hardware=hardware,
+            **kwargs)
+        machine = instance(system_dir, instance_id)
+        machine.apply_changes(state=state, auth=auth, hardware=hardware, **kwargs)
+        return machine

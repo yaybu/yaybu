@@ -1,7 +1,13 @@
 from base import (PasswordAuth,
                   SSHAuth,
                   RemoteImage,
-                  StandardImage,
+                  CanonicalImage,
                   Hardware,
                   MachineBuilder,
                   MachineInstance)
+
+from library import ImageLibrary
+
+import ubuntu
+import fedora
+import cirros

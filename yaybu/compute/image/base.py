@@ -20,6 +20,7 @@ import logging
 import uuid
 
 from . import error
+import hashlib
 
 logger = logging.getLogger("image")
 
@@ -42,20 +43,77 @@ class SSHAuth(Auth):
 
 
 class Image(object):
-    pass
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def fetch(self, imagedir, context=None):
+        """ Fetch the image into the specified image directory, and return the pathname. """
 
 
 class RemoteImage(Image):
+
+    """ An image specified by URL """
+
     def __init__(self, url):
         self.url = url
 
+    @property
+    def distro(self):
+        # we are going to need to know the distro for:
+        # hypervizor layer configuration
+        # cloudinit
+        return None
 
-class StandardImage(Image):
+    def fetch(self, imagedir):
+        urihash = hashlib.sha256()
+        urihash.update(self.url)
+        pathname = os.path.join(imagedir, "user-{0}.qcow2".format(urihash.hexdigest()))
+        try:
+            response = urllib2.urlopen(remote_url)
+        except urllib2.HTTPError:
+            raise error.FetchFailedException("Unable to fetch {0}".format(remote_url))
+        local = open(pathname, "w")
+        while True:
+            data = response.read(20 * 1024 * 1024 * 1024)
+            if not data:
+                break
+            local.write(data)
+        return pathname
+
+class CanonicalImage(Image):
+
+    """ An image specified with distro, release and arch """
+
+    # populated with metaclass magic
+    distributions = {}
+
     def __init__(self, distro, release, arch):
         self.distro = distro
         self.release = release
         self.arch = arch
 
+    def distro_class(self):
+        c = self.distributions.get(self.distro, None)
+        if c is None:
+            raise error.DistributionNotKnown()
+        return c
+
+    def fetch(self, imagedir):
+        """ Fetches the specified uri into the cache and then extracts it
+        into the library.  If name is None then a name is made up.
+
+        Arguments:
+            distro: the name of the distribution, i.e. Ubuntu, Fedora
+            release: the distribution's name for the release, i.e. 12.04
+            arch: the distribution's name for the architecture, i.e. x86_64, amd64
+            format: the format of virtual machine image required, i.e. vmdk, qcow
+        """
+        pathname = os.path.join(imagedir, "{0}-{1}-{2}.qcow2".format(self.distro, self.release, self.arch))
+        klass = self.distro_class()
+        distro = klass(pathname, self.release, self.arch)
+        distro.update()
+        return pathname
 
 class Hardware(object):
     def __init__(self, memory, cpus):
@@ -98,6 +156,13 @@ class MachineBuilder(object):
     def write(self, base_image, **kwargs):
         """ Builds the instance """
 
+class CloudImageType(abc.ABCMeta):
+
+    def __new__(meta, class_name, bases, new_attrs):
+        cls = type.__new__(meta, class_name, bases, new_attrs)
+        if cls.name is not None:
+            CanonicalImage.distributions[cls.name] = cls
+        return cls
 
 class CloudImage(object):
 
@@ -108,7 +173,10 @@ class CloudImage(object):
     This is an Abstract Base Class. Concrete implementations need to provide
     some information about the image locations and hash file format. """
 
-    __metaclass__ = abc.ABCMeta
+    __metaclass__ = CloudImageType
+
+    # overridden in concrete implementations
+    name = None
 
     # size of blocks fetched from remote resources
     blocksize = 81920

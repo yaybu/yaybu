@@ -19,6 +19,7 @@ from . import base
 
 class UbuntuCloudImage(base.StandardCloudImage):
 
+    name = "ubuntu"
     server = "cloud-images.ubuntu.com"
     source = "http://{server}/releases/{release}/release"
     prefix = "ubuntu-{release}-server-cloudimg-{arch}"

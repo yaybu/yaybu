@@ -70,13 +70,14 @@ class VBoxMachineInstance(base.MachineInstance):
 
     name = "vbox"
 
-    def __init__(self, directory, instance_id, **kwargs):
+    def __init__(self, directory, instance_id):
         self.instance_id = instance_id
         self.instance_dir = os.path.join(directory, instance_id)
 
-    def check_state(self, state):
+    def apply_changes(self, state=None, auth=None, hardware=None, modifyvm=None):
         """ Check the settings of the VM against the state, and do what is
-        necessary to resolve any differences if possible. """
+        necessary to resolve any differences if possible. Write the state to
+        the state file as required. """
 
     @property
     def id(self):
@@ -118,6 +119,8 @@ class VBoxMachineBuilder(base.MachineBuilder):
 
     ostype = {
         "ubuntu": "Ubuntu_64",
+        "fedora": "Fedora_64",
+        None: "Linux_64",
     }
 
     def store_state(self):
@@ -135,23 +138,16 @@ class VBoxMachineBuilder(base.MachineBuilder):
         qemu_img(source=base_image, destination=disk, format="vdi")
         return disk
 
-    def write(self, base_image, **kwargs):
-        """ Create a new VMWare virtual machine in the specified directory from the base image. """
-
-        distro = kwargs.pop("distro", None)
-        # release = kwargs.pop("release", None)
-        # arch = kwargs.pop("arch", None)
-        auth = kwargs.pop("auth", None)
-        # size = kwargs.pop("size", None)
-        # cpus = kwargs.pop("cpus", None)
-        # cores = kwargs.pop("cores", None)
-        # ram = kwargs.pop("ram", None)
+    def write(self, distro, base_image, state, auth, hardware, modifyvm):
+        """ Create a new virtual machine in the specified directory from the base image. """
 
         # create the directory to hold all the bits
         os.mkdir(self.instance_dir)
 
-        createvm(name=self.instance_id, directory=self.directory, ostype=self.ostype[distro])
-        configurevm(name=self.instance_id, memsize=256)
+        createvm(name=self.instance_id,
+                 directory=self.directory,
+                 ostype=self.ostype[distro])
+        configurevm(name=self.instance_id, memsize=hardware.memory)
 
         # create the disk image and attach it
         disk = self.create_disk(base_image)
@@ -160,7 +156,7 @@ class VBoxMachineBuilder(base.MachineBuilder):
 
         # create the seed ISO
         config_class = self.configs[distro]
-        cloud_config = config_class(auth, **kwargs)
+        cloud_config = config_class(auth)
         meta_data = cloudinit.MetaData(self.instance_id)
         seed = cloudinit.Seed(self.instance_dir, cloud_config=cloud_config,
                               meta_data=meta_data)
