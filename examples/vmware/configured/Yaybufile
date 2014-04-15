@@ -1,0 +1,34 @@
+# An example with lots of configuration
+
+new Provisioner as instance:
+
+    new Compute as server:
+
+        name: vmwareconfigured
+        driver: VMWARE
+
+        image:
+            distro: ubuntu
+            arch: amd64
+            release: 13.10
+
+        user: yaybu
+        password: password
+
+        # 1024MB Memory
+        memory: 1024
+
+        # 2 CPUs
+        cpus: 2
+
+        # Settings applied directly to the vmx file
+        vmx:
+            svga:
+                vramSize: 128
+                maxHeight: 1200
+                maxWidth: 1900
+
+    resources:
+        - File:
+            name: /etc/helloworld
+
