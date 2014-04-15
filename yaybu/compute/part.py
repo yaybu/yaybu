@@ -23,6 +23,7 @@ from yaybu.base import GraphExternalAction
 
 from .layer.cloud import CloudComputeLayer
 from .layer.base import DriverNotFound, NodeFailedToStartException
+from .layer.vbox import VBoxLayer
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,9 @@ class Compute(GraphExternalAction):
 
     """
 
-    layers = {}
+    layers = {
+        'VBOX': VBoxLayer,
+    }
     default_layer = CloudComputeLayer
 
     @property

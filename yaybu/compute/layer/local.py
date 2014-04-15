@@ -14,7 +14,6 @@
 
 from yaybu.compute import vbox
 from yaybu.compute import bigv
-from libcloud.compute.base import NodeImage
 from yaybu.compute import docker
 from yaybu.compute import vmware
 
@@ -23,6 +22,7 @@ from .base import Layer
 from yay import errors
 from yaybu import error
 
+from ..image.library import ImageLibrary
 
 class LocalComputeLayer(Layer):
 
@@ -32,6 +32,10 @@ class LocalComputeLayer(Layer):
         "DOCKER": docker.DockerNodeDriver,
         "VBOX": vbox.VBoxDriver,
     }
+
+    def __init__(self, original, yaybu_root="~/.yaybu"):
+        super(LocalComputeLayer, self).__init__(original)
+        self.machines = ImageLibrary(root=yaybu_root)
 
     def _get_image(self):
         """ Image can look like any one of these three formats:

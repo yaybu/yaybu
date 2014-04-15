@@ -51,10 +51,6 @@ class CloudComputeLayer(Layer):
             size: t1.micro         # Smallest AWS size
     """
 
-    # used purely for test injection, but could be used to extend
-    # cloud drivers
-    extra_drivers = {}
-
     def __init__(self, original):
         super(CloudComputeLayer, self).__init__(original)
         self.pending_node = None  # a node that hasn't started yet

@@ -34,6 +34,22 @@ class Layer(object):
         return self.node is not None
 
     @abc.abstractmethod
+    def create(self):
+        """ Create a new virtual machine. Do not wait until it is running -
+        wait will do that. """
+
+    @abc.abstractmethod
+    def wait(self):
+        """ Wait a sensible amount of time for a virtual machine created with
+        create() to start. attached should return True once the machine is
+        running and ready.
+        """
+
+    @abc.abstractmethod
+    def destroy(self):
+        """ Destroy the underlying virtual machine completely. """
+
+    @abc.abstractmethod
     def load(self, name):
         """ Load and start the specified node, if we can find it. """
 

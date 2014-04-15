@@ -16,137 +16,42 @@
 # This driver presents a libcloud interface around vmrun - the command line API
 # for controlling VMWare VM's.
 
-# Base image notes:
-# 1. Install vmware tools from packages.vmware.com/tools - the latest esx ones work with vmware fusion
-# 2. Don't forget to delete the persistent net rules
-# 3. There needs to be a user with a password/key that can get to root
-# without sudo requiring a passphrase.
-
 import os
 
-from libcloud.common.types import LibcloudError
 import time
 import shutil
 
-from libcloud.compute.base import NodeDriver, Node
-from libcloud.compute.base import NodeState
-from libcloud.compute.types import Provider
+from .local import LocalComputeLayer
 
-from yaybu.compute.process import Connection
+from ..util import SubRunner
 
-from .image.library import ImageLibrary
-
-
-class VBoxError(LibcloudError):
-    pass
-
-# FIXME:
-Provider.VBOX = 98
+def vboxmanage(*args):
+    return SubRunner(command_name="VBoxManage", args=args)
 
 
-class VBoxDriver(NodeDriver):
+startvm = vboxmanage("startvm",
+                     "--type", "{type}",
+                     "{name}")
 
-    type = Provider.VBOX
-    name = "vbox"
-    website = "http://www.vmware.com/products/fusion/"
-    connectionCls = Connection
-    features = {'create_node': ['ssh_key', 'password']}
+unregistervm = vboxmanage("unregistervm",
+                          "{name}", "--delete")
 
-    def __init__(self, yaybu_root="~/.yaybu", vboxmanage=None):
-        super(VBoxDriver, self).__init__(None)
-        self.vboxmanage = vboxmanage or self._find_vboxmanage()
-        self.machines = ImageLibrary(root=yaybu_root)
 
-    def ex_start(self, node):
-        """
-        Start a stopped node.
+class VBoxLayer(LocalComputeLayer):
 
-        @param node: Node which should be used
-        @type  node: L{Node}
-
-        @rtype: C{bool}
-        """
-        self._action("startvm", "--type", "gui", node.id)
-        node.state = NodeState.RUNNING
-        with self.yaybu_context.ui.throbber("Wait for VM to boot completely"):
-            while not self._decorate_node(node):
-                time.sleep(1)
-
-    def _find_vboxmanage(self):
-        known_locations = [
-            "/usr/bin",
-        ]
-        for dir in known_locations:
-            path = os.path.join(dir, "VBoxManage")
-            if os.path.exists(path):
-                return path
-        raise LibcloudError(
-            'VBoxDriver requires \'VBoxManage\' executable to be present on system')
-
-    def _action(self, *params, **kwargs):
-        command = [self.vboxmanage] + list(params)
-        return (
-            self.connection.request(command).body
-        )
-
-    def list_images(self, location=None):
-        raise NotImplementedError
-
-    def list_sizes(self, location=None):
-        raise NotImplementedError
-
-    def list_locations(self):
-        return []
-
-    def _list_running(self):
-        """ List running virtual machines """
-        # TODO
-        return []
-
-    def _decorate_node(self, node):
-        """ Add ips. Returns True if it successfully decorated it, False if
-        it failed and None if the node was not running. """
-        if node.state == NodeState.RUNNING:
-            # find the IP somehow!
-            # node.public_ips = [ip]
-            return True
+    def _find_vm(self, name):
+        for vm in self.machines.instances("vbox"):
+            # find it
+            return vm
         return None
 
-    def list_nodes(self):
-        """ List all of the nodes the driver knows about. """
-        nodes = []
-        running = list(self._list_running())
-        for vm in self.machines.instances("vbox"):
-            state = NodeState.RUNNING if vm.id in running else NodeState.UNKNOWN
-            n = Node(vm.id, vm.id, state, None, None, self)
-            self._decorate_node(n)
-            nodes.append(n)
-        return nodes
+    def load(self, name):
+        vm = self._find_vm(name)
+        if vm is not None:
+            startvm(type="gui", name=self.node)
 
-    def _image_smells_remote(self, imageid):
-        remote_smells = ('http://', 'https://', 'file://')
-        for smell in remote_smells:
-            if imageid.startswith(smell):
-                return True
-        return False
-
-    def _get_source(self, image):
-        """ If the source looks like it is remote then fetch the image and
-        extract it into the library directory, otherwise use it directly. """
-        if "distro" in image.extra:
-            source = self.machines.get_canonical(distro=image.extra['distro'], release=image.extra['release'], arch=image.extra['arch'], context=self.yaybu_context)
-        elif self._image_smells_remote(image.id):
-            source = self.machines.get_remote(image.id, context=self.yaybu_context)
-        else:
-            source = os.path.expanduser(image.id)
-        if not os.path.exists(source):
-            raise LibcloudError("Base image %s not found" % source)
-        return source
-
-    def create_node(self, name, image, **kwargs):
-        """ Create a new VM from a template VM and start it.
-        """
-
+    def create(self):
+        # TODO THIS IS THE OLD CODE
         state = kwargs.pop("state")
         kwargs.update(image.extra)
         auth = self._get_and_check_auth(kwargs.pop("auth", None))
@@ -156,10 +61,40 @@ class VBoxDriver(NodeDriver):
         self.ex_start(node)
         return node
 
-    def reboot_node(self, node):
-        self._action("controlvm", node.id, "reset")
-        node.state = NodeState.REBOOTING
+    def destroy(self):
+        unregistervm(name=self.node)
+        shutil.rmtree(os.path.dirname(self.node))
 
-    def destroy_node(self, node):
-        self._action("unregistervm", node.id, "--delete")
-        shutil.rmtree(os.path.dirname(node.id))
+    def wait(self):
+        # see the old _decorate_node
+        pass
+
+    def test(self):
+        raise NotImplementedError()
+
+    def domain(self):
+        raise NotImplementedError()
+
+    def fqdn(self):
+        raise NotImplementedError()
+
+    def hostname(self):
+        raise NotImplementedError()
+
+    def location(self):
+        raise NotImplementedError()
+
+    def name(self):
+        raise NotImplementedError()
+
+    def private_ip(self):
+        raise NotImplementedError()
+
+    def private_ips(self):
+        raise NotImplementedError()
+
+    def public_ip(self):
+        raise NotImplementedError()
+
+    def public_ips(self):
+        raise NotImplementedError()
