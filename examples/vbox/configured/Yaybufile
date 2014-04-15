@@ -1,0 +1,32 @@
+# An example with lots of configuration
+
+new Provisioner as instance:
+
+    new Compute as server:
+
+        name: vboxconfigured
+        driver: VBOX
+
+        image:
+            distro: ubuntu
+            arch: amd64
+            release: 13.10
+
+        user: yaybu
+        password: password
+
+        # 1024MB Memory
+        memory: 1024
+
+        # 2 CPUs
+        cpus: 2
+
+        # Arguments passed to VBoxManage modifyvm directly
+        modifyvm:
+            cpuexecutioncap: 80
+            pagefusion: on
+
+    resources:
+        - File:
+            name: /etc/helloworld
+

@@ -1,0 +1,22 @@
+# A simple VirtualBox example with key based authentication
+
+new Provisioner as instance:
+
+    new Compute as server:
+        name: vboxsshkeys
+        driver: VBOX
+
+        image:
+            distro: ubuntu
+            arch: amd64
+            release: 13.10
+
+        user: yaybu
+
+        # this key will be found in ~/.ssh
+        key: id_rsa
+
+    resources:
+        - File:
+            name: /etc/helloworld
+

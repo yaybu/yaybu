@@ -1,0 +1,22 @@
+yaybu:
+    searchpath:
+        - .
+
+new Provisioner as instance:
+
+    new Compute as server:
+        name: example
+        driver: 
+            id: EC2_EU_WEST
+            key: {{ aws.key }}
+            secret: {{ aws.secret }}
+        image: ami-1b665f6f
+        size: m1.medium
+        user: ubuntu
+        ex_keyname: yaybu_examples
+        private_key: yaybu_examples.pem
+
+    resources:
+        - File:
+            name: /etc/yaybu_woz_ere
+

@@ -1,0 +1,20 @@
+# A simple VirtualBox example
+
+new Provisioner as instance:
+
+    new Compute as server:
+        name: vboxsimple
+        driver: VBOX
+
+        image:
+            distro: ubuntu
+            arch: amd64
+            release: 13.10
+
+        user: yaybu
+        password: password
+
+    resources:
+        - File:
+            name: /etc/helloworld
+

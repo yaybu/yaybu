@@ -1,0 +1,22 @@
+# A simple VirtualBox example with key based authentication using
+# files located on the yaybu search path
+
+new Provisioner as instance:
+
+    new Compute as server:
+        name: vboxsimple
+        driver: VBOX
+
+        image:
+            distro: ubuntu
+            arch: amd64
+            release: 13.10
+
+        user: yaybu
+        public_key: mykey.pub
+        private_key: mykey
+
+    resources:
+        - File:
+            name: /etc/helloworld
+
