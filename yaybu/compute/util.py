@@ -75,5 +75,5 @@ class SubRunner(object):
             for line in stderr.splitlines():
                 logging.info("STDERR: {0}".format(line))
         if p.returncode != 0:
-            raise SubRunnerException("Command execution of {0} failed with error code {1}".format(" ".join(command), p.returncode))
+            raise SubRunnerException("Command execution of {0} failed with error code {1} and error output: {2}".format(" ".join(command), p.returncode, stderr))
         return self.parse(stdout, stderr)

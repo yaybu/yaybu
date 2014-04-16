@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
 import os
 import shutil
 
 from yaybu.core.util import memoized
 from ..util import SubRunner
-from .local import LocalComputeLayer
+from .local import LocalComputeLayer, NodeState
 
 # createvm options to accomodate - Priority 1
 # --memory <memorysize in MB> - CONFIGURATION
@@ -48,81 +49,32 @@ startvm = vboxmanage("startvm",
 unregistervm = vboxmanage("unregistervm",
                           "{name}", "--delete")
 
+guestproperty = vboxmanage("guestproperty", "get", "{name}", "{property}")
+
 
 class VBoxLayer(LocalComputeLayer):
 
-    def load(self, name):
-        for vm in self.machines.instances("vbox"):
-            if vm.name == name:
-                self.node = vm
-                startvm(type="gui", name=self.node.id)
-                return
+    system = "vbox"
 
-    @memoized
-    @property
-    def modifyvm(self):
-        """ Take the parameters from the compute node and configure ourselves
-        to create or run an instance """
-        return self.original.params.modifyvm.as_dict(default=None)
+    def start(self):
+        startvm(type="gui", name=self.node.id)
+        self.state = NodeState.STARTING
 
-    def create(self):
-        base_image = self.machines.fetch(self.image)
-        self.pending_node = self.machines.create_node(
-            name=self.original.params.name.as_string(),
-            distro=self.image.distro,
-            system="vbox",
-            base_image=base_image,
-            state=self.original.state,
-            auth=self.auth,
-            hardware=self.hardware,
-            modifyvm=self.modifyvm)
-        startvm(type="gui", name=self.pending_node.id)
+    def create_args(self):
+        return dict(modifyvm=self.original.params.modifyvm.as_dict(default=None))
 
     def destroy(self):
         unregistervm(name=self.node)
         shutil.rmtree(os.path.dirname(self.node))
-
-    def wait(self):
-        self.node = self.pending_node
-        self.pending_node = None
+        self.node = None
+        self.state = NodeState.EMPTY
 
     def test(self):
         return startvm.pathname is not None
 
     @property
-    def domain(self):
-        raise NotImplementedError()
-
-    @property
-    def fqdn(self):
-        raise NotImplementedError()
-
-    @property
-    def hostname(self):
-        raise NotImplementedError()
-
-    @property
-    def location(self):
-        raise NotImplementedError()
-
-    @property
-    def name(self):
-        if self.node is not None:
-            return self.node.name
-        raise ValueError("No active node")
-
-    @property
-    def private_ip(self):
-        raise NotImplementedError()
-
-    @property
-    def private_ips(self):
-        raise NotImplementedError()
-
-    @property
     def public_ip(self):
-        raise NotImplementedError()
-
-    @property
-    def public_ips(self):
-        raise NotImplementedError()
+        s = guestproperty(name=self.node.id, property="/VirtualBox/GuestInfo/Net/0/V4/IP")
+        if s.startswith("Value: "):
+            # Value: 10.0.2.15
+            return s.split(" ", 1)[1]

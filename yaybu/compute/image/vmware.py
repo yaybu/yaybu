@@ -213,13 +213,11 @@ class VMWareCloudConfig(cloudinit.CloudConfig):
     runcmd = vmware_tools_install
 
 
-class VMWareUbuntuCloudConfig(cloudinit.UbuntuCloudConfig,
-                              VMWareCloudConfig):
+class VMWareUbuntuCloudConfig(VMWareCloudConfig):
     packages = ['zip']
 
 
-class VMWareFedoraCloudConfig(cloudinit.FedoraCloudConfig,
-                              VMWareCloudConfig):
+class VMWareFedoraCloudConfig(VMWareCloudConfig):
     packages = ['file', 'perl']
 
 
@@ -247,24 +245,15 @@ class VMWareMachineBuilder(base.MachineBuilder):
         qemu_img(source=base_image, destination=disk, format="vmdk")
         return disk
 
-    def write(self, base_image, **kwargs):
+    def write(self, distro, base_image, state, auth, hardware, vmx):
         """ Create a new VMWare virtual machine in the specified directory from the base image. """
-
-        distro = kwargs.pop("distro", None)
-        # release = kwargs.pop("release", None)
-        # arch = kwargs.pop("arch", None)
-        auth = kwargs.pop("auth", None)
-        # size = kwargs.pop("size", None)
-        # cpus = kwargs.pop("cpus", None)
-        # cores = kwargs.pop("cores", None)
-        # ram = kwargs.pop("ram", None)
 
         # create the directory to hold all the bits
         os.mkdir(self.instance_dir)
 
         # create a vanilla vmx file
         vmx = VMX(self.instance_dir, self.instance.name)
-        vmx.configure_core(guestos="fedora")
+        vmx.configure_core(guestos=distro)
 
         # create the disk image and attach it
         disk = self.create_disk(base_image)
@@ -272,10 +261,9 @@ class VMWareMachineBuilder(base.MachineBuilder):
 
         # create the seed ISO
         config_class = self.configs[distro]
-        cloud_config = config_class(auth, **kwargs)
+        cloud_config = config_class(auth)
         meta_data = cloudinit.MetaData(self.instance_id)
-        seed = cloudinit.Seed(self.instance_dir, cloud_config=cloud_config,
-                              meta_data=meta_data)
+        seed = cloudinit.Seed(self.instance_dir, cloud_config=cloud_config, meta_data=meta_data)
         seed.write()
 
         # connect the seed ISO and the tools ISO

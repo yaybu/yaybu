@@ -39,7 +39,6 @@ class CloudConfig:
         "package_upgrade",
         "package_update",
         "package_reboot_if_required",
-        # "cloud_config_modules",
         "packages",
         "runcmd",
     ]
@@ -107,92 +106,6 @@ class CloudConfig:
         print >> f, "#cloud-config"
         print >> f, yaml.dump(config)
         return StringIO.StringIO(f.getvalue())
-
-
-class UbuntuCloudConfig:
-
-    cloud_config_modules = [
-        # default
-        "emit_upstart",
-        "disk_setup",
-        "mounts",
-        "ssh-import-id",
-        "locale",
-        "set-passwords",
-        "grub-dpkg",
-        "apt-pipelining",
-        "apt-configure",
-        "package-update-upgrade-install",
-        "landscape",
-        "timezone",
-        "puppet",
-        "chef",
-        "salt-minion",
-        "mcollective",
-        "disable-ec2-metadata",
-        "byobu",
-        "runcmd",
-
-        # others
-        "users_groups",
-    ]
-
-
-class FedoraCloudConfig:
-
-    # these are the modules available in Release 20
-    cloud_config_modules = [
-
-        # default
-        'mounts',
-        'locale',
-        'set-passwords',
-        'yum-add-repo',
-        'package-update-upgrade-install',
-        'timezone',
-        'puppet',
-        'chef',
-        'salt-minion',
-        'mcollective',
-        'disable-ec2-metadata',
-        'runcmd',
-
-        # other available
-        # 'apt-configure',
-        # 'apt-pipelining',
-        # 'bootcmd',
-        # 'byobu',
-        # 'ca-certs',
-        # 'emit-upstart',
-        # 'final-message',
-        # 'foo',
-        # 'growpart',
-        # 'grub-dpkg',
-        # 'keys-to-console',
-        # 'landscape',
-        # 'migrator',
-        # 'phone-home',
-        # 'power-state-change',
-        # 'resizefs',
-        # 'resolv-conf',
-        # 'rsyslog',
-        # 'set-hostname',
-        # 'ssh-import-id',
-        # 'ssh',
-        # 'update-etc-hosts',
-        # 'update-hostname',
-        'users_groups',
-        # 'write-files',
-
-        # final modules already used
-        # 'rightscale-userdata',
-        # 'scripts-per-boot',
-        # 'scripts-per-instance',
-        # 'scripts-per-once',
-        # 'scripts-user',
-        # 'ssh-authkey-fingerprints',
-    ]
-
 
 class MetaData:
 

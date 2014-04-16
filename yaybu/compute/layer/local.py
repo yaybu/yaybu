@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
 import os
+import abc
 
 from .base import Layer, AuthenticationError
 from yaybu.core.util import memoized
@@ -20,11 +22,73 @@ from yay import errors
 
 from yaybu.compute.image import PasswordAuth, SSHAuth, RemoteImage, CanonicalImage, ImageLibrary, Hardware
 
+class NodeState:
+    EMPTY = 1
+    STARTING = 2
+    RUNNING = 3
 
 class LocalComputeLayer(Layer):
+
+    __metaclass__ = abc.ABCMeta
+
+    wait_delay = 30
+
     def __init__(self, original, yaybu_root="~/.yaybu"):
         super(LocalComputeLayer, self).__init__(original)
         self.machines = ImageLibrary(root=yaybu_root)
+        self.node = None
+        self.state = NodeState.EMPTY
+
+    @abc.abstractmethod
+    def start(self):
+        """ Start self.node """
+
+    @abc.abstractmethod
+    def create_args(self):
+        """ Return additional args to be passed to the create_node command """
+
+    def create(self):
+        if self.state != NodeState.EMPTY:
+            raise ValueError("Trying to create a node when we already have one")
+        args = dict(
+            name=self.name,
+            distro=self.image.distro,
+            system=self.system,
+            base_image=self.base_image,
+            state=self.original.state,
+            auth=self.auth,
+            hardware=self.hardware,
+            )
+        args.update(self.create_args())
+        self.node = self.machines.create_node(**args)
+        self.start()
+
+    def load(self, name):
+        if self.state != NodeState.EMPTY:
+            raise ValueError("Trying to start a node when we already have one")
+        for vm in self.machines.instances("vbox"):
+            if vm.name == name:
+                self.node = vm
+                self.start()
+                return
+
+    def wait(self):
+        for i in range(self.wait_delay):
+            if self.public_ip:
+                self.state = NodeState.RUNNING
+                return
+            else:
+                time.sleep(1)
+
+    @property
+    @memoized
+    def name(self):
+        return self.original.params.name.as_string()
+
+    @property
+    @memoized
+    def base_image(self):
+        return self.machines.fetch(self.image)
 
     @property
     @memoized
@@ -102,3 +166,31 @@ class LocalComputeLayer(Layer):
     def price(self):
         """ Local implementations are free. \o/. """
         return None
+
+    @property
+    def domain(self):
+        return "unknown-domain"
+
+    @property
+    def fqdn(self):
+        return self.public_ip
+
+    @property
+    def hostname(self):
+        return "unknown-hostname"
+
+    @property
+    def location(self):
+        return self.public_ip
+
+    @property
+    def private_ip(self):
+        return None
+
+    @property
+    def private_ips(self):
+        return []
+
+    @property
+    def public_ips(self):
+        return [self.public_ip]

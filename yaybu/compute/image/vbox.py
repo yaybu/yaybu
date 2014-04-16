@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
 import os
 import logging
 
@@ -62,8 +63,9 @@ attach_ide = vboxmanage("storageattach", "{name}",
 configurevm = vboxmanage("modifyvm", "{name}",
                        "--ioapic", "on",
                        "--boot1", "disk", "--boot2", "none",
-                       "--memory", "{memsize}", "--vram", "128",
-                       "--nic1", "bridged", "--bridgeadapter1", "e1000g0")
+                       "--memory", "{memsize}", "--vram", "12",
+                       "--uart1", "0x3f8", "4",
+                       "--uartmode1", "disconnected")
 
 
 class VBoxMachineInstance(base.MachineInstance):
@@ -88,22 +90,19 @@ class VBoxMachineInstance(base.MachineInstance):
 
 
 class VBoxCloudConfig(cloudinit.CloudConfig):
-    pass
+    runcmd = [
+        ['mount', '/dev/sr1', '/mnt'],
+        ['/mnt/VBoxLinuxAdditions.run'],
+        #['umount', '/mnt'],
+    ]
+
+class VBoxUbuntuCloudConfig(VBoxCloudConfig):
+    #package_update = True
+    #package_upgrade = True
+    packages = ['build-essential']
 
 
-class VBoxUbuntuCloudConfig(cloudinit.UbuntuCloudConfig,
-                            VBoxCloudConfig):
-    packages = ['zip']
-    # package_update = True
-    # package_upgrade = True
-    # packages = ['virtualbox-guest-utils']
-    # runcmd = [
-    #     ["/etc/init.d/virtualbox-guest-utils", "start"],
-    # ]
-
-
-class VBoxFedoraCloudConfig(cloudinit.FedoraCloudConfig,
-                            VBoxCloudConfig):
+class VBoxFedoraCloudConfig(VBoxCloudConfig):
 
     pass
 
@@ -165,4 +164,4 @@ class VBoxMachineBuilder(base.MachineBuilder):
         # connect the seed ISO and the tools ISO
         create_ide(name=self.instance_id)
         attach_ide(name=self.instance_id, port="0", device="0", filename=seed.pathname)
-        # attach_ide(name=self.instance_id, port="0", device="1", filename="/usr/share/virtualbox/VBoxGuestAdditions.iso")
+        attach_ide(name=self.instance_id, port="0", device="1", filename="/usr/share/virtualbox/VBoxGuestAdditions.iso")
