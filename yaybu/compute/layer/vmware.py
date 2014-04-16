@@ -13,42 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import shutil
-import os
-from yaybu.core.util import memoized
-from ..util import SubRunner
-from .local import LocalComputeLayer, NodeState
-
-
-def vmrun(*args):
-    return SubRunner(command_name="vmrun", args=args)
-
-startvm = vmrun("start", "{name}", "gui")
-stopvm = vmrun("stop", "{name}", "hard")
-deletevm = vmrun("deleteVM", "{name}")
-readVariable = vmrun("readVariable", "{name}", "guestVar", "{variable}")
+from .local import LocalComputeLayer
+from yaybu.compute.image.vmware import test_connection
 
 
 class VMWareLayer(LocalComputeLayer):
 
     system = "vmware"
 
-    def start(self):
-        startvm(name=self.node.id)
-        self.state = NodeState.RUNNING
-
-    def create_args(self):
-        return dict(vmx=self.original.params.vmx.as_dict(default=None))
-
-    def destroy(self):
-        stopvm(name=self.node.id)
-        deletevm(name=self.node.id)
-        shutil.rmtree(os.path.dirname(self.node.id))
+    def options(self):
+        return self.original.params.vmx.as_dict(default=None)
 
     def test(self):
-        return startvm.pathname is not None
-
-    @property
-    def public_ip(self):
-        return readVariable(name=self.node.id, variable="ip").strip()
-
+        return test_connection()

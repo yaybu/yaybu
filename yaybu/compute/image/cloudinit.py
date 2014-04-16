@@ -107,6 +107,7 @@ class CloudConfig:
         print >> f, yaml.dump(config)
         return StringIO.StringIO(f.getvalue())
 
+
 class MetaData:
 
     filename = "meta-data"

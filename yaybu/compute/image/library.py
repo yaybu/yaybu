@@ -47,9 +47,6 @@ class ImageLibrary:
             if not os.path.exists(d):
                 os.makedirs(d)
 
-    def fetch(self, image):
-        return image.fetch(self.imagedir)
-
     def get_system_driver(self, name):
         if name not in self.systems:
             raise error.SystemNotKnown()
@@ -74,22 +71,7 @@ class ImageLibrary:
             count = count + 1
         return instance_id
 
-    def create_node(self, name, system, distro, base_image, state, auth, hardware, **kwargs):
-        """ Create an instance from the provided base image """
-        instance, builder = self.get_system_driver(system)
+    def get_builder(self, system):
         system_dir = os.path.join(self.instancedir, system)
-        if name is None:
-            name = system
-        instance_id = self.get_instance_id(system_dir, name)
-        print "Creating", instance_id
-        b = builder(system_dir, state, instance_id)
-        b.write(
-            base_image=base_image,
-            distro=distro,
-            state=state,
-            auth=auth,
-            hardware=hardware,
-            **kwargs)
-        machine = instance(system_dir, instance_id)
-        machine.apply_changes(state=state, auth=auth, hardware=hardware, **kwargs)
-        return machine
+        builder = self.systems[system][1]
+        return builder(system_dir, self.imagedir)

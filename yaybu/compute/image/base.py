@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
+import datetime
 import os
 import abc
 import urllib2
 import logging
-import uuid
 
 from . import error
 import hashlib
@@ -47,7 +48,7 @@ class Image(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def fetch(self, imagedir, context=None):
+    def fetch(self, image_dir):
         """ Fetch the image into the specified image directory, and return the pathname. """
 
 
@@ -100,7 +101,7 @@ class CanonicalImage(Image):
             raise error.DistributionNotKnown()
         return c
 
-    def fetch(self, imagedir):
+    def fetch(self, image_dir):
         """ Fetches the specified uri into the cache and then extracts it
         into the library.  If name is None then a name is made up.
 
@@ -110,7 +111,7 @@ class CanonicalImage(Image):
             arch: the distribution's name for the architecture, i.e. x86_64, amd64
             format: the format of virtual machine image required, i.e. vmdk, qcow
         """
-        pathname = os.path.join(imagedir, "{0}-{1}-{2}.qcow2".format(self.distro, self.release, self.arch))
+        pathname = os.path.join(image_dir, "{0}-{1}-{2}.qcow2".format(self.distro, self.release, self.arch))
         klass = self.distro_class()
         distro = klass(pathname, self.release, self.arch)
         distro.update()
@@ -123,20 +124,58 @@ class Hardware(object):
         self.cpus = cpus
 
 
+class MachineSpec(object):
+    def __init__(self, name, auth, image, hardware, options):
+        self.name = name
+        self.auth = auth
+        self.image = image
+        self.hardware = hardware
+        self.options = options
+
+
+class State:
+    DEAD = 0
+    STARTING = 1
+    RUNNING = 2
+
+
 class MachineInstance(object):
 
     """ This is a local virtual machine, created by a MachineBuilder. """
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, directory, state, instance_id, **kwargs):
-        self.distro = kwargs.pop("distro", None)
-        self.release = kwargs.pop("release", None)
-        self.arch = kwargs.pop("arch", None)
-        self.size = kwargs.pop("size", None)
-        self.auth = kwargs.pop("auth", None)
-        self.directory = directory
-        self.state = state
+    system = None
+
+    def __init__(self, directory, instance_id):
+        self.instance_dir = os.path.join(directory, instance_id)
+        self.instance_id = instance_id
+        self.state = State.DEAD
+
+    def start(self):
+        self._start()
+        self.state = State.STARTING
+
+    def destroy(self):
+        self._destroy()
+        self.state = State.DEAD
+
+    def load(self, name):
+        if self.state != State.DEAD:
+            raise ValueError("Trying to start a node when we already have one")
+        for vm in self.machines.instances("vbox"):
+            if vm.name == name:
+                self.node = vm
+                self.start()
+                return
+
+    def wait(self):
+        for i in range(self.wait_delay):
+            if self.public_ip:
+                self.state = State.RUNNING
+                return
+            else:
+                time.sleep(1)
 
 
 class MachineBuilder(object):
@@ -147,16 +186,24 @@ class MachineBuilder(object):
 
     instance = MachineInstance
 
-    def __init__(self, directory, state, instance_id=None):
+    def __init__(self, directory, image_dir, instance_id=None):
         self.directory = directory
-        self.state = state
-        self.instance_id = instance_id
-        if self.instance_id is None:
-            self.instance_id = str(uuid.uuid4())
-        self.instance_dir = os.path.join(self.directory, self.instance_id)
+        self.image_dir = image_dir
 
-    def write(self, base_image, **kwargs):
+    def create(self, spec):
         """ Builds the instance """
+
+    def get_instance_id(self, spec):
+        today = datetime.datetime.now()
+        instance_id = "{0}-{1:%Y-%m-%d}".format(spec.name, today)
+        count = 1
+        while True:
+            pathname = os.path.join(self.directory, instance_id)
+            if not os.path.exists(pathname):
+                break
+            instance_id = "{0}-{1:%Y-%m-%d}-{2:02}".format(spec.name, today, count)
+            count = count + 1
+        return instance_id
 
 
 class CloudImageType(abc.ABCMeta):

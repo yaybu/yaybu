@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
 import os
 import logging
+import shutil
 
 from . import cloudinit
 from . import base
@@ -67,34 +67,48 @@ configurevm = vboxmanage("modifyvm", "{name}",
                        "--uart1", "0x3f8", "4",
                        "--uartmode1", "disconnected")
 
+startvm = vboxmanage("startvm",
+                     "--type", "{type}",
+                     "{name}")
+
+unregistervm = vboxmanage("unregistervm",
+                          "{name}", "--delete")
+
+guestproperty = vboxmanage("guestproperty", "get", "{name}", "{property}")
+
+
+def test_connection():
+    return startvm.pathname is not None
+
 
 class VBoxMachineInstance(base.MachineInstance):
 
     name = "vbox"
 
-    def __init__(self, directory, instance_id):
-        self.instance_id = instance_id
-        self.instance_dir = os.path.join(directory, instance_id)
-
-    def apply_changes(self, state=None, auth=None, hardware=None, modifyvm=None):
-        """ Check the settings of the VM against the state, and do what is
-        necessary to resolve any differences if possible. Write the state to
-        the state file as required. """
-
     @property
     def id(self):
-        """ Return a persistent unique identifier for the virtual machine,
-        which is used by the compute node to manipulate it. Value is
-        dependent on the underlying VM system. """
         return self.instance_id
+
+    def _start(self):
+        startvm(type="gui", name=self.instance_id)
+
+    def _destroy(self):
+        unregistervm(name=self.node)
+        shutil.rmtree(os.path.dirname(self.node))
+
+    def get_ip(self):
+        s = guestproperty(name=self.instance_id, property="/VirtualBox/GuestInfo/Net/0/V4/IP")
+        if s.startswith("Value: "):
+            return s.split(" ", 1)[1]
 
 
 class VBoxCloudConfig(cloudinit.CloudConfig):
     runcmd = [
         ['mount', '/dev/sr1', '/mnt'],
         ['/mnt/VBoxLinuxAdditions.run'],
-        #['umount', '/mnt'],
+        ['umount', '/mnt'],
     ]
+
 
 class VBoxUbuntuCloudConfig(VBoxCloudConfig):
     #package_update = True
@@ -122,46 +136,36 @@ class VBoxMachineBuilder(base.MachineBuilder):
         None: "Linux_64",
     }
 
-    def store_state(self):
-        """ Write out the pertinent state details to the local state file, so we can manage change """
-        if self.distro is not None:
-            self.state.update(distro=self.distro)
-        if self.release is not None:
-            self.state.update(release=self.release)
-        if self.seed is not None:
-            if self.seed.password is not None:
-                self.state.update(username=self.seed.username, password=self.seed.hashed_password)
-
-    def create_disk(self, base_image):
-        disk = os.path.join(self.instance_dir, self.instance.name + ".vdi")
-        qemu_img(source=base_image, destination=disk, format="vdi")
-        return disk
-
-    def write(self, distro, base_image, state, auth, hardware, modifyvm):
+    def create(self, spec):
         """ Create a new virtual machine in the specified directory from the base image. """
 
-        # create the directory to hold all the bits
-        os.mkdir(self.instance_dir)
+        assert isinstance(spec, base.MachineSpec)
 
-        createvm(name=self.instance_id,
+        instance_id = self.get_instance_id(spec)
+        instance_dir = os.path.join(self.directory, instance_id)
+        # create the directory to hold all the bits
+        os.mkdir(instance_dir)
+
+        createvm(name=instance_id,
                  directory=self.directory,
-                 ostype=self.ostype[distro])
-        configurevm(name=self.instance_id, memsize=hardware.memory)
+                 ostype=self.ostype[spec.image.distro])
+        configurevm(name=spec.name, memsize=spec.hardware.memory)
 
         # create the disk image and attach it
-        disk = self.create_disk(base_image)
-        create_sata(name=self.instance_id)
-        attach_disk(name=self.instance_id, disk=disk)
+        disk = os.path.join(instance_dir, instance_id + "_disk1.vdi")
+        qemu_img(source=spec.image.fetch(self.image_dir), destination=disk, format="vdi")
+        create_sata(name=instance_id)
+        attach_disk(name=instance_id, disk=disk)
 
         # create the seed ISO
-        config_class = self.configs[distro]
-        cloud_config = config_class(auth)
-        meta_data = cloudinit.MetaData(self.instance_id)
-        seed = cloudinit.Seed(self.instance_dir, cloud_config=cloud_config,
-                              meta_data=meta_data)
+        config_class = self.configs[spec.image.distro]
+        cloud_config = config_class(spec.auth)
+        meta_data = cloudinit.MetaData(spec.name)
+        seed = cloudinit.Seed(instance_dir, cloud_config=cloud_config, meta_data=meta_data)
         seed.write()
 
         # connect the seed ISO and the tools ISO
-        create_ide(name=self.instance_id)
-        attach_ide(name=self.instance_id, port="0", device="0", filename=seed.pathname)
-        attach_ide(name=self.instance_id, port="0", device="1", filename="/usr/share/virtualbox/VBoxGuestAdditions.iso")
+        create_ide(name=instance_id)
+        attach_ide(name=instance_id, port="0", device="0", filename=seed.pathname)
+        attach_ide(name=instance_id, port="0", device="1", filename="/usr/share/virtualbox/VBoxGuestAdditions.iso")
+        return VBoxMachineInstance(instance_dir, spec.name)

@@ -20,14 +20,18 @@ from .base import Layer, AuthenticationError
 from yaybu.core.util import memoized
 from yay import errors
 
-from yaybu.compute.image import PasswordAuth, SSHAuth, RemoteImage, CanonicalImage, ImageLibrary, Hardware
+from yaybu.compute.image import PasswordAuth, SSHAuth, RemoteImage, CanonicalImage, ImageLibrary, Hardware, MachineSpec
+
 
 class NodeState:
     EMPTY = 1
     STARTING = 2
     RUNNING = 3
 
+
 class LocalComputeLayer(Layer):
+
+    """ Adapts the compute part. Parses the provided configuration to determine how to start the specified node. """
 
     __metaclass__ = abc.ABCMeta
 
@@ -37,36 +41,34 @@ class LocalComputeLayer(Layer):
         super(LocalComputeLayer, self).__init__(original)
         self.machines = ImageLibrary(root=yaybu_root)
         self.node = None
-        self.state = NodeState.EMPTY
 
-    @abc.abstractmethod
     def start(self):
         """ Start self.node """
+        if self.node is None:
+            raise ValueError("Trying to start a node that does not exist")
+        self.node.start()
+
+    def destroy(self):
+        if self.node is None:
+            raise ValueError("Trying to destroy a node that does not exist")
+        self.node.destroy()
+        self.node = None
 
     @abc.abstractmethod
-    def create_args(self):
-        """ Return additional args to be passed to the create_node command """
+    def options(self):
+        """ Return additional options to be passed to the builder """
 
     def create(self):
-        if self.state != NodeState.EMPTY:
+        if self.node is not None:
             raise ValueError("Trying to create a node when we already have one")
-        args = dict(
-            name=self.name,
-            distro=self.image.distro,
-            system=self.system,
-            base_image=self.base_image,
-            state=self.original.state,
-            auth=self.auth,
-            hardware=self.hardware,
-            )
-        args.update(self.create_args())
-        self.node = self.machines.create_node(**args)
+        builder = self.machines.get_builder(self.system)
+        self.node = builder.create(self.spec)
         self.start()
 
     def load(self, name):
-        if self.state != NodeState.EMPTY:
+        if self.node is not None:
             raise ValueError("Trying to start a node when we already have one")
-        for vm in self.machines.instances("vbox"):
+        for vm in self.machines.instances(self.system):
             if vm.name == name:
                 self.node = vm
                 self.start()
@@ -87,8 +89,14 @@ class LocalComputeLayer(Layer):
 
     @property
     @memoized
-    def base_image(self):
-        return self.machines.fetch(self.image)
+    def spec(self):
+        return MachineSpec(
+            name=self.name,
+            auth=self.auth,
+            image=self.image,
+            hardware=self.hardware,
+            options=self.options,
+        )
 
     @property
     @memoized
@@ -194,3 +202,7 @@ class LocalComputeLayer(Layer):
     @property
     def public_ips(self):
         return [self.public_ip]
+
+    @property
+    def public_ip(self):
+        return self.node.get_ip()

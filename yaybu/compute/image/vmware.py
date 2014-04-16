@@ -25,11 +25,20 @@ from yaybu.compute.util import SubRunner
 
 logger = logging.getLogger("vmware")
 
+
+def vmrun(*args):
+    return SubRunner(command_name="vmrun", args=args)
+
 qemu_img = SubRunner(
     command_name="qemu-img",
     args=["convert", "-O", "{format}", "{source}", "{destination}"],
     log_execution=True,
 )
+
+startvm = vmrun("start", "{name}", "gui")
+stopvm = vmrun("stop", "{name}", "hard")
+deletevm = vmrun("deleteVM", "{name}")
+readVariable = vmrun("readVariable", "{name}", "guestVar", "{variable}")
 
 
 class VMX(collections.defaultdict):
@@ -174,25 +183,26 @@ class VMX(collections.defaultdict):
         }
 
 
+def test_connection():
+    return startvm.pathname is not None
+
+
 class VMWareMachineInstance(base.MachineInstance):
 
     name = "vmware"
 
     def __init__(self, directory, instance_id):
-        self.instance_id = instance_id
-        self.instance_dir = os.path.join(directory, instance_id)
-        self.vmx = VMX(self.instance_dir, self.name)
+        super(VMWareMachineInstance, self).__init__(directory, instance_id)
+        self.vmx = VMX(self.instance_dir, self.instance_id)
 
-    def apply_changes(self, state=None, auth=None, hardware=None, vmx=None):
-        """ Check the settings of the VM against the state, and do what is
-        necessary to resolve any differences if possible. """
+    def _start(self):
+        startvm(name=self.vmx.pathname)
 
-    @property
-    def id(self):
-        """ Return a persistent unique identifier for the virtual machine,
-        which is used by the compute node to manipulate it. Value is
-        dependent on the underlying VM system. """
-        return self.vmx.pathname
+    def _destroy(self):
+        stopvm(name=self.vmx.pathname)
+
+    def get_ip(self):
+        return readVariable(name=self.vmx.pathname, variable="ip").strip()
 
 
 class VMWareCloudConfig(cloudinit.CloudConfig):
@@ -230,43 +240,33 @@ class VMWareMachineBuilder(base.MachineBuilder):
         "fedora": VMWareFedoraCloudConfig,
     }
 
-    def store_state(self):
-        """ Write out the pertinent state details to the local state file, so we can manage change """
-        if self.distro is not None:
-            self.state.update(distro=self.distro)
-        if self.release is not None:
-            self.state.update(release=self.release)
-        if self.seed is not None:
-            if self.seed.password is not None:
-                self.state.update(username=self.seed.username, password=self.seed.hashed_password)
+    def create(self, spec):
 
-    def create_disk(self, base_image):
-        disk = os.path.join(self.instance_dir, self.instance.name + ".vmdk")
-        qemu_img(source=base_image, destination=disk, format="vmdk")
-        return disk
+        assert isinstance(spec, base.MachineSpec)
 
-    def write(self, distro, base_image, state, auth, hardware, vmx):
-        """ Create a new VMWare virtual machine in the specified directory from the base image. """
-
+        instance_id = self.get_instance_id(spec)
+        instance_dir = os.path.join(self.directory, instance_id)
         # create the directory to hold all the bits
-        os.mkdir(self.instance_dir)
+        os.mkdir(instance_dir)
 
         # create a vanilla vmx file
-        vmx = VMX(self.instance_dir, self.instance.name)
-        vmx.configure_core(guestos=distro)
+        vmx = VMX(instance_dir, instance_id)
+        vmx.configure_core(guestos=spec.image.distro)
 
         # create the disk image and attach it
-        disk = self.create_disk(base_image)
+        disk = os.path.join(instance_dir, instance_id + "_disk1.vmdk")
+        qemu_img(source=spec.image.fetch(self.image_dir), destination=disk, format="vmdk")
         vmx.connect_disk(disk)
 
         # create the seed ISO
-        config_class = self.configs[distro]
-        cloud_config = config_class(auth)
-        meta_data = cloudinit.MetaData(self.instance_id)
-        seed = cloudinit.Seed(self.instance_dir, cloud_config=cloud_config, meta_data=meta_data)
+        config_class = self.configs[spec.image.distro]
+        cloud_config = config_class(spec.auth)
+        meta_data = cloudinit.MetaData(spec.name)
+        seed = cloudinit.Seed(instance_dir, cloud_config=cloud_config, meta_data=meta_data)
         seed.write()
 
         # connect the seed ISO and the tools ISO
         vmx.connect_iso(seed.pathname)
         vmx.connect_iso("/usr/lib/vmware/isoimages/linux.iso", "ide0:1", "TRUE")
         vmx.write()
+        return VMWareMachineInstance(self.directory, instance_id)
