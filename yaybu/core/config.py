@@ -193,6 +193,7 @@ class Config(BaseConfig):
             self.load_uri(defaults_gpg)
 
         self._changed = False
+        self.target = "sync"
 
     def setup_openers(self):
         self.add({"yaybu": {"searchpath": self.searchpath or []}})

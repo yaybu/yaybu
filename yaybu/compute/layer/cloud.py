@@ -55,6 +55,9 @@ class CloudComputeLayer(Layer):
         super(CloudComputeLayer, self).__init__(original)
         self.pending_node = None  # a node that hasn't started yet
 
+        # This will make us throw if we choose a driver type that doesnt exist.
+        self.driver_class()
+
     def destroy(self):
         self.node.destroy()
 
@@ -77,8 +80,8 @@ class CloudComputeLayer(Layer):
         return "%r/%r" % (self.node.public_ips, self.node.private_ips)
 
     def driver_class(self):
-        provider = getattr(Provider, self.original.driver_id)
         try:
+            provider = getattr(Provider, self.original.driver_id)
             return providers.get_driver(provider)
         except AttributeError:
             raise DriverNotFound()

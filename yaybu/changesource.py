@@ -21,7 +21,7 @@ import requests
 from yaybu import base, error
 
 
-class GitChangeSource(base.GraphExternalAction):
+class GitChangeSource(base.Part):
 
     """
     This part manages listens to an external git repository for new commits,
@@ -116,7 +116,7 @@ class GitChangeSource(base.GraphExternalAction):
         self.members["tags"] = tags
 
 
-class GitHubChangeSource(base.GraphExternalAction):
+class GitHubChangeSource(base.Part):
 
     """
     This part pushes metadata into the graph as new commits and releases are

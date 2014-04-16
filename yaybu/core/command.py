@@ -235,8 +235,10 @@ class YaybuCmd(OptionParsingCmd):
         with graph.ui:
             graph.resolve()
             for actor in graph.actors:
-                actor.test()
-
+                try:
+                    actor.test()
+                except AttributeError:
+                    pass
         return 0
 
     def opts_up(self, parser):
@@ -257,10 +259,9 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
+        graph.target = "test"
         with graph.ui:
             graph.resolve()
-            for actor in graph.actors:
-                actor.test()
 
         graph = self._get_graph(opts, args)
         with graph.ui:
@@ -285,11 +286,14 @@ class YaybuCmd(OptionParsingCmd):
         """
         graph = self._get_graph(opts, args)
         graph.readonly = True
+        graph.target = "destroy"
         with graph.ui:
             graph.resolve()
             for actor in graph.actors:
-                actor.destroy()
-
+                try:
+                    actor.destroy()
+                except AttributeError:
+                    pass
         return 0
 
     def do_ssh(self, opts, args):

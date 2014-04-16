@@ -15,8 +15,7 @@
 from yay import errors
 from yaybu import error
 from yaybu.tests.base import TestCase
-from yaybu.tests.mocks.libcloud_compute import MockNodeDriver, MockNodeDriverArgless, MockArglessCloudComputeLayer, MockCloudComputeLayer
-from yaybu.compute import Compute
+from yaybu.tests.mocks.libcloud_compute import MockNodeDriver, MockNodeDriverArgless
 
 
 class TestCloudComputeLayer(TestCase):
@@ -267,10 +266,6 @@ class TestComputeArgless(TestCase):
     def setUp(self):
         MockNodeDriverArgless.install(self)
         self.driver = MockNodeDriverArgless()
-        Compute.default_layer = MockArglessCloudComputeLayer
-
-    def tearDown(self):
-        Compute.default_layer = MockCloudComputeLayer
 
     def test_empty_compute_node(self):
         self.assertEqual(len(self.driver.list_nodes()), 0)

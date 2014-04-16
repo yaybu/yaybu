@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from libcloud.compute.base import Node, NodeSize, NodeImage
-from libcloud.compute.types import NodeState
-from libcloud.compute.drivers.dummy import DummyNodeDriver
+import operator
 
-from yaybu.compute import Compute
-from yaybu.compute.layer.cloud import CloudComputeLayer
-from yaybu.compute.layer import base
+from libcloud.compute.base import Node, NodeSize, NodeImage
+from libcloud.compute.types import NodeState, Provider
+from libcloud.compute.providers import DRIVERS
+from libcloud.compute.drivers.dummy import DummyNodeDriver
 
 
 class MockNodeDriver(DummyNodeDriver):
@@ -68,24 +67,15 @@ class MockNodeDriver(DummyNodeDriver):
 
     @classmethod
     def install(cls, test_case):
+        Provider.DUMMY = "dummy"
+        test_case.addCleanup(delattr, Provider, "DUMMY")
+        DRIVERS[Provider.DUMMY] = (
+            'yaybu.tests.mocks.libcloud_compute', cls.__name__
+        )
+        test_case.addCleanup(operator.delitem, DRIVERS, Provider.DUMMY)
         test_case.addCleanup(setattr, MockNodeDriver, "nl", [])
 
 
 class MockNodeDriverArgless(MockNodeDriver):
-
     def __init__(self):
         pass
-
-
-class MockCloudComputeLayer(CloudComputeLayer):
-    def driver_class(self):
-        if self.original.driver_id == "DUMMY":
-            return MockNodeDriver
-        raise base.DriverNotFound
-
-
-class MockArglessCloudComputeLayer(CloudComputeLayer):
-    def driver_class(self):
-        return MockNodeDriverArgless
-
-Compute.default_layer = MockCloudComputeLayer

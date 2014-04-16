@@ -121,7 +121,7 @@ class TransportPlayback(object):
         return _
 
 
-class FakeChrootPart(base.GraphExternalAction):
+class FakeChrootPart(base.Part):
 
     """
     This part can create and destroy a fakechroot, but via the yay machinery.

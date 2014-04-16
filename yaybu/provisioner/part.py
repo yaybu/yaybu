@@ -32,7 +32,7 @@ from . import event, transports
 logger = logging.getLogger(__name__)
 
 
-class Provision(base.GraphExternalAction):
+class Provision(base.Part):
 
     """
     Use yaybu to configure a server

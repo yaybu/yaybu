@@ -86,7 +86,7 @@ class SyncMembers(MetadataSync):
         ))
 
 
-class LoadBalancer(base.GraphExternalAction):
+class LoadBalancer(base.Part):
 
     """
     This part manages a libcloud load balancer

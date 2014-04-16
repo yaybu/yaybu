@@ -27,7 +27,7 @@ class ExecutionError(Exception):
     pass
 
 
-class Heroku(base.GraphExternalAction):
+class Heroku(base.Part):
 
     def __init__(self, params):
         super(Heroku, self).__init__(params)

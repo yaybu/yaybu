@@ -26,7 +26,7 @@ from libcloud.storage.types import Provider, ContainerDoesNotExistError, ObjectD
 from libcloud.storage.providers import get_driver
 
 
-class StaticContainer(base.GraphExternalAction):
+class StaticContainer(base.Part):
 
     """
     This part manages a container in a libcloud managed storage provider such

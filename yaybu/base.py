@@ -12,21 +12,112 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+
 from yay import ast
 
+logger = logging.getLogger(__name__)
 
-class GraphExternalAction(ast.PythonClass):
 
-    def test(self):
+class ActionContext(object):
+
+    """
+    I am some state that is shared between different Actions operation on the
+    same AST Node (This must be a subclass of ast.PythonClass).
+
+    Any data stored in ``outputs`` is coerced into the graph, and notification
+    updates to other components may be generated.
+    """
+
+    def __init__(self, node):
+        self.node = node
+        self.outputs = {}
+        self.changed = False
+
+
+class ActionType(type):
+
+    """
+    I am a metaclass that maintains a registry of all available actions by part
+    and name
+    """
+
+    actions = {}
+
+    def __new__(meta, class_name, bases, attrs):
+        if class_name != "Action" and "part" not in attrs:
+            raise TypeError("An Action subclass must specify a 'part' attribute")
+
+        cls = super(ActionType, meta).__new__(meta, class_name, bases, attrs)
+
+        if "part" in attrs and "name" in attrs:
+            part_registry = meta.actions.setdefault(attrs["part"], {})
+            part_registry[attrs["name"]] = cls
+
+        return cls
+
+
+class Action(object):
+
+    """
+    I am an action taken against a part of your deployment architecture, for
+    example turning it off or updating it.
+    """
+
+    __metaclass__ = ActionType
+
+    dependencies = []
+
+    def apply(self, context):
         pass
 
-    def destroy(self):
-        pass
+    def __repr__(self):
+        if hasattr(self, "name"):
+            return "Action(name='%s')" % self.name
+        return "Action(class='%s')" % self.__class__.__name__
+
+
+class Part(ast.PythonClass):
+
+    """
+    I am a component in a deployment architecture.
+
+    I might have side effects: I might create and manage a LoadBalancer or
+    deploy an Application.
+
+    I might be an information source - such as a monitoring metric.
+
+    I might be a event source, such as a notification about new Git tags.
+    """
+
+    ActionContext = ActionContext
+
+    def apply(self):
+        actions = [ActionType.actions[self.__class__][self.root.target]]
+
+        # FIXME: is this too dumb?
+        # Detect cycles, dammit
+        # Also if A -> B and A -> C and B-> D and C-> D, this can end up with order CDBA instead of DCBA
+        for action in actions:
+            for dep in action.dependencies:
+                if not dep in actions:
+                    actions.append(dep)
+        actions.reverse()
+
+        context = self.ActionContext(self)
+        for action in actions:
+            logger.debug("Applying %r" % action)
+            action().apply(context)
+        self.members.update(context.outputs)
+
+        if context.changed:
+            self.root.changed()
 
     def _resolve(self):
         # FIXME: There is a nicer way to do this without resolve, but more yay
         # refactoring required
+        # This lets you find all Part's after doing a read-only resolve
         root = self.root
         if self not in root.actors:
             root.actors.append(self)
-        return super(GraphExternalAction, self)._resolve()
+        return super(Part, self)._resolve()

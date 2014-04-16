@@ -19,7 +19,7 @@ from yaybu.core.state import PartState
 from yaybu import error
 from yaybu.i18n import _
 from yay import errors
-from yaybu.base import GraphExternalAction
+from yaybu import base
 
 from .layer.cloud import CloudComputeLayer
 from .layer.base import DriverNotFound, NodeFailedToStartException
@@ -29,7 +29,25 @@ from .layer.vmware import VMWareLayer
 logger = logging.getLogger(__name__)
 
 
-class Compute(GraphExternalAction):
+class ActionContext(base.ActionContext):
+
+    def __init__(self, node):
+        super(ActionContext, self).__init__(node)
+        self.simulate = node.root.simulate
+        self.ui = node.root.ui
+        self.state = node.state
+
+    def update_from_layer(self):
+        print type(self.layer)
+        for i in ['public_ip', 'public_ips',
+                 'private_ip', 'private_ips',
+                 'fqdn', 'hostname', 'domain']:
+            v = getattr(self.layer, i)
+            if v is not None:
+                self.outputs[i] = v
+
+
+class Compute(base.Part):
 
     """ Provides the Yaybu interface to the underlying virtualization
     implementation. Handles provision of information out to the rest of the
@@ -46,11 +64,7 @@ class Compute(GraphExternalAction):
 
     """
 
-    layers = {
-        'VBOX': VBoxLayer,
-        'VMWARE': VMWareLayer,
-    }
-    default_layer = CloudComputeLayer
+    ActionContext = ActionContext
 
     @property
     @memoized
@@ -72,106 +86,165 @@ class Compute(GraphExternalAction):
 
     @property
     @memoized
-    def layer(self):
-        """ Return the underlying virtualization layer implementation. """
-        if self.driver_id in self.layers:
-            return self.layers[self.driver_id](self)
-        else:
-            return self.default_layer(self)
-
-    @property
-    @memoized
     def state(self):
         return PartState(self.root.state, self.full_name)
-
-    def synchronise(self):
-        """ Update our members with the appropriate data from the underlying layer. """
-        self.state.update(their_name=self.layer.name)
-        for i in ['public_ip', 'public_ips',
-                 'private_ip', 'private_ips',
-                 'fqdn', 'hostname', 'domain']:
-            v = getattr(self.layer, i)
-            if v is not None:
-                self.members[i] = v
-
-    def test(self):
-        """ Check that we're able to connect to the underlying
-        implementation. Will raise an exception if there is a failure. """
-        with self.root.ui.throbber(_("Check compute credentials/connectivity")):
-            self.layer.test()
-
-    def destroy(self):
-        """ Try to connect the layer successfully, then destroy the underlying node. """
-        self.load()
-        if not self.layer.attached:
-            return
-        with self.root.ui.throbber(_("Destroy node %r") % self.full_name):
-            self.layer.destroy()
-
-    def load(self):
-        if not self.layer.attached:
-            self.state.refresh()
-            if "their_name" in self.state:
-                self.layer.load(self.state.their_name)
-        if not self.layer.attached:
-            self.layer.load(self.full_name)
-        if self.layer.attached:
-            self.synchronise()
-
-    def apply(self):
-        """ Create or connect the compute node """
-
-        if self.layer.attached:
-            return
-
-        try:
-            self.load()
-        except DriverNotFound:
-            raise error.ValueError("%r is not a valid driver" % self.driver_id)
-        if self.layer.attached:
-            logger.debug("Applying to node %s at %s" % (self.layer.name, self.layer.location))
-            return
-
-        if self.root.readonly or self.root.simulate:
-            self.members['public_ip'] = '0.0.0.0'
-            self.members['private_ip'] = '0.0.0.0'
-            self.members['fqdn'] = 'missing-host'
-            if self.root.simulate:
-                self.root.changed()
-            return
-
-        logger.debug("Node will be %r" % self.full_name)
-
-        for tries in range(10):
-            logger.debug("Creating %r, attempt %d" % (self.full_name, tries))
-            if self.create():
-                return
-        logger.error("Unable to create node successfully. giving up.")
-        raise IOError()
-
-    def create(self):
-        with self.root.ui.throbber(_("Create node '%r'") % (self.full_name, )):
-            self.layer.create()
-            logger.debug("Waiting for node %r to start" % (self.full_name, ))
-            try:
-                with self.root.ui.throbber(_("Wait for node '%r' to start") % self.full_name):
-                    self.layer.wait()
-                logger.debug("Node %r running" % (self.full_name, ))
-                self.synchronise()
-                self.root.changed()
-                return True
-
-            except NodeFailedToStartException:
-                logger.warning("Node %r did not start before timeout. retrying." % self.full_name)
-                self.destroy()
-                return False
-
-            except Exception:
-                logger.exception(
-                    "Node %r had an unexpected error - node will be cleaned up and processing will stop" % (self.full_name,))
-                self.node.destroy()
-                raise
 
     @property
     def full_name(self):
         return "%s" % str(self.params.name.as_string())
+
+
+class SetupLayer(base.Action):
+
+    part = Compute
+
+    layers = {
+        'VBOX': VBoxLayer,
+        'VMWARE': VMWareLayer,
+    }
+    default_layer = CloudComputeLayer
+
+    def apply(self, context):
+        try:
+            if context.node.driver_id in self.layers:
+                context.layer = self.layers[context.node.driver_id](context.node)
+            else:
+                context.layer = self.default_layer(context.node)
+        except DriverNotFound:
+            raise error.ValueError("Driver not found")
+
+
+class GetCurrentState(base.Action):
+
+    """
+    Based on the information in the config and any information in the state
+    data find metadata on a given VM.
+    """
+
+    part = Compute
+    dependencies = [SetupLayer]
+
+    def apply(self, context):
+        context.outputs['public_ip'] = '0.0.0.0'
+        context.outputs['private_ip'] = '0.0.0.0'
+        context.outputs['fqdn'] = 'missing-host'
+
+        # If our local state file knows the unique name for the VM (which might
+        # be different from the name we asked for in the config) then look to see if it
+        # still exists - it might have gone away when we werent looking.
+        if not context.layer.attached:
+            context.state.refresh()
+            if "their_name" in context.state:
+                context.layer.load(context.state.their_name)
+
+        # If we can't find a VM based on the state file then see if we can find one based on
+        # the name in the config. This might work for platforms that do use our name as the
+        # canonical ID - and means 2 people can both apply a config without needing shared state
+        if not context.layer.attached:
+            context.layer.load(context.node.full_name)
+            context.state.update(their_name=context.node.full_name)
+
+        # If we have managed to find a Compute resource then update the context with all the
+        # information we've been able to retrieve.
+        if context.layer.attached:
+            context.update_from_layer()
+            logger.debug("Found existing node %s at %s" % (context.layer.name, context.layer.location))
+
+
+class Test(base.Action):
+
+    """
+    Test connectivity
+    """
+
+    name = "test"
+    part = Compute
+    dependencies = [GetCurrentState]
+
+    def apply(self, context):
+        """ Check that we're able to connect to the underlying
+        implementation. Will raise an exception if there is a failure. """
+        with context.ui.throbber(_("Check compute credentials/connectivity")):
+            context.layer.test()
+
+
+class Sync(base.Action):
+
+    """
+    Compare the params in the graph to the actual state in the cloud provider
+    and create a new Compute node as required.
+    """
+
+    name = "sync"
+    part = Compute
+    dependencies = [GetCurrentState]
+
+    def apply(self, context):
+        """ Create or connect the compute node """
+        if context.layer.attached:
+            # FIXME: One day inspect to see if Compute node needs re-provisioning
+            return
+
+        logger.debug("Node will be %r" % context.node.full_name)
+
+        for tries in range(10):
+            logger.debug("Creating %r, attempt %d" % (context.node.full_name, tries))
+            if self.create(context):
+                return
+
+        logger.error("Unable to create node successfully. giving up.")
+        raise IOError()
+
+    def create(self, context):
+        with context.ui.throbber(_("Create node '%r'") % (context.node.full_name, )):
+            if not context.simulate:
+                context.layer.create()
+            context.changed = True
+
+        if context.simulate:
+            return True
+
+        logger.debug("Waiting for node %r to start" % (context.node.full_name, ))
+        try:
+            with context.ui.throbber(_("Wait for node '%r' to start") % context.node.full_name):
+                context.layer.wait()
+            logger.debug("Node %r running" % (context.node.full_name, ))
+            context.update_from_layer()
+            context.changed = True
+            return True
+
+        except NodeFailedToStartException:
+            logger.warning("Node %r did not start before timeout. retrying." % context.node.full_name)
+            context.layer.destroy()
+            return False
+
+        except Exception:
+            logger.exception(
+                "Node %r had an unexpected error - node will be cleaned up and processing will stop" % (context.node.full_name,))
+            context.layer.destroy()
+            raise
+
+
+class Destroy(base.Action):
+
+    name = "destroy"
+    part = Compute
+    dependencies = [GetCurrentState]
+
+    def apply(self, context):
+        """ Try to connect the layer successfully, then destroy the underlying node. """
+        if not context.layer.attached:
+            return
+        with context.ui.throbber(_("Destroy node %r") % context.node.full_name):
+            context.layer.destroy()
+
+
+class EstimateCost(base.Action):
+
+    name = "estimate_cost"
+    part = Compute
+    dependencies = [GetCurrentState]
+
+    def apply(self, context):
+        # FIXME: Do something nice with this
+        print context.layer.price

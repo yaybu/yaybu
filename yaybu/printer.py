@@ -17,10 +17,7 @@ from __future__ import absolute_import
 from yaybu import base
 
 
-class Printer(base.GraphExternalAction):
-
-    def test(self):
-        pass
+class Printer(base.Part):
 
     def apply(self):
         print str(self.params.message)

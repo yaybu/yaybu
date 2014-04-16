@@ -147,7 +147,7 @@ class RecordSync(MetadataSync):
         )
 
 
-class Zone(base.GraphExternalAction):
+class Zone(base.Part):
 
     """
     This part manages a single DNS zone
