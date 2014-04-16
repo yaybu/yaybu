@@ -54,6 +54,8 @@ guestproperty = vboxmanage("guestproperty", "get", "{name}", "{property}")
 
 class VBoxLayer(LocalComputeLayer):
 
+    wait_delay = 300
+
     system = "vbox"
 
     def start(self):
