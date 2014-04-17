@@ -14,6 +14,7 @@
 
 import logging
 
+from yaybu import error
 from yay import ast
 
 logger = logging.getLogger(__name__)
@@ -93,16 +94,19 @@ class Part(ast.PythonClass):
     ActionContext = ActionContext
 
     def apply(self):
-        actions = [ActionType.actions[self.__class__][self.root.target]]
-
-        # FIXME: is this too dumb?
-        # Detect cycles, dammit
-        # Also if A -> B and A -> C and B-> D and C-> D, this can end up with order CDBA instead of DCBA
-        for action in actions:
+        def resolve(action, resolved, unresolved):
+            unresolved.add(action)
             for dep in action.dependencies:
-                if not dep in actions:
-                    actions.append(dep)
-        actions.reverse()
+                if dep in resolved:
+                    continue
+                if dep in unresolved:
+                    raise error.TypeError('Action invalid due to circular reference between %r and %r' % (action, dep))
+                resolve(dep, resolved, unresolved)
+            unresolved.remove(action)
+            resolved.append(action)
+            return resolved
+
+        actions = resolve(ActionType.actions[self.__class__][self.root.target], [], set())
 
         context = self.ActionContext(self)
         for action in actions:
