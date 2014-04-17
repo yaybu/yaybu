@@ -22,7 +22,7 @@ new Provisioner as instance:
         cpus: 2
 
         # Settings applied directly to the vmx file
-        vmx:
+        options:
             svga:
                 vramSize: 128
                 maxHeight: 1200

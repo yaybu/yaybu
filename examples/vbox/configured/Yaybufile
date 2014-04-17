@@ -22,7 +22,7 @@ new Provisioner as instance:
         cpus: 2
 
         # Arguments passed to VBoxManage modifyvm directly
-        modifyvm:
+        options:
             cpuexecutioncap: 80
             pagefusion: on
 

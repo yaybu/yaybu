@@ -23,8 +23,7 @@ from yaybu.base import GraphExternalAction
 
 from .layer.cloud import CloudComputeLayer
 from .layer.base import DriverNotFound, NodeFailedToStartException
-from .layer.vbox import VBoxLayer
-from .layer.vmware import VMWareLayer
+from .layer.local import LocalComputeLayer
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +45,6 @@ class Compute(GraphExternalAction):
 
     """
 
-    layers = {
-        'VBOX': VBoxLayer,
-        'VMWARE': VMWareLayer,
-    }
     default_layer = CloudComputeLayer
 
     @property
@@ -74,8 +69,8 @@ class Compute(GraphExternalAction):
     @memoized
     def layer(self):
         """ Return the underlying virtualization layer implementation. """
-        if self.driver_id in self.layers:
-            return self.layers[self.driver_id](self)
+        if self.driver_id in ("VBOX", "VMWARE"):
+            return LocalComputeLayer(self)
         else:
             return self.default_layer(self)
 

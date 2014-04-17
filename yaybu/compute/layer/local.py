@@ -20,8 +20,8 @@ from .base import Layer, AuthenticationError
 from yaybu.core.util import memoized
 from yay import errors
 
-from yaybu.compute.image import PasswordAuth, SSHAuth, RemoteImage, CanonicalImage, ImageLibrary, Hardware, MachineSpec
-
+from hyperkit.spec import PasswordAuth, SSHAuth, LiteralImage, CanonicalImage, Hardware, MachineSpec
+from hyperkit.hypervisor import VMWare, VirtualBox
 
 class NodeState:
     EMPTY = 1
@@ -37,10 +37,10 @@ class LocalComputeLayer(Layer):
 
     wait_delay = 30
 
-    def __init__(self, original, yaybu_root="~/.yaybu"):
-        super(LocalComputeLayer, self).__init__(original)
-        self.machines = ImageLibrary(root=yaybu_root)
-        self.node = None
+    hypervisors = {
+        "VMWARE": VMWare,
+        "VBOX": VirtualBox,
+    }
 
     def start(self):
         """ Start self.node """
@@ -54,25 +54,21 @@ class LocalComputeLayer(Layer):
         self.node.destroy()
         self.node = None
 
-    @abc.abstractmethod
-    def options(self):
-        """ Return additional options to be passed to the builder """
+    def test(self):
+        return self.hypervisor.present
 
     def create(self):
         if self.node is not None:
             raise ValueError("Trying to create a node when we already have one")
-        builder = self.machines.get_builder(self.system)
-        self.node = builder.create(self.spec)
+        self.node = self.hypervisor.create(self.spec)
         self.start()
 
     def load(self, name):
         if self.node is not None:
             raise ValueError("Trying to start a node when we already have one")
-        for vm in self.machines.instances(self.system):
-            if vm.name == name:
-                self.node = vm
-                self.start()
-                return
+        self.node = self.hypervisor.load(name)
+        if self.node is not None:
+            self.start()
 
     def wait(self):
         for i in range(self.wait_delay):
@@ -81,6 +77,17 @@ class LocalComputeLayer(Layer):
                 return
             else:
                 time.sleep(1)
+
+    @property
+    @memoized
+    def hypervisor(self):
+        return self.hypervisors[self.original.driver_id]()
+
+    @property
+    @memoized
+    def options(self):
+        """ Return additional options to be passed to the builder """
+        return self.original.params.options.as_dict(default=None)
 
     @property
     @memoized

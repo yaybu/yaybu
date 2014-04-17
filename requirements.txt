@@ -9,6 +9,9 @@ coveralls
 unittest2
 flake8
 
+# hyperkit from git master
+-e git://github.com/yaybu/hyperkit@master#egg=hyperkit
+
 # yay from git master
 -e git://github.com/yaybu/yay@master#egg=yay
 
