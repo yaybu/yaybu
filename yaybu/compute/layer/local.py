@@ -20,8 +20,11 @@ from .base import Layer, AuthenticationError
 from yaybu.core.util import memoized
 from yay import errors
 
-from hyperkit.spec import PasswordAuth, SSHAuth, LiteralImage, CanonicalImage, Hardware, MachineSpec
+from hyperkit.spec import (PasswordAuth, SSHAuth,
+                           LiteralImage, CanonicalImage,
+                           Hardware, MachineSpec)
 from hyperkit.hypervisor import VMWare, VirtualBox
+
 
 class NodeState:
     EMPTY = 1
@@ -157,7 +160,7 @@ class LocalComputeLayer(Layer):
         p = self.original.params
         try:
             url = p.image.as_string()
-            image = RemoteImage(url)
+            image = LiteralImage(url)
         except errors.TypeError:
             distro = p.image.distro.as_string(default=None)
             release = p.image.release.as_string(default=None)
