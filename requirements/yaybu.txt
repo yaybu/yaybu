@@ -1,5 +1,5 @@
 Jinja2==2.7.2
-MarkupSafe==0.19
+MarkupSafe==0.21
 apache-libcloud==0.14.1
 gevent==1.0
 greenlet==0.4.2
