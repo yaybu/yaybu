@@ -15,9 +15,11 @@ after_success:
   - coveralls
 
 notifications:
-    use_notice: true
-    skip_join: true
-    irc: "irc.oftc.net#yaybu"
-    on_success: change
-    on_failure: always
+    irc:
+        channels:
+            - "irc.oftc.net#yaybu"
+        use_notice: true
+        skip_join: true
+        on_success: change
+        on_failure: always
 
