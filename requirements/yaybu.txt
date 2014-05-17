@@ -1,13 +1,13 @@
 Jinja2==2.7.2
-MarkupSafe==0.21
+MarkupSafe==0.23
 apache-libcloud==0.14.1
-gevent==1.0
+gevent==1.0.1
 greenlet==0.4.2
 lockfile==0.9.1
-paramiko==1.13.0
+paramiko==1.14.0
 ply==3.4
 pycrypto==2.6.1
-requests==2.2.1
+requests==2.3.0
 
 fakechroot==0.0.9
 mock
