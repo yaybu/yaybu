@@ -52,49 +52,9 @@ class BigVResponse(JsonResponse):
         return self.status in self.valid_response_codes
 
 
-# =======================================================================
-# FIXME: Remove this when there is a better way to do this
-from libcloud.common.base import LoggingHTTPSConnection
-import socket
-import ssl
-
-
-class BigVHTTPSConnection(LoggingHTTPSConnection):
-
-    def connect(self):
-        """Connect
-
-        Checks if verification is toggled; if not, just call
-        httplib.HTTPSConnection's connect
-        """
-        if not self.verify:
-            return httplib.HTTPSConnection.connect(self)
-
-        # otherwise, create a connection and verify the hostname
-        # use socket.create_connection (in 2.6+) if possible
-        if getattr(socket, 'create_connection', None):
-            sock = socket.create_connection((self.host, self.port),
-                                            self.timeout)
-        else:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((self.host, self.port))
-        self.sock = ssl.wrap_socket(sock,
-                                    self.key_file,
-                                    self.cert_file,
-                                    cert_reqs=ssl.CERT_REQUIRED,
-                                    ca_certs=self.ca_cert,
-                                    ssl_version=ssl.PROTOCOL_SSLv3)
-        cert = self.sock.getpeercert()
-        if not self._verify_hostname(self.host, cert):
-            raise ssl.SSLError('Failed to verify hostname')
-
-# =======================================================================
-
-
 class BigVConnection(ConnectionUserAndKey):
 
     responseCls = BigVResponse
-    conn_classes = (None, BigVHTTPSConnection)
 
     def add_default_headers(self, headers):
         user_b64 = base64.b64encode(b('%s:%s' % (self.user_id, self.key)))
@@ -111,14 +71,7 @@ class BigVNodeDriver(NodeDriver):
     connectionCls = BigVConnection
     features = {'create_node': ['password']}
 
-    def __init__(
-        self,
-        key,
-        secret,
-        account,
-        group='default',
-        location=DEFAULT_LOCATION,
-            **kwargs):
+    def __init__(self, key, secret, account, group='default', location=DEFAULT_LOCATION, **kwargs):
         """
         @inherits: L{NodeDriver.__init__}
 
