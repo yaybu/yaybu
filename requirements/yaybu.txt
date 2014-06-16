@@ -1,4 +1,4 @@
-Jinja2==2.7.2
+Jinja2==2.7.3
 MarkupSafe==0.23
 apache-libcloud==0.14.1
 gevent==1.0.1
@@ -9,5 +9,5 @@ ply==3.4
 pycrypto==2.6.1
 requests==2.3.0
 
-fakechroot==0.0.9
+fakechroot==0.2.1
 mock
