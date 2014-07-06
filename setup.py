@@ -29,10 +29,8 @@ setup(name='Yaybu',
           'paramiko >= 1.8.0',
           'gevent',
           'lockfile',
+          'fuselage',
       ],
-      dependency_links = [
-          'https://gevent.googlecode.com/files/gevent-1.0rc2.tar.gz#egg=gevent-1.0rc2',
-          ],
       extras_require = {
           'test': ['unittest2', 'mock', 'fakechroot'],
           },
