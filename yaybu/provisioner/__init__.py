@@ -1,4 +1,4 @@
-# Copyright 2013 Isotoma Limited
+# Copyright 2013-2014 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pkg_resources import iter_entry_points
-
 from .part import Provision
-
-import yaybu.provisioner.resources  # NOQA
-for ep in iter_entry_points(group='yaybu.resource', name=None):
-    ep.load()
-
-import yaybu.provisioner.providers  # NOQA
-for ep in iter_entry_points(group='yaybu.providers', name=None):
-    ep.load()
 
 
 __all__ = [

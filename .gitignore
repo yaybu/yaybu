@@ -11,3 +11,5 @@ include/
 lib/
 local/
 src/
+.Python
+*.egg-info
