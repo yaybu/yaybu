@@ -15,11 +15,47 @@
 import logging
 import getpass
 
-from yaybu.changes import TextRenderer
-from yaybu import base
+from fuselage import bundle
+
+from yaybu import base, error
+from yay import errors
 
 
 logger = logging.getLogger(__name__)
+
+
+class ResourceBundle(bundle.ResourceBundle):
+
+    def add_nodes_from_expression(self, node):
+        try:
+            node.as_dict()
+        except errors.TypeError:
+            raise error.ParseError("Not a valid Resource definition", anchor=node.anchor)
+
+        keys = list(node.keys())
+        if len(keys) > 1:
+            raise error.ParseError("Too many keys in list item", anchor=node.anchor)
+
+        typename = keys[0]
+        instances = node.get_key(typename)
+
+        try:
+            instances.as_dict()
+            iterable = [instances]
+        except errors.TypeError:
+            iterable = instances.get_iterable()
+
+        # FIXME: We want to inspect the resource kwarg errors ourself so we can map them to nice exceptions
+        # Either refactor create or make it throw useful exceptions
+        for instance in iterable:
+            self.create(typename, instance.as_dict())
+
+    @classmethod
+    def create_from_expression(cls, expression):
+        b = cls()
+        for node in expression.get_iterable():
+            b.add_nodes_from_expression(node)
+        return b
 
 
 class Provision(base.GraphExternalAction):
@@ -62,18 +98,12 @@ class Provision(base.GraphExternalAction):
             self.transport.connect()
 
         # Actually apply the configuration
-        #bundle = ResourceBundle.create_from_yay_expression(
-        #    self.params.resources, verbose_errors=self.verbose > 2)
+        bundle = ResourceBundle.create_from_yay_expression(self.params.resources)
+        with self.root.ui.throbber("Provision %s" % self.host) as throbber:
+            changed = bundle.apply(self, throbber)
 
-        #with self.root.ui.throbber("Provision %s" % self.host) as throbber:
-        #    changed = bundle.apply(self, throbber)
-        #self.root.changed(changed)
+        self.root.changed(changed)
 
     def test(self):
-        #bundle = ResourceBundle.create_from_yay_expression(
-        #    self.params.resources)
-        pass
-
-    def change(self, change):
-        renderer = TextRenderer.get(change, self.current_output)
-        return change.apply(self, renderer)
+        bundle = ResourceBundle.create_from_yay_expression(self.params.resources)
+        bundle.some_sort_of_self_check()  # FIXME
