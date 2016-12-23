@@ -1,7 +1,7 @@
 Jinja2==2.8
 MarkupSafe==0.23
 apache-libcloud==1.4.0
-gevent==1.1.2
+gevent==1.2.0
 greenlet==0.4.11
 lockfile==0.12.2
 paramiko==2.1.1
