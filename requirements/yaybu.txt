@@ -1,6 +1,6 @@
 Jinja2==2.9.6
 MarkupSafe==1.0
-apache-libcloud==2.1.0
+apache-libcloud==2.2.0
 gevent==1.2.2
 greenlet==0.4.12
 lockfile==0.12.2
