@@ -1,4 +1,4 @@
-Jinja2==2.9.6
+Jinja2==2.10
 MarkupSafe==1.0
 apache-libcloud==2.2.1
 gevent==1.2.2
