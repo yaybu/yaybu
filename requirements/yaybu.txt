@@ -7,7 +7,7 @@ lockfile==0.12.2
 paramiko==2.4.1
 ply==3.11
 pycrypto==2.6.1
-requests==2.19.0
+requests==2.19.1
 
 fakechroot==0.2.1
 mock
