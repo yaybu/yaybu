@@ -4,7 +4,7 @@ apache-libcloud==2.5.0
 gevent==1.4.0
 greenlet==0.4.15
 lockfile==0.12.2
-paramiko==2.5.0
+paramiko==2.6.0
 ply==3.11
 pycrypto==2.6.1
 requests==2.22.0
